@@ -563,69 +563,6 @@ func shimSearchMethodStateV5(v4SearchMethodState map[string]interface{}) (interf
 			"remaining_runs":     remainingTrials,
 			"search_method_type": v4SearchMethodState["search_method_type"],
 		}, nil
-	case searcher.AdaptiveASHASearch:
-		trialTable, ok := v4SearchMethodState["trial_table"].(map[model.RequestID]int)
-		subSearchStatesV4, ok := v4SearchMethodState["sub_search_states"].([]map[string]interface{})
-		runTable, err := mapRequestIDToRunID(trialTable)
-		if !ok || err != nil {
-			return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
-		}
-		var subSearchStates []map[string]interface{}
-
-		for _, subSearchStateV4 := range subSearchStatesV4 {
-			rungsV4, ok := subSearchStateV4["rungsV4"].([]map[string]interface{})
-			trialRungs, ok := subSearchStateV4["trial_rungs"].(map[model.RequestID]int)
-			earlyExitTrials, ok := subSearchStateV4["early_exit_trials"].(map[model.RequestID]bool)
-			runRungs, err := mapRequestIDToRunID(trialRungs)
-			earlyExitRuns, err := mapRequestIDToRunID(earlyExitTrials)
-			trialsCompleted, ok := subSearchStateV4["trials_completed"].(int)
-			invalidTrials, ok := subSearchStateV4["invalid_trials"].(int)
-			if !ok || err != nil {
-				return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
-			}
-			var rungs []map[string]interface{}
-
-			for _, rungV4 := range rungsV4 {
-				unitsNeeded, ok := rungV4["units_needed"].(uint64)
-				metricsV4, ok := rungV4["metrics"].([]map[string]interface{})
-				if !ok {
-					return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
-				}
-				var metrics []map[string]interface{}
-
-				for _, metric := range metricsV4 {
-					requestID, ok := metric["request_id"].(model.RequestID)
-					metric, ok := metric["metric"].(model.ExtendedFloat64)
-					if !ok {
-						return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
-					}
-					tID, err := db.TrialIDByRequestID(context.TODO(), requestID)
-					if err != nil {
-						return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
-					}
-					metrics = append(metrics, map[string]interface{}{
-						"run_id": tID,
-						"metric": metric,
-					})
-				}
-
-				rungs = append(rungs, map[string]interface{}{
-					"units_needed": unitsNeeded,
-					"metrics":      metrics,
-				})
-			}
-			subSearchStates = append(subSearchStates, map[string]interface{}{
-				"invalid_runs":    invalidTrials,
-				"runs_completed":  trialsCompleted,
-				"early_exit_runs": earlyExitRuns,
-				"run_rungs":       runRungs,
-			})
-		}
-		return map[string]interface{}{
-			"run_table":          runTable,
-			"sub_search_states":  subSearchStates,
-			"search_method_type": v4SearchMethodState["search_method_type"],
-		}, nil
 	default:
 		return nil, ExperimentSnapshotShimError{Message: "unsupported search_method_type"}
 	}
