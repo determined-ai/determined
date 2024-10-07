@@ -82,19 +82,6 @@ def log_in_user(args: argparse.Namespace) -> None:
     else:
         username = args.username
 
-    if args.token is not None:
-        token_store = authentication.TokenStore(args.master)
-        token_store.set_token(username, args.token)
-        token_store.set_active(username)
-
-        d = client.Determined._from_session(
-            api.Session(master=args.master, username=username, token=args.token, cert=cli.cert)
-        )
-        user = d.whoami()
-        if user.username != username:
-            raise errors.CliError("Token does not match the provided username")
-        return
-
     message = "Password for user '{}': ".format(username)
     password = getpass.getpass(message)
 
@@ -329,6 +316,19 @@ def create_token(args: argparse.Namespace) -> None:
         print(output_string)
 
 
+def login_with_token(args: argparse.Namespace) -> None:
+    unauth_session = api.UnauthSession(master=args.master, cert=cli.cert)
+    auth_headers = {"Authorization": f"Bearer {args.token}"}
+    user_data = unauth_session.get("/api/v1/me", headers=auth_headers).json()
+    if 'user' in user_data and 'username' in user_data['user']:
+        username = user_data.get('user').get('username')
+
+    token_store = authentication.TokenStore(args.master)
+    token_store.set_token(username, args.token)
+    token_store.set_active(username)
+    print("Authenticated as {}.".format(username))
+
+
 AGENT_USER_GROUP_ARGS = [
     cli.Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
     cli.Arg("--agent-user", help="user on the agent to run tasks as"),
@@ -350,7 +350,6 @@ args_description = [
         ], is_default=True),
         cli.Cmd("login", log_in_user, "log in user", [
             cli.Arg("username", nargs="?", default=None, help="name of user to log in as"),
-            cli.Arg("--token", default=None, help="token to use for authentication"),
         ]),
         cli.Cmd("rename", rename, "change username for user", [
             cli.Arg(
@@ -461,6 +460,9 @@ args_description = [
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],
                 ),
+            ]),
+            cli.Cmd("login", login_with_token, "log in with token", [
+                cli.Arg("token", help="token to use for authentication", default=None),
             ]),
         ]),
     ])
