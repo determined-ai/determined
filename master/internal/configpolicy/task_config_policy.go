@@ -177,7 +177,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, found bool
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
 			if configs.Resources.Priority != nil {
-				return *configs.Resources.Priority, false, fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
+				return *configs.Resources.Priority, false,
+					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		case model.ExperimentType:
 			var configs expconf.ExperimentConfigV0
@@ -186,7 +187,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, found bool
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
 			if configs.Resources().Priority() != nil {
-				return *configs.Resources().Priority(), false, fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
+				return *configs.Resources().Priority(), false,
+					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		default:
 			return 0, false, fmt.Errorf("workload type %s not supported", workloadType)

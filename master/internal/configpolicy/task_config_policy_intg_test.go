@@ -40,7 +40,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	configPriority := 15
 	invariantConfig := fmt.Sprintf(`{"resources": {"priority": %d}}`, configPriority)
 	addConfigs(t, user, nil, invariantConfig, model.NTSCType)
-	limit, found, err = findAllowedPriority(nil, model.NTSCType)
+	limit, _, err = findAllowedPriority(nil, model.NTSCType)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	require.Equal(t, configPriority, limit)
 
@@ -48,7 +48,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	configPriority = 7
 	invariantConfig = fmt.Sprintf(`{"resources": {"priority": %d}}`, configPriority)
 	addConfigs(t, user, nil, invariantConfig, model.ExperimentType)
-	limit, found, err = findAllowedPriority(nil, model.ExperimentType)
+	limit, _, err = findAllowedPriority(nil, model.ExperimentType)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	require.Equal(t, configPriority, limit)
 }
@@ -99,7 +99,7 @@ func TestPriorityUpdateAllowed(t *testing.T) {
 	// Priority cannot be updated if invariant_config.resources.priority is set.
 	invariantConfig := `{"resources": {"priority": 7}}`
 	addConfigs(t, user, &w.ID, invariantConfig, model.NTSCType)
-	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, globalLimit, true)
+	_, err = PriorityUpdateAllowed(w.ID, model.NTSCType, globalLimit, true)
 	require.Error(t, errPriorityImmutable)
 	ok, err = PriorityUpdateAllowed(w.ID, model.ExperimentType, globalLimit, true)
 	require.NoError(t, err)
