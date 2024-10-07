@@ -1,7 +1,7 @@
 stages:
   - db:
       name: db
-      image_name: postgres:$DET_POSTGRES_VERSION
+      image_name: "postgres":$DET_POSTGRES_VERSION
   - master:
       pre:
         - sh: make -C tools prep-root
