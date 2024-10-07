@@ -100,7 +100,7 @@ func TestPriorityUpdateAllowed(t *testing.T) {
 	invariantConfig := `{"resources": {"priority": 7}}`
 	addConfigs(t, user, &w.ID, invariantConfig, model.NTSCType)
 	_, err = PriorityUpdateAllowed(w.ID, model.NTSCType, globalLimit, true)
-	require.Error(t, errPriorityImmutable)
+	require.ErrorIs(t, err, errPriorityImmutable)
 	ok, err = PriorityUpdateAllowed(w.ID, model.ExperimentType, globalLimit, true)
 	require.NoError(t, err)
 	require.True(t, ok)
