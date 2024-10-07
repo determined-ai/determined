@@ -177,7 +177,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, found bool
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
 			if configs.Resources.Priority != nil {
-				return *configs.Resources.Priority, false,
+				adminPriority := *configs.Resources.Priority
+				return adminPriority, false,
 					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		case model.ExperimentType:
@@ -187,7 +188,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, found bool
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
 			if configs.Resources().Priority() != nil {
-				return *configs.Resources().Priority(), false,
+				adminPriority := *configs.Resources().Priority()
+				return adminPriority, false,
 					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		default:
@@ -213,9 +215,9 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, found bool
 func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smallerHigher bool) (bool, error) {
 	// Check if a priority limit has been set with a constraint policy.
 	// Global policies have highest precedence.
-	limit, found, err := findAllowedPriority(nil, workloadType)
+	globalLimit, globalFound, err := findAllowedPriority(nil, workloadType)
 
-	if err == errPriorityImmutable && limit == priority {
+	if errors.Is(err, errPriorityImmutable) && globalLimit == priority {
 		// If task config policies have updated since the workload was originally scheduled, allow users
 		// to update the priority to the new priority set by invariant config.
 		return true, nil
@@ -223,18 +225,26 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 	if err != nil {
 		return false, err
 	}
-	if found {
-		return priorityWithinLimit(priority, limit, smallerHigher), nil
-	}
 
 	// TODO use COALESCE instead once postgres updates are complete.
 	// Workspace policies have second precedence.
-	limit, found, err = findAllowedPriority(&wkspID, workloadType)
+	wkspLimit, wkspFound, err := findAllowedPriority(&wkspID, workloadType)
+
+	if errors.Is(err, errPriorityImmutable) && wkspLimit == priority {
+		// If task config policies have updated since the workload was originally scheduled, allow users
+		// to update the priority to the new priority set by invariant config.
+		return true, nil
+	}
 	if err != nil {
 		return false, err
 	}
-	if found {
-		return priorityWithinLimit(priority, limit, smallerHigher), nil
+
+	// No invariant configs. Check for constraints.
+	if globalFound {
+		return priorityWithinLimit(priority, globalLimit, smallerHigher), nil
+	}
+	if wkspFound {
+		return priorityWithinLimit(priority, wkspLimit, smallerHigher), nil
 	}
 
 	// No priority limit has been set.

@@ -99,9 +99,14 @@ func TestPriorityUpdateAllowed(t *testing.T) {
 	// Priority cannot be updated if invariant_config.resources.priority is set.
 	invariantConfig := `{"resources": {"priority": 1}}`
 	addConfigs(t, user, &w.ID, invariantConfig, model.NTSCType)
-	_, err = PriorityUpdateAllowed(w.ID, model.NTSCType, 10, true)
+	_, err = PriorityUpdateAllowed(w.ID, model.NTSCType, 11, true)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	ok, err = PriorityUpdateAllowed(w.ID, model.ExperimentType, 10, true)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	// Priority can be updated if it's the same value as the one set by invariant config.
+	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, 1, true)
 	require.NoError(t, err)
 	require.True(t, ok)
 }
