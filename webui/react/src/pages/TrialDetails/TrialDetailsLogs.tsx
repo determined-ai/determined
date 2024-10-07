@@ -11,7 +11,6 @@ import Message from 'hew/Message';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
-import Tooltip from 'hew/Tooltip';
 import useConfirm from 'hew/useConfirm';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -398,23 +397,23 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
               width={240}
               onChange={onSearchChange}
             />
-            <Tooltip content={`${searchOn ? 'Close' : 'Open'} Search`}>
-              <Button
-                type={searchOn ? 'primary' : 'default'}
-                onClick={() => {
-                  setSearchOn((prev) => !prev);
-                  searchOn && setLogViewerOn(true);
-                }}>
-                <Icon decorative name="search" />
-              </Button>
-            </Tooltip>
-            <Tooltip content={searchOn && `${logViewerOn ? 'Close' : 'Open'} Logs`}>
-              <Button
-                type={logViewerOn ? 'primary' : 'default'}
-                onClick={() => searchOn && setLogViewerOn((prev) => !prev)}>
-                <Icon decorative name="list" />
-              </Button>
-            </Tooltip>
+            <Button
+              type={searchOn ? 'primary' : 'default'}
+              onClick={() => {
+                setSearchOn((prev) => !prev);
+                searchOn && setLogViewerOn(true);
+              }}>
+              <Icon name="search" showTooltip title={`${searchOn ? 'Close' : 'Open'} Search`} />
+            </Button>
+            <Button
+              type={logViewerOn ? 'primary' : 'default'}
+              onClick={() => searchOn && setLogViewerOn((prev) => !prev)}>
+              <Icon
+                name="list"
+                showTooltip
+                title={searchOn ? `${logViewerOn ? 'Close' : 'Open'} Logs` : ''}
+              />
+            </Button>
             {logFilters}
           </div>
           {rightButtons}

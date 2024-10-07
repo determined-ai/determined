@@ -274,16 +274,14 @@ function LogViewer<T>({
   // Initial fetch on mount or when fetch direction changes.
   useEffect(() => {
     setScrolledForSearch(false);
-    fetchLogs({ canceler, fetchDirection, offsetLog: selectedLog }, FetchType.Initial).then(
-      (logs) => {
-        addLogs(logs, false);
+    fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then((logs) => {
+      addLogs(logs, false);
 
-        // Slight delay on scrolling to the end for the log viewer to render and resolve everything.
-        setTimeout(() => {
-          local.current.isScrollReady = true;
-        }, 200);
-      },
-    );
+      // Slight delay on scrolling to the end for the log viewer to render and resolve everything.
+      setTimeout(() => {
+        local.current.isScrollReady = true;
+      }, 200);
+    });
   }, [addLogs, canceler, fetchDirection, fetchLogs, selectedLog]);
 
   // Enable streaming for loading latest entries.
@@ -422,7 +420,8 @@ function LogViewer<T>({
                     level={logEntry.level}
                     message={logEntry.message}
                     style={{
-                      backgroundColor: logEntry.id === selectedLog?.id ? '#E7F7FF' : 'transparent',
+                      backgroundColor:
+                        logEntry.id === selectedLog?.id ? 'var(--theme-ix-active)' : 'transparent',
                     }}
                   />
                 )}
