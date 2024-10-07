@@ -2,12 +2,14 @@
 package searcher
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMakeRungs(t *testing.T) {

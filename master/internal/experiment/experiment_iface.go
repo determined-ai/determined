@@ -49,7 +49,7 @@ type (
 type Experiment interface {
 	RunReportProgress(runID int32, msg RunReportProgress) error
 	RunReportValidation(runID int32, metrics map[string]interface{}) error
-	//TrialGetSearcherState(runID int32) (RunSearcherState, error)
+	// TrialGetSearcherState(runID int32) (RunSearcherState, error)
 	UserInitiatedEarlyRunExit(msg UserInitiatedEarlyRunExit) error
 	PatchRunState(msg PatchRunState) error
 	SetGroupMaxSlots(msg sproto.SetGroupMaxSlots)

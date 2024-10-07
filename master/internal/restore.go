@@ -5,6 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -16,8 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
@@ -448,7 +450,6 @@ func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
 // - `trial_searcher_state.Stop` -> dropped
 // - `trial_searcher_state.Closed` -> `run_searcher_state.Closed`
 func shimExperimentSnapshotV5(snapshot []byte) ([]byte, error) {
-
 	type v4SearcherState struct {
 		TrialsRequested   int                         `json:"trials_requested"`
 		TrialsCreated     map[model.RequestID]bool    `json:"trials_created"`

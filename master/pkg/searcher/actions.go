@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"fmt"
+
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 

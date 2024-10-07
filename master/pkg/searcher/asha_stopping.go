@@ -3,9 +3,10 @@ package searcher
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"math"
 	"sort"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -18,8 +19,6 @@ import (
 // to stop or continue training the trial based on the ranking of the validation metric
 // compared to other trials in a particular rung.  Once a trial has been stopped, it will not
 // be resumed later; this is why the algorithm does not require fault tolerance.
-// The searcher state and config match that of AsyncHalvingSearch but we will only run
-// the stopping based version if StopOnce is true.
 type asyncHalvingStoppingSearch struct {
 	expconf.AsyncHalvingConfig
 	SmallerIsBetter bool
@@ -219,7 +218,6 @@ func (s *asyncHalvingStoppingSearch) stopRun(
 		// If this is the top rung, close the run and exit.
 		if r == s.NumRungs()-1 {
 			actions = append(actions, NewStop(runID))
-			//s.ClosedTrials[requestID] = true
 			return actions
 		}
 
