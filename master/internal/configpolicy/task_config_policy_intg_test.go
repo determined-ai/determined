@@ -16,6 +16,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+// TODO unit test priorityUpdateAllowed
+// - check: experiment & ntsc parsing, priority matches invariant config
 func TestPriorityUpdateAllowed(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)

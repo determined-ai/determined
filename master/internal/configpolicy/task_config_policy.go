@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"gopkg.in/yaml.v3"
 )
 
 // ExperimentConfigPolicies is the invariant config and constraints for an experiment.
@@ -163,7 +164,6 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 }
 
 func priorityUpdateAllowed(scope *int, workloadType string, priority int) (int, bool, error) {
-
 	configPolicies, err := GetTaskConfigPolicies(context.TODO(), scope, workloadType)
 	if err != nil {
 		return 0, false, fmt.Errorf("unable to fetch task config policies: %w", err)
@@ -218,7 +218,6 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 	// Check if a priority limit has been set with a constraint policy.
 	// Global policies have highest precedence.
 	limit, found, err := priorityUpdateAllowed(nil, workloadType, priority)
-
 	if err != nil {
 		return false, err
 	}
