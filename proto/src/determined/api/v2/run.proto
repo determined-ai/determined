@@ -11,61 +11,61 @@ import "determined/trial/v1/trial.proto";
 
 // Stream training metrics.
 message GetMetricsV2Request {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: [ "run_ids", "group" ] }
-    };
-    // Run IDs to get metrics for.
-    repeated int32 run_ids = 1
-        [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-            required:
-            ["run_ids"];
-        }];
-    // The group of metrics to get eg 'training', 'validation', etc.
-    string group = 2
-        [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-            required:
-            ["group"];
-        }];
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "run_ids", "group" ] }
+  };
+  // Run IDs to get metrics for.
+  repeated int32 run_ids = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["run_ids"];
+      }];
+  // The group of metrics to get eg 'training', 'validation', etc.
+  string group = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["group"];
+      }];
 }
 // Response to GetMetricsV2Request.
 message GetMetricsV2Response {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: [ "metrics" ] }
-    };
-    // Metric response.
-    repeated determined.trial.v1.MetricsReport metrics = 1;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics" ] }
+  };
+  // Metric response.
+  repeated determined.trial.v1.MetricsReport metrics = 1;
 }
 
 // Stream training metrics.
 message GetTrainingMetricsV2Request {
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "run_ids" ] }
-};
-// Run IDs to get metrics for.
-repeated int32 run_ids = 1;
+  };
+  // Run IDs to get metrics for.
+  repeated int32 run_ids = 1;
 }
 // Response to GetTrainingMetricsRequest.
 message GetTrainingMetricsV2Response {
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "metrics" ] }
-};
-// Metric response.
-repeated determined.trial.v1.MetricsReport metrics = 1;
+  };
+  // Metric response.
+  repeated determined.trial.v1.MetricsReport metrics = 1;
 }
 
 // Stream validation metrics.
 message GetValidationMetricsV2Request {
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "run_ids" ] }
-};
-// Run IDs to get metrics for.
-repeated int32 run_ids = 1;
+  };
+  // Run IDs to get metrics for.
+  repeated int32 run_ids = 1;
 }
 // Response to GetTrainingMetricsV2Request.
 message GetValidationMetricsV2Response {
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "metrics" ] }
-};
-// Metric response.
-repeated determined.trial.v1.MetricsReport metrics = 1;
+  };
+  // Metric response.
+  repeated determined.trial.v1.MetricsReport metrics = 1;
 }
