@@ -34,7 +34,7 @@ builds:
 archives:
   - wrap_in_directory: "true"
     rlcp: true
-    name_template: "determined_master_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 \"v1\") }}{{ .Amd64 }}{{ end }}"
+    name_template: "determined-master_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 \"v1\") }}{{ .Amd64 }}{{ end }}"
     files:
       - src: "packaging/master.yaml"
         dst: "etc/determined/"
