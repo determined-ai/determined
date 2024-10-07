@@ -119,12 +119,12 @@ func TestInsertCompletedMetric(t *testing.T) {
 	}
 	rung := rung{
 		UnitsNeeded: 0,
-		Metrics:     []trialMetric{},
+		Metrics:     []runMetric{},
 	}
 	for _, c := range cases {
-		var currentMetrics []trialMetric
+		var currentMetrics []runMetric
 		for _, m := range c.existingMetrics {
-			currentMetrics = append(currentMetrics, trialMetric{
+			currentMetrics = append(currentMetrics, runMetric{
 				Metric: model.ExtendedFloat64(m),
 			})
 		}
@@ -244,7 +244,7 @@ func TestStopTrials(t *testing.T) {
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 1,
-					Metrics: []trialMetric{
+					Metrics: []runMetric{
 						{
 							RunID:  1,
 							Metric: model.ExtendedFloat64(0.5),
@@ -265,7 +265,7 @@ func TestStopTrials(t *testing.T) {
 			rungs: []*rung{
 				{
 					UnitsNeeded: 1,
-					Metrics: []trialMetric{
+					Metrics: []runMetric{
 						{
 							RunID:  1,
 							Metric: model.ExtendedFloat64(0.5),
@@ -296,7 +296,7 @@ func TestStopTrials(t *testing.T) {
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 1,
-					Metrics: []trialMetric{
+					Metrics: []runMetric{
 						{
 							RunID:  2,
 							Metric: model.ExtendedFloat64(0.4),
@@ -321,7 +321,7 @@ func TestStopTrials(t *testing.T) {
 			rungs: []*rung{
 				{
 					UnitsNeeded: 1,
-					Metrics: []trialMetric{
+					Metrics: []runMetric{
 						{
 							RunID:  1,
 							Metric: model.ExtendedFloat64(0.5),
@@ -352,7 +352,7 @@ func TestStopTrials(t *testing.T) {
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 1,
-					Metrics: []trialMetric{
+					Metrics: []runMetric{
 						{
 							RunID:  1,
 							Metric: model.ExtendedFloat64(0.5),

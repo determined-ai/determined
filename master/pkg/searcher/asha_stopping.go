@@ -30,20 +30,20 @@ type (
 	asyncHalvingSearchState struct {
 		Rungs    []*rung       `json:"rungs"`
 		RunRungs map[int32]int `json:"run_rungs"`
-		// EarlyExitRuns contains trials that exited early that are still considered in the search.
+		// EarlyExitRuns contains runs that exited early that are still considered in the search.
 		EarlyExitRuns    map[int32]bool   `json:"early_exit_runs"`
 		RunsCompleted    int              `json:"runs_completed"`
 		InvalidRuns      int              `json:"invalid_runs"`
 		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 
-	trialMetric struct {
+	runMetric struct {
 		RunID  int32                 `json:"run_id"`
 		Metric model.ExtendedFloat64 `json:"metric"`
 	}
 	rung struct {
-		UnitsNeeded uint64        `json:"units_needed"`
-		Metrics     []trialMetric `json:"metrics"`
+		UnitsNeeded uint64      `json:"units_needed"`
+		Metrics     []runMetric `json:"metrics"`
 	}
 )
 
@@ -104,9 +104,9 @@ func (r *rung) insertMetric(runID int32, metric float64) int {
 	)
 
 	// Add metrics to state.
-	r.Metrics = append(r.Metrics, trialMetric{})
+	r.Metrics = append(r.Metrics, runMetric{})
 	copy(r.Metrics[insertIndex+1:], r.Metrics[insertIndex:])
-	r.Metrics[insertIndex] = trialMetric{
+	r.Metrics[insertIndex] = runMetric{
 		RunID:  runID,
 		Metric: model.ExtendedFloat64(metric),
 	}
@@ -203,28 +203,28 @@ func (s *asyncHalvingStoppingSearch) stopRun(
 	rungIndex := s.RunRungs[runID]
 	var actions []Action
 
-	// Starting at current rung, check for trials to early-stop.
+	// Starting at current rung, check for runs to early-stop.
 	// Since validations aren't controlled by searcher, they could complete > 1 rungs at a time.
 	for r := rungIndex; r < s.NumRungs(); r++ {
 		rung := s.Rungs[r]
 		s.RunRungs[runID] = r
 
-		// If trial has not completed enough steps to qualify for this rung, exit.
+		// If run has not completed enough steps to qualify for this rung, exit.
 		if timeStep < rung.UnitsNeeded {
 			return actions
 		}
 
 		insertIndex := rung.insertMetric(runID, metric)
 
-		// If this is the top rung, close the trial and exit.
+		// If this is the top rung, close the run and exit.
 		if r == s.NumRungs()-1 {
 			actions = append(actions, NewStop(runID))
 			//s.ClosedTrials[requestID] = true
 			return actions
 		}
 
-		// Top 1/divisor trials should continue, trials - 1/divisor trials should be stopped.
-		// If trials < divisor, continue if this is the best performing trial so far.
+		// Top 1/divisor runs should continue, runs - 1/divisor runs should be stopped.
+		// If runs < divisor, continue if this is the best performing run so far.
 		numContinue := mathx.Max(int(float64(len(rung.Metrics))/s.Divisor()), 1)
 
 		if insertIndex >= numContinue {
@@ -259,7 +259,6 @@ func (s *asyncHalvingStoppingSearch) runExitedEarly(
 		var actions []Action
 		s.EarlyExitRuns[runID] = true
 		actions = append(actions, NewStop(runID))
-		//s.ClosedTrials[requestID] = true
 		s.InvalidRuns++
 		// Remove metrics associated with InvalidHP trial across all rungs
 		highestRungIndex := s.RunRungs[runID]
