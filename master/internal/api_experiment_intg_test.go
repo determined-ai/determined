@@ -583,7 +583,8 @@ func TestPutExperimentsRetainLogs(t *testing.T) {
 
 func TestParseAndMergeContinueConfig(t *testing.T) {
 	// Blank config.
-	api, curUser, ctx := setupAPITest(t, nil)
+	mockRM := MockRM()
+	api, curUser, ctx := setupAPITest(t, nil, mockRM)
 	exp := createTestExp(t, api, curUser)
 
 	_, _, err := api.parseAndMergeContinueConfig(exp.ID, ``)
@@ -652,6 +653,7 @@ resources:
 	}
 
 	// No checkpoint specified anywhere.
+	mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 	resp, err := api.CreateExperiment(ctx, createReq)
 	require.NoError(t, err)
 	_, _, err = api.parseAndMergeContinueConfig(int(resp.Experiment.Id), `{}`)
@@ -671,7 +673,8 @@ searcher:
 
 // nolint: exhaustruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
-	api, _, ctx := setupAPITest(t, nil)
+	mockRM := MockRM()
+	api, _, ctx := setupAPITest(t, nil, mockRM)
 	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
 	defer func() {
 		api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
@@ -694,6 +697,7 @@ resources:
 	}
 
 	// No checkpoint specified anywhere.
+	mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 	_, err := api.CreateExperiment(ctx, createReq)
 	require.ErrorContains(t, err, "checkpoint_storage: type is a required property")
 
@@ -1589,7 +1593,8 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 }
 
 func TestAuthZCreateExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	mockRM := MockRM()
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil, mockRM)
 	forkFrom := createTestExp(t, api, curUser)
 	workspaceID, projectID := createProjectAndWorkspace(ctx, t, api)
 
@@ -1682,6 +1687,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 			Return(nil).Once()
 		authZExp.On("CanEditExperiment", mock.Anything, mockUserArg, mock.Anything, mock.Anything).Return(
 			fmt.Errorf("canActivateExperimentError")).Once()
+		mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 			Activate:        true,
 			Config:          minExpConfToYaml(t),

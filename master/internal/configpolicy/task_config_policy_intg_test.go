@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestPriorityAllowed(t *testing.T) {
@@ -28,7 +29,7 @@ func TestPriorityAllowed(t *testing.T) {
 
 	wkspLimit := 50
 	user := db.RequireMockUser(t, pgDB)
-	w := addWorkspacePriorityLimit(t, user, wkspLimit)
+	w := addWorkspacePriorityLimit(t, user, wkspLimit, model.NTSCType)
 
 	// Priority is outside workspace limit.
 	smallerValueIsHigherPriority := true
@@ -37,7 +38,7 @@ func TestPriorityAllowed(t *testing.T) {
 	require.False(t, ok)
 
 	globalLimit := 42
-	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit))
+	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit), model.NTSCType)
 
 	// Priority is within global limit.
 	ok, err = PriorityAllowed(w.ID, model.NTSCType, wkspLimit-1, true)
@@ -50,7 +51,7 @@ func TestPriorityAllowed(t *testing.T) {
 	require.False(t, ok)
 }
 
-func TestValidateNTSCConstraints(t *testing.T) {
+func TestCheckNTSCConstraints(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
 	defer cleanup()
@@ -63,21 +64,20 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
-		config := defaultConfig()
-		ok, err := CheckNTSCConstraints(context.Background(), 1, config, &resourceManager)
+		config := defaultNTSCConfig()
+		err := CheckNTSCConstraints(context.Background(), 1, config, &resourceManager)
 		require.NoError(t, err)
-		require.True(t, ok)
 	})
 
 	t.Run("running in wksp with constraints - not ok", func(t *testing.T) {
-		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit)
+		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		config := defaultConfig()
-		_, err := CheckNTSCConstraints(ctx, w.ID, config, &resourceManager)
+		config := defaultNTSCConfig()
+		err := CheckNTSCConstraints(ctx, w.ID, config, &resourceManager)
 		require.Error(t, err)
 		require.ErrorIs(t, err, errPriorityConstraintFailure)
 	})
@@ -89,9 +89,8 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
 		require.NoError(t, err)
 
-		config := defaultConfig()
-		ok, err := CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
-		require.True(t, ok)
+		config := defaultNTSCConfig()
+		err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.NoError(t, err)
 	})
 
@@ -100,13 +99,13 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
 		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
 		require.NoError(t, err)
-		addConstraints(t, user, &w.ID, *constraints)
+		addConstraints(t, user, &w.ID, *constraints, model.NTSCType)
 
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
-		config := defaultConfig()
-		_, err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
+		config := defaultNTSCConfig()
+		err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.Error(t, err)
 		require.ErrorIs(t, err, errResourceConstraintFailure)
 	})
@@ -116,52 +115,144 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
 		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
 		require.NoError(t, err)
-		addConstraints(t, user, &w.ID, *constraints)
+		addConstraints(t, user, &w.ID, *constraints, model.NTSCType)
 
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
-		config := defaultConfig()
+		config := defaultNTSCConfig()
 		config.Resources.Slots = *config.Resources.MaxSlots
 		config.Resources.MaxSlots = nil // ensure only slots is set
-		_, err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
+		err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.Error(t, err)
 		require.ErrorIs(t, err, errResourceConstraintFailure)
 	})
 
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
-		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit)
+		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
 		rm1 := mocks.ResourceManager{}
 		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
 
-		config := defaultConfig()
-		_, err := CheckNTSCConstraints(context.Background(), w.ID, config, &rm1)
+		config := defaultNTSCConfig()
+		err := CheckNTSCConstraints(context.Background(), w.ID, config, &rm1)
 		require.Error(t, err)
 		require.ErrorIs(t, err, errPriorityConstraintFailure)
 
 		// Validate constraints again. This time, the RM does not support priority.
 		rmNoPriority := mocks.ResourceManager{}
 		rmNoPriority.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, fmt.Errorf("not supported")).Once()
-		ok, err := CheckNTSCConstraints(context.Background(), w.ID, config, &rmNoPriority)
-		require.True(t, ok)
+		err = CheckNTSCConstraints(context.Background(), w.ID, config, &rmNoPriority)
 		require.NoError(t, err)
 	})
 
 	t.Run("no config set - ok", func(t *testing.T) {
 		constraints := DefaultConstraints()
-		addConstraints(t, user, nil, *constraints) // add global constraints
+		addConstraints(t, user, nil, *constraints, model.NTSCType) // add global constraints
 
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
-		config := defaultConfig()
-		ok, err := CheckNTSCConstraints(context.Background(), 1, config, &resourceManager)
-		require.False(t, ok)
+		config := defaultNTSCConfig()
+		err := CheckNTSCConstraints(context.Background(), 1, config, &resourceManager)
 		require.Error(t, err)
 
 		emptyConfig := model.CommandConfig{}
-		ok, err = CheckNTSCConstraints(context.Background(), 1, emptyConfig, &resourceManager)
-		require.True(t, ok)
+		err = CheckNTSCConstraints(context.Background(), 1, emptyConfig, &resourceManager)
+		require.NoError(t, err)
+	})
+}
+
+func TestCheckExperimentConstraints(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+	wkspPriorityLimit := 7
+	user := db.RequireMockUser(t, pgDB)
+
+	t.Run("no constraints set - ok", func(t *testing.T) {
+		resourceManager := mocks.ResourceManager{}
+		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
+
+		config := defaultExperimentConfig()
+		err := CheckExperimentConstraints(context.Background(), 1, config, &resourceManager)
+		require.NoError(t, err)
+	})
+
+	t.Run("running in wksp with constraints - not ok", func(t *testing.T) {
+		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
+		resourceManager := mocks.ResourceManager{}
+		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		config := defaultExperimentConfig()
+		err := CheckExperimentConstraints(ctx, w.ID, config, &resourceManager)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errPriorityConstraintFailure)
+	})
+
+	t.Run("running in wksp without constraints - ok", func(t *testing.T) {
+		resourceManager := mocks.ResourceManager{}
+		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
+		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
+		require.NoError(t, err)
+
+		config := defaultExperimentConfig()
+		err = CheckExperimentConstraints(context.Background(), w.ID, config, &resourceManager)
+		require.NoError(t, err)
+	})
+
+	t.Run("exceeds max slots - not ok", func(t *testing.T) {
+		constraints := DefaultConstraints()
+		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
+		require.NoError(t, err)
+		addConstraints(t, user, &w.ID, *constraints, model.ExperimentType)
+
+		resourceManager := mocks.ResourceManager{}
+		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+
+		config := defaultExperimentConfig()
+		err = CheckExperimentConstraints(context.Background(), w.ID, config, &resourceManager)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errResourceConstraintFailure)
+	})
+
+	t.Run("rm priority not supported - ok", func(t *testing.T) {
+		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
+		rm1 := mocks.ResourceManager{}
+		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
+
+		config := defaultExperimentConfig()
+		err := CheckExperimentConstraints(context.Background(), w.ID, config, &rm1)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errPriorityConstraintFailure)
+
+		// Validate constraints again. This time, the RM does not support priority.
+		rmNoPriority := mocks.ResourceManager{}
+		rmNoPriority.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, fmt.Errorf("not supported")).Once()
+		err = CheckExperimentConstraints(context.Background(), w.ID, config, &rmNoPriority)
+		require.NoError(t, err)
+	})
+
+	t.Run("no config set - ok", func(t *testing.T) {
+		constraints := DefaultConstraints()
+		addConstraints(t, user, nil, *constraints, model.ExperimentType) // add global constraints
+
+		resourceManager := mocks.ResourceManager{}
+		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+
+		config := defaultExperimentConfig()
+		err := CheckExperimentConstraints(context.Background(), 1, config, &resourceManager)
+		require.Error(t, err)
+
+		emptyResources := expconf.ResourcesConfigV0{}
+		emptyConfig := expconf.ExperimentConfigV0{}
+		emptyConfig.SetResources(emptyResources)
+		err = CheckExperimentConstraints(context.Background(), 1, emptyConfig, &resourceManager)
 		require.NoError(t, err)
 	})
 }
@@ -181,7 +272,7 @@ func TestGetMergedConstraints(t *testing.T) {
 	// Workspace priority limit set.
 	wkspLimit := 42
 	user := db.RequireMockUser(t, pgDB)
-	w := addWorkspacePriorityLimit(t, user, wkspLimit)
+	w := addWorkspacePriorityLimit(t, user, wkspLimit, model.NTSCType)
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Nil(t, constraints.ResourceConstraints)
@@ -189,21 +280,21 @@ func TestGetMergedConstraints(t *testing.T) {
 
 	// Global limit overrides workspace limit.
 	globalLimit := 25
-	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit))
+	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit), model.NTSCType)
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Nil(t, constraints.ResourceConstraints)
 	require.Equal(t, globalLimit, *constraints.PriorityLimit)
 
 	// Workspace max slots set.
-	addConstraints(t, user, &w.ID, *DefaultConstraints())
+	addConstraints(t, user, &w.ID, *DefaultConstraints(), model.NTSCType)
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Equal(t, 8, *constraints.ResourceConstraints.MaxSlots) // defined in DefaultConstraintsStr
 	require.Equal(t, globalLimit, *constraints.PriorityLimit)      // global constraint overrides workspace value
 }
 
-func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int) model.Workspace {
+func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int, workloadType string) model.Workspace {
 	ctx := context.Background()
 
 	// add a workspace to use
@@ -213,7 +304,7 @@ func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int) model.W
 
 	constraints := fmt.Sprintf(`{"priority_limit": %d}`, limit)
 	input := model.TaskConfigPolicies{
-		WorkloadType:  model.NTSCType,
+		WorkloadType:  workloadType,
 		WorkspaceID:   &w.ID,
 		Constraints:   &constraints,
 		LastUpdatedBy: user.ID,
@@ -224,11 +315,11 @@ func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int) model.W
 	return w
 }
 
-func addConstraints(t *testing.T, user model.User, wkspID *int, constraints string) {
+func addConstraints(t *testing.T, user model.User, wkspID *int, constraints string, workloadType string) {
 	ctx := context.Background()
 
 	input := model.TaskConfigPolicies{
-		WorkloadType:  model.NTSCType,
+		WorkloadType:  workloadType,
 		WorkspaceID:   wkspID,
 		Constraints:   &constraints,
 		LastUpdatedBy: user.ID,
@@ -237,13 +328,27 @@ func addConstraints(t *testing.T, user model.User, wkspID *int, constraints stri
 	require.NoError(t, err)
 }
 
-func defaultConfig() model.CommandConfig {
+func defaultNTSCConfig() model.CommandConfig {
 	config := model.DefaultConfig(nil)
 
 	configPriority := 50
 	configMaxSlots := 12
 	config.Resources.Priority = &configPriority
 	config.Resources.MaxSlots = &configMaxSlots
+
+	return config
+}
+
+func defaultExperimentConfig() expconf.ExperimentConfigV0 {
+	config := expconf.ExperimentConfigV0{}
+
+	configPriority := 50
+	configMaxSlots := 12
+	resources := expconf.ResourcesConfigV0{
+		RawMaxSlots: &configMaxSlots,
+		RawPriority: &configPriority,
+	}
+	config.SetResources(resources)
 
 	return config
 }
