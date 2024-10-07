@@ -6,7 +6,7 @@ WITH const AS (
 relevant_tasks AS (
     SELECT 
         task_id
-    FROM tasks
+    FROM tasks, const
     WHERE
         start_time >= const.target_date
         AND start_time < (const.target_date + interval '1 day')
