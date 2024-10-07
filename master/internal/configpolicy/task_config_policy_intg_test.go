@@ -109,6 +109,13 @@ func TestPriorityUpdateAllowed(t *testing.T) {
 	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, 1, true)
 	require.NoError(t, err)
 	require.True(t, ok)
+
+	globalLimit = 15
+	globalConfig := fmt.Sprintf(`{"resources": {"priority": %d}}`, globalLimit)
+	addConfigs(t, user, nil, globalConfig, model.NTSCType)
+	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, globalLimit, true)
+	require.NoError(t, err)
+	require.True(t, ok)
 }
 
 func TestCheckNTSCConstraints(t *testing.T) {
