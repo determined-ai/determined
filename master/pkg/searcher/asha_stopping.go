@@ -51,36 +51,6 @@ func (r *rung) String() string {
 	return fmt.Sprintf("Rung(%d, %v)", r.UnitsNeeded, r.Metrics)
 }
 
-type (
-	legacyAsyncHalvingSearchState struct {
-		Rungs      []*rung                 `json:"rungs"`
-		TrialRungs map[model.RequestID]int `json:"trial_rungs"`
-		// EarlyExitTrials contains trials that exited early that are still considered in the search.
-		EarlyExitTrials  map[model.RequestID]bool `json:"early_exit_trials"`
-		ClosedTrials     map[model.RequestID]bool `json:"closed_trials"`
-		TrialsCompleted  int                      `json:"trials_completed"`
-		InvalidTrials    int                      `json:"invalid_trials"`
-		PendingTrials    int                      `json:"pending_trials"`
-		SearchMethodType SearchMethodType         `json:"search_method_type"`
-	}
-	legacyTrialMetric struct {
-		RequestID model.RequestID       `json:"request_id"`
-		Metric    model.ExtendedFloat64 `json:"metric"`
-		// fields below used by asha.go.
-		Promoted bool `json:"promoted"`
-	}
-
-	// legacyRung describes a set of trials that are to be trained for the same number of units.
-	legacyRung struct {
-		UnitsNeeded   uint64        `json:"units_needed"`
-		Metrics       []trialMetric `json:"metrics"`
-		StartTrials   int           `json:"start_trials"`
-		PromoteTrials int           `json:"promote_trials"`
-		// field below used by asha.go.
-		OutstandingTrials int `json:"outstanding_trials"`
-	}
-)
-
 const ashaExitedMetricValue = math.MaxFloat64
 
 func makeRungs(numRungs int, divisor float64, maxLength uint64) []*rung {
