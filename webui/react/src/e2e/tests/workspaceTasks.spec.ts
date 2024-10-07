@@ -18,6 +18,8 @@ test.describe('Workspace Tasks', () => {
 
       const jupyterLabPage = await context.waitForEvent('page', { timeout: 10_000 });
       await jupyterLabPage.close();
+
+      await firstRow.pwLocator.waitFor({ timeout: 10_000 });
     });
 
     await test.step('Kill task', async () => {
