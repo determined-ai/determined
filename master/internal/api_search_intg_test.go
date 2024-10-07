@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -15,7 +16,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv2"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/searchv2"
 )
 
 func TestGetSearchConfig(t *testing.T) {
@@ -109,4 +113,71 @@ func TestGetPutDeleteSearchTags(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Empty(t, getResp.Tags)
+}
+
+func TestBulkFilterConversion(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    *apiv2.BulkSearchFilters
+		expected *apiv1.BulkExperimentFilters
+	}{
+		{
+			name: "Full Object",
+			input: &apiv2.BulkSearchFilters{
+				Description: "desc",
+				Name:        "name",
+				Labels:      []string{"a", "b"},
+				Archived: &wrappers.BoolValue{
+					Value: false,
+				},
+				States: []searchv2.State{
+					searchv2.State_STATE_ACTIVE,
+					searchv2.State_STATE_COMPLETED,
+				},
+				UserIds:           []int32{1, 2, 3},
+				ProjectId:         1,
+				ExcludedSearchIds: []int32{8, 9, 10},
+			},
+			expected: &apiv1.BulkExperimentFilters{
+				Description: "desc",
+				Name:        "name",
+				Labels:      []string{"a", "b"},
+				Archived: &wrappers.BoolValue{
+					Value: false,
+				},
+				States: []experimentv1.State{
+					experimentv1.State_STATE_ACTIVE,
+					experimentv1.State_STATE_COMPLETED,
+				},
+				UserIds:               []int32{1, 2, 3},
+				ProjectId:             1,
+				ExcludedExperimentIds: []int32{8, 9, 10},
+			},
+		},
+		{
+			name: "Partial Object",
+			input: &apiv2.BulkSearchFilters{
+				Description: "desc",
+				Name:        "name",
+				States: []searchv2.State{
+					searchv2.State_STATE_ACTIVE,
+					searchv2.State_STATE_COMPLETED,
+				},
+			},
+			expected: &apiv1.BulkExperimentFilters{
+				Description: "desc",
+				Name:        "name",
+				States: []experimentv1.State{
+					experimentv1.State_STATE_ACTIVE,
+					experimentv1.State_STATE_COMPLETED,
+				},
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			result := bulkFiltersSearchToExperiment(c.input)
+			require.Equal(t, c.expected, result)
+		})
+	}
 }

@@ -92,9 +92,9 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
 
         # If searcher is NOT being updated and preemption signal is received
         # (e.g., by pausing experiment in the WebUI), notify Trainer (via TrainerControl)
-        # to save the checkpoint. After the checkpoint is uploaded to Determined storage,
-        # the process is preempted (see on_save() method for details).
+        # to save the checkpoint and stop training.
         if self.updating_searcher is False and self.core_context.preempt.should_preempt():
+            control.should_training_stop = True
             control.should_save = True
 
     def _get_metrics(self, logs: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -135,9 +135,6 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         self.core_context.checkpoint.upload(
             args.output_dir, metadata=det_checkpoint_metadata, shard=True, selector=selector
         )
-
-        if self.core_context.preempt.should_preempt():
-            pass
 
     def _on_save_user_data(self, save_path: str) -> None:
         """

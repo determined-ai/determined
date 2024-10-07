@@ -1313,8 +1313,8 @@ Optional. Whether the bind-mount should be a read-only mount. Defaults to ``fals
 ===============
 
 Optional. `Propagation behavior
-<https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
-bind-mount. Defaults to ``rprivate``.
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
+the bind-mount. Defaults to ``rprivate``.
 
 For example, to mount ``/data`` on the host to the same path in the container, use:
 

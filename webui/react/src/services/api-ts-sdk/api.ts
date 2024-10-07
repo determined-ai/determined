@@ -933,6 +933,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     metadata?: any;
+    /**
+     * The log signals.
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    logSignal?: string;
 }
 /**
  * 
@@ -3623,6 +3629,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     localId?: string;
+    /**
+     * Log signal.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    logSignal?: string;
 }
 /**
  * 

@@ -727,6 +727,7 @@ class trialv1Trial(Printable):
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     logRetentionDays: "typing.Optional[int]" = None
+    logSignal: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
@@ -753,6 +754,7 @@ class trialv1Trial(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
+        logSignal: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
@@ -782,6 +784,8 @@ class trialv1Trial(Printable):
             self.latestValidation = latestValidation
         if not isinstance(logRetentionDays, Unset):
             self.logRetentionDays = logRetentionDays
+        if not isinstance(logSignal, Unset):
+            self.logSignal = logSignal
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(runnerState, Unset):
@@ -824,6 +828,8 @@ class trialv1Trial(Printable):
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "logRetentionDays" in obj:
             kwargs["logRetentionDays"] = obj["logRetentionDays"]
+        if "logSignal" in obj:
+            kwargs["logSignal"] = obj["logSignal"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "runnerState" in obj:
@@ -866,6 +872,8 @@ class trialv1Trial(Printable):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "logRetentionDays" in vars(self):
             out["logRetentionDays"] = self.logRetentionDays
+        if not omit_unset or "logSignal" in vars(self):
+            out["logSignal"] = self.logSignal
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "runnerState" in vars(self):
@@ -4392,6 +4400,7 @@ class v1FlatRun(Printable):
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     localId: "typing.Optional[str]" = None
+    logSignal: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -4418,6 +4427,7 @@ class v1FlatRun(Printable):
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         localId: "typing.Union[str, None, Unset]" = _unset,
+        logSignal: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -4448,6 +4458,8 @@ class v1FlatRun(Printable):
             self.labels = labels
         if not isinstance(localId, Unset):
             self.localId = localId
+        if not isinstance(logSignal, Unset):
+            self.logSignal = logSignal
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(searcherMetricValue, Unset):
@@ -4486,6 +4498,8 @@ class v1FlatRun(Printable):
             kwargs["labels"] = obj["labels"]
         if "localId" in obj:
             kwargs["localId"] = obj["localId"]
+        if "logSignal" in obj:
+            kwargs["logSignal"] = obj["logSignal"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "searcherMetricValue" in obj:
@@ -4524,6 +4538,8 @@ class v1FlatRun(Printable):
             out["labels"] = self.labels
         if not omit_unset or "localId" in vars(self):
             out["localId"] = self.localId
+        if not omit_unset or "logSignal" in vars(self):
+            out["logSignal"] = self.logSignal
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "searcherMetricValue" in vars(self):
