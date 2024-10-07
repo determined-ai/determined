@@ -16,7 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-func TestPriorityAllowed(t *testing.T) {
+func TestPriorityUpdateAllowed(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
 	defer cleanup()
@@ -51,6 +51,10 @@ func TestPriorityAllowed(t *testing.T) {
 	require.False(t, ok)
 
 	// Priority cannot be updated if invariant_config.resoruces.priority is set.
+	invariantConfig := `{"resources": {"priority": 7}}`
+	addConfigs(t, user, &w.ID, invariantConfig, model.NTSCType)
+	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, globalLimit, true)
+	require.Error(t, errPriorityImmutable)
 }
 
 func TestCheckNTSCConstraints(t *testing.T) {
@@ -325,6 +329,19 @@ func addConstraints(t *testing.T, user model.User, wkspID *int, constraints stri
 		WorkspaceID:   wkspID,
 		Constraints:   &constraints,
 		LastUpdatedBy: user.ID,
+	}
+	err := SetTaskConfigPolicies(ctx, &input)
+	require.NoError(t, err)
+}
+
+func addConfigs(t *testing.T, user model.User, wkspID *int, configs string, workloadType string) {
+	ctx := context.Background()
+
+	input := model.TaskConfigPolicies{
+		WorkloadType:    workloadType,
+		WorkspaceID:     wkspID,
+		InvariantConfig: &configs,
+		LastUpdatedBy:   user.ID,
 	}
 	err := SetTaskConfigPolicies(ctx, &input)
 	require.NoError(t, err)

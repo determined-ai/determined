@@ -35,7 +35,7 @@ type NTSCConfigPolicies struct {
 var (
 	errPriorityConstraintFailure = errors.New("submitted workload failed priority constraint")
 	errResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
-	errPriorityUnmutable         = errors.New("priority cannot be modified")
+	errPriorityImmutable         = errors.New("priority cannot be modified")
 )
 
 // CheckNTSCConstraints returns an error if the NTSC config fails constraint checks.
@@ -170,40 +170,44 @@ func priorityUpdateAllowed(scope *int, workloadType string, priority int) (int, 
 	}
 
 	// Cannot update priority if priority set in invariant config.
-	switch workloadType {
-	case model.NTSCType:
-		var configs model.CommandConfig
-		err = yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
-		if err != nil {
-			return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
+	if configPolicies.InvariantConfig != nil {
+		switch workloadType {
+		case model.NTSCType:
+			var configs model.CommandConfig
+			err = yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
+			if err != nil {
+				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
+			}
+			if configs.Resources.Priority != nil && *configs.Resources.Priority != priority {
+				// If task config policies have updated since the workload was originally scheduled, allow users
+				// to update the priority to the new priority set by invariant config.
+				return 0, false, fmt.Errorf("priority already set in invariant config: %w", errPriorityImmutable)
+			}
+		case model.ExperimentType:
+			var configs expconf.ExperimentConfigV0
+			err = yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
+			if err != nil {
+				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
+			}
+			if configs.Resources().Priority() != nil && *configs.Resources().Priority() != priority {
+				// If task config policies have updated since the workload was originally scheduled, allow users
+				// to update the priority to the new priority set by invariant config.
+				return 0, false, fmt.Errorf("priority already set in invariant config: %w", errPriorityImmutable)
+			}
+		default:
+			return 0, false, fmt.Errorf("workload type %s not supported", workloadType)
 		}
-		if configs.Resources.Priority != nil && *configs.Resources.Priority != priority {
-			// If task config policies have updated since the workload was originally scheduled, allow users
-			// to update the priority to the new priority set by invariant config.
-			return 0, false, fmt.Errorf("priority already set in invariant config: %w", errPriorityUnmutable)
-		}
-	case model.ExperimentType:
-		var configs expconf.ExperimentConfigV0
-		err = yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
-		if err != nil {
-			return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
-		}
-		if configs.Resources().Priority() != nil && *configs.Resources().Priority() != priority {
-			// If task config policies have updated since the workload was originally scheduled, allow users
-			// to update the priority to the new priority set by invariant config.
-			return 0, false, fmt.Errorf("priority already set in invariant config: %w", errPriorityUnmutable)
-		}
-	default:
-		return 0, false, fmt.Errorf("workload type %s not supported", workloadType)
 	}
 
 	// Find priority constraint, if set.
 	var constraints model.Constraints
-	if err = json.Unmarshal([]byte(*configPolicies.Constraints), &constraints); err != nil {
-		return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
-	}
-	if constraints.PriorityLimit != nil {
-		return *constraints.PriorityLimit, true, nil
+	if configPolicies.Constraints != nil {
+		if err = json.Unmarshal([]byte(*configPolicies.Constraints), &constraints); err != nil {
+			return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
+		}
+		if constraints.PriorityLimit != nil {
+			return *constraints.PriorityLimit, true, nil
+		}
 	}
 
 	return 0, false, nil
