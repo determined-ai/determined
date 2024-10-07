@@ -2,12 +2,14 @@ package searcher
 
 import (
 	"fmt"
+	"math/rand"
+
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/pkg/errors"
-	"math/rand"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.

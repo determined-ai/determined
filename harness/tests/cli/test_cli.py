@@ -24,6 +24,7 @@ from tests.cli import util
 MINIMAL_CONFIG = '{"description": "test"}'
 MASTER_HOST = "http://localhost:8080"
 
+
 def test_parse_config() -> None:
     assert ntsc.parse_config(None, [], [], []) == {}
 
@@ -582,7 +583,7 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             "name": "random",
             "metric": "loss",
             "max_trials": 10,
-        }
+        },
     }
     conf_path = tmp_path / "config.yaml"
     with conf_path.open("w") as tmp_file:
@@ -593,7 +594,7 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             config=searcher_config,
             runs={
                 "1": bindings.v1SearchUnit(undefined=True),
-            }
+            },
         )
     )
     with util.standard_cli_rsps() as rsps:
@@ -609,6 +610,4 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             ],
             json=mock_resp.to_json(),
         )
-        cli.main(
-            ["preview-search", str(conf_path)]
-        )
+        cli.main(["preview-search", str(conf_path)])

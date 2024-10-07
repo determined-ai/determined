@@ -46,7 +46,7 @@ from determined.cli import (
     version,
     workspace,
 )
-from determined.common import api, util, yaml
+from determined.common import api, util
 from determined.common.api import bindings, certs
 
 
@@ -54,6 +54,9 @@ def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
     output = [
         termcolor.colored("Using search configuration:", "green"),
     ]
+
+    # For mypy
+    assert resp.summary and resp.summary.config and resp.summary.runs
     config_str = render.format_object_as_yaml(resp.summary.config)
     output.append(config_str)
     headers = ["Runs", "Training Time"]
@@ -68,18 +71,20 @@ def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
     output.append(tabulate.tabulate(run_summaries, headers, tablefmt="presto"))
     return "\n".join(output)
 
+
 def preview_search(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     experiment_config = util.safe_load_yaml_with_exceptions(args.config_file)
     args.config_file.close()
 
     if "searcher" not in experiment_config:
-        raise errors.CliError(f"Missing 'searcher' config section in experiment config.")
+        raise errors.CliError("Missing 'searcher' config section in experiment config.")
 
     resp = bindings.post_PreviewHPSearch(
-        session=sess, body=bindings.v1PreviewHPSearchRequest(
+        session=sess,
+        body=bindings.v1PreviewHPSearchRequest(
             config=experiment_config,
-        )
+        ),
     )
     print(_render_search_summary(resp=resp))
 
