@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -86,7 +84,7 @@ func CheckExperimentConstraints(
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
 		// users cannot specify number of slots for an experiment
-		slotsRequest := 0
+		slotsRequest := *constraints.ResourceConstraints.MaxSlots
 		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, slotsRequest,
 			workloadConfig.Resources().MaxSlots()); err != nil {
 			return err
@@ -163,7 +161,7 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 	return &constraints, nil
 }
 
-func priorityUpdateAllowed(scope *int, workloadType string, priority int) (int, bool, error) {
+func findAllowedPriority(scope *int, workloadType string) (limit int, found bool, err error) {
 	configPolicies, err := GetTaskConfigPolicies(context.TODO(), scope, workloadType)
 	if err != nil {
 		return 0, false, fmt.Errorf("unable to fetch task config policies: %w", err)
@@ -174,25 +172,21 @@ func priorityUpdateAllowed(scope *int, workloadType string, priority int) (int, 
 		switch workloadType {
 		case model.NTSCType:
 			var configs model.CommandConfig
-			err = yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
+			err = json.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
 			if err != nil {
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
-			if configs.Resources.Priority != nil && *configs.Resources.Priority != priority {
-				// If task config policies have updated since the workload was originally scheduled, allow users
-				// to update the priority to the new priority set by invariant config.
-				return 0, false, fmt.Errorf("priority already set in invariant config: %w", errPriorityImmutable)
+			if configs.Resources.Priority != nil {
+				return *configs.Resources.Priority, false, fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		case model.ExperimentType:
 			var configs expconf.ExperimentConfigV0
-			err = yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
+			err = json.Unmarshal([]byte(*configPolicies.InvariantConfig), &configs)
 			if err != nil {
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
-			if configs.Resources().Priority() != nil && *configs.Resources().Priority() != priority {
-				// If task config policies have updated since the workload was originally scheduled, allow users
-				// to update the priority to the new priority set by invariant config.
-				return 0, false, fmt.Errorf("priority already set in invariant config: %w", errPriorityImmutable)
+			if configs.Resources().Priority() != nil {
+				return *configs.Resources().Priority(), false, fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		default:
 			return 0, false, fmt.Errorf("workload type %s not supported", workloadType)
@@ -217,7 +211,13 @@ func priorityUpdateAllowed(scope *int, workloadType string, priority int) (int, 
 func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smallerHigher bool) (bool, error) {
 	// Check if a priority limit has been set with a constraint policy.
 	// Global policies have highest precedence.
-	limit, found, err := priorityUpdateAllowed(nil, workloadType, priority)
+	limit, found, err := findAllowedPriority(nil, workloadType)
+
+	if err == errPriorityImmutable && limit == priority {
+		// If task config policies have updated since the workload was originally scheduled, allow users
+		// to update the priority to the new priority set by invariant config.
+		return true, nil
+	}
 	if err != nil {
 		return false, err
 	}
@@ -227,7 +227,7 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 
 	// TODO use COALESCE instead once postgres updates are complete.
 	// Workspace policies have second precedence.
-	limit, found, err = priorityUpdateAllowed(&wkspID, workloadType, priority)
+	limit, found, err = findAllowedPriority(&wkspID, workloadType)
 	if err != nil {
 		return false, fmt.Errorf("unable to fetch task config policy priority limit")
 	}
