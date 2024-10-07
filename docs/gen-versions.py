@@ -37,7 +37,7 @@ def main():
     output.append(
         {
             "version": latest,
-            "url": f"https://docs.determined.ai/latest/",
+            "url": "https://docs.determined.ai/latest/",
         }
     )
 
