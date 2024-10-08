@@ -274,7 +274,6 @@ func TestGridSearchMethod(t *testing.T) {
 	allHparams := map[int]bool{0: true, 1: true, 2: true, 3: true}
 
 	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
-	//gridSearch := testSearchRunner.method.(*gridSearch)
 
 	// Expect 2 initial runs created.
 	runsCreated, runsStopped := testSearchRunner.start()
