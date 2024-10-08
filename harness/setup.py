@@ -18,7 +18,7 @@ def version() -> str:
             # shell script during Determined's __init__.py (i.e. on import), but I'm
             # running out of ideas to make editable installs work comfortably, and
             # this shouldn't ever run for end users anyway.
-            output = subprocess.run(["../version.sh"], capture_output=True)
+            output = subprocess.run(["../version.sh"], capture_output=True, shell=True)
         except subprocess.CalledProcessError:
             # version.sh failed for whatever reason. Return an unknown version with
             # epoch set to 1 so at least pip dependency resolution should succeed.
