@@ -337,6 +337,18 @@ func TestGetConfigPolicies(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 
+	defer func() {
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.ExperimentType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+	}()
+
 	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
 	workspaceID1 := ptrs.Ptr(int(wkspResp.Workspace.Id))
@@ -453,13 +465,13 @@ func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
 	// set only NTSC config policy for workspace 1
 	taskConfigPolicies.WorkloadType = model.NTSCType
 	taskConfigPolicies.Constraints = nil
-	//taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
+	// taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
 	// set both config and constraints policy for workspace 2 (NTSC)
 	taskConfigPolicies.WorkspaceID = workspaceID2
-	//taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
+	// taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
@@ -716,7 +728,7 @@ bad_config_spec:
 		},
 		// Valid constraint policies (YAML).
 		{"YAML experiment valid constraints policy", model.ExperimentType, validConstraintsPolicyYAML, nil},
-		{"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, fmt.Errorf(globalPriorityErr)},
+		{"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, nil},
 		{
 			"YAML experiment simple valid constraints policy priority limit", model.ExperimentType,
 			`
@@ -729,7 +741,7 @@ constraints:
 			`
 constraints:
   priority_limit: 10
-`, fmt.Errorf(globalPriorityErr),
+`, nil,
 		},
 		{
 			"YAML experiment simple valid constraints policy resources", model.ExperimentType,
@@ -849,7 +861,7 @@ invariant_config:
 		// Additional NTSC combinatory tests (YAML).
 		{
 			"YAML NTSC valid config valid constraints", model.NTSCType,
-			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, fmt.Errorf(globalPriorityErr),
+			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, fmt.Errorf("invalid ntsc config policy"),
 		},
 		{
 			"YAML NTSC valid constraints invalid constraints", model.NTSCType,
@@ -1037,7 +1049,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"{" + validConstraintsPolicyJSON + "}", nil,
 		},
 		{"JSON NTSC valid constraints policy", model.NTSCType, "{" + validConstraintsPolicyJSON +
-			"}", fmt.Errorf(globalPriorityErr)},
+			"}", nil},
 		{
 			"JSON experiment simple valid constraints policy priority limit", model.ExperimentType,
 			`{ "constraints": {
@@ -1050,7 +1062,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			`{ "constraints": {
 			"priority_limit": 10
 		}
-	}`, fmt.Errorf(globalPriorityErr),
+	}`, nil,
 		},
 		{
 			"JSON experiment simple valid constraints policy resources", model.ExperimentType,
@@ -1180,8 +1192,8 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 
 		// Additional NTSC combinatory tests (JSON).
 		{
-			"JSON NTSC valid config valid constraints", model.NTSCType,
-			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", fmt.Errorf(globalPriorityErr),
+			"JSON NTSC valid config invalid constraints", model.NTSCType,
+			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", fmt.Errorf("invalid ntsc config policy"),
 		},
 		{
 			"JSON NTSC valid constraints invalid constraints", model.NTSCType,
@@ -1559,6 +1571,16 @@ func TestPutWorkspaceConfigPolicies(t *testing.T) {
 		if err != nil {
 			log.Errorf("error when cleaning up mock workspaces")
 		}
+
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.ExperimentType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
 	}()
 
 	tests := []struct {
@@ -1578,7 +1600,7 @@ func TestPutWorkspaceConfigPolicies(t *testing.T) {
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf("invalid workload type"),
+			err:                   fmt.Errorf("error retrieving bad type task config policies"),
 		},
 		{
 			name: "empty workload type",
@@ -1588,7 +1610,7 @@ func TestPutWorkspaceConfigPolicies(t *testing.T) {
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf("no workload type"),
+			err:                   fmt.Errorf("error retrieving  task config policies"),
 		},
 		{
 			name: "valid experiment invariant config add update YAML",
