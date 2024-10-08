@@ -110,7 +110,6 @@ func makeBrackets(config expconf.AdaptiveASHAConfig) []bracket {
 
 func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bool, metric string) SearchMethod {
 	brackets := makeBrackets(config)
-	fmt.Printf("Brackets: %v\n", brackets)
 	methods := make([]SearchMethod, 0, len(brackets))
 	for _, bracket := range brackets {
 		c := expconf.AsyncHalvingConfig{
