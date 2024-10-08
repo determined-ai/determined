@@ -68,6 +68,7 @@ release-and-rc-filters: &release-and-rc-filters
       - /.*/
   tags:
     only:
+      # Tags like: v2.5.0, v3.0.1+rc2
       - /v\d+\.\d+\.\d+(rc\d+)?/
 
 rc-filters: &rc-filters
@@ -76,6 +77,7 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
+      # Tags like: v2.5.0rc3
       - /v\d+\.\d+\.\d+rc\d+/
 
 release-filters: &release-filters
@@ -84,6 +86,7 @@ release-filters: &release-filters
       - /.*/
   tags:
     only:
+      # Tags like: v2.1.2
       - /v\d+\.\d+\.\d+/
 
 release-dryrun: &release-dryrun
@@ -92,6 +95,7 @@ release-dryrun: &release-dryrun
       - /.*/
   tags:
     only:
+      # Tags like: v3.1.3+dryrun
       - /v\d+\.\d+\.\d+\+dryrun/
 
 upstream-feature-branch: &upstream-feature-branch
