@@ -6,7 +6,7 @@ import { Select } from 'e2e/models/common/hew/Select';
  */
 export class ChangeUserStatusModal extends Modal {
   readonly status = new StatusSelect({
-    parent: this.body,
+    parent: this,
     selector: '[data-testid="status"]',
   });
 }

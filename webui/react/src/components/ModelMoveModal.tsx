@@ -74,6 +74,7 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
               (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
             }
             filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? -1 : 1)}
+            id="workspace"
             options={workspaces
               .filter(
                 (ws) => ws.id !== model.workspaceId && canMoveModel({ destination: { id: ws.id } }),
