@@ -229,34 +229,40 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     />
   );
 
-  const throttledChangeSearch = useMemo(
+  const debouncedChangeSearch = useMemo(
     () =>
       throttle(
         500,
         (s: string) => {
-          updateSettings({ ...settings, searchText: s });
+          updateSettings({ searchText: s });
         },
         { noLeading: true },
       ),
-    [updateSettings, settings],
+    [updateSettings],
   );
 
   useEffect(() => {
     return () => {
-      throttledChangeSearch.cancel();
+      debouncedChangeSearch.cancel();
+      // kinda gross but we want this to run only on unmount
+      setSearchInput((s) => {
+        updateSettings({ searchText: s });
+        return s;
+      });
     };
-  }, [throttledChangeSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedChangeSearch]);
 
   const onSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchInput(e.target.value);
-      throttledChangeSearch(e.target.value);
+      debouncedChangeSearch(e.target.value);
       if (!e.target.value) {
         setSearchResults([]);
         setSelectedLog(undefined);
       }
     },
-    [throttledChangeSearch],
+    [debouncedChangeSearch],
   );
 
   const formattedSearchResults = useMemo(() => {
