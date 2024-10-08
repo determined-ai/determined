@@ -233,6 +233,7 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	1: shimExperimentSnapshotV1,
 	2: shimExperimentSnapshotV2,
 	4: shimExperimentSnapshotV4,
+	5: shimExperimentSnapshotV5,
 }
 
 // shimExperimentSnapshot shims an experiment snapshot to the version required by the master,
@@ -331,6 +332,17 @@ func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
 
 // Version 2 => 3 shims
 
+// All the operation types that support serialization.
+const (
+	CreateOperation        OperationType = 0
+	TrainOperation         OperationType = 1
+	ValidateOperation      OperationType = 2
+	CloseOperation         OperationType = 4
+	ValidateAfterOperation OperationType = 5
+)
+
+type OperationType int
+
 // shimExperimentSnapshotV2 shims a v2 snapshot to a v3 snapshot. From v2 to v3,
 // Train and Validate operations were merged into a single ValidateAfter operation
 // that indicates to the trial the total units to train before reporting a validation
@@ -348,15 +360,15 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 	var newOperationsList []map[string]interface{}
 	for _, iOp := range operationsList {
 		op := iOp.(map[string]interface{})
-		switch searcher.OperationType(op["OperationType"].(float64)) {
-		case searcher.TrainOperation:
+		switch OperationType(op["OperationType"].(float64)) {
+		case TrainOperation:
 			op := op["Operation"].(map[string]interface{})
 			requestID := op["RequestID"].(string)
 			length := op["Length"].(map[string]interface{})
 			for unit, units := range length {
 				totalUnitsForTrial[requestID] += units.(float64)
 				newOperationsList = append(newOperationsList, map[string]interface{}{
-					"OperationType": searcher.ValidateAfterOperation,
+					"OperationType": ValidateAfterOperation,
 					"Operation": map[string]interface{}{
 						"RequestID": requestID,
 						"Length": map[string]interface{}{
@@ -365,7 +377,7 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 					},
 				})
 			}
-		case searcher.ValidateOperation:
+		case ValidateOperation:
 			continue
 		default:
 			newOperationsList = append(newOperationsList, op)

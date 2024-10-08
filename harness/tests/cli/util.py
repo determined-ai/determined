@@ -1,4 +1,5 @@
 import contextlib
+import difflib
 import io
 import os
 from typing import Any, Iterator, List, Optional, cast
@@ -163,4 +164,8 @@ def check_cli_output(args: List[str], expected: str) -> None:
     with contextlib.redirect_stdout(io.StringIO()) as f:
         cli.main(args=args)
     actual = f.getvalue()
-    assert expected == actual, "CLI output does not match expected output."
+    exp_lines = expected.splitlines(keepends=True)
+    act_lines = actual.splitlines(keepends=True)
+    diff_lines = difflib.ndiff(act_lines, exp_lines)
+    diff = "".join(diff_lines)
+    assert expected == actual, f"CLI output for {args} does not match expected output: {diff}"
