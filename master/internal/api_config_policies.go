@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/license"
@@ -23,12 +22,13 @@ import (
 )
 
 const (
-	noWorkloadErr          = "no workload type specified."
-	noPoliciesErr          = "no specified config policies."
-	invalidWorkloadTypeErr = "invalid workload type"
+	noWorkloadErr              = "no workload type specified."
+	noPoliciesErr              = "no specified config policies."
+	globalPriorityErr          = "global priority limit already exists"
+	invalidWorkloadTypeErr     = "invalid workload type"
+	invalidExpConfigPolicyErr  = "invalid experiment config policy"
+	invalidNTSCConfigPolicyErr = "invalid ntsc config policy"
 )
-
-var ErrGlobalPriorityExists = fmt.Errorf("global priority limit already exists for the task config policy")
 
 func (a *apiServer) validatePoliciesAndWorkloadType(
 	ctx context.Context, workloadType string, configPolicies string,
@@ -73,20 +73,20 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 	// Validate constraints if they exist
 	if constraints != nil {
 		if err := a.checkAgainstGlobalPriority(ctx, constraints.PriorityLimit, workloadType); err != nil {
-			return err
+			return status.Errorf(codes.InvalidArgument, globalPriorityErr)
 		}
 	}
 
 	// Validate against specific configurations
 	if expConfigPolicies != nil {
 		if err := a.validateExperimentConfig(ctx, expConfigPolicies, constraints, workloadType); err != nil {
-			return err
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidExpConfigPolicyErr+": %s.", err))
 		}
 	}
 
 	if ntscConfigPolicies != nil {
 		if err := a.validateNTSCConfig(ctx, ntscConfigPolicies, constraints, workloadType); err != nil {
-			return err
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidNTSCConfigPolicyErr+": %s.", err))
 		}
 	}
 
@@ -138,7 +138,7 @@ func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority
 
 	_, globalPriorityExists, _ := configpolicy.GetPriorityLimit(ctx, nil, workloadType)
 	if globalPriorityExists {
-		return ErrGlobalPriorityExists
+		return fmt.Errorf(globalPriorityErr)
 	}
 
 	return nil
@@ -168,30 +168,32 @@ func (a *apiServer) checkAgainstGlobalConfig(
 	if err != nil {
 		return fmt.Errorf("error in getting global scope task config policy: %w", err)
 	}
-
-	if globalConfigPolicies.InvariantConfig != nil {
-		if ntscConfig != nil {
-			globalNTSCConfig, err := configpolicy.UnmarshalNTSCConfigPolicy(*globalConfigPolicies.InvariantConfig)
-			if err != nil {
-				return nil
-			}
-
-			if err = apiutils.HaveAtLeastOneSharedDefinedField(globalNTSCConfig.InvariantConfig, ntscConfig); err != nil {
-				return err
-			}
-		}
-
-		if expConfig != nil {
-			globalExpConfig, err := configpolicy.UnmarshalExperimentConfigPolicy(*globalConfigPolicies.InvariantConfig)
-			if err != nil {
-				return nil
-			}
-
-			if err = apiutils.HaveAtLeastOneSharedDefinedField(globalExpConfig.InvariantConfig, expConfig); err != nil {
-				return err
-			}
-		}
+	if globalConfigPolicies == nil || globalConfigPolicies.InvariantConfig == nil {
+		return nil
 	}
+
+	if ntscConfig != nil {
+		globalInvConfig, err := configpolicy.UnmarshalConfigPolicy[model.CommandConfig](
+			*globalConfigPolicies.InvariantConfig,
+		)
+		if err != nil {
+			return err
+		}
+
+		return configpolicy.HaveAtLeastOneSharedDefinedField(globalInvConfig, ntscConfig)
+	}
+
+	if expConfig != nil {
+		globalInvConfig, err := configpolicy.UnmarshalConfigPolicy[expconf.ExperimentConfig](
+			*globalConfigPolicies.InvariantConfig,
+		)
+		if err != nil {
+			return err
+		}
+
+		return configpolicy.HaveAtLeastOneSharedDefinedField(globalInvConfig, expConfig)
+	}
+
 	return nil
 }
 
