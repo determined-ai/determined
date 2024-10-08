@@ -890,7 +890,7 @@ invariant_config:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := api.validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
+			err := api.validatePoliciesAndWorkloadType(context.TODO(), test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
@@ -1226,7 +1226,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := api.validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
+			err := api.validatePoliciesAndWorkloadType(context.TODO(), test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
