@@ -736,10 +736,9 @@ func (a *apiServer) PostAccessToken(
 }
 
 type accessTokenFilter struct {
-	ShowActive bool
-	Username   string
-	TokenType  model.TokenType
-	TokenID    model.TokenID
+	OnlyActive bool            `json:"only_active"`
+	Username   string          `json:"username"`
+	TokenIDs   []model.TokenID `json:"token_ids"`
 }
 
 // GetAccessTokens returns all access token info.
@@ -794,7 +793,7 @@ func (a *apiServer) GetAccessTokens(
 		}
 
 		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if atf.ShowActive {
+			if atf.OnlyActive {
 				return q.Where("us.expiry > ?", time.Now().UTC()).
 					Where("us.revoked = false")
 			}
@@ -805,17 +804,17 @@ func (a *apiServer) GetAccessTokens(
 			}
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if atf.TokenType != "" {
-				return q.Where("us.token_type = ?", atf.TokenType)
-			}
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if atf.TokenID > 0 {
-				return q.Where("us.id = ?", atf.TokenID)
+			for _, tokenId := range atf.TokenIDs {
+				if tokenId > 0 {
+					q = q.WhereOr("us.id = ?", tokenId)
+				}
 			}
 			return q
 		})
 	}
+
+	// Get only Access token type
+	query.Where("us.token_type = ?", model.TokenTypeAccessToken)
 
 	orderBy, ok := orderByMap[req.OrderBy]
 	if !ok {
@@ -841,6 +840,7 @@ func (a *apiServer) GetAccessTokens(
 	} else if !curUser.Admin {
 		query.Where("us.user_id = ?", curUser.ID)
 	}
+
 	targetFullUser, err := getFullModelUser(ctx, userID)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("User with id: {%d} not found", userID))
