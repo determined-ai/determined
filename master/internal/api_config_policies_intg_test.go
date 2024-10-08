@@ -465,13 +465,13 @@ func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
 	// set only NTSC config policy for workspace 1
 	taskConfigPolicies.WorkloadType = model.NTSCType
 	taskConfigPolicies.Constraints = nil
-	// taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
+	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
 	// set both config and constraints policy for workspace 2 (NTSC)
 	taskConfigPolicies.WorkspaceID = workspaceID2
-	// taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
+	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
@@ -1571,16 +1571,6 @@ func TestPutWorkspaceConfigPolicies(t *testing.T) {
 		if err != nil {
 			log.Errorf("error when cleaning up mock workspaces")
 		}
-
-		if _, err := api.DeleteGlobalConfigPolicies(ctx,
-			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.ExperimentType}); err != nil {
-			log.Errorf("error when cleaning up mock task config policies")
-		}
-
-		if _, err := api.DeleteGlobalConfigPolicies(ctx,
-			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType}); err != nil {
-			log.Errorf("error when cleaning up mock task config policies")
-		}
 	}()
 
 	tests := []struct {
@@ -2536,6 +2526,11 @@ invariant_config:
 			configPolicies := getResp.ConfigPolicies.AsMap()
 			require.Equal(t, test.configPolicies, configPolicies)
 
+			// Delete before PUT-ing again
+			_, err = api.DeleteGlobalConfigPolicies(ctx,
+				&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: test.req.WorkloadType})
+			require.NoError(t, err)
+
 			resp, err = api.PutGlobalConfigPolicies(ctx, test.updatedPoliciesReq)
 			require.NoError(t, err)
 			require.Equal(t, test.updatedConfigPolicies, resp.ConfigPolicies.AsMap())
@@ -2557,13 +2552,13 @@ invariant_config:
 		WorkloadType:   "bad type",
 		ConfigPolicies: validExperimentConfigPolicyYAML,
 	})
-	require.ErrorContains(t, err, "invalid workload type")
+	require.ErrorContains(t, err, "error retrieving bad type task config policies")
 	require.Nil(t, resp)
 
 	// Test empty workload type.
 	resp, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
 		ConfigPolicies: validExperimentConfigPolicyYAML,
 	})
-	require.ErrorContains(t, err, "no workload type")
+	require.ErrorContains(t, err, "error retrieving  task config policies")
 	require.Nil(t, resp)
 }

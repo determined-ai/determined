@@ -80,7 +80,9 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 
 	// Validate against specific configurations
 	if expConfigPolicies != nil {
-		if err := a.validateExperimentConfig(ctx, globalConfigPolicies, expConfigPolicies, constraints, workloadType); err != nil {
+		if err := a.validateExperimentConfig(
+			ctx, globalConfigPolicies, expConfigPolicies, constraints, workloadType,
+		); err != nil {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid experiment config policy"+": %s.", err))
 		}
 	}
