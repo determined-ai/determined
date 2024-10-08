@@ -29,7 +29,10 @@ const (
 )
 
 func (a *apiServer) validatePoliciesAndWorkloadType(
-	ctx context.Context, workloadType string, configPolicies string,
+	ctx context.Context,
+	globalConfigPolicies *model.TaskConfigPolicies,
+	workloadType string,
+	configPolicies string,
 ) error {
 	// Validate workload type
 	if !configpolicy.ValidWorkloadType(workloadType) {
@@ -77,13 +80,13 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 
 	// Validate against specific configurations
 	if expConfigPolicies != nil {
-		if err := a.validateExperimentConfig(ctx, expConfigPolicies, constraints, workloadType); err != nil {
+		if err := a.validateExperimentConfig(ctx, globalConfigPolicies, expConfigPolicies, constraints, workloadType); err != nil {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid experiment config policy"+": %s.", err))
 		}
 	}
 
 	if ntscConfigPolicies != nil {
-		if err := a.validateNTSCConfig(ctx, ntscConfigPolicies, constraints, workloadType); err != nil {
+		if err := a.validateNTSCConfig(ctx, globalConfigPolicies, ntscConfigPolicies, constraints, workloadType); err != nil {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid ntsc config policy"+": %s.", err))
 		}
 	}
@@ -92,7 +95,9 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 }
 
 func (a *apiServer) validateExperimentConfig(
-	ctx context.Context, expConfigPolicies *expconf.ExperimentConfigV0,
+	ctx context.Context,
+	globalConfigPolicies *model.TaskConfigPolicies,
+	expConfigPolicies *expconf.ExperimentConfigV0,
 	constraints *model.Constraints, workloadType string,
 ) error {
 	if expConfigPolicies.RawResources != nil {
@@ -105,11 +110,14 @@ func (a *apiServer) validateExperimentConfig(
 		}
 	}
 
-	return checkAgainstGlobalConfig(ctx, expConfigPolicies, nil, workloadType)
+	return checkAgainstGlobalConfig(ctx, globalConfigPolicies, expConfigPolicies, nil, workloadType)
 }
 
 func (a *apiServer) validateNTSCConfig(
-	ctx context.Context, ntscConfigPolicies *model.CommandConfig, constraints *model.Constraints, workloadType string,
+	ctx context.Context,
+	globalConfigPolicies *model.TaskConfigPolicies,
+	ntscConfigPolicies *model.CommandConfig,
+	constraints *model.Constraints, workloadType string,
 ) error {
 	if ntscConfigPolicies.Resources.Priority != nil {
 		if err := a.checkAgainstGlobalPriority(ctx, ntscConfigPolicies.Resources.Priority, workloadType); err != nil {
@@ -121,7 +129,7 @@ func (a *apiServer) validateNTSCConfig(
 		return err
 	}
 
-	return checkAgainstGlobalConfig(ctx, nil, ntscConfigPolicies, workloadType)
+	return checkAgainstGlobalConfig(ctx, globalConfigPolicies, nil, ntscConfigPolicies, workloadType)
 }
 
 func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority *int, workloadType string) error {
@@ -160,19 +168,16 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 }
 
 func checkAgainstGlobalConfig(
-	ctx context.Context, expConfig *expconf.ExperimentConfigV0, ntscConfig *model.CommandConfig, workloadType string,
+	ctx context.Context, globalConfigPolicies *model.TaskConfigPolicies,
+	expConfig *expconf.ExperimentConfigV0, ntscConfig *model.CommandConfig, workloadType string,
 ) error {
-	globalConfigPolicies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, workloadType)
-	if err != nil {
-		return fmt.Errorf("error in getting global scope task config policy: %w", err)
-	}
 	if globalConfigPolicies == nil || globalConfigPolicies.InvariantConfig == nil {
 		return nil
 	}
 
 	if ntscConfig != nil {
 		globalInvConfig, err := configpolicy.UnmarshalConfigPolicy[model.CommandConfig](
-			*globalConfigPolicies.InvariantConfig,
+			*globalConfigPolicies.InvariantConfig, configpolicy.InvalidNTSCConfigPolicyErr,
 		)
 		if err != nil {
 			return err
@@ -183,7 +188,7 @@ func checkAgainstGlobalConfig(
 
 	if expConfig != nil {
 		globalInvConfig, err := configpolicy.UnmarshalConfigPolicy[expconf.ExperimentConfig](
-			*globalConfigPolicies.InvariantConfig,
+			*globalConfigPolicies.InvariantConfig, configpolicy.InvalidExperimentConfigPolicyErr,
 		)
 		if err != nil {
 			return err
@@ -259,7 +264,12 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = a.validatePoliciesAndWorkloadType(ctx, req.WorkloadType, req.ConfigPolicies)
+	globalConfigPolicies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, req.WorkloadType)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.validatePoliciesAndWorkloadType(ctx, globalConfigPolicies, req.WorkloadType, req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +313,12 @@ func (a *apiServer) PutGlobalConfigPolicies(
 		return nil, err
 	}
 
-	err = a.validatePoliciesAndWorkloadType(ctx, req.WorkloadType, req.ConfigPolicies)
+	globalConfigPolicies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, req.WorkloadType)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.validatePoliciesAndWorkloadType(ctx, globalConfigPolicies, req.WorkloadType, req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}

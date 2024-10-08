@@ -23,6 +23,10 @@ const (
 	// GlobalConfigConflictErr is the error reported when an invariant config has a conflict
 	// with a value already set in the global config.
 	GlobalConfigConflictErr = "conflict between global and task config policy"
+	// InvalidExperimentConfigPolicyErr is the error reported by an invalid experiment config policy.
+	InvalidExperimentConfigPolicyErr = "invalid experiment config policy"
+	// InvalidNTSCConfigPolicyErr is the error reported by an invalid NTSC config policy.
+	InvalidNTSCConfigPolicyErr = "invalid NTSC config policy"
 )
 
 // ValidWorkloadType checks if the string is an accepted WorkloadType.
@@ -37,40 +41,41 @@ func ValidWorkloadType(val string) bool {
 
 // UnmarshalExperimentConfigPolicy unpacks a string into ExperimentConfigPolicy struct.
 func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicies, error) {
-	return UnmarshalConfigPolicy[ExperimentConfigPolicies](str)
+	return UnmarshalConfigPolicy[ExperimentConfigPolicies](str, InvalidExperimentConfigPolicyErr)
 }
 
 // UnmarshalNTSCConfigPolicy unpacks a string into NTSCConfigPolicy struct.
 func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicies, error) {
-	return UnmarshalConfigPolicy[NTSCConfigPolicies](str)
+	return UnmarshalConfigPolicy[NTSCConfigPolicies](str, InvalidNTSCConfigPolicyErr)
 }
 
 // UnmarshalConfigPolicy is a generic helper function to unmarshal both JSON and YAML strings.
-func UnmarshalConfigPolicy[T any](str string) (*T, error) {
+func UnmarshalConfigPolicy[T any](str string, errString string) (*T, error) {
 	var configPolicy T
 	dec := json.NewDecoder(bytes.NewReader([]byte(str)))
 	dec.DisallowUnknownFields()
 
+	var err error
 	// Attempt to decode JSON.
-	if err := dec.Decode(&configPolicy); err == nil {
+	if err = dec.Decode(&configPolicy); err == nil {
 		// valid JSON input
-		if reflect.DeepEqual(configPolicy, new(T)) {
+		if reflect.ValueOf(configPolicy).IsZero() {
 			return nil, fmt.Errorf(EmptyInvariantConfigErr)
 		}
 		return &configPolicy, nil
 	}
 
 	// Attempt to decode YAML if JSON fails.
-	if err := yaml.Unmarshal([]byte(str), &configPolicy, yaml.DisallowUnknownFields); err == nil {
+	if err = yaml.Unmarshal([]byte(str), &configPolicy, yaml.DisallowUnknownFields); err == nil {
 		// valid YAML input
-		if reflect.DeepEqual(configPolicy, new(T)) {
+		if reflect.ValueOf(configPolicy).IsZero() {
 			return nil, fmt.Errorf(EmptyInvariantConfigErr)
 		}
 		return &configPolicy, nil
 	}
 
 	// Return error if both JSON and YAML parsing fail.
-	return nil, fmt.Errorf("invalid config policy: %v", str)
+	return nil, fmt.Errorf("%s: %w", errString, err)
 }
 
 // MarshalConfigPolicy packs a config policy into a proto struct.
