@@ -1,4 +1,5 @@
 import contextlib
+import io
 import os
 from typing import Any, Iterator, List, Optional, cast
 
@@ -6,6 +7,7 @@ import responses
 from responses import registries
 
 import determined as det
+from determined.cli import cli
 from determined.common.api import authentication
 
 
@@ -151,3 +153,14 @@ def expect_get_info(
         rsps.get(f"{master_url}/info", status=200, json={"version": det.__version__})
     else:
         responses.get(f"{master_url}/info", status=200, json={"version": det.__version__})
+
+
+def check_cli_output(args: List[str], expected: str) -> None:
+    """
+    Helper method to test CLI methods that checks redirected STDOUT from the executed command
+    matches expected output.
+    """
+    with contextlib.redirect_stdout(io.StringIO()) as f:
+        cli.main(args=args)
+    actual = f.getvalue()
+    assert expected == actual, "CLI output does not match expected output."

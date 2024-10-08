@@ -574,15 +574,16 @@ def test_dev_bindings_call_arg_unmarshal(case: Tuple[List[str], Dict[str, Any]])
 
 def test_preview_search(tmp_path: pathlib.Path) -> None:
     # Save a test experiment config file to a temporary path.
+    max_trials = 10
     searcher_config = {
-        "name": "test preview search",
         "hyperparameters": {
             "x": 12,
         },
+        "name": "test preview search",
         "searcher": {
             "name": "random",
             "metric": "loss",
-            "max_trials": 10,
+            "max_trials": max_trials,
         },
     }
     conf_path = tmp_path / "config.yaml"
@@ -593,7 +594,7 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
         summary=bindings.v1SearchSummary(
             config=searcher_config,
             runs={
-                "1": bindings.v1SearchUnit(undefined=True),
+                str(max_trials): bindings.v1SearchUnit(undefined=True),
             },
         )
     )
@@ -610,4 +611,11 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             ],
             json=mock_resp.to_json(),
         )
-        cli.main(["preview-search", str(conf_path)])
+        expected_output = f"""
+Using search configuration:
+{render.format_object_as_yaml(searcher_config)}
+   Runs | Training Time
+--------+---------------------------------
+     10 | maximum length of training code
+"""
+        util.check_cli_output(["preview-search", str(conf_path)], expected_output)
