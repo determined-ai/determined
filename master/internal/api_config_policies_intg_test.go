@@ -569,6 +569,8 @@ func setupConfigPolicyAuthZ() *mocks.ConfigPolicyAuthZ {
 }
 
 func TestValidatePoliciesAndWorkloadTypeYAML(t *testing.T) {
+	api, _, _ := setupAPITest(t, nil)
+
 	tests := []struct {
 		name           string
 		workloadType   string
@@ -888,7 +890,7 @@ invariant_config:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
+			err := api.validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
@@ -900,6 +902,8 @@ invariant_config:
 }
 
 func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
+	api, _, _ := setupAPITest(t, nil)
+
 	tests := []struct {
 		name           string
 		workloadType   string
@@ -1222,7 +1226,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
+			err := api.validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())

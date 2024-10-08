@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -72,11 +73,12 @@ func (a *apiServer) validatePoliciesAndWorkloadType(workloadType, configPolicies
 		if err := a.checkAgainstGlobalPriority(ctx, expConfigPolicies.Resources().Priority(), workloadType); err != nil {
 			return err
 		}
-		if err := a.checkAgainstGlobalConfig(expConfigPolicies, nil); err != nil {
+		if err := a.checkAgainstGlobalConfig(ctx, expConfigPolicies, nil, workloadType); err != nil {
 			return err
 		}
 		if err := a.checkConstraintConflicts(
-			constraints, *expConfigPolicies.RawResources.RawMaxSlots, *expConfigPolicies.RawResources.RawPriority,
+			constraints, *expConfigPolicies.RawResources.RawMaxSlots,
+			*expConfigPolicies.RawResources.RawSlotsPerTrial, *expConfigPolicies.RawResources.RawPriority,
 		); err != nil {
 			return err
 		}
@@ -86,11 +88,12 @@ func (a *apiServer) validatePoliciesAndWorkloadType(workloadType, configPolicies
 		if err := a.checkAgainstGlobalPriority(ctx, ntscConfigPolicies.Resources.Priority, workloadType); err != nil {
 			return err
 		}
-		if err := a.checkAgainstGlobalConfig(nil, ntscConfigPolicies); err != nil {
+		if err := a.checkAgainstGlobalConfig(ctx, nil, ntscConfigPolicies, workloadType); err != nil {
 			return err
 		}
 		if err := a.checkConstraintConflicts(
-			constraints, *ntscConfigPolicies.Resources.MaxSlots, *ntscConfigPolicies.Resources.Priority,
+			constraints, *ntscConfigPolicies.Resources.MaxSlots,
+			ntscConfigPolicies.Resources.Slots, *ntscConfigPolicies.Resources.Priority,
 		); err != nil {
 			return err
 		}
@@ -112,13 +115,16 @@ func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority
 	return nil
 }
 
-func (a *apiServer) checkConstraintConflicts(constraints *model.Constraints, slots int, priority int) error {
+func (a *apiServer) checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, priority int) error {
 	if constraints != nil {
 		if *constraints.PriorityLimit != priority {
 			return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
 		}
-		if *constraints.ResourceConstraints.MaxSlots != slots {
+		if *constraints.ResourceConstraints.MaxSlots != maxSlots {
 			return fmt.Errorf("invariant config & constraints are trying to set the max slots")
+		}
+		if *constraints.ResourceConstraints.MaxSlots > slots {
+			return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot")
 		}
 	}
 	return nil
@@ -127,12 +133,77 @@ func (a *apiServer) checkConstraintConflicts(constraints *model.Constraints, slo
 func (a *apiServer) checkAgainstGlobalConfig(
 	ctx context.Context, expConfig *expconf.ExperimentConfigV0, ntscConfig *model.CommandConfig, workloadType string,
 ) error {
-	_, err := configpolicy.GetTaskConfigPolicies(ctx, nil, workloadType)
+	globalConfigPolicies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, workloadType)
 	if err != nil {
 		return fmt.Errorf("error in getting global scope task config policy: %w", err)
 	}
-	// TODO CAROLINA
+
+	globalNTSCConfig, err := configpolicy.UnmarshalNTSCConfigPolicy(*globalConfigPolicies.InvariantConfig)
+	if err != nil {
+		return err
+	}
+	if err = haveEqualDefinedFields(globalNTSCConfig.InvariantConfig, ntscConfig); err != nil {
+		return err
+	}
+
+	globalExpConfig, err := configpolicy.UnmarshalExperimentConfigPolicy(*globalConfigPolicies.InvariantConfig)
+	if err != nil {
+		return err
+	}
+	if err = haveEqualDefinedFields(globalExpConfig.InvariantConfig, expConfig); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func haveEqualDefinedFields(config1, config2 interface{}) error {
+	v1 := reflect.ValueOf(config1)
+	v2 := reflect.ValueOf(config2)
+
+	// If the values are pointers, dereference them
+	if v1.Kind() == reflect.Ptr {
+		v1 = v1.Elem()
+	}
+	if v2.Kind() == reflect.Ptr {
+		v2 = v2.Elem()
+	}
+
+	// Check if both values are valid structs
+	if v1.Kind() != reflect.Struct || v2.Kind() != reflect.Struct {
+		return fmt.Errorf("both inputs must be structs")
+	}
+
+	hasSharedField := false
+
+	// Iterate over the fields in the struct
+	for i := 0; i < v1.NumField(); i++ {
+		field1 := v1.Field(i)
+		field2 := v2.Field(i)
+
+		// Check if the field is a pointer, map, or interface (which can be nil)
+		if field1.Kind() == reflect.Ptr || field1.Kind() == reflect.Map || field1.Kind() == reflect.Interface {
+			if !field1.IsNil() && !field2.IsNil() {
+				hasSharedField = true
+				// Compare the dereferenced values
+				if !reflect.DeepEqual(field1.Interface(), field2.Interface()) {
+					return fmt.Errorf("shared non-null field has different values")
+				}
+			}
+		} else if field1.IsValid() && field2.IsValid() && !field1.IsZero() && !field2.IsZero() {
+			hasSharedField = true
+			// For non-pointer fields, compare directly if both are non-zero
+			if !reflect.DeepEqual(field1.Interface(), field2.Interface()) {
+				return fmt.Errorf("shared non-null field has different values")
+			}
+		}
+	}
+
+	if !hasSharedField {
+		return nil // No shared non-null fields to compare
+	}
+
+	return nil // Configs are equal in shared non-null fields
 }
 
 func parseConfigPolicies(configAndConstraints string) (
@@ -209,7 +280,6 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	// TODO CAROLINA: CM-544
 	err = configpolicy.SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 		WorkspaceID:     ptrs.Ptr(int(req.WorkspaceId)),
 		WorkloadType:    req.WorkloadType,

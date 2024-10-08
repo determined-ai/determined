@@ -31,10 +31,6 @@ type NTSCConfigPolicies struct {
 	Constraints     *model.Constraints   `json:"constraints"`
 }
 
-type ConfigPolicy interface {
-	UnmarshalConfigPolicy(string) error
-}
-
 var (
 	errPriorityConstraintFailure = errors.New("submitted workload failed priority constraint")
 	errResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
