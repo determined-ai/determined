@@ -196,8 +196,9 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 	if wkspOverride {
 		if globalOverride {
 			scope += "workspace and global"
+		} else {
+			scope += "workspace"
 		}
-		scope += "workspace"
 	} else if globalOverride {
 		scope += "global"
 	}

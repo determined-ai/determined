@@ -1471,17 +1471,17 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 
 	ctx := context.TODO()
 	w, err := workspace.WorkspaceByName(ctx, activeConfig.Workspace())
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows && err != db.ErrNotFound {
 		return nil, false,
 			fmt.Errorf("error getting workspace %s: %w", activeConfig.Workspace(), err)
-	}
-
-	// Merge the config with the optionally specified invariant config specified by task config
-	// policies.
-	err = configpolicy.MergeWithInvariantExperimentConfigs(ctx, w.ID, &mergedConfig)
-	if err != nil {
-		return nil, false,
-			fmt.Errorf("error merging invariant experiment configs: %w", err)
+	} else if w != nil {
+		// Merge the config with the optionally specified invariant config specified by task config
+		// policies.
+		err = configpolicy.MergeWithInvariantExperimentConfigs(ctx, w.ID, &mergedConfig)
+		if err != nil {
+			return nil, false,
+				fmt.Errorf("error merging invariant experiment configs: %w", err)
+		}
 	}
 
 	bytes, err := mergedConfig.Value()

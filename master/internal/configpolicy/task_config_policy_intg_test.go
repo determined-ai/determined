@@ -131,7 +131,7 @@ func TestCheckNTSCConstraints(t *testing.T) {
 	})
 
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
-		w := createWorkspaceWithPriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
+		w := createWorkspaceWithPriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
 		rm1 := mocks.ResourceManager{}
 		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
 
@@ -274,7 +274,7 @@ func TestGetMergedConstraints(t *testing.T) {
 	// Workspace priority limit set.
 	wkspLimit := 42
 	user := db.RequireMockUser(t, pgDB)
-	w := createWorkspaceWithPriorityLimit(t, user, wkspLimit, model.ExperimentType)
+	w := createWorkspaceWithPriorityLimit(t, user, wkspLimit, model.NTSCType)
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Nil(t, constraints.ResourceConstraints)
@@ -317,7 +317,9 @@ func addWorkspacePriorityLimit(ctx context.Context, t *testing.T, user model.Use
 	require.NoError(t, err)
 }
 
-func createWorkspaceWithPriorityLimit(t *testing.T, user model.User, wkspLimit int, workloadType string) model.Workspace {
+func createWorkspaceWithPriorityLimit(t *testing.T, user model.User, wkspLimit int,
+	workloadType string,
+) model.Workspace {
 	ctx := context.Background()
 	w := createWorkspaceWithUser(ctx, t, user.ID)
 	addWorkspacePriorityLimit(ctx, t, user, w, wkspLimit, workloadType)
@@ -557,19 +559,19 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 	err = json.Unmarshal([]byte(wkspDefaultConfig), &wkspInvariantConfig)
 	require.NoError(t, err)
 
-	var fullWkspInvariantConfig expconf.ExperimentConfigV0
-	err = json.Unmarshal([]byte(wkspPartialConfig), &fullWkspInvariantConfig)
+	var wkspPartialInvariantConfig expconf.ExperimentConfigV0
+	err = json.Unmarshal([]byte(wkspPartialConfig), &wkspPartialInvariantConfig)
 	require.NoError(t, err)
 
-	fullWkspInvariantConfig.RawName = defaultConfig.RawName
-	fullWkspInvariantConfig = schemas.WithDefaults(fullWkspInvariantConfig)
+	wkspPartialInvariantConfig.RawName = defaultConfig.RawName
+	wkspPartialInvariantConfig = schemas.WithDefaults(wkspPartialInvariantConfig)
 
-	var partialWkspInvariantConfig expconf.ExperimentConfigV0
-	err = json.Unmarshal([]byte(userPartialConfig), &partialWkspInvariantConfig)
+	var userPartialInvariantConfig expconf.ExperimentConfigV0
+	err = json.Unmarshal([]byte(userPartialConfig), &userPartialInvariantConfig)
 	require.NoError(t, err)
 
-	partialWkspInvariantConfig.RawName = defaultConfig.RawName
-	partialWkspInvariantConfig = schemas.WithDefaults(partialWkspInvariantConfig)
+	userPartialInvariantConfig.RawName = defaultConfig.RawName
+	userPartialInvariantConfig = schemas.WithDefaults(userPartialInvariantConfig)
 
 	var mergedWkspInvariantConfig expconf.ExperimentConfigV0
 	err = json.Unmarshal([]byte(mergedWkspConfig), &mergedWkspInvariantConfig)
@@ -714,7 +716,7 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		InvariantConfig: &wkspPartialConfig,
 	}, nil)
 	err = MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
-		&partialWkspInvariantConfig)
+		&userPartialInvariantConfig)
 	require.NoError(t, err)
 	require.Equal(t, defaultConfig, *conf)
 }
