@@ -52,32 +52,6 @@ func (s *SearcherConfigV0) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(s)), "failed to parse searcher config")
 }
 
-// Unit implements the model.InUnits interface.
-func (s SearcherConfigV0) Unit() Unit {
-	switch {
-	case s.RawSingleConfig != nil:
-		return s.RawSingleConfig.Unit()
-	case s.RawRandomConfig != nil:
-		return s.RawRandomConfig.Unit()
-	case s.RawGridConfig != nil:
-		return s.RawGridConfig.Unit()
-	case s.RawAsyncHalvingConfig != nil:
-		return s.RawAsyncHalvingConfig.Unit()
-	case s.RawAdaptiveASHAConfig != nil:
-		return s.RawAdaptiveASHAConfig.Unit()
-	case s.RawCustomConfig != nil:
-		panic("cannot get unit of EOL searcher class")
-	case s.RawSyncHalvingConfig != nil:
-		panic("cannot get unit of EOL searcher class")
-	case s.RawAdaptiveConfig != nil:
-		panic("cannot get unit of EOL searcher class")
-	case s.RawAdaptiveSimpleConfig != nil:
-		panic("cannot get unit of EOL searcher class")
-	default:
-		panic("no searcher type specified")
-	}
-}
-
 // AsLegacy converts a current ExperimentConfig to a (limited capacity) LegacySearcher.
 func (s SearcherConfigV0) AsLegacy() LegacySearcher {
 	var name string
@@ -117,11 +91,6 @@ type SingleConfigV0 struct {
 	RawMaxLength *LengthV0 `json:"max_length"`
 }
 
-// Unit implements the model.InUnits interface.
-func (s SingleConfigV0) Unit() Unit {
-	return s.RawMaxLength.Unit
-}
-
 // RandomConfigV0 configures a random search.
 //
 //go:generate ../gen.sh
@@ -131,22 +100,12 @@ type RandomConfigV0 struct {
 	RawMaxConcurrentTrials *int      `json:"max_concurrent_trials"`
 }
 
-// Unit implements the model.InUnits interface.
-func (r RandomConfigV0) Unit() Unit {
-	return r.RawMaxLength.Unit
-}
-
 // GridConfigV0 configures a grid search.
 //
 //go:generate ../gen.sh
 type GridConfigV0 struct {
 	RawMaxLength           *LengthV0 `json:"max_length"`
 	RawMaxConcurrentTrials *int      `json:"max_concurrent_trials"`
-}
-
-// Unit implements the model.InUnits interface.
-func (g GridConfigV0) Unit() Unit {
-	return g.RawMaxLength.Unit
 }
 
 // AsyncHalvingConfigV0 configures asynchronous successive halving.
@@ -163,11 +122,6 @@ type AsyncHalvingConfigV0 struct {
 	// They exist to help parse legacy exp configs.
 	RawMaxLength *LengthV0 `json:"max_length"`
 	RawStopOnce  *bool     `json:"stop_once"`
-}
-
-// Unit implements the model.InUnits interface.
-func (a AsyncHalvingConfigV0) Unit() Unit {
-	return a.RawMaxLength.Unit
 }
 
 // Length returns the maximum training length.
@@ -209,11 +163,6 @@ type AdaptiveASHAConfigV0 struct {
 	// They exist to help parse legacy exp configs.
 	RawMaxLength *LengthV0 `json:"max_length"`
 	RawStopOnce  *bool     `json:"stop_once"`
-}
-
-// Unit implements the model.InUnits interface.
-func (a AdaptiveASHAConfigV0) Unit() Unit {
-	return a.RawMaxLength.Unit
 }
 
 // Length returns the maximum training length.
@@ -270,6 +219,10 @@ type CustomConfigV0 struct {
 // AssertCurrent distinguishes configs which are only parsable from those that are runnable.
 func (s SearcherConfig) AssertCurrent() error {
 	switch {
+	case s.RawAdaptiveASHAConfig != nil:
+		if s.RawAdaptiveASHAConfig.RawMaxTime == nil || s.RawAdaptiveASHAConfig.RawTimeMetric == nil {
+			return errors.New("the `adaptive_asha` searcher requires `max_time` and `time_metric` to be set")
+		}
 	case s.RawSyncHalvingConfig != nil:
 		return errors.New(
 			"the 'sync_halving' searcher has been removed and is not valid for new experiments",

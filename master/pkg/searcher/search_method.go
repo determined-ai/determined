@@ -37,7 +37,6 @@ type SearchMethod interface {
 
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
-	expconf.InUnits
 	Type() SearchMethodType
 }
 
