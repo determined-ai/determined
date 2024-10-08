@@ -22,12 +22,10 @@ import (
 )
 
 const (
-	noWorkloadErr              = "no workload type specified."
-	noPoliciesErr              = "no specified config policies."
-	globalPriorityErr          = "global priority limit already exists"
-	invalidWorkloadTypeErr     = "invalid workload type"
-	invalidExpConfigPolicyErr  = "invalid experiment config policy"
-	invalidNTSCConfigPolicyErr = "invalid ntsc config policy"
+	noWorkloadErr          = "no workload type specified."
+	noPoliciesErr          = "no specified config policies."
+	globalPriorityErr      = "global priority limit already exists"
+	invalidWorkloadTypeErr = "invalid workload type"
 )
 
 func (a *apiServer) validatePoliciesAndWorkloadType(
@@ -80,13 +78,13 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 	// Validate against specific configurations
 	if expConfigPolicies != nil {
 		if err := a.validateExperimentConfig(ctx, expConfigPolicies, constraints, workloadType); err != nil {
-			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidExpConfigPolicyErr+": %s.", err))
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid experiment config policy"+": %s.", err))
 		}
 	}
 
 	if ntscConfigPolicies != nil {
 		if err := a.validateNTSCConfig(ctx, ntscConfigPolicies, constraints, workloadType); err != nil {
-			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidNTSCConfigPolicyErr+": %s.", err))
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid ntsc config policy"+": %s.", err))
 		}
 	}
 
@@ -101,13 +99,13 @@ func (a *apiServer) validateExperimentConfig(
 		if err := a.checkAgainstGlobalPriority(ctx, expConfigPolicies.RawResources.RawPriority, workloadType); err != nil {
 			return err
 		}
-		if err := a.checkConstraintConflicts(constraints, expConfigPolicies.RawResources.RawMaxSlots,
+		if err := checkConstraintConflicts(constraints, expConfigPolicies.RawResources.RawMaxSlots,
 			expConfigPolicies.RawResources.RawSlotsPerTrial, expConfigPolicies.RawResources.RawPriority); err != nil {
 			return err
 		}
 	}
 
-	return a.checkAgainstGlobalConfig(ctx, expConfigPolicies, nil, workloadType)
+	return checkAgainstGlobalConfig(ctx, expConfigPolicies, nil, workloadType)
 }
 
 func (a *apiServer) validateNTSCConfig(
@@ -118,12 +116,12 @@ func (a *apiServer) validateNTSCConfig(
 			return err
 		}
 	}
-	if err := a.checkConstraintConflicts(constraints, ntscConfigPolicies.Resources.MaxSlots,
+	if err := checkConstraintConflicts(constraints, ntscConfigPolicies.Resources.MaxSlots,
 		&ntscConfigPolicies.Resources.Slots, ntscConfigPolicies.Resources.Priority); err != nil {
 		return err
 	}
 
-	return a.checkAgainstGlobalConfig(ctx, nil, ntscConfigPolicies, workloadType)
+	return checkAgainstGlobalConfig(ctx, nil, ntscConfigPolicies, workloadType)
 }
 
 func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority *int, workloadType string) error {
@@ -144,7 +142,7 @@ func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority
 	return nil
 }
 
-func (a *apiServer) checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, priority *int) error {
+func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, priority *int) error {
 	if constraints == nil {
 		return nil
 	}
@@ -161,7 +159,7 @@ func (a *apiServer) checkConstraintConflicts(constraints *model.Constraints, max
 	return nil
 }
 
-func (a *apiServer) checkAgainstGlobalConfig(
+func checkAgainstGlobalConfig(
 	ctx context.Context, expConfig *expconf.ExperimentConfigV0, ntscConfig *model.CommandConfig, workloadType string,
 ) error {
 	globalConfigPolicies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, workloadType)

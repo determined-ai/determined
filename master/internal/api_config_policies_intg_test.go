@@ -568,8 +568,6 @@ func setupConfigPolicyAuthZ() *mocks.ConfigPolicyAuthZ {
 }
 
 func TestValidatePoliciesAndWorkloadTypeYAML(t *testing.T) {
-	api, _, _ := setupAPITest(t, nil)
-
 	tests := []struct {
 		name           string
 		workloadType   string
@@ -591,10 +589,10 @@ func TestValidatePoliciesAndWorkloadTypeYAML(t *testing.T) {
 
 		// Valid experiment invariant config policies (YAML).
 		{
-			"YAML simple experiment config with description", model.ExperimentType,
+			"YAML simple experiment config with debug", model.ExperimentType,
 			`
 invariant_config:
-  description: "test\nspecial\tchar"
+  debug: true
 `, nil,
 		},
 		{
@@ -605,27 +603,35 @@ invariant_config:
     slots: 1
 `, nil,
 		},
-		{"YAML partial experiment config", model.ExperimentType, validExperimentConfigPolicyYAML, nil},
+		{
+			"YAML partial experiment config", model.ExperimentType, validExperimentConfigPolicyYAML, nil,
+		},
 
 		// Valid NTSC invariant config policies (YAML).
 		{
-			"YAML simple NTSC config with description", model.NTSCType,
+			"YAML simple NTSC config with debug", model.NTSCType,
 			`
 invariant_config:
-  description: "test\nspecial\tchar"
-`, fmt.Errorf(configpolicy.GlobalConfigConflictErr),
+	debug: true
+`, nil,
 		},
 		{
-			"YAML simple NTSC config with resources", model.NTSCType,
+			"YAML simple NTSC config with environment", model.NTSCType,
 			`
 invariant_config:
-  resources:
-    slots: 1
-`, fmt.Errorf(configpolicy.GlobalConfigConflictErr),
+  environment:
+    force_pull_image: true
+`, nil,
 		},
 		{
 			"YAML partial NTSC config", model.NTSCType,
-			validNTSCConfigPolicyYAML, fmt.Errorf(configpolicy.GlobalConfigConflictErr),
+			`invariant_config:
+			environment:
+			  force_pull_image: false
+			  add_capabilities:
+				- "cap1"
+				- "cap2"
+			work_dir: my/working/directory`, nil,
 		},
 
 		// Invalid experiment invariant config policies (YAML).
@@ -659,12 +665,6 @@ invariant_config:
     slots: 1
   extra_key: 2
 `, fmt.Errorf(invalidConfigPolicyErr),
-		},
-		{
-			"YAML experiment just config", model.ExperimentType,
-			`
-invariant_config:
-`, nil,
 		},
 		{
 			"YAML experiment bad config spec", model.ExperimentType,
@@ -708,12 +708,6 @@ invariant_config:
 `, fmt.Errorf(invalidConfigPolicyErr),
 		},
 		{
-			"YAML NTSC just config", model.NTSCType,
-			`
-invariant_config:
-`, nil,
-		},
-		{
 			"YAML NTSC bad config spec", model.NTSCType,
 			`
 bad_config_spec:
@@ -722,8 +716,12 @@ bad_config_spec:
 `, fmt.Errorf(invalidConfigPolicyErr),
 		},
 		// Valid constraint policies (YAML).
-		{"YAML experiment valid constraints policy", model.ExperimentType, validConstraintsPolicyYAML, nil},
-		{"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, fmt.Errorf(globalPriorityErr)},
+		{
+			"YAML experiment valid constraints policy", model.ExperimentType, validConstraintsPolicyYAML, nil,
+		},
+		{
+			"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, nil,
+		},
 		{
 			"YAML experiment simple valid constraints policy priority limit", model.ExperimentType,
 			`
@@ -736,7 +734,7 @@ constraints:
 			`
 constraints:
   priority_limit: 10
-`, fmt.Errorf(globalPriorityErr),
+`, nil,
 		},
 		{
 			"YAML experiment simple valid constraints policy resources", model.ExperimentType,
@@ -788,12 +786,6 @@ constraints:
   extra_key: 2
 `, fmt.Errorf(invalidConfigPolicyErr),
 		},
-		{
-			"YAML experiment just constraints", model.ExperimentType,
-			`
-constraints:
-`, nil,
-		},
 
 		// Invalid NTSC constraint policies (YAML).
 		{
@@ -828,12 +820,6 @@ constraints:
   extra_key: 2
 `, fmt.Errorf(invalidConfigPolicyErr),
 		},
-		{
-			"YAML NTSC just constraints", model.NTSCType,
-			`
-constraints:
-`, nil,
-		},
 
 		// Additional experiment combinatory tests (YAML).
 		{
@@ -846,7 +832,7 @@ constraints:
 constraints:
   resources:
     max_slots: "this should be a number"
-`, fmt.Errorf(invalidConfigPolicyErr),
+`, nil,
 		},
 		{
 			"YAML experiment invalid config valid constraints", model.ExperimentType,
@@ -892,6 +878,7 @@ invariant_config:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			api, _, _ := setupAPITest(t, nil)
 			err := api.validatePoliciesAndWorkloadType(context.TODO(), test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)

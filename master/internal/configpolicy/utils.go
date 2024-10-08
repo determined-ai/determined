@@ -105,7 +105,7 @@ func HaveAtLeastOneSharedDefinedField(config1, config2 interface{}) error {
 		if field1.IsValid() && field2.IsValid() && !field1.IsZero() && !field2.IsZero() {
 			// For non-pointer fields, compare directly if both are non-zero
 			if !reflect.DeepEqual(field1.Interface(), field2.Interface()) {
-				return fmt.Errorf(GlobalConfigConflictErr)
+				return fmt.Errorf(GlobalConfigConflictErr + field1.String() + field2.String())
 			}
 		}
 	}
