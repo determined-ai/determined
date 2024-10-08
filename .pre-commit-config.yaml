@@ -72,6 +72,11 @@ repos:
         description: "Runs `golangci-lint`, install https://github.com/golangci/golangci-lint"
         exclude: ^(proto/pkg|hpc-ard-launcher-go/launcher/)
         require_serial: true
+      - id: lock-api-state
+        name: "Generate buf image (lock-api-state.sh)"
+        entry: ./pre-commit/lock-api-state.sh
+        language: "script"
+        description: "Attempts to generate a new buf.image.bin, and fails if there are changes to commit."
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
