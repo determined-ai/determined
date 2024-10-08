@@ -79,6 +79,7 @@ repos:
         description: "Attempts to generate a new buf.image.bin, and fails if there are changes to commit."
         pass_filenames: false
         files: '^proto/'
+        verbose: true
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
