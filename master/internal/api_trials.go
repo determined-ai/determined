@@ -1456,9 +1456,9 @@ func (a *apiServer) ReportTrialMetrics(
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	defer func() {
-		// Notify searcher of validation metrics.
-		if metricGroup == model.ValidationMetricGroup {
+	if metricGroup == model.ValidationMetricGroup {
+		defer func() {
+			// Notify searcher of validation metrics.
 			eID, err := a.m.db.ExperimentIDByTrialID(int(req.Metrics.TrialId))
 			if err != nil {
 				log.WithError(err).Errorf("Failed to get experiment ID from trial ID (%d)", req.Metrics.TrialId)
@@ -1474,8 +1474,8 @@ func (a *apiServer) ReportTrialMetrics(
 				log.WithError(err).Errorf("Failed to report validation metrics for trial (%d)", req.Metrics.TrialId)
 				return
 			}
-		}
-	}()
+		}()
+	}
 	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricGroup); err != nil {
 		return nil, err
 	}
