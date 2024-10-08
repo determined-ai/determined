@@ -3,6 +3,7 @@ package searcher
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 
@@ -30,7 +31,7 @@ func checkGrid(t *testing.T, counts []int) {
 	for _, count := range counts {
 		numTrials *= count
 	}
-	grid := NewHyperparameterGrid(generateHyperparameters(counts))
+	grid := newHyperparameterGrid(generateHyperparameters(counts))
 	assert.Equal(t, len(grid), numTrials)
 }
 
@@ -96,7 +97,7 @@ func TestGrid(t *testing.T) {
 		"1": expconf.Hyperparameter{RawIntHyperparameter: iParam1},
 		"2": expconf.Hyperparameter{RawIntHyperparameter: iParam2},
 	}
-	actual := NewHyperparameterGrid(hparams)
+	actual := newHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": 0, "2": 0},
 		{"1": 0, "2": 5},
@@ -122,7 +123,7 @@ func TestNestedGrid(t *testing.T) {
 			},
 		},
 	}
-	actual := NewHyperparameterGrid(hparams)
+	actual := newHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": 0, "2": HParamSample{"3": 0}},
 		{"1": 0, "2": HParamSample{"3": 5}},
@@ -198,7 +199,7 @@ func TestNestedGridFurther(t *testing.T) {
 		`{"a":{"b":{"c1":5,"c2":11}},"constant":2,"f":17,"l":100}`: true,
 	}
 
-	for _, sample := range NewHyperparameterGrid(hps) {
+	for _, sample := range newHyperparameterGrid(hps) {
 		byts, err := json.Marshal(sample)
 		assert.NilError(t, err)
 		result := string(byts)
@@ -227,7 +228,7 @@ func TestGridIntCount(t *testing.T) {
 			},
 		},
 	}
-	actual := NewHyperparameterGrid(hparams)
+	actual := newHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": 0},
 		{"1": 1},
@@ -246,7 +247,7 @@ func TestGridIntCountNegative(t *testing.T) {
 			},
 		},
 	}
-	actual := NewHyperparameterGrid(hparams)
+	actual := newHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": -4},
 		{"1": -3},
@@ -256,5 +257,66 @@ func TestGridIntCountNegative(t *testing.T) {
 }
 
 func TestGridSearchMethod(t *testing.T) {
-	// write this
+	maxConcurrentTrials := 2
+	gridConfig := expconf.GridConfig{
+		RawMaxConcurrentTrials: ptrs.Ptr(maxConcurrentTrials),
+	}
+	searcherConfig := expconf.SearcherConfig{
+		RawGridConfig: &gridConfig,
+	}
+	hparams := expconf.Hyperparameters{
+		"a": expconf.Hyperparameter{
+			RawIntHyperparameter: &expconf.IntHyperparameter{
+				RawMinval: 0, RawMaxval: 3, RawCount: ptrs.Ptr(4),
+			},
+		},
+	}
+	allHparams := map[int]bool{0: true, 1: true, 2: true, 3: true}
+
+	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
+	//gridSearch := testSearchRunner.method.(*gridSearch)
+
+	// Expect 2 initial runs created.
+	runsCreated, runsStopped := testSearchRunner.start()
+	require.Equal(t, maxConcurrentTrials, len(runsCreated))
+	require.Equal(t, 0, len(runsStopped))
+	run1, run2 := runsCreated[0], runsCreated[1]
+	hp := run1.hparams["a"].(int)
+	_, ok := allHparams[hp]
+	require.True(t, ok)
+	delete(allHparams, hp)
+
+	hp = run2.hparams["a"].(int)
+	_, ok = allHparams[hp]
+	require.True(t, ok)
+	delete(allHparams, hp)
+
+	// First 1 finished training -> should create new run (run 3).
+	runsCreated, runsStopped = testSearchRunner.closeRun(run1.id)
+	require.Equal(t, 1, len(runsCreated))
+	require.Equal(t, 0, len(runsStopped))
+	run3 := runsCreated[0]
+	hp = run3.hparams["a"].(int)
+	_, ok = allHparams[run3.hparams["a"].(int)]
+	require.True(t, ok)
+	delete(allHparams, hp)
+
+	// Run 2 finished training -> create run 4.
+	runsCreated, runsStopped = testSearchRunner.closeRun(run2.id)
+	require.Equal(t, 1, len(runsCreated))
+	require.Equal(t, 0, len(runsStopped))
+	run4 := runsCreated[0]
+	hp = run4.hparams["a"].(int)
+	_, ok = allHparams[hp]
+	require.True(t, ok)
+	delete(allHparams, hp)
+
+	// Run 3 & 4 finished -> no new runs should be created.
+	runsCreated, runsStopped = testSearchRunner.closeRun(run3.id)
+	require.Equal(t, 0, len(runsCreated))
+	runsCreated, runsStopped = testSearchRunner.closeRun(run4.id)
+	require.Equal(t, 0, len(runsCreated))
+
+	// All params in grid space have been exhausted.
+	require.Equal(t, 0, len(allHparams))
 }

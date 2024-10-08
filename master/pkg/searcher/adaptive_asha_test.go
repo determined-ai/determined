@@ -35,7 +35,8 @@ func TestMakeBrackets(t *testing.T) {
 		{
 			conf: expconf.AdaptiveASHAConfig{
 				RawMode:                ptrs.Ptr(expconf.StandardMode),
-				RawMaxLength:           &expconf.LengthV0{Units: 100},
+				RawMaxTime:             ptrs.Ptr(100),
+				RawTimeMetric:          ptrs.Ptr("batches"),
 				RawMaxConcurrentTrials: ptrs.Ptr(2),
 				RawMaxTrials:           ptrs.Ptr(10),
 			},
@@ -55,7 +56,8 @@ func TestMakeBrackets(t *testing.T) {
 		{
 			conf: expconf.AdaptiveASHAConfig{
 				RawMode:                ptrs.Ptr(expconf.ConservativeMode),
-				RawMaxLength:           &expconf.LengthV0{Units: 1000},
+				RawMaxTime:             ptrs.Ptr(1000),
+				RawTimeMetric:          ptrs.Ptr("batches"),
 				RawDivisor:             ptrs.Ptr(3.0),
 				RawMaxConcurrentTrials: ptrs.Ptr(5),
 				RawMaxTrials:           ptrs.Ptr(10),
