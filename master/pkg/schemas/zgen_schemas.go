@@ -2600,6 +2600,20 @@ var (
             ],
             "default": null
         },
+        "time_metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "max_time": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
         "smaller_is_better": {
             "type": [
                 "boolean",

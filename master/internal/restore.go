@@ -205,7 +205,7 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
 	default:
-		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
+		if snapshot, err = shimExperimentSnapshot(expModel.ID, snapshot, version); err != nil {
 			return nil, errors.Wrap(err, "failed to shim experiment snapshot")
 		}
 		return snapshot, nil
@@ -239,11 +239,11 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 // shimExperimentSnapshot shims an experiment snapshot to the version required by the master,
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
-func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
-	return shimSnapshot(experimentSnapshotShims, snapshot, version)
+func shimExperimentSnapshot(experimentID int, snapshot []byte, version int) ([]byte, error) {
+	return shimSnapshot(experimentID, experimentSnapshotShims, snapshot, version)
 }
 
-func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
+func shimSnapshot(experimentID int, shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
 	if version > experimentSnapshotVersion {
 		return nil, fmt.Errorf("cannot shim from %d to %d", version, experimentSnapshotVersion)
 	}
@@ -253,7 +253,7 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 		if !ok {
 			return nil, fmt.Errorf("missing shim from %d to %d", version, experimentSnapshotVersion)
 		}
-		if snapshot, err = shim(snapshot); err != nil {
+		if snapshot, err = shim(experimentID, snapshot); err != nil {
 			return nil, errors.Wrapf(err, "failed to shim snapshot")
 		}
 		version++
@@ -262,7 +262,7 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 }
 
 // snapshotShimFunc is a shimming function.
-type snapshotShimFunc func([]byte) ([]byte, error)
+type snapshotShimFunc func(experimentID int, snapshot []byte) ([]byte, error)
 
 // Version 0 => 1 shims
 
@@ -271,7 +271,7 @@ type snapshotShimFunc func([]byte) ([]byte, error)
 // operations are removed from the operations requested of trials and any PBT operations
 // which are awaiting a particular checkpoint to finish added to the queue of trial operations,
 // since by other invariants in the system we can guarantee this checkpoint exists.
-func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV0(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV0 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV0); err != nil {
 		return nil, err
@@ -315,7 +315,7 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 // shimExperimentSnapshotV1 shims a v1 snapshot to a v2 snapshot. From v1 to v2,
 // progress was rewritten so that individual trial progress was tracked and aggregated
 // instead of just maintaining the total units completed.
-func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV1(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV1 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV1); err != nil {
 		return nil, err
@@ -347,7 +347,7 @@ type OperationType int
 // Train and Validate operations were merged into a single ValidateAfter operation
 // that indicates to the trial the total units to train before reporting a validation
 // to the searcher.
-func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV2(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV2 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV2); err != nil {
 		return nil, err
@@ -400,7 +400,7 @@ func (e ExperimentSnapshotShimError) Error() string {
 
 // shimExperimentSnapshotV4 shims a v4 snapshot to a v4 snapshot. From v4 to v5,
 // Length lost its units and became just an int again.
-func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV4(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV4 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV4); err != nil {
 		return nil, err
@@ -461,7 +461,7 @@ func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
 // - `trial_searcher_state.Op (searcher.ValidateAfter)` -> dropped
 // - `trial_searcher_state.Stop` -> dropped
 // - `trial_searcher_state.Closed` -> `run_searcher_state.Closed`
-func shimExperimentSnapshotV5(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV5(experimentID int, snapshot []byte) ([]byte, error) {
 	type v4SearcherState struct {
 		TrialsRequested   int                         `json:"trials_requested"`
 		TrialsCreated     map[model.RequestID]bool    `json:"trials_created"`
@@ -496,17 +496,17 @@ func shimExperimentSnapshotV5(snapshot []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	runsCreated, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.TrialsCreated)
-	runsClosed, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.TrialsClosed)
-	exits, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.Exits)
-	cancels, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.Cancels)
-	failures, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.Failures)
-	runProgress, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.TrialProgress)
+	runsCreated, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialsCreated)
+	runsClosed, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialsClosed)
+	exits, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Exits)
+	cancels, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Cancels)
+	failures, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Failures)
+	runProgress, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialProgress)
 
 	searchMethodStateV4 := map[string]interface{}{}
 	err = json.Unmarshal(v4ExperimentSnapshot.SearcherState.SearchMethodState, &searchMethodStateV4)
 	searchMethodState, err := shimSearchMethodStateV5(searchMethodStateV4)
-	runSearcherStateV4, err := mapRequestIDToRunID(v4ExperimentSnapshot.TrialSearcherState)
+	runSearcherStateV4, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.TrialSearcherState)
 	if err != nil {
 		return nil, ExperimentSnapshotShimError{Message: "unable to parse searcher state"}
 	}
@@ -581,11 +581,11 @@ func shimSearchMethodStateV5(v4SearchMethodState map[string]interface{}) (interf
 	}
 }
 
-func mapRequestIDToRunID[T any](obj map[model.RequestID]T) (map[int]T, error) {
+func mapRequestIDToRunID[T any](experimentID int, obj map[model.RequestID]T) (map[int]T, error) {
 	runIDMap := make(map[int]T)
 
 	for k, v := range obj {
-		tID, err := db.TrialIDByRequestID(context.TODO(), k)
+		tID, err := db.TrialIDByExperimentIDAndRequestID(context.TODO(), experimentID, k)
 		if err != nil {
 			return nil, err
 		}
