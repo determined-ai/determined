@@ -185,19 +185,13 @@ type AdaptiveMode string
 const (
 	// AggressiveMode quickly stops underperforming trials, which enables the searcher to explore
 	// more hyperparameter configurations.
-	AggressiveMode = "aggressive"
+	AggressiveMode AdaptiveMode = "aggressive"
 	// StandardMode provides a balance between downsampling and hyperparameter exploration.
-	StandardMode = "standard"
+	StandardMode AdaptiveMode = "standard"
 	// ConservativeMode performs minimal downsampling at the cost of not exploring as many
 	// configurations.
-	ConservativeMode = "conservative"
+	ConservativeMode AdaptiveMode = "conservative"
 )
-
-// AdaptiveModePtr is like &AdaptiveMode("standard"), except it works.
-func AdaptiveModePtr(mode string) *AdaptiveMode {
-	tmp := AdaptiveMode(mode)
-	return &tmp
-}
 
 // AdaptiveASHAConfigV0 configures an adaptive searcher for use with ASHA.
 //
