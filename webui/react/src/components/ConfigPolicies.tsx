@@ -54,7 +54,7 @@ type FormInputs = {
   [YAML_FORM_ITEM_NAME]: string;
 };
 
-const SUCCESS_MESSAGE = 'Config policies updated.';
+const SUCCESS_MESSAGE = 'Configuration policies updated.';
 const YAML_FORM_ITEM_NAME = 'configPolicies';
 
 const ConfigPolicies: React.FC<Props> = ({ workspaceId, global }: Props) => {
@@ -103,13 +103,13 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
   const [disabled, setDisabled] = useState(true);
 
   const applyMessage = global
-    ? "You're about to apply these config policies to this cluster."
-    : "You're about to apply these config policies to this workspace.";
+    ? "You're about to apply these configuration policies to the cluster."
+    : "You're about to apply these configuration policies to the workspace.";
   const viewMessage = global
-    ? 'These global config policies are being applied to this cluster.'
-    : 'These global config policies are being applied to this workspace.';
+    ? 'Global configuration policies are being applied to the cluster.'
+    : 'Global configuration policies are being applied to the workspace.';
   const confirmMessageEnding = global
-    ? 'underlying workspaces, projects, and submitted experiments in this cluster.'
+    ? 'underlying workspaces, projects, and submitted experiments in the cluster.'
     : 'underlying projects and their experiments in this workspace.';
 
   const updatePolicies = async () => {
