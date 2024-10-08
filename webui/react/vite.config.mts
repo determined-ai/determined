@@ -90,7 +90,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': JSON.stringify(process.env.VERSION || child.execSync('git describe --tags --always 2>/dev/null || echo "unknown"').toString().trimEnd()),
+    'process.env.VERSION': JSON.stringify(process.env.VERSION || child.execSync('../../version.sh').toString().trimEnd()),
   },
   optimizeDeps: {
     include: ['notebook'],
