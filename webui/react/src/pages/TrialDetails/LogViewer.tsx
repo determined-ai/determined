@@ -29,6 +29,10 @@ export interface Props<T> {
   logs: ViewerLog[];
   setLogs: React.Dispatch<React.SetStateAction<ViewerLog[]>>;
   logsRef: React.RefObject<HTMLDivElement>;
+  local: React.MutableRefObject<{
+    idSet: Set<RecordKey>;
+    isScrollReady: boolean;
+  }>;
 }
 
 export interface ViewerLog extends Log {
@@ -95,15 +99,13 @@ function LogViewer<T>({
   logs,
   setLogs,
   logsRef,
+  local,
 }: Props<T>): JSX.Element {
   const componentId = useId();
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [isFetching, setIsFetching] = useState(false);
-  const local = useRef({
-    idSet: new Set<RecordKey>([]),
-    isScrollReady: false as boolean,
-  });
+
   const [canceler] = useState(new AbortController());
   const [fetchDirection, setFetchDirection] = useState<FetchDirection>(FetchDirection.Older);
   const [isTailing, setIsTailing] = useState<boolean>(true);
@@ -124,7 +126,7 @@ function LogViewer<T>({
         .map((log) => formatLogEntry(log))
         .sort(logSorter(sortKey));
     },
-    [sortKey],
+    [sortKey, local],
   );
 
   const addLogs = useCallback(
@@ -137,15 +139,22 @@ function LogViewer<T>({
   );
 
   useEffect(() => {
+    setScrolledForSearch(false);
+  }, [selectedLog]);
+
+  useEffect(() => {
     if (scrolledForSearch || !selectedLog || !local.current.isScrollReady) return;
     setTimeout(() => {
-      virtuosoRef.current?.scrollToIndex({
-        behavior: 'smooth',
-        index: logs.findIndex((l) => l.id === selectedLog.id),
-      });
-      if (logs.findIndex((l) => l.id === selectedLog.id) >= 0) setScrolledForSearch(true);
+      const index = logs.findIndex((l) => l.id === selectedLog.id);
+      if (index > -1 && index + 1 < logs.length) {
+        virtuosoRef.current?.scrollToIndex({
+          behavior: 'smooth',
+          index: index,
+        });
+        setScrolledForSearch(true);
+      }
     }, 250);
-  }, [scrolledForSearch, selectedLog, logs]);
+  }, [scrolledForSearch, selectedLog, logs, local]);
 
   const fetchLogs = useCallback(
     async (config: Partial<FetchConfig>, type: FetchType): Promise<ViewerLog[]> => {
@@ -184,16 +193,13 @@ function LogViewer<T>({
       if (isFetching) return;
 
       // Detect when user scrolls to the "edge" and requires more logs to load.
-      const shouldFetchNewLogs =
-        positionReached === 'end' && fetchDirection === FetchDirection.Newer;
-      const shouldFetchOldLogs =
-        positionReached === 'start' && fetchDirection === FetchDirection.Older;
-
+      const shouldFetchNewLogs = positionReached === 'end';
+      const shouldFetchOldLogs = positionReached === 'start';
       if (shouldFetchNewLogs || shouldFetchOldLogs) {
         const newLogs = await fetchLogs(
           {
             canceler,
-            fetchDirection,
+            fetchDirection: shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
             offsetLog: shouldFetchNewLogs ? logs[logs.length - 1] : logs[0],
           },
           shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
@@ -215,7 +221,7 @@ function LogViewer<T>({
       }
       return;
     },
-    [addLogs, canceler, fetchDirection, fetchLogs, isFetching, logs],
+    [addLogs, canceler, fetchLogs, isFetching, logs, local],
   );
 
   const handleScrollToOldest = useCallback(() => {
@@ -233,7 +239,7 @@ function LogViewer<T>({
       setFetchDirection(FetchDirection.Newer);
       setFirstItemIndex(0);
     }
-  }, [fetchDirection, firstItemIndex, setLogs]);
+  }, [fetchDirection, firstItemIndex, setLogs, local]);
 
   const handleEnableTailing = useCallback(() => {
     setIsTailing(true);
@@ -250,7 +256,7 @@ function LogViewer<T>({
       setFetchDirection(FetchDirection.Older);
       setFirstItemIndex(START_INDEX);
     }
-  }, [fetchDirection, setLogs]);
+  }, [fetchDirection, setLogs, local]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {
@@ -263,7 +269,7 @@ function LogViewer<T>({
     setIsTailing(true);
     setFetchDirection(FetchDirection.Older);
     setFirstItemIndex(START_INDEX);
-  }, [onFetch, setLogs]);
+  }, [onFetch, setLogs, local]);
 
   // Add initial logs if applicable.
   useEffect(() => {
@@ -273,7 +279,6 @@ function LogViewer<T>({
 
   // Initial fetch on mount or when fetch direction changes.
   useEffect(() => {
-    setScrolledForSearch(false);
     fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then((logs) => {
       addLogs(logs, false);
 
@@ -282,7 +287,7 @@ function LogViewer<T>({
         local.current.isScrollReady = true;
       }, 200);
     });
-  }, [addLogs, canceler, fetchDirection, fetchLogs, selectedLog]);
+  }, [addLogs, canceler, fetchDirection, fetchLogs, local]);
 
   // Enable streaming for loading latest entries.
   useEffect(() => {
@@ -339,7 +344,7 @@ function LogViewer<T>({
         if (newLogs?.length === 0) setIsTailing(true);
       } else if (!atBottom) setIsTailing(false);
     },
-    [handleFetchMoreLogs, isFetching, isTailing],
+    [handleFetchMoreLogs, isFetching, isTailing, local],
   );
 
   const handleReachedTop = useCallback(

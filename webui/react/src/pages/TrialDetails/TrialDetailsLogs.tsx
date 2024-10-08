@@ -4,6 +4,7 @@ import ClipboardButton from 'hew/ClipboardButton';
 import CodeSample from 'hew/CodeSample';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
+import { RecordKey } from 'hew/internal/types';
 import LogViewerEntry, { MAX_DATETIME_LENGTH } from 'hew/LogViewer/LogViewerEntry';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
@@ -65,6 +66,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const container = useRef<HTMLDivElement>(null);
   const logsRef = useRef<HTMLDivElement>(null);
   const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const local = useRef({
+    idSet: new Set<RecordKey>([]),
+    isScrollReady: false as boolean,
+  });
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
   const { resetSettings, settings, updateSettings } = useSettings<Settings>(trialSettingsConfig);
@@ -270,7 +276,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
     if (!key) return [];
     const formatted: ViewerLog[] = [];
-    searchResults.forEach((l) => {
+    _.uniqBy(searchResults, (l) => l.id).forEach((l) => {
       const content = l.log;
       if (!content) return;
       if (settings.enableRegex) {
@@ -315,6 +321,62 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     }
   }, [settings.searchText, handleFetch, settings.enableRegex, canceler]);
 
+  const processLogs = useCallback((newLogs: Log[]) => {
+    return newLogs
+      .filter((log) => {
+        const isDuplicate = local.current.idSet.has(log.id);
+        const isTqdm = log.message.includes('\r');
+        local.current.idSet.add(log.id);
+        return !isDuplicate && !isTqdm;
+      })
+      .map((log) => formatLogEntry(log));
+  }, []);
+
+  const onSelectLog = useCallback(
+    async (logEntry: ViewerLog) => {
+      setSelectedLog(logEntry);
+      setLogViewerOn(true);
+      const index = logs.findIndex((l) => l.id === logEntry.id);
+      if (index > -1) {
+        // Selected log is already fetched. Just need to scroll to the place.
+        return;
+      }
+      local.current = {
+        idSet: new Set<RecordKey>([]),
+        isScrollReady: true,
+      };
+      const bufferBefore: TrialLog[] = [];
+      const bufferAfter: TrialLog[] = [];
+
+      await readStream(
+        handleFetch(
+          {
+            canceler: canceler.current,
+            fetchDirection: FetchDirection.Older,
+            limit: 100,
+            offsetLog: logEntry,
+          },
+          FetchType.Older,
+        ),
+        (log) => bufferBefore.push(mapV1LogsResponse(log)),
+      );
+      await readStream(
+        handleFetch(
+          {
+            canceler: canceler.current,
+            fetchDirection: FetchDirection.Newer,
+            limit: 100,
+            offsetLog: logEntry,
+          },
+          FetchType.Newer,
+        ),
+        (log) => bufferAfter.push(mapV1LogsResponse(log)),
+      );
+      setLogs([...processLogs(bufferBefore.reverse()), ...processLogs(bufferAfter)]);
+    },
+    [handleFetch, logs, processLogs],
+  );
+
   const renderSearch = useCallback(() => {
     const height = container.current?.getBoundingClientRect().height || 0;
     return (
@@ -331,8 +393,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
                 className={css.log}
                 key={logEntry.id}
                 onClick={() => {
-                  setSelectedLog(logEntry);
-                  setLogViewerOn(true);
+                  onSelectLog(logEntry);
                 }}>
                 <LogViewerEntry
                   formattedTime={logEntry.formattedTime}
@@ -353,7 +414,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         </div>
       </div>
     );
-  }, [settings.enableRegex, formattedSearchResults, container, selectedLog, updateSettings]);
+  }, [
+    settings.enableRegex,
+    formattedSearchResults,
+    container,
+    selectedLog,
+    updateSettings,
+    onSelectLog,
+  ]);
 
   const formatClipboardHeader = (log: Log): string => {
     const logEntry = formatLogEntry(log);
@@ -432,6 +500,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           rightPane={
             <LogViewer
               decoder={mapV1LogsResponse}
+              local={local}
               logs={logs}
               logsRef={logsRef}
               selectedLog={selectedLog}
