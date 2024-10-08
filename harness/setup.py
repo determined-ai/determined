@@ -10,7 +10,7 @@ def readme() -> str:
 
 
 def version() -> str:
-    def get_version_from_sh():
+    def get_version_from_sh() -> str:
         try:
             # This feels more disgusting than it is. Numpy does something similar,
             # although they generate a version.py file from their Meson build file
