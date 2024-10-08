@@ -76,7 +76,7 @@ repos:
         name: "Generate buf image (lock-api-state.sh)"
         entry: ./pre-commit/lock-api-state.sh
         language: "script"
-        description: "Attempts to generate a new buf.image.bin, and fails if there are changes to commit."
+        description: "Fails if the existing protobuf definitions would generate a new buf.image.bin."
         pass_filenames: false
         files: '^proto/'
 
