@@ -23,7 +23,7 @@ func TestSimulate(t *testing.T) {
 			RawMaxConcurrentTrials: &maxConcurrentTrials,
 			RawMaxTrials:           &maxTrials,
 			RawTimeMetric:          ptrs.Ptr("batches"),
-			RawMode:                expconf.AdaptiveModePtr(expconf.StandardMode),
+			RawMode:                ptrs.Ptr(expconf.StandardMode),
 		},
 		RawMetric:          ptrs.Ptr("loss"),
 		RawSmallerIsBetter: ptrs.Ptr(true),
