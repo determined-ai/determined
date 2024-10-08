@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/labstack/gommon/log"
+
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/labstack/gommon/log"
 )
 
 // ExperimentConfigPolicies is the invariant config and constraints for an experiment.
