@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/labstack/gommon/log"
 )
 
 // ExperimentConfigPolicies is the invariant config and constraints for an experiment.
@@ -164,7 +166,10 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 // configs, where a global invariant config takes precedence over a workspace-level invariant
 // config.
 func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
-	config *expconf.ExperimentConfigV0) error {
+	config *expconf.ExperimentConfigV0,
+) error {
+	originalConfig := *config
+	var wkspOverride, globalOverride bool
 	wkspConfigPolicies, err := GetTaskConfigPolicies(ctx, &workspaceID, model.ExperimentType)
 	if err != nil {
 		return err
@@ -173,6 +178,7 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 		if err := json.Unmarshal([]byte(*wkspConfigPolicies.InvariantConfig), config); err != nil {
 			return fmt.Errorf("error unmarshaling workspace invariant config: %w", err)
 		}
+		wkspOverride = true
 	}
 
 	globalConfigPolicies, err := GetTaskConfigPolicies(ctx, nil, model.ExperimentType)
@@ -185,6 +191,20 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 		}
 	}
 
+	scope := ""
+	if wkspOverride {
+		if globalOverride {
+			scope += "workspace and global"
+		}
+		scope += "workspace"
+	} else if globalOverride {
+		scope += "global"
+	}
+
+	if !reflect.DeepEqual(originalConfig, *config) {
+		log.Warnf("some fields of submitted config were silently overrideen with %s config(s)",
+			scope)
+	}
 	return nil
 }
 

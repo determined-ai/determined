@@ -572,12 +572,12 @@ func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 	return &w, nil, ntscTCP
 }
 
-// DefaultInvaraintConfig has slots 4 and max_slots 8
+// DefaultInvaraintConfig has slots 4 and max_slots 8.
 func DefaultInvariantConfig() *string {
 	return ptrs.Ptr(DefaultInvariantConfigStr)
 }
 
-// DefaultConstraints has priority_limit 10 and max_slots 8
+// DefaultConstraints has priority_limit 10 and max_slots 8.
 func DefaultConstraints() *string {
 	return ptrs.Ptr(DefaultConstraintsStr)
 }
