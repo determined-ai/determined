@@ -142,7 +142,8 @@ test.describe('Project List', () => {
   const workspaceIds: number[] = [];
 
   test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
-    // create workspace to use for List tests instead of using fixture:
+    // Shared 'newWorkspace' fixture can sometimes contain projects from other test runs.
+    // Avoid this issue by creating a workspace specifically for Project List tests:
     workspaceIds.push(
       (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())).workspace.id,
     );
