@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -26,7 +27,8 @@ const (
 	invalidWorkloadTypeErr = "invalid workload type"
 )
 
-func validatePoliciesAndWorkloadType(workloadType, configPolicies string) error {
+func (a *apiServer) validatePoliciesAndWorkloadType(workloadType, configPolicies string) error {
+	ctx := context.Background() // TODO CAROLINA
 	if !configpolicy.ValidWorkloadType(workloadType) {
 		errMessage := fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType)
 		if len(workloadType) == 0 {
@@ -40,24 +42,101 @@ func validatePoliciesAndWorkloadType(workloadType, configPolicies string) error 
 	}
 
 	// Validate the input config based on workload type.
+	var expConfigPolicies *expconf.ExperimentConfigV0
+	var ntscConfigPolicies *model.CommandConfig
+	var constraints *model.Constraints
 	if workloadType == model.ExperimentType {
-		_, err := configpolicy.UnmarshalExperimentConfigPolicy(configPolicies)
+		cp, err := configpolicy.UnmarshalExperimentConfigPolicy(configPolicies)
 		if err != nil {
 			return err
 		}
+		expConfigPolicies = cp.InvariantConfig
+		constraints = cp.Constraints
 	} else {
-		_, err := configpolicy.UnmarshalNTSCConfigPolicy(configPolicies)
+		cp, err := configpolicy.UnmarshalNTSCConfigPolicy(configPolicies)
 		if err != nil {
+			return err
+		}
+		ntscConfigPolicies = cp.InvariantConfig
+		constraints = cp.Constraints
+	}
+
+	// Now validate against global priority, max slots, and other fields.
+	if constraints != nil {
+		if err := a.checkAgainstGlobalPriority(ctx, constraints.PriorityLimit, workloadType); err != nil {
 			return err
 		}
 	}
 
-	// TODO (request validation): Verify that configs do not violate constraints.
+	if expConfigPolicies != nil {
+		if err := a.checkAgainstGlobalPriority(ctx, expConfigPolicies.Resources().Priority(), workloadType); err != nil {
+			return err
+		}
+		if err := a.checkAgainstGlobalConfig(expConfigPolicies, nil); err != nil {
+			return err
+		}
+		if err := a.checkConstraintConflicts(
+			constraints, *expConfigPolicies.RawResources.RawMaxSlots, *expConfigPolicies.RawResources.RawPriority,
+		); err != nil {
+			return err
+		}
+	}
+
+	if ntscConfigPolicies != nil {
+		if err := a.checkAgainstGlobalPriority(ctx, ntscConfigPolicies.Resources.Priority, workloadType); err != nil {
+			return err
+		}
+		if err := a.checkAgainstGlobalConfig(nil, ntscConfigPolicies); err != nil {
+			return err
+		}
+		if err := a.checkConstraintConflicts(
+			constraints, *ntscConfigPolicies.Resources.MaxSlots, *ntscConfigPolicies.Resources.Priority,
+		); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface{},
-	invariantConfig *string, constraints *string, err error,
+func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority *int, workloadType string) error {
+	if taskPriority != nil {
+		_, priorityEnabledErr := a.m.rm.SmallerValueIsHigherPriority()
+		if priorityEnabledErr != nil {
+			return fmt.Errorf("task priority is not supported in this cluster: %w", priorityEnabledErr)
+		}
+		_, globalPriorityExists, _ := configpolicy.GetPriorityLimit(ctx, nil, workloadType)
+		if globalPriorityExists {
+			return fmt.Errorf("global priority limit already exists for the task config policy")
+		}
+	}
+	return nil
+}
+
+func (a *apiServer) checkConstraintConflicts(constraints *model.Constraints, slots int, priority int) error {
+	if constraints != nil {
+		if *constraints.PriorityLimit != priority {
+			return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
+		}
+		if *constraints.ResourceConstraints.MaxSlots != slots {
+			return fmt.Errorf("invariant config & constraints are trying to set the max slots")
+		}
+	}
+	return nil
+}
+
+func (a *apiServer) checkAgainstGlobalConfig(
+	ctx context.Context, expConfig *expconf.ExperimentConfigV0, ntscConfig *model.CommandConfig, workloadType string,
+) error {
+	_, err := configpolicy.GetTaskConfigPolicies(ctx, nil, workloadType)
+	if err != nil {
+		return fmt.Errorf("error in getting global scope task config policy: %w", err)
+	}
+	// TODO CAROLINA
+	return nil
+}
+
+func parseConfigPolicies(configAndConstraints string) (
+	tcps map[string]interface{}, invariantConfig *string, constraints *string, err error,
 ) {
 	if len(configAndConstraints) == 0 {
 		return nil, nil, nil, status.Error(codes.InvalidArgument, "nothing to parse, empty "+
@@ -68,7 +147,7 @@ func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error parsing config policies: %w", err)
 	}
-	// Extract individal config and constraints.
+	// Extract individual config and constraints.
 	var policies map[string]interface{}
 	dec := json.NewDecoder(bytes.NewReader(configPolicies))
 	err = dec.Decode(&policies)
@@ -120,7 +199,7 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
+	err = a.validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +209,7 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		return nil, err
 	}
 
+	// TODO CAROLINA: CM-544
 	err = configpolicy.SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 		WorkspaceID:     ptrs.Ptr(int(req.WorkspaceId)),
 		WorkloadType:    req.WorkloadType,
@@ -164,7 +244,7 @@ func (a *apiServer) PutGlobalConfigPolicies(
 		return nil, err
 	}
 
-	err = validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
+	err = a.validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}

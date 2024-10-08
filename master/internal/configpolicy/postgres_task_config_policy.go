@@ -38,8 +38,7 @@ func SetTaskConfigPolicies(ctx context.Context,
 func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 	tcp *model.TaskConfigPolicies,
 ) error {
-	q := db.Bun().NewInsert().
-		Model(tcp)
+	q := db.Bun().NewInsert().Model(tcp)
 
 	if tcp.InvariantConfig == nil {
 		q = q.ExcludeColumn("invariant_config")
@@ -71,8 +70,8 @@ func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 
 // GetTaskConfigPolicies retrieves the invariant config and constraints for the
 // given scope (global or workspace-level) and workload Type.
-func GetTaskConfigPolicies(ctx context.Context,
-	scope *int, workloadType string,
+func GetTaskConfigPolicies(
+	ctx context.Context, scope *int, workloadType string,
 ) (*model.TaskConfigPolicies, error) {
 	var tcp model.TaskConfigPolicies
 	wkspQuery := wkspIDQuery
