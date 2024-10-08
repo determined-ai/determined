@@ -8,8 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-const defaultMetric = "metric"
-
 type TestSearchRunner struct {
 	config   expconf.SearcherConfig
 	searcher *Searcher
@@ -21,7 +19,6 @@ type TestSearchRunner struct {
 type testRun struct {
 	id           int32
 	hparams      HParamSample
-	stopped      bool
 	searchRunner *TestSearchRunner
 }
 
@@ -59,7 +56,13 @@ func (sr *TestSearchRunner) reportValidationMetric(runID int32, stepNum int, met
 	return created, stopped
 }
 
-// run created, run stopped, error
+// closeRun simulates a run completing its train loop and exiting.
+func (sr *TestSearchRunner) closeRun(runID int32) ([]testRun, []testRun) {
+	actions, err := sr.searcher.RunClosed(runID)
+	assert.NilError(sr.t, err, "error closing run")
+	return sr.handleActions(actions)
+}
+
 func (sr *TestSearchRunner) handleActions(actions []Action) ([]testRun, []testRun) {
 	var runsCreated []testRun
 	var runsStopped []testRun
@@ -75,8 +78,6 @@ func (sr *TestSearchRunner) handleActions(actions []Action) ([]testRun, []testRu
 			runsCreated = append(runsCreated, run)
 		case Stop:
 			run := sr.runs[action.RunID]
-			run.stopped = true
-			sr.runs[action.RunID] = run
 			runsStopped = append(runsStopped, run)
 		}
 	}

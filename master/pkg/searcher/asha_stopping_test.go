@@ -202,7 +202,7 @@ func TestGetMetric(t *testing.T) {
 }
 
 func TestStopTrials(t *testing.T) {
-	type runMetric struct {
+	type testMetric struct {
 		runID    int32
 		timeStep uint64
 		metric   float64
@@ -213,7 +213,7 @@ func TestStopTrials(t *testing.T) {
 		rungs            []*rung
 		runRungs         map[int32]int
 		divisor          float64
-		metric           runMetric
+		metric           testMetric
 		expectedOps      []Action
 		expectedRunRungs map[int32]int
 		expectedRungs    []*rung
@@ -235,7 +235,7 @@ func TestStopTrials(t *testing.T) {
 				1: 0,
 			},
 			divisor: 3.0,
-			metric: runMetric{
+			metric: testMetric{
 				runID:    1,
 				timeStep: 1,
 				metric:   0.5,
@@ -286,7 +286,7 @@ func TestStopTrials(t *testing.T) {
 				2: 0,
 			},
 			divisor: 3.0,
-			metric: runMetric{
+			metric: testMetric{
 				runID:    2,
 				timeStep: 1,
 				metric:   0.4,
@@ -342,7 +342,7 @@ func TestStopTrials(t *testing.T) {
 				2: 0,
 			},
 			divisor: 3.0,
-			metric: runMetric{
+			metric: testMetric{
 				runID:    2,
 				timeStep: 1,
 				metric:   0.6,
@@ -395,7 +395,6 @@ func TestASHAStopping(t *testing.T) {
 	maxTrials := 10
 	divisor := 3.0
 	maxTime := 900
-	smallerIsBetter := true
 	metric := "loss"
 	config := expconf.AsyncHalvingConfig{
 		RawMaxTime:             &maxTime,
@@ -403,12 +402,12 @@ func TestASHAStopping(t *testing.T) {
 		RawNumRungs:            ptrs.Ptr(3),
 		RawMaxConcurrentTrials: &maxConcurrentTrials,
 		RawMaxTrials:           &maxTrials,
-		RawTimeMetric:          ptrs.Ptr(metric),
+		RawTimeMetric:          ptrs.Ptr("batches"),
 	}
 	searcherConfig := expconf.SearcherConfig{
 		RawAsyncHalvingConfig: &config,
-		RawSmallerIsBetter:    ptrs.Ptr(smallerIsBetter),
-		RawMetric:             ptrs.Ptr("loss"),
+		RawSmallerIsBetter:    ptrs.Ptr(true),
+		RawMetric:             ptrs.Ptr(metric),
 	}
 	config = schemas.WithDefaults(config)
 	searcherConfig = schemas.WithDefaults(searcherConfig)
@@ -419,9 +418,7 @@ func TestASHAStopping(t *testing.T) {
 	}
 
 	// Create a new test searcher and verify brackets/rungs.
-	method := newAsyncHalvingStoppingSearch(config, smallerIsBetter, metric)
-	searcher := NewSearcher(uint32(102932948), method, hparams)
-	testSearchRunner := &TestSearchRunner{t: t, config: searcherConfig, searcher: searcher, method: method, runs: make(map[int32]testRun)}
+	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
 	search := testSearchRunner.method.(*asyncHalvingStoppingSearch)
 
 	expectedRungs := []*rung{
