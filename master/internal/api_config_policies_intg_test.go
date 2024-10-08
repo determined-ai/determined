@@ -721,7 +721,7 @@ bad_config_spec:
 		},
 		// Valid constraint policies (YAML).
 		{"YAML experiment valid constraints policy", model.ExperimentType, validConstraintsPolicyYAML, nil},
-		{"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, nil},
+		{"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, ErrGlobalPriorityExists},
 		{
 			"YAML experiment simple valid constraints policy priority limit", model.ExperimentType,
 			`
@@ -734,7 +734,7 @@ constraints:
 			`
 constraints:
   priority_limit: 10
-`, nil,
+`, ErrGlobalPriorityExists,
 		},
 		{
 			"YAML experiment simple valid constraints policy resources", model.ExperimentType,
@@ -857,8 +857,8 @@ invariant_config:
 
 		// Additional NTSC combinatory tests (YAML).
 		{
-			"YAML NTSC valid config valid constraints", model.NTSCType,
-			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, nil,
+			"YAML NTSC valid config valid constraints, invalid priority", model.NTSCType,
+			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, ErrGlobalPriorityExists,
 		},
 		{
 			"YAML NTSC valid constraints invalid constraints", model.NTSCType,
@@ -1046,7 +1046,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"{" + validConstraintsPolicyJSON + "}", nil,
 		},
 		{"JSON NTSC valid constraints policy", model.NTSCType, "{" + validConstraintsPolicyJSON +
-			"}", nil},
+			"}", ErrGlobalPriorityExists},
 		{
 			"JSON experiment simple valid constraints policy priority limit", model.ExperimentType,
 			`{ "constraints": {
@@ -1059,7 +1059,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			`{ "constraints": {
 			"priority_limit": 10
 		}
-	}`, nil,
+	}`, ErrGlobalPriorityExists,
 		},
 		{
 			"JSON experiment simple valid constraints policy resources", model.ExperimentType,
@@ -1190,7 +1190,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		// Additional NTSC combinatory tests (JSON).
 		{
 			"JSON NTSC valid config valid constraints", model.NTSCType,
-			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", nil,
+			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", ErrGlobalPriorityExists,
 		},
 		{
 			"JSON NTSC valid constraints invalid constraints", model.NTSCType,
