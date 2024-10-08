@@ -12,13 +12,13 @@
 EPOCH="0.21.0"
 
 VERSIONS=$(git \
-	-c versionsort.suffix='-rc' \
-	tag \
-	--sort='v:refname:short' \
-	--format='%(refname:short)' \
-	--no-contains=$(git merge-base HEAD main) \
-	--contains=$(git rev-parse $(git merge-base HEAD ${EPOCH})~1) \
-	| grep -E -v 'v0.12|-ee' \
-	| grep -E -o '\d+\.\d+\.\d+$')
+    -c versionsort.suffix='-rc' \
+    tag \
+    --sort='v:refname:short' \
+    --format='%(refname:short)' \
+    --no-contains=$(git merge-base HEAD main) \
+    --contains=$(git rev-parse $(git merge-base HEAD ${EPOCH})~1) \
+    | grep -E -v 'v0.12|-ee' \
+    | grep -E -o '\d+\.\d+\.\d+$')
 
-comm -2 -3 <(cat <<< "${VERSIONS}") exclude-versions.txt | sort -Vr
+comm -2 -3 <(cat <<<"${VERSIONS}") exclude-versions.txt | sort -Vr

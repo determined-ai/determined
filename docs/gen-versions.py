@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="gen-versions.py",
