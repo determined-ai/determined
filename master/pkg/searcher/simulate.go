@@ -75,7 +75,7 @@ func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (Sea
 		searchSummary.Runs[maxRuns] = SearchUnit{Undefined: true}
 		return searchSummary, nil
 	case conf.RawGridConfig != nil:
-		hparamGrid := NewHyperparameterGrid(hparams)
+		hparamGrid := newHyperparameterGrid(hparams)
 		searchSummary.Runs[len(hparamGrid)] = SearchUnit{Undefined: true}
 		return searchSummary, nil
 	case conf.RawAdaptiveASHAConfig != nil:
