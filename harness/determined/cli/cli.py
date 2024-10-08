@@ -86,6 +86,7 @@ def preview_search(args: argparse.Namespace) -> None:
             config=experiment_config,
         ),
     )
+    print()
     print(_render_search_summary(resp=resp))
 
 
