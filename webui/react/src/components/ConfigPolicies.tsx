@@ -57,35 +57,19 @@ type FormInputs = {
 const SUCCESS_MESSAGE = 'Configuration policies updated.';
 const YAML_FORM_ITEM_NAME = 'configPolicies';
 
-const ConfigPolicies: React.FC<Props> = ({ workspaceId, global }: Props) => {
-  let tabItems: PivotProps['items'];
-  if (global) {
-    tabItems = [
-      {
-        children: <ConfigPoliciesTab global type="experiments" />,
-        key: 'experiments',
-        label: ConfigPoliciesValues.experiments.label,
-      },
-      {
-        children: <ConfigPoliciesTab global type="tasks" />,
-        key: 'tasks',
-        label: ConfigPoliciesValues.tasks.label,
-      },
-    ];
-  } else if (workspaceId) {
-    tabItems = [
-      {
-        children: <ConfigPoliciesTab type="experiments" workspaceId={workspaceId} />,
-        key: 'experiments',
-        label: ConfigPoliciesValues.experiments.label,
-      },
-      {
-        children: <ConfigPoliciesTab type="tasks" workspaceId={workspaceId} />,
-        key: 'tasks',
-        label: ConfigPoliciesValues.tasks.label,
-      },
-    ];
-  }
+const ConfigPolicies: React.FC<Props> = (props: Props) => {
+  const tabItems: PivotProps['items'] = [
+    {
+      children: <ConfigPoliciesTab type="experiments" {...props} />,
+      key: 'experiments',
+      label: ConfigPoliciesValues.experiments.label,
+    },
+    {
+      children: <ConfigPoliciesTab type="tasks" {...props} />,
+      key: 'tasks',
+      label: ConfigPoliciesValues.tasks.label,
+    },
+  ];
 
   return <Pivot items={tabItems} type="secondary" />;
 };
@@ -114,50 +98,21 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
 
   const updatePolicies = async () => {
     const configPolicies = form.getFieldValue(YAML_FORM_ITEM_NAME);
-    if (global) {
-      if (configPolicies.length) {
-        try {
-          await updateGlobalConfigPolicies({
-            configPolicies,
-            workloadType: ConfigPoliciesValues[type].workloadType,
-          });
-          openToast({ title: SUCCESS_MESSAGE });
-        } catch (error) {
-          handleError(error);
-        }
-      } else {
-        try {
-          await deleteGlobalConfigPolicies({
-            workloadType: ConfigPoliciesValues[type].workloadType,
-          });
-          openToast({ title: SUCCESS_MESSAGE });
-        } catch (error) {
-          handleError(error);
-        }
+    const workloadType = ConfigPoliciesValues[type].workloadType;
+
+    try {
+      if (global) {
+        configPolicies.length
+          ? await updateGlobalConfigPolicies({ configPolicies, workloadType })
+          : await deleteGlobalConfigPolicies({ workloadType });
+      } else if (workspaceId) {
+        configPolicies.length
+          ? await updateWorkspaceConfigPolicies({ configPolicies, workloadType, workspaceId })
+          : await deleteWorkspaceConfigPolicies({ workloadType, workspaceId });
       }
-    } else if (workspaceId) {
-      if (configPolicies.length) {
-        try {
-          await updateWorkspaceConfigPolicies({
-            configPolicies,
-            workloadType: ConfigPoliciesValues[type].workloadType,
-            workspaceId,
-          });
-          openToast({ title: SUCCESS_MESSAGE });
-        } catch (error) {
-          handleError(error);
-        }
-      } else {
-        try {
-          await deleteWorkspaceConfigPolicies({
-            workloadType: ConfigPoliciesValues[type].workloadType,
-            workspaceId,
-          });
-          openToast({ title: SUCCESS_MESSAGE });
-        } catch (error) {
-          handleError(error);
-        }
-      }
+      openToast({ title: SUCCESS_MESSAGE });
+    } catch (error) {
+      handleError(error);
     }
   };
 
