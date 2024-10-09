@@ -87,7 +87,3 @@ func TestMakeBrackets(t *testing.T) {
 		require.Equal(t, c.expBrackets, brackets)
 	}
 }
-
-func TestAdaptiveASHA(t *testing.T) {
-	// xxx: write this
-}

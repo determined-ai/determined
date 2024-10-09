@@ -167,7 +167,6 @@ func (s *asyncHalvingStoppingSearch) validationCompleted(
 		*value *= -1
 	}
 	ops := s.stopRun(runID, *timeStep, *value)
-	fmt.Printf("validation complete trial=%d, step=%v, metric=%v ops=%v runrungs=%v, rungs=%v\n", runID, *timeStep, *value, ops, s.RunRungs, s.Rungs)
 	allTrials := len(s.RunRungs) - s.InvalidRuns
 	if len(ops) > 0 && allTrials < s.MaxTrials() {
 		create := NewCreate(

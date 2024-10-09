@@ -118,7 +118,6 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 			RawMaxTrials:           &bracket.maxTrials,
 			RawDivisor:             ptrs.Ptr(config.Divisor()),
 			RawMaxConcurrentTrials: ptrs.Ptr(bracket.maxConcurrentTrials),
-			RawStopOnce:            ptrs.Ptr(config.StopOnce()),
 			RawTimeMetric:          config.RawTimeMetric,
 			RawMaxTime:             config.RawMaxTime,
 		}
