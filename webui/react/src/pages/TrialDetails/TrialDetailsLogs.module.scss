@@ -19,7 +19,7 @@
   }
   .search {
     .logContainer {
-      height: 100%;
+      height: calc(100% - 22px);
       overflow-y: auto;
 
       .log {

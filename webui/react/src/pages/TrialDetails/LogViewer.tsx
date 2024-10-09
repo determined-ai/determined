@@ -66,7 +66,7 @@ export type FetchDirection = ValueOf<typeof FetchDirection>;
 export const ARIA_LABEL_ENABLE_TAILING = 'Enable Tailing';
 export const ARIA_LABEL_SCROLL_TO_OLDEST = 'Scroll to Oldest';
 
-const PAGE_LIMIT = 100;
+export const PAGE_LIMIT = 100;
 const THROTTLE_TIME = 50;
 
 export const formatLogEntry = (log: Log): ViewerLog => {

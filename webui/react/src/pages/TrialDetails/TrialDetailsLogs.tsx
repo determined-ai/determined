@@ -31,6 +31,7 @@ import { ExperimentBase, Log, TrialDetails, TrialLog } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
+import { dateTimeStringSorter } from 'utils/sort';
 import { pluralizer } from 'utils/string';
 
 import LogViewer, {
@@ -38,6 +39,7 @@ import LogViewer, {
   FetchDirection,
   FetchType,
   formatLogEntry,
+  PAGE_LIMIT,
   ViewerLog,
 } from './LogViewer';
 import css from './TrialDetailsLogs.module.scss';
@@ -329,7 +331,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         local.current.idSet.add(log.id);
         return !isDuplicate && !isTqdm;
       })
-      .map((log) => formatLogEntry(log));
+      .map((log) => formatLogEntry(log))
+      .sort((a, b) => dateTimeStringSorter(a['time'] as string, b['time'] as string));
   }, []);
 
   const onSelectLog = useCallback(
@@ -353,7 +356,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           {
             canceler: canceler.current,
             fetchDirection: FetchDirection.Older,
-            limit: 100,
+            limit: PAGE_LIMIT,
             offsetLog: logEntry,
           },
           FetchType.Older,
@@ -365,14 +368,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           {
             canceler: canceler.current,
             fetchDirection: FetchDirection.Newer,
-            limit: 100,
+            limit: PAGE_LIMIT,
             offsetLog: logEntry,
           },
           FetchType.Newer,
         ),
         (log) => bufferAfter.push(mapV1LogsResponse(log)),
       );
-      setLogs([...processLogs(bufferBefore.reverse()), ...processLogs(bufferAfter)]);
+      setLogs(processLogs([...bufferBefore, ...bufferAfter]));
     },
     [handleFetch, logs, processLogs],
   );
