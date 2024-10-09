@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Regenerate proto/buf.image.bin
-make get-deps-proto
 make -C proto gen-buf-image
 
 # If proto/buf.image.bin has been modified locally, then we have changes to
