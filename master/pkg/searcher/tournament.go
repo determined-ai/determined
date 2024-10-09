@@ -2,7 +2,6 @@ package searcher
 
 import (
 	"encoding/json"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -64,12 +63,8 @@ func (s *tournamentSearch) initialRuns(ctx context) ([]Action, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Set SubSearchID on the create actions.
-		for _, create := range creates {
-			action := create.(Create)
-			action.SubSearchID = i
-			actions = append(actions, action)
-		}
+		s.markCreates(i, creates)
+		actions = append(actions, creates...)
 	}
 	return actions, nil
 }
@@ -80,7 +75,7 @@ func (s *tournamentSearch) runCreated(
 	s.RunTable[runID] = action.SubSearchID
 	subSearch := s.subSearches[action.SubSearchID]
 	ops, err := subSearch.runCreated(ctx, runID, action)
-	return s.markCreates(action.SubSearchID, runID, ops), err
+	return s.markCreates(action.SubSearchID, ops), err
 }
 
 func (s *tournamentSearch) validationCompleted(
@@ -89,17 +84,17 @@ func (s *tournamentSearch) validationCompleted(
 	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
 	ops, err := subSearch.validationCompleted(ctx, runID, metrics)
-	return s.markCreates(subSearchID, runID, ops), err
+	return s.markCreates(subSearchID, ops), err
 }
 
-// trialClosed informs the searcher that the trial has been closed as a result of a Close operation.
+// runClosed informs the searcher that the trial has been closed as a result of a Close operation.
 func (s *tournamentSearch) runClosed(
 	ctx context, runID int32,
 ) ([]Action, error) {
 	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
 	ops, err := subSearch.runClosed(ctx, runID)
-	return s.markCreates(subSearchID, runID, ops), err
+	return s.markCreates(subSearchID, ops), err
 }
 
 func (s *tournamentSearch) runExitedEarly(
@@ -108,7 +103,7 @@ func (s *tournamentSearch) runExitedEarly(
 	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
 	ops, err := subSearch.runExitedEarly(ctx, runID, exitedReason)
-	return s.markCreates(subSearchID, runID, ops), err
+	return s.markCreates(subSearchID, ops), err
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
@@ -135,10 +130,12 @@ func (s *tournamentSearch) progress(
 	return sum / float64(len(s.subSearches))
 }
 
-func (s *tournamentSearch) markCreates(subSearchID int, runID int32, actions []Action) []Action {
-	for _, action := range actions {
+func (s *tournamentSearch) markCreates(subSearchID int, actions []Action) []Action {
+	for i, action := range actions {
 		if _, ok := action.(Create); ok {
-			s.RunTable[runID] = subSearchID
+			create := action.(Create)
+			create.SubSearchID = subSearchID
+			actions[i] = create
 		}
 	}
 	return actions
