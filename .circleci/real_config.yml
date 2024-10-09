@@ -3227,19 +3227,13 @@ jobs:
       DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
-      # TODO CAROLINA: remove pip build, take inputs of commit SHAs, not just tags.
       - when:
           condition: <<parameters.upgrade>>
           steps:
             - run: 
-                name: Fetch Tags & Checkout <<parameters.det-version>> Version
-                command: git fetch --tags && git checkout tags/<<parameters.det-version>>
-            - run: 
-                name: Fetch Release Branch & checkout
-                command: # given branch name, find most recent build, & substitute in ... ?
-            # 1. checkout git branch
-            # 2. iterate through SHAs & check which is a match (for master, agent, etc) in docker image registry
-            # 3. take first match & git fetch that SHA
+                name: Fetch & Checkout Branch/Commit SHA <<parameters.det-version>>
+                command: git fetch origin <<parameters.det-version>> && git checkout <<parameters.det-version>>
+            - package-and-push-system-dev
         
       - add-and-fetch-upstream
       - skip-if-only-docs
