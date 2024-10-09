@@ -2,8 +2,6 @@ package searcher
 
 import (
 	"fmt"
-	"math/rand"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/mathx"
@@ -11,20 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
-
-// ValidationFunction calculates the validation metric for the validation step.
-type ValidationFunction func(random *rand.Rand, trialID, idx int) float64
-
-// ConstantValidation returns the same validation metric for all validation steps.
-func ConstantValidation(_ *rand.Rand, _, _ int) float64 { return 1 }
-
-// RandomValidation returns a random validation metric for each validation step.
-func RandomValidation(rand *rand.Rand, _, _ int) float64 { return rand.Float64() }
-
-// TrialIDMetric returns the trialID as the metric for all validation steps.
-func TrialIDMetric(_ *rand.Rand, trialID, _ int) float64 {
-	return float64(trialID)
-}
 
 type SearchSummary struct {
 	Runs   map[int]SearchUnit

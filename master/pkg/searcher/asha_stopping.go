@@ -231,7 +231,6 @@ func (s *asyncHalvingStoppingSearch) stopRun(
 
 		// Continue to next rung.
 	}
-
 	return actions
 }
 

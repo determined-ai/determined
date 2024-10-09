@@ -26,17 +26,21 @@ type testRun struct {
 }
 
 func (tr testRun) String() string {
-	return fmt.Sprintf("testRun{id: %v, hparams: %v, stopped: %v, stoppedAt: %v}", tr.id, tr.hparams, tr.stopped, tr.stoppedAt)
+	return fmt.Sprintf("testRun{id: %v, hparams: %v, stopped: %v, stoppedAt: %v, completed: %v}", tr.id, tr.hparams, tr.stopped, tr.stoppedAt, tr.completed)
 }
 
-func (sr *TestSearchRunner) trainLoop() {
-	startingMetric := 1.0
-	sr.start()
+func (sr *TestSearchRunner) run(maxUnits int, valPeriod int, increasing bool) {
+	metric := 0.0
+	sr.initialRuns()
 	for i := 0; i < len(sr.runs); i++ {
 		run := sr.runs[int32(i)]
-		for j := 0; j <= 100; j += 10 {
-			startingMetric += 1
-			sr.reportValidationMetric(run.id, j, startingMetric)
+		for j := 0; j <= maxUnits; j += valPeriod {
+			if increasing {
+				metric = metric + 1
+			} else {
+				metric = metric - 1
+			}
+			sr.reportValidationMetric(run.id, j, metric)
 			//fmt.Printf("run=%v, step=%v, metric=%v, created=%v, stopping=%v\n", run.id, j, startingMetric, creates, stops)
 			if run.stopped {
 				run.stoppedAt = j
@@ -60,7 +64,7 @@ func NewTestSearchRunner(t *testing.T, config expconf.SearcherConfig, hparams ex
 	}
 }
 
-func (sr *TestSearchRunner) start() ([]testRun, []testRun) {
+func (sr *TestSearchRunner) initialRuns() ([]testRun, []testRun) {
 	creates, err := sr.searcher.InitialRuns()
 	assert.NilError(sr.t, err, "error getting initial runs")
 	created, stopped := sr.handleActions(creates)
