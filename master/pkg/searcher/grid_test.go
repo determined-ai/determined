@@ -4,6 +4,7 @@ package searcher
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -263,6 +264,7 @@ func TestGridSearchMethod(t *testing.T) {
 	}
 	searcherConfig := expconf.SearcherConfig{
 		RawGridConfig: &gridConfig,
+		RawMetric:     ptrs.Ptr("loss"),
 	}
 	hparams := expconf.Hyperparameters{
 		"a": expconf.Hyperparameter{
@@ -271,51 +273,20 @@ func TestGridSearchMethod(t *testing.T) {
 			},
 		},
 	}
-	allHparams := map[int]bool{0: true, 1: true, 2: true, 3: true}
+	allHparams := []int{0, 1, 2, 3}
 
 	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
 
-	// Expect 2 initial runs created.
-	runsCreated, runsStopped := testSearchRunner.start()
-	require.Equal(t, maxConcurrentTrials, len(runsCreated))
-	require.Equal(t, 0, len(runsStopped))
-	run1, run2 := runsCreated[0], runsCreated[1]
-	hp := run1.hparams["a"].(int)
-	_, ok := allHparams[hp]
-	require.True(t, ok)
-	delete(allHparams, hp)
+	// Simulate the search and check resulting runs.
+	testSearchRunner.run(100, 10, false)
 
-	hp = run2.hparams["a"].(int)
-	_, ok = allHparams[hp]
-	require.True(t, ok)
-	delete(allHparams, hp)
-
-	// First 1 finished training -> should create new run (run 3).
-	runsCreated, runsStopped = testSearchRunner.closeRun(run1.id)
-	require.Equal(t, 1, len(runsCreated))
-	require.Equal(t, 0, len(runsStopped))
-	run3 := runsCreated[0]
-	hp = run3.hparams["a"].(int)
-	_, ok = allHparams[run3.hparams["a"].(int)]
-	require.True(t, ok)
-	delete(allHparams, hp)
-
-	// Run 2 finished training -> create run 4.
-	runsCreated, runsStopped = testSearchRunner.closeRun(run2.id)
-	require.Equal(t, 1, len(runsCreated))
-	require.Equal(t, 0, len(runsStopped))
-	run4 := runsCreated[0]
-	hp = run4.hparams["a"].(int)
-	_, ok = allHparams[hp]
-	require.True(t, ok)
-	delete(allHparams, hp)
-
-	// Run 3 & 4 finished -> no new runs should be created.
-	runsCreated, runsStopped = testSearchRunner.closeRun(run3.id)
-	require.Equal(t, 0, len(runsCreated))
-	runsCreated, runsStopped = testSearchRunner.closeRun(run4.id)
-	require.Equal(t, 0, len(runsCreated))
-
-	// All params in grid space have been exhausted.
-	require.Equal(t, 0, len(allHparams))
+	// 4 total runs for each hparam in space, all should run to completion.
+	var runHparams []int
+	require.Len(t, testSearchRunner.runs, len(allHparams))
+	for _, tr := range testSearchRunner.runs {
+		require.False(t, tr.stopped)
+		runHparams = append(runHparams, tr.hparams["a"].(int))
+	}
+	slices.Sort(runHparams)
+	require.Equal(t, allHparams, runHparams)
 }

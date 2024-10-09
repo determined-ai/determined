@@ -390,7 +390,7 @@ func TestStopTrials(t *testing.T) {
 	}
 }
 
-func TestASHAStopping(t *testing.T) {
+func TestASHAStoppingSearchMethod(t *testing.T) {
 	maxConcurrentTrials := 3
 	maxTrials := 10
 	divisor := 3.0
@@ -429,36 +429,17 @@ func TestASHAStopping(t *testing.T) {
 
 	require.Equal(t, expectedRungs, search.Rungs)
 
-	// Start the search, validate correct number of initial runs created.
-	runsCreated, runsStopped := testSearchRunner.start()
-	require.Equal(t, maxConcurrentTrials, len(runsCreated))
-	require.Equal(t, 0, len(runsStopped))
+	// Simulate the search.
+	testSearchRunner.run(900, 100, true)
 
-	startingMetric := 1.0
-
-	// "Train" all runs to the first rung target. Since we're reporting progressively worse metrics,
-	// only the first run should continue to the next rungs.
-	var stoppedRuns []testRun
-
-	for len(runsCreated) > 0 {
-		var created []testRun
-		for _, rc := range runsCreated {
-			startingMetric += 1
-			creates, stops := testSearchRunner.reportValidationMetric(rc.id, 100, startingMetric)
-			stoppedRuns = append(stoppedRuns, stops...)
-			created = append(created, creates...)
+	// Expect 10 total runs.
+	// Since we reported progressively worse metrics, only the first run should continue.
+	require.Len(t, testSearchRunner.runs, maxTrials)
+	for i, tr := range testSearchRunner.runs {
+		if i == 0 {
+			require.Equal(t, 900, tr.stoppedAt)
+		} else {
+			require.Equal(t, 100, tr.stoppedAt)
 		}
-		runsCreated = created
 	}
-	require.Equal(t, maxTrials-1, len(stoppedRuns))
-
-	// Report metrics for second and third rungs. Run should continue.
-	creates, stops := testSearchRunner.reportValidationMetric(0, 300, startingMetric)
-	require.Equal(t, 0, len(creates))
-	require.Equal(t, 0, len(stops))
-
-	// Report metrics for last rung, run should stop.
-	creates, stops = testSearchRunner.reportValidationMetric(0, 900, startingMetric)
-	require.Equal(t, 0, len(creates))
-	require.Equal(t, 1, len(stops))
 }

@@ -12,60 +12,41 @@ import (
 
 func TestRandomSearchMethod(t *testing.T) {
 	conf := expconf.SearcherConfig{
+		RawMetric: ptrs.Ptr("loss"),
 		RawRandomConfig: &expconf.RandomConfig{
 			RawMaxTrials:           ptrs.Ptr(4),
 			RawMaxConcurrentTrials: ptrs.Ptr(2),
 		},
 	}
-	intHparam := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.Ptr(3)}
+	intHparam := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.Ptr(4)}
 	hparams := expconf.Hyperparameters{
 		"x": expconf.Hyperparameter{RawIntHyperparameter: intHparam},
 	}
 	testSearchRunner := NewTestSearchRunner(t, conf, hparams)
 
-	// Expect 2 initial runs created.
-	created, stopped := testSearchRunner.start()
-	require.Len(t, created, 2)
-	require.Len(t, stopped, 0)
-	for _, r := range created {
-		require.True(t, r.hparams["x"].(int) <= 10 && r.hparams["x"].(int) > 0)
+	// Simulate a search and verify expected run states.
+	testSearchRunner.run(100, 10, false)
+	// 4 total runs created, each with hparam in space and run to completion.
+	require.Len(t, testSearchRunner.runs, 4)
+	for _, tr := range testSearchRunner.runs {
+		hparam := tr.hparams["x"].(int)
+		require.True(t, hparam <= 10 && hparam >= 0)
+		require.False(t, tr.stopped)
 	}
-	run1, run2 := created[0], created[1]
-
-	// Run 1 finished training, create run 3
-	runsCreated, runsStopped := testSearchRunner.closeRun(run1.id)
-	require.Len(t, runsCreated, 1)
-	require.Len(t, runsStopped, 0)
-	run3 := runsCreated[0]
-
-	// Run 2 finished training, create run 4
-	runsCreated, runsStopped = testSearchRunner.closeRun(run2.id)
-	require.Len(t, runsCreated, 1)
-	require.Len(t, runsStopped, 0)
-	run4 := runsCreated[0]
-
-	// Run 3 & 4 finished training, no new runs created.
-	runsCreated, runsStopped = testSearchRunner.closeRun(run3.id)
-	require.Len(t, runsCreated, 0)
-	runsCreated, runsStopped = testSearchRunner.closeRun(run4.id)
-	require.Len(t, runsCreated, 0)
 }
 
 func TestSingleSearchMethod(t *testing.T) {
 	conf := expconf.SearcherConfig{
+		RawMetric:       ptrs.Ptr("loss"),
 		RawSingleConfig: &expconf.SingleConfig{},
 	}
 
 	testSearchRunner := NewTestSearchRunner(t, conf, expconf.Hyperparameters{})
 
+	// Simulate a search and verify expected run states.
+	testSearchRunner.run(100, 10, false)
+
 	// Single search should create exactly one run.
-	created, stopped := testSearchRunner.start()
-	require.Len(t, created, 1)
-	require.Len(t, stopped, 0)
-
-	run := created[0]
-
-	// When the run is finished, no new runs should be created.
-	created, stopped = testSearchRunner.closeRun(run.id)
-	require.Len(t, created, 0)
+	require.Len(t, testSearchRunner.runs, 1)
+	require.False(t, testSearchRunner.runs[0].stopped)
 }
