@@ -77,7 +77,7 @@ repos:
         entry: ./pre-commit/lock-api-state.sh
         language: "script"
         description: "Fails if the existing protobuf definitions would generate a new buf.image.bin."
-        files: '^proto/'
+        files: '^proto/.*'
         verbose: true
 
   - repo: https://github.com/adrienverge/yamllint.git
