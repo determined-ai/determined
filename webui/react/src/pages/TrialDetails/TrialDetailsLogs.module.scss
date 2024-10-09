@@ -7,6 +7,7 @@
   .header {
     border-bottom: var(--theme-stroke-width) solid var(--theme-stage-border);
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     margin-bottom: var(--spacing-md);
     padding-block: var(--spacing-md);
@@ -14,6 +15,7 @@
 
     .filters {
       display: flex;
+      flex-wrap: wrap;
       gap: var(--spacing-md);
     }
   }
