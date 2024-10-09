@@ -1,11 +1,11 @@
 import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
-import Icon from 'hew/Icon';
+
 import Input from 'hew/Input';
-import InputNumber from 'hew/InputNumber';
+
 import { Modal } from 'hew/Modal';
-import Row from 'hew/Row';
+
 import Spinner from 'hew/Spinner';
 import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
@@ -29,16 +29,14 @@ import handleError, {
 import {
   FULL_CONFIG_BUTTON_TEXT,
   getExperimentName,
-  getMaxLengthType,
-  getMaxLengthValue,
+
   SIMPLE_CONFIG_BUTTON_TEXT,
   trialContinueConfig,
   upgradeConfig,
 } from 'utils/experiment';
 import { routeToReactUrl } from 'utils/routes';
-import { capitalize, capitalizeWord } from 'utils/string';
+import { capitalize } from 'utils/string';
 
-import css from './ExperimentContinueModal.module.scss';
 const FORM_ID = 'continue-experiment-form';
 
 export const ContinueExperimentType = {
@@ -50,12 +48,12 @@ export type ContinueExperimentType = ValueOf<typeof ContinueExperimentType>;
 
 const ExperimentCopyMapping: Record<ContinueExperimentType, string> = {
   [ContinueExperimentType.Continue]: 'Continue Trial in New Experiment',
-  [ContinueExperimentType.Reactivate]: 'Reactivate Current Trial',
+  [ContinueExperimentType.Reactivate]: 'Resume Current Trial',
 } satisfies Record<ContinueExperimentType, string>;
 
 const SearchCopyMapping: Record<ContinueExperimentType, string> = {
   [ContinueExperimentType.Continue]: 'Continue as New Run',
-  [ContinueExperimentType.Reactivate]: 'Reactivate Current Run',
+  [ContinueExperimentType.Reactivate]: 'Resume Current Run',
 };
 
 type EntityCopyMap = {
@@ -74,8 +72,6 @@ const flatRunsEntityCopyMap: EntityCopyMap = {
 };
 
 const EXPERIMENT_NAME = 'name';
-const MAX_LENGTH = 'maxLength';
-const ADDITIONAL_LENGTH = 'additionalLength';
 
 export interface Props {
   onClose?: () => void;
@@ -116,7 +112,6 @@ const ExperimentContinueModalComponent = ({
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
-  const [originalConfig, setOriginalConfig] = useState(experiment.configRaw);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
   const isReactivate = type === ContinueExperimentType.Reactivate;
@@ -125,9 +120,7 @@ const ExperimentContinueModalComponent = ({
     : [ExperimentCopyMapping, experimentEntityCopyMap];
   const actionCopy = actionCopyMap[modalState.type];
 
-  useEffect(() => setOriginalConfig(experiment.configRaw), [experiment]);
-
-  const requiredFields = useMemo(() => [EXPERIMENT_NAME, MAX_LENGTH], []);
+  const requiredFields = useMemo(() => [EXPERIMENT_NAME], []);
 
   const handleModalClose = () => {
     setModalState(DEFAULT_MODAL_STATE);
@@ -142,24 +135,6 @@ const ExperimentContinueModalComponent = ({
       const values = form.getFieldsValue();
       if (!prev.isAdvancedMode) {
         prev.config.name = values[EXPERIMENT_NAME];
-      }
-      if (!isReactivate && values[MAX_LENGTH]) {
-        const maxLengthType = getMaxLengthType(prev.config);
-        if (maxLengthType) {
-          prev.config.searcher.max_length[maxLengthType] = parseInt(values[MAX_LENGTH]);
-        } else {
-          prev.config.searcher.max_length = parseInt(values[MAX_LENGTH]);
-        }
-      }
-      if (isReactivate && values[ADDITIONAL_LENGTH] && parseInt(values[ADDITIONAL_LENGTH]) >= 0) {
-        const maxLengthType = getMaxLengthType(prev.config);
-        if (maxLengthType) {
-          prev.config.searcher.max_length[maxLengthType] =
-            originalConfig.searcher.max_length[maxLengthType] + parseInt(values[ADDITIONAL_LENGTH]);
-        } else {
-          prev.config.searcher.max_length =
-            originalConfig.searcher.max_length + parseInt(values[ADDITIONAL_LENGTH]);
-        }
       }
       prev.configString = yaml.dump(prev.config);
       return prev;
@@ -208,37 +183,9 @@ const ExperimentContinueModalComponent = ({
     if (modalState.isAdvancedMode && form) {
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
-        const maxLengthType = getMaxLengthType(newConfig);
-        const isReactivate = modalState.type === ContinueExperimentType.Reactivate;
-        const originalLength = maxLengthType
-          ? originalConfig.searcher.max_length[maxLengthType]
-          : originalConfig.searcher.max_length;
-        let additionalLength;
-        try {
-          const newLength = maxLengthType
-            ? newConfig.searcher.max_length[maxLengthType]
-            : newConfig.searcher.max_length;
-          const lengthDifference = newLength - originalLength;
-          if (
-            originalLength &&
-            lengthDifference &&
-            Number.isInteger(originalLength) &&
-            Number.isInteger(lengthDifference) &&
-            lengthDifference > 0
-          ) {
-            additionalLength = lengthDifference;
-          }
-        } catch {
-          additionalLength = undefined;
-        }
 
         form.setFields([
-          { name: EXPERIMENT_NAME, value: getExperimentName(newConfig) },
-          {
-            name: MAX_LENGTH,
-            value: !isReactivate ? getMaxLengthValue(newConfig) : undefined,
-          },
-          { name: ADDITIONAL_LENGTH, value: additionalLength },
+          { name: EXPERIMENT_NAME, value: getExperimentName(newConfig) }
         ]);
         await form.validateFields();
       } catch (e) {
@@ -247,24 +194,12 @@ const ExperimentContinueModalComponent = ({
     } else {
       setDisabled(false);
     }
-  }, [form, modalState, originalConfig.searcher.max_length]);
+  }, [form, modalState]);
 
   const getConfigFromForm = useCallback(
     (config: RawJson) => {
       if (!form) return yaml.dump(config);
-
-      const formValues = form.getFieldsValue();
       const newConfig = structuredClone(config);
-
-      if (formValues[MAX_LENGTH]) {
-        const maxLengthType = getMaxLengthType(newConfig);
-        if (maxLengthType === undefined) {
-          // Unitless searcher config.
-          newConfig.searcher.max_length = parseInt(formValues[MAX_LENGTH]);
-        } else {
-          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues[MAX_LENGTH]) };
-        }
-      }
       return yaml.dump(newConfig);
     },
     [form],
@@ -408,7 +343,6 @@ const ExperimentContinueModalComponent = ({
 
   const hideSimpleConfig = isReactivate && experiment.state !== RunState.Completed;
 
-  const maxLengthType = capitalizeWord(getMaxLengthType(modalState.config) || 'batches');
   const modalIsInAdvancedMode = modalState.isAdvancedMode || hideSimpleConfig;
   return (
     <Modal
@@ -428,7 +362,7 @@ const ExperimentContinueModalComponent = ({
         handleError,
         handler: handleSubmit,
         text: isReactivate
-          ? `Reactivate ${capitalize(entityCopyMap.trial)}`
+          ? `Resume ${capitalize(entityCopyMap.trial)}`
           : `Launch ${capitalize(entityCopyMap.experiment)}`,
       }}
       title={actionCopy}
@@ -452,7 +386,7 @@ const ExperimentContinueModalComponent = ({
         {!modalIsInAdvancedMode && (
           <Body>
             {isReactivate
-              ? `Reactivate and continue the current ${entityCopyMap.trial} from the latest checkpoint`
+              ? `Resume the current ${entityCopyMap.trial} from the latest checkpoint`
               : f_flat_runs
                 ? "Start a new run from the current run's latest checkpoint"
                 : "Start a new experiment from the current trial's latest checkpoint"}
@@ -477,52 +411,6 @@ const ExperimentContinueModalComponent = ({
                 },
               ]}>
               <Input />
-            </Form.Item>
-          )}
-          {!isReactivate && (
-            <Form.Item
-              label={`Max ${maxLengthType}`}
-              name={MAX_LENGTH}
-              rules={[
-                {
-                  required: true,
-                  validator: (_rule, value) => {
-                    let errorMessage = '';
-                    if (!value) errorMessage = `Please provide a max ${maxLengthType}.`;
-                    if (value < 1) errorMessage = `Max ${maxLengthType} must be at least 1.`;
-                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
-                  },
-                },
-              ]}>
-              <Input type="number" />
-            </Form.Item>
-          )}
-          {isReactivate && !hideSimpleConfig && (
-            <Form.Item
-              label={
-                <Row>
-                  {`Additional ${maxLengthType}`}
-                  <Icon
-                    name="info"
-                    showTooltip
-                    title={`Add additional training to the current ${entityCopyMap.trial}.`}
-                  />
-                </Row>
-              }
-              name={ADDITIONAL_LENGTH}
-              rules={[
-                {
-                  required: false,
-                  validator: (_rule, value) => {
-                    let errorMessage = '';
-                    if (value < 0) errorMessage = `Additional ${maxLengthType} must be at least 0.`;
-                    if (value && !Number.isInteger(value))
-                      errorMessage = `Additional ${maxLengthType} must be an integer.`;
-                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
-                  },
-                },
-              ]}>
-              <InputNumber className={css.fullWidth} />
             </Form.Item>
           )}
         </Form>

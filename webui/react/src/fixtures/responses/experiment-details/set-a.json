@@ -197,9 +197,6 @@
         "bracket_rungs": null,
         "divisor": 4,
         "max_concurrent_trials": 16,
-        "max_length": {
-          "epochs": 32
-        },
         "max_rungs": 5,
         "max_trials": 16,
         "metric": "validation_error",
@@ -291,9 +288,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "epochs": 200
-        },
         "metric": "val_accuracy",
         "name": "single",
         "smaller_is_better": true,
@@ -424,9 +418,6 @@
       },
       "scheduling_unit": 16,
       "searcher": {
-        "max_length": {
-          "batches": 64
-        },
         "metric": "loss",
         "name": "single",
         "smaller_is_better": true,
@@ -523,9 +514,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "batches": 2000
-        },
         "metric": "error",
         "name": "single",
         "smaller_is_better": true,
@@ -645,9 +633,6 @@
       },
       "scheduling_unit": 16,
       "searcher": {
-        "max_length": {
-          "batches": 64
-        },
         "metric": "loss",
         "name": "single",
         "smaller_is_better": true,
@@ -794,9 +779,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "records": 180000
-        },
         "metric": "f1",
         "name": "single",
         "smaller_is_better": false,
@@ -897,9 +879,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "epochs": 5
-        },
         "metric": "val_accuracy",
         "name": "single",
         "smaller_is_better": false,
@@ -1182,9 +1161,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "epochs": 1
-        },
         "metric": "validation_loss",
         "name": "single",
         "smaller_is_better": true,
@@ -1284,9 +1260,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "epochs": 4
-        },
         "metric": "val_avg_iou",
         "name": "single",
         "smaller_is_better": false,
@@ -1386,9 +1359,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "epochs": 5
-        },
         "metric": "val_accuracy",
         "name": "single",
         "smaller_is_better": true,
@@ -1508,9 +1478,6 @@
       "scheduling_unit": 100,
       "searcher": {
         "divisor": 4,
-        "max_length": {
-          "batches": 80000
-        },
         "max_rungs": 5,
         "max_trials": 16,
         "metric": "validation_error",
@@ -1633,9 +1600,6 @@
       "scheduling_unit": 100,
       "searcher": {
         "divisor": 4,
-        "max_length": {
-          "batches": 80000
-        },
         "max_rungs": 5,
         "max_trials": 16,
         "metric": "validation_error",
@@ -1746,9 +1710,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "batches": 937
-        },
         "metric": "validation_loss",
         "name": "single",
         "smaller_is_better": true,
@@ -1868,9 +1829,6 @@
       },
       "scheduling_unit": 16,
       "searcher": {
-        "max_length": {
-          "batches": 64
-        },
         "metric": "loss",
         "name": "single",
         "smaller_is_better": true,
@@ -1979,9 +1937,7 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": {
-          "epochs": 1
-        },
+
         "metric": "validation_loss",
         "name": "single",
         "smaller_is_better": true,
@@ -2657,7 +2613,6 @@
         },
         "scheduling_unit": 100,
         "searcher": {
-          "max_length": 1,
           "metric": "x",
           "name": "single",
           "smaller_is_better": true,
@@ -2667,7 +2622,7 @@
         "slurm": {},
         "workspace": "test integration"
       },
-      "originalConfig": "environment:\n  add_capabilities: []\n  drop_capabilities: []\n  environment_variables:\n    cpu: []\n    cuda: []\n    rocm: []\n  force_pull_image: false\n  image:\n    cpu: determinedai/pytorch-ngc-dev:e960eae\n    cuda: determinedai/pytorch-ngc-dev:e960eae\n    rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512\n  pod_spec: null\n  ports: {}\n  proxy_ports: []\nproject: test integration 1\nworkspace: test integration\nbind_mounts: []\ncheckpoint_policy: best\ncheckpoint_storage:\n  access_key: null\n  bucket: det-determined-main-us-west-2-573932760021\n  endpoint_url: null\n  prefix: null\n  save_experiment_best: 0\n  save_trial_best: 1\n  save_trial_latest: 1\n  secret_key: null\n  type: s3\ndata: {}\ndebug: false\ndescription: null\nentrypoint: python3 2_checkpoints.py\nhyperparameters: {}\nintegrations:\n  pachyderm:\n    dataset:\n      branch: master\n      commit: 1d2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b\n      project: test-project\n      repo: test-data\n      token: 1234567890abcdef1234567890abcdef\n    pachd:\n      host: localhost\n      port: 30650\n    proxy:\n      host: localhost\n      port: 80\n      scheme: http\nlabels: []\nlog_policies: []\nmax_restarts: 0\nmin_checkpoint_period:\n  batches: 0\nmin_validation_period:\n  batches: 0\nname: core-api-stage-2\noptimizations:\n  aggregation_frequency: 1\n  auto_tune_tensor_fusion: false\n  average_aggregated_gradients: true\n  average_training_metrics: true\n  grad_updates_size_file: null\n  gradient_compression: false\n  mixed_precision: O0\n  tensor_fusion_cycle_time: 1\n  tensor_fusion_threshold: 64\npbs: {}\nperform_initial_validation: false\nprofiling:\n  begin_on_batch: 0\n  enabled: false\n  end_after_batch: null\n  sync_timings: true\nrecords_per_epoch: 0\nreproducibility:\n  experiment_seed: 1718898986\nresources:\n  devices: []\n  is_single_node: null\n  max_slots: null\n  native_parallel: false\n  priority: null\n  resource_pool: compute-pool\n  shm_size: null\n  slots_per_trial: 1\n  weight: 1\nscheduling_unit: 100\nsearcher:\n  max_length: 1\n  metric: x\n  name: single\n  smaller_is_better: true\n  source_checkpoint_uuid: null\n  source_trial_id: null\nslurm: {}\n",
+      "originalConfig": "environment:\n  add_capabilities: []\n  drop_capabilities: []\n  environment_variables:\n    cpu: []\n    cuda: []\n    rocm: []\n  force_pull_image: false\n  image:\n    cpu: determinedai/pytorch-ngc-dev:e960eae\n    cuda: determinedai/pytorch-ngc-dev:e960eae\n    rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512\n  pod_spec: null\n  ports: {}\n  proxy_ports: []\nproject: test integration 1\nworkspace: test integration\nbind_mounts: []\ncheckpoint_policy: best\ncheckpoint_storage:\n  access_key: null\n  bucket: det-determined-main-us-west-2-573932760021\n  endpoint_url: null\n  prefix: null\n  save_experiment_best: 0\n  save_trial_best: 1\n  save_trial_latest: 1\n  secret_key: null\n  type: s3\ndata: {}\ndebug: false\ndescription: null\nentrypoint: python3 2_checkpoints.py\nhyperparameters: {}\nintegrations:\n  pachyderm:\n    dataset:\n      branch: master\n      commit: 1d2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b\n      project: test-project\n      repo: test-data\n      token: 1234567890abcdef1234567890abcdef\n    pachd:\n      host: localhost\n      port: 30650\n    proxy:\n      host: localhost\n      port: 80\n      scheme: http\nlabels: []\nlog_policies: []\nmax_restarts: 0\nmin_checkpoint_period:\n  batches: 0\nmin_validation_period:\n  batches: 0\nname: core-api-stage-2\noptimizations:\n  aggregation_frequency: 1\n  auto_tune_tensor_fusion: false\n  average_aggregated_gradients: true\n  average_training_metrics: true\n  grad_updates_size_file: null\n  gradient_compression: false\n  mixed_precision: O0\n  tensor_fusion_cycle_time: 1\n  tensor_fusion_threshold: 64\npbs: {}\nperform_initial_validation: false\nprofiling:\n  begin_on_batch: 0\n  enabled: false\n  end_after_batch: null\n  sync_timings: true\nrecords_per_epoch: 0\nreproducibility:\n  experiment_seed: 1718898986\nresources:\n  devices: []\n  is_single_node: null\n  max_slots: null\n  native_parallel: false\n  priority: null\n  resource_pool: compute-pool\n  shm_size: null\n  slots_per_trial: 1\n  weight: 1\nscheduling_unit: 100\nsearcher:\n  metric: x\n  name: single\n  smaller_is_better: true\n  source_checkpoint_uuid: null\n  source_trial_id: null\nslurm: {}\n",
       "projectOwnerId": 1262,
       "checkpointSize": "79",
       "checkpointCount": 2,
@@ -2798,7 +2753,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-        "max_length": 1,
         "metric": "x",
         "name": "single",
         "smaller_is_better": true,
