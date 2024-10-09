@@ -54,7 +54,8 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 	var constraints *model.Constraints
 
 	if workloadType == model.ExperimentType {
-		cp, err := configpolicy.UnmarshalExperimentConfigPolicy(configPolicies)
+		cp, err := configpolicy.UnmarshalConfigPolicy[configpolicy.ExperimentConfigPolicies](
+			configPolicies, configpolicy.InvalidExperimentConfigPolicyErr)
 		if err != nil {
 			return err
 		}
@@ -62,7 +63,8 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 		expConfigPolicies = cp.InvariantConfig
 		constraints = cp.Constraints
 	} else {
-		cp, err := configpolicy.UnmarshalNTSCConfigPolicy(configPolicies)
+		cp, err := configpolicy.UnmarshalConfigPolicy[configpolicy.NTSCConfigPolicies](
+			configPolicies, configpolicy.InvalidNTSCConfigPolicyErr)
 		if err != nil {
 			return err
 		}
@@ -112,7 +114,7 @@ func (a *apiServer) validateExperimentConfig(
 		}
 	}
 
-	return checkAgainstGlobalConfig(ctx, globalConfigPolicies, expConfigPolicies, nil, workloadType)
+	return checkAgainstGlobalConfig(globalConfigPolicies, expConfigPolicies, nil)
 }
 
 func (a *apiServer) validateNTSCConfig(
@@ -131,7 +133,7 @@ func (a *apiServer) validateNTSCConfig(
 		return err
 	}
 
-	return checkAgainstGlobalConfig(ctx, globalConfigPolicies, nil, ntscConfigPolicies, workloadType)
+	return checkAgainstGlobalConfig(globalConfigPolicies, nil, ntscConfigPolicies)
 }
 
 func (a *apiServer) checkAgainstGlobalPriority(ctx context.Context, taskPriority *int, workloadType string) error {
@@ -170,8 +172,9 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 }
 
 func checkAgainstGlobalConfig(
-	ctx context.Context, globalConfigPolicies *model.TaskConfigPolicies,
-	expConfig *expconf.ExperimentConfigV0, ntscConfig *model.CommandConfig, workloadType string,
+	globalConfigPolicies *model.TaskConfigPolicies,
+	expConfig *expconf.ExperimentConfigV0,
+	ntscConfig *model.CommandConfig,
 ) error {
 	if globalConfigPolicies == nil || globalConfigPolicies.InvariantConfig == nil {
 		return nil
@@ -185,7 +188,7 @@ func checkAgainstGlobalConfig(
 			return err
 		}
 
-		return configpolicy.HaveAtLeastOneSharedDefinedField(globalInvConfig, ntscConfig)
+		return configpolicy.ConfigPolicyConflict(globalInvConfig, ntscConfig)
 	}
 
 	if expConfig != nil {
@@ -196,7 +199,7 @@ func checkAgainstGlobalConfig(
 			return err
 		}
 
-		return configpolicy.HaveAtLeastOneSharedDefinedField(globalInvConfig, expConfig)
+		return configpolicy.ConfigPolicyConflict(globalInvConfig, expConfig)
 	}
 
 	return nil

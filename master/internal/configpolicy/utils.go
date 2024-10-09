@@ -39,16 +39,6 @@ func ValidWorkloadType(val string) bool {
 	}
 }
 
-// UnmarshalExperimentConfigPolicy unpacks a string into ExperimentConfigPolicy struct.
-func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicies, error) {
-	return UnmarshalConfigPolicy[ExperimentConfigPolicies](str, InvalidExperimentConfigPolicyErr)
-}
-
-// UnmarshalNTSCConfigPolicy unpacks a string into NTSCConfigPolicy struct.
-func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicies, error) {
-	return UnmarshalConfigPolicy[NTSCConfigPolicies](str, InvalidNTSCConfigPolicyErr)
-}
-
 // UnmarshalConfigPolicy is a generic helper function to unmarshal both JSON and YAML strings.
 func UnmarshalConfigPolicy[T any](str string, errString string) (*T, error) {
 	var configPolicy T
@@ -58,19 +48,11 @@ func UnmarshalConfigPolicy[T any](str string, errString string) (*T, error) {
 	var err error
 	// Attempt to decode JSON.
 	if err = dec.Decode(&configPolicy); err == nil {
-		// valid JSON input
-		if reflect.ValueOf(configPolicy).IsZero() {
-			return nil, fmt.Errorf(EmptyInvariantConfigErr)
-		}
 		return &configPolicy, nil
 	}
 
 	// Attempt to decode YAML if JSON fails.
 	if err = yaml.Unmarshal([]byte(str), &configPolicy, yaml.DisallowUnknownFields); err == nil {
-		// valid YAML input
-		if reflect.ValueOf(configPolicy).IsZero() {
-			return nil, fmt.Errorf(EmptyInvariantConfigErr)
-		}
 		return &configPolicy, nil
 	}
 
@@ -83,9 +65,9 @@ func MarshalConfigPolicy(configPolicy interface{}) *structpb.Struct {
 	return protoutils.ToStruct(configPolicy)
 }
 
-// HaveAtLeastOneSharedDefinedField compares two different configurations and
+// ConfigPolicyConflict compares two different configurations and
 // returns an error if both try to define the same field.
-func HaveAtLeastOneSharedDefinedField(config1, config2 interface{}) error {
+func ConfigPolicyConflict(config1, config2 interface{}) error {
 	v1 := reflect.ValueOf(config1)
 	v2 := reflect.ValueOf(config2)
 
