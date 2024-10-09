@@ -78,6 +78,7 @@ repos:
         language: "script"
         description: "Fails if the existing protobuf definitions would generate a new buf.image.bin."
         files: '^proto/'
+        pass_names: false'
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
