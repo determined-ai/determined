@@ -17,7 +17,7 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
-import { throttle } from 'throttle-debounce';
+import { debounce } from 'throttle-debounce';
 
 import useUI from 'components/ThemeProvider';
 import useFeature from 'hooks/useFeature';
@@ -239,12 +239,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const debouncedChangeSearch = useMemo(
     () =>
-      throttle(
+      debounce(
         500,
         (s: string) => {
           updateSettings({ searchText: s });
         },
-        { noLeading: true },
+        { atBegin: false },
       ),
     [updateSettings],
   );
