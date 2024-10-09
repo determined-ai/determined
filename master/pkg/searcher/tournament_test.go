@@ -2,6 +2,7 @@
 package searcher
 
 import (
+	"fmt"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/stretchr/testify/require"
@@ -113,4 +114,36 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 	runsCreated, runsStopped = testSearchRunner.reportValidationMetric(runsCreated[0].id, 30, 2.0)
 	require.Len(t, runsStopped, 1)
 	require.Len(t, runsCreated, 0)
+}
+
+func TestAdaptiveASHA(t *testing.T) {
+	maxConcurrentTrials := 3
+	maxTrials := 9
+	maxRungs := 5
+	divisor := 3.0
+	maxTime := 90
+	metric := "loss"
+	config := expconf.AdaptiveASHAConfig{
+		RawMaxTime:             &maxTime,
+		RawDivisor:             &divisor,
+		RawMaxRungs:            &maxRungs,
+		RawMaxConcurrentTrials: &maxConcurrentTrials,
+		RawMaxTrials:           &maxTrials,
+		RawTimeMetric:          ptrs.Ptr("batches"),
+		RawMode:                ptrs.Ptr(expconf.StandardMode),
+	}
+	searcherConfig := expconf.SearcherConfig{
+		RawAdaptiveASHAConfig: &config,
+		RawSmallerIsBetter:    ptrs.Ptr(true),
+		RawMetric:             ptrs.Ptr(metric),
+	}
+	intHparam := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.Ptr(3)}
+	hparams := expconf.Hyperparameters{
+		"x": expconf.Hyperparameter{RawIntHyperparameter: intHparam},
+	}
+
+	// Create a new test searcher and verify brackets/rungs.
+	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
+	testSearchRunner.trainLoop()
+	fmt.Printf("runs: %v\n", testSearchRunner.runs)
 }
