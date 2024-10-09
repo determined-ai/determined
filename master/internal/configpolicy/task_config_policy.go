@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -167,29 +168,38 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 // configs, where a global invariant config takes precedence over a workspace-level invariant
 // config.
 func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
-	config *expconf.ExperimentConfigV0,
-) error {
-	originalConfig := *config
+	config expconf.ExperimentConfigV0,
+) (*expconf.ExperimentConfigV0, error) {
+	originalConfig := config
 	var wkspOverride, globalOverride bool
 	wkspConfigPolicies, err := GetTaskConfigPolicies(ctx, &workspaceID, model.ExperimentType)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if wkspConfigPolicies.InvariantConfig != nil {
-		if err := json.Unmarshal([]byte(*wkspConfigPolicies.InvariantConfig), config); err != nil {
-			return fmt.Errorf("error unmarshaling workspace invariant config: %w", err)
+		var tempConfig expconf.ExperimentConfigV0
+		if err := json.Unmarshal([]byte(*wkspConfigPolicies.InvariantConfig), &tempConfig); err != nil {
+			return nil, fmt.Errorf("error unmarshaling workspace invariant config: %w", err)
 		}
+		// Merge arrays and maps with those specified in the user-submitted config.
+		config = schemas.Merge(tempConfig, config)
 		wkspOverride = true
 	}
 
 	globalConfigPolicies, err := GetTaskConfigPolicies(ctx, nil, model.ExperimentType)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if globalConfigPolicies.InvariantConfig != nil {
-		if err = json.Unmarshal([]byte(*globalConfigPolicies.InvariantConfig), config); err != nil {
-			return fmt.Errorf(" error unmarshaling global invariant config: %w", err)
+		var tempConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(*globalConfigPolicies.InvariantConfig), &config)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling global invariant config: %w", err)
 		}
+		// Merge arrays and maps with those specified in the current (user-submitted combined with
+		// optionally set workspace invariant) config.
+		config = schemas.Merge(tempConfig, config)
+		globalOverride = true
 	}
 
 	scope := ""
@@ -203,11 +213,10 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 		scope += "global"
 	}
 
-	if !reflect.DeepEqual(originalConfig, *config) {
-		log.Warnf("some fields of submitted config were silently overrideen with %s config(s)",
-			scope)
+	if !reflect.DeepEqual(originalConfig, config) {
+		log.Warnf("some fields were overridden by admin %s config policies", scope)
 	}
-	return nil
+	return &config, nil
 }
 
 // PriorityAllowed returns true if the desired priority is within the task config policy limit.

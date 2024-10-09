@@ -358,12 +358,14 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 
 	// Merge the config with the optionally specified invariant config specified by task config
 	// policies.
-	err = configpolicy.MergeWithInvariantExperimentConfigs(ctx, workspaceID, &config)
+	configWithInvariantOverrides, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+		workspaceID, config)
 	if err != nil {
 		return nil, nil, config, nil, nil,
 			fmt.Errorf("error merging invariant experiment configs: %w", err)
 	}
 
+	config = *configWithInvariantOverrides
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
 		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")

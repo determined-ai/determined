@@ -1469,20 +1469,26 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
 
+	// Determine which workspace the experiment is in.
+	wkspName := activeConfig.Workspace()
+	if wkspName == "" {
+		wkspName = "Uncategorized"
+	}
 	ctx := context.TODO()
-	w, err := workspace.WorkspaceByName(ctx, activeConfig.Workspace())
-	if err != nil && err != sql.ErrNoRows && err != db.ErrNotFound {
+	w, err := workspace.WorkspaceByName(ctx, wkspName)
+	if err != nil {
 		return nil, false,
 			fmt.Errorf("error getting workspace %s: %w", activeConfig.Workspace(), err)
-	} else if w != nil {
-		// Merge the config with the optionally specified invariant config specified by task config
-		// policies.
-		err = configpolicy.MergeWithInvariantExperimentConfigs(ctx, w.ID, &mergedConfig)
-		if err != nil {
-			return nil, false,
-				fmt.Errorf("error merging invariant experiment configs: %w", err)
-		}
 	}
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+		w.ID, mergedConfig)
+	if err != nil {
+		return nil, false,
+			fmt.Errorf("error merging invariant experiment configs: %w", err)
+	}
+	mergedConfig = *configWithInvariantDefaults
 
 	bytes, err := mergedConfig.Value()
 	if err != nil {
