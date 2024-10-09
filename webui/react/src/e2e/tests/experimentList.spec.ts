@@ -450,8 +450,10 @@ test.describe('Experiment List', () => {
         descending: boolean,
       ) => {
         const valuesToCompare = await Promise.all(
-          rows.map(async (r) => await (await r.getCellByColumnName(colKey)).pwLocator.innerText()),
+          rows.map(async (r) => (await r.getCellByColumnName(colKey)).pwLocator.innerText()),
         );
+        // eslint-disable-next-line no-console
+        console.log(valuesToCompare[0]);
 
         const expectedValues = [...valuesToCompare].sort();
         if (descending) {
