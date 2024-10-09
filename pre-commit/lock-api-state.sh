@@ -1,6 +1,6 @@
 #!/bin/bash
 
-printf "'%s' "  "$@"
+printf "'%s' " "$@"
 
 # Regenerate proto/buf.image.bin
 make get-deps-proto
