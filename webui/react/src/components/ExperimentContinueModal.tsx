@@ -1,11 +1,8 @@
 import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
-
 import Input from 'hew/Input';
-
 import { Modal } from 'hew/Modal';
-
 import Spinner from 'hew/Spinner';
 import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
@@ -29,7 +26,6 @@ import handleError, {
 import {
   FULL_CONFIG_BUTTON_TEXT,
   getExperimentName,
-
   SIMPLE_CONFIG_BUTTON_TEXT,
   trialContinueConfig,
   upgradeConfig,
@@ -184,9 +180,7 @@ const ExperimentContinueModalComponent = ({
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
 
-        form.setFields([
-          { name: EXPERIMENT_NAME, value: getExperimentName(newConfig) }
-        ]);
+        form.setFields([{ name: EXPERIMENT_NAME, value: getExperimentName(newConfig) }]);
         await form.validateFields();
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });

@@ -1937,7 +1937,6 @@
       },
       "scheduling_unit": 100,
       "searcher": {
-
         "metric": "validation_loss",
         "name": "single",
         "smaller_is_better": true,

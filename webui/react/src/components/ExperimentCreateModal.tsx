@@ -180,9 +180,7 @@ const ExperimentCreateModalComponent = ({
     if (modalState.isAdvancedMode && form) {
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
-        form.setFields([
-          { name: 'name', value: getExperimentName(newConfig) },
-        ]);
+        form.setFields([{ name: 'name', value: getExperimentName(newConfig) }]);
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });
       }

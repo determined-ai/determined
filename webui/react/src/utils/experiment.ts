@@ -85,7 +85,7 @@ const stepRemovalTranslations = [
   { oldName: 'min_checkpoint_period' },
   { oldName: 'min_validation_period' },
   { newName: 'searcher.budget', oldName: 'searcher.step_budget' },
-  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' }
+  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' },
 ];
 
 const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, number] => {
