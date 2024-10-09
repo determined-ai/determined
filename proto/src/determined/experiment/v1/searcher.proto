@@ -154,16 +154,26 @@ message TrialOperation {
 
 // SearchUnit describes a length unit used by some searchers to manage training.
 message SearchUnit {
+  // Name of the length unit (if max_length is false).
   string name = 1;
+  // Value of the length unit (if max_length is false).
   int32 value = 2;
-  // Bool indicating whether the training length is defined by the searcher.
-  bool undefined = 3;
+  // Bool indicating whether the training length is defined in code.
+  bool max_length = 3;
+}
+
+// RunSummary describes the runs that are estimated to train for a certain length.
+message RunSummary {
+  // Number of runs.
+  int32 count = 1;
+  // Training length for the runs.
+  SearchUnit unit = 2;
 }
 
 // SearchSummary contains the estimated runs and training lengths that a search plans to execute.
 message SearchSummary {
   // The searcher config from which the summary is generated.
   google.protobuf.Struct config = 1;
-  // A map of planned number of runs to their training lengths.
-  map<int32, SearchUnit> runs = 2;
+  // A list of planned number of runs to their training lengths.
+  repeated RunSummary runs = 2;
 }

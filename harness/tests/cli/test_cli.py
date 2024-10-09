@@ -593,9 +593,12 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
     mock_resp = bindings.v1PreviewHPSearchResponse(
         summary=bindings.v1SearchSummary(
             config=searcher_config,
-            runs={
-                str(max_trials): bindings.v1SearchUnit(undefined=True),
-            },
+            runs=[
+                bindings.v1RunSummary(
+                    count=max_trials,
+                    unit=bindings.v1SearchUnit(maxLength=True),
+                )
+            ],
         )
     )
     with util.standard_cli_rsps() as rsps:
