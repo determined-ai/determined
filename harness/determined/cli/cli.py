@@ -61,11 +61,13 @@ def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
     output.append(config_str)
     headers = ["Runs", "Training Time"]
     run_summaries = []
-    for num_runs, train_length in resp.summary.runs.items():
-        if train_length.undefined:
+    for run_summary in resp.summary.runs:
+        num_runs = run_summary.count
+        run_unit = run_summary.unit
+        if run_unit.maxLength:
             run_summary = "maximum length of training code"
         else:
-            run_summary = f"train for {train_length.value} {train_length.name}"
+            run_summary = f"train for {run_unit.value} {run_unit.name}"
         run_summaries.append([num_runs, run_summary])
 
     output.append(tabulate.tabulate(run_summaries, headers, tablefmt="presto"))

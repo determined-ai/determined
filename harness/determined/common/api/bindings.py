@@ -13738,6 +13738,41 @@ class v1RunPrepareForReportingResponse(Printable):
             out["storageId"] = self.storageId
         return out
 
+class v1RunSummary(Printable):
+    """RunSummary describes the runs that are estimated to train for a certain length."""
+    count: "typing.Optional[int]" = None
+    unit: "typing.Optional[v1SearchUnit]" = None
+
+    def __init__(
+        self,
+        *,
+        count: "typing.Union[int, None, Unset]" = _unset,
+        unit: "typing.Union[v1SearchUnit, None, Unset]" = _unset,
+    ):
+        if not isinstance(count, Unset):
+            self.count = count
+        if not isinstance(unit, Unset):
+            self.unit = unit
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RunSummary":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "count" in obj:
+            kwargs["count"] = obj["count"]
+        if "unit" in obj:
+            kwargs["unit"] = v1SearchUnit.from_json(obj["unit"]) if obj["unit"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "count" in vars(self):
+            out["count"] = self.count
+        if not omit_unset or "unit" in vars(self):
+            out["unit"] = None if self.unit is None else self.unit.to_json(omit_unset)
+        return out
+
 class v1SSOProvider(Printable):
     """Describe one SSO provider."""
     alwaysRedirect: "typing.Optional[bool]" = None
@@ -14107,13 +14142,13 @@ class v1SearchRunsResponse(Printable):
 class v1SearchSummary(Printable):
     """SearchSummary contains the estimated runs and training lengths that a search plans to execute."""
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    runs: "typing.Optional[typing.Dict[str, v1SearchUnit]]" = None
+    runs: "typing.Optional[typing.Sequence[v1RunSummary]]" = None
 
     def __init__(
         self,
         *,
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        runs: "typing.Union[typing.Dict[str, v1SearchUnit], None, Unset]" = _unset,
+        runs: "typing.Union[typing.Sequence[v1RunSummary], None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -14127,7 +14162,7 @@ class v1SearchSummary(Printable):
         if "config" in obj:
             kwargs["config"] = obj["config"]
         if "runs" in obj:
-            kwargs["runs"] = {k: v1SearchUnit.from_json(v) for k, v in obj["runs"].items()} if obj["runs"] is not None else None
+            kwargs["runs"] = [v1RunSummary.from_json(x) for x in obj["runs"]] if obj["runs"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -14136,26 +14171,26 @@ class v1SearchSummary(Printable):
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
         if not omit_unset or "runs" in vars(self):
-            out["runs"] = None if self.runs is None else {k: v.to_json(omit_unset) for k, v in self.runs.items()}
+            out["runs"] = None if self.runs is None else [x.to_json(omit_unset) for x in self.runs]
         return out
 
 class v1SearchUnit(Printable):
     """SearchUnit describes a length unit used by some searchers to manage training."""
+    maxLength: "typing.Optional[bool]" = None
     name: "typing.Optional[str]" = None
-    undefined: "typing.Optional[bool]" = None
     value: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
+        maxLength: "typing.Union[bool, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
-        undefined: "typing.Union[bool, None, Unset]" = _unset,
         value: "typing.Union[int, None, Unset]" = _unset,
     ):
+        if not isinstance(maxLength, Unset):
+            self.maxLength = maxLength
         if not isinstance(name, Unset):
             self.name = name
-        if not isinstance(undefined, Unset):
-            self.undefined = undefined
         if not isinstance(value, Unset):
             self.value = value
 
@@ -14163,10 +14198,10 @@ class v1SearchUnit(Printable):
     def from_json(cls, obj: Json) -> "v1SearchUnit":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "maxLength" in obj:
+            kwargs["maxLength"] = obj["maxLength"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
-        if "undefined" in obj:
-            kwargs["undefined"] = obj["undefined"]
         if "value" in obj:
             kwargs["value"] = obj["value"]
         return cls(**kwargs)
@@ -14174,10 +14209,10 @@ class v1SearchUnit(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "maxLength" in vars(self):
+            out["maxLength"] = self.maxLength
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
-        if not omit_unset or "undefined" in vars(self):
-            out["undefined"] = self.undefined
         if not omit_unset or "value" in vars(self):
             out["value"] = self.value
         return out

@@ -10140,6 +10140,25 @@ export interface V1RunPrepareForReportingResponse {
     storageId?: number;
 }
 /**
+ * RunSummary describes the runs that are estimated to train for a certain length.
+ * @export
+ * @interface V1RunSummary
+ */
+export interface V1RunSummary {
+    /**
+     * Number of runs.
+     * @type {number}
+     * @memberof V1RunSummary
+     */
+    count?: number;
+    /**
+     * Training length for the runs.
+     * @type {V1SearchUnit}
+     * @memberof V1RunSummary
+     */
+    unit?: V1SearchUnit;
+}
+/**
  * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.  - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is delegated.
  * @export
  * @enum {string}
@@ -10361,11 +10380,11 @@ export interface V1SearchSummary {
      */
     config?: any;
     /**
-     * A map of planned number of runs to their training lengths.
-     * @type {{ [key: string]: V1SearchUnit; }}
+     * A list of planned number of runs to their training lengths.
+     * @type {Array<V1RunSummary>}
      * @memberof V1SearchSummary
      */
-    runs?: { [key: string]: V1SearchUnit; };
+    runs?: Array<V1RunSummary>;
 }
 /**
  * SearchUnit describes a length unit used by some searchers to manage training.
@@ -10374,23 +10393,23 @@ export interface V1SearchSummary {
  */
 export interface V1SearchUnit {
     /**
-     * 
+     * Name of the length unit (if max_length is false).
      * @type {string}
      * @memberof V1SearchUnit
      */
     name?: string;
     /**
-     * 
+     * Value of the length unit (if max_length is false).
      * @type {number}
      * @memberof V1SearchUnit
      */
     value?: number;
     /**
-     * Bool indicating whether the training length is defined by the searcher.
+     * Bool indicating whether the training length is defined in code.
      * @type {boolean}
      * @memberof V1SearchUnit
      */
-    undefined?: boolean;
+    maxLength?: boolean;
 }
 /**
  * Set the cluster-wide message.
