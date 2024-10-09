@@ -85,9 +85,7 @@ const stepRemovalTranslations = [
   { oldName: 'min_checkpoint_period' },
   { oldName: 'min_validation_period' },
   { newName: 'searcher.budget', oldName: 'searcher.step_budget' },
-  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' },
-  { newName: 'searcher.max_length', oldName: 'searcher.max_steps' },
-  { newName: 'searcher.max_length', oldName: 'searcher.target_trial_steps' },
+  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' }
 ];
 
 const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, number] => {
@@ -326,18 +324,6 @@ export const getExperimentName = (config: RawJson): string => {
   return config.name || '';
 };
 
-// For unitless searchers, this will return undefined.
-export const getMaxLengthType = (config: RawJson): string | undefined => {
-  return (Object.keys(config.searcher?.max_length || {}) || [])[0];
-};
-
-export const getMaxLengthValue = (config: RawJson): number => {
-  const value = (Object.keys(config.searcher?.max_length || {}) || [])[0];
-  return value
-    ? parseInt(config.searcher?.max_length[value])
-    : parseInt(config.searcher?.max_length);
-};
-
 export const trialContinueConfig = (
   experimentConfig: RawJson,
   trialHparams: TrialHyperparameters,
@@ -351,7 +337,6 @@ export const trialContinueConfig = (
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
     project: projectName,
     searcher: {
-      max_length: experimentConfig.searcher.max_length,
       metric: experimentConfig.searcher.metric,
       name: 'single',
       smaller_is_better: experimentConfig.searcher.smaller_is_better,
