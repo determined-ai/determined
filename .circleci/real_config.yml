@@ -76,6 +76,7 @@ release-and-rc-filters: &release-and-rc-filters
     only:
       # Tags like: v2.5.0, v3.0.1+rc2
       - /v\d+\.\d+\.\d+(rc\d+)?/
+      - carolinac/cm-544 # for testing purposes
 
 rc-filters: &rc-filters
   branches:
@@ -85,6 +86,7 @@ rc-filters: &rc-filters
     only:
       # Tags like: v2.5.0rc3
       - /v\d+\.\d+\.\d+rc\d+/
+      - carolinac/cm-544 # for testing purposes
 
 release-filters: &release-filters
   branches:
@@ -94,6 +96,7 @@ release-filters: &release-filters
     only:
       # Tags like: v2.1.2
       - /v\d+\.\d+\.\d+/
+      - carolinac/cm-544 # for testing purposes
 
 release-dryrun: &release-dryrun
   branches:
@@ -1504,6 +1507,21 @@ commands:
     steps:
       - run: 
           command: pkill -SIGHUP -f "devcluster" && rm -rf /tmp/devcluster/lock
+
+  read-supported-versions:
+    steps:
+      - run:
+          name: Read Versions from File
+          command: |
+            VERSION_FILE="supported_versions.txt"
+            if [ -f "$VERSION_FILE" ]; then
+              SUPPORTED_VERSIONS=$(cat "$VERSION_FILE" | tr '\n' ' ')
+              # Export the variable to use in the matrix job
+              echo "export SUPPORTED_VERSIONS=\"$SUPPORTED_VERSIONS\"" >> $BASH_ENV
+            else
+              echo "Version file not found!"
+              exit 1
+            fi
 
   make-component:
     description: "Basic parameterized version of make for building Determined components."
@@ -3210,7 +3228,9 @@ jobs:
             - run: 
                 name: Fetch Tags & Checkout <<parameters.det-version>> Version
                 command: git fetch --tags && git checkout tags/<<parameters.det-version>>
-            - run: # given branch name, find most recent build, & substitute in ... ?
+            - run: 
+                name: Fetch Release Branch & checkout
+                command: # given branch name, find most recent build, & substitute in ... ?
             # 1. checkout git branch
             # 2. iterate through SHAs & check which is a match (for master, agent, etc) in docker image registry
             # 3. take first match & git fetch that SHA
@@ -4863,6 +4883,8 @@ workflows:
           name: build-go-ee
           context: github-read
 
+      - read-supported-versions
+
       - test-e2e:
           name: test-e2e-rbac
           context:
@@ -4875,7 +4897,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4890,7 +4912,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4907,7 +4929,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4922,7 +4944,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4937,7 +4959,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4957,7 +4979,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4975,7 +4997,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4993,7 +5015,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -5009,7 +5031,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -5024,7 +5046,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -5040,7 +5062,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -5056,7 +5078,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -5072,7 +5094,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -5087,7 +5109,7 @@ workflows:
           matrix:
             parameters:
               agent-version: ["0.17.10"]
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
           upgrade: true
 
       - test-e2e:
@@ -5104,7 +5126,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
       - test-e2e:
           name: test-e2e-saml
@@ -5119,7 +5141,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: *det-versions
+              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
