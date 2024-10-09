@@ -1,5 +1,5 @@
 .base {
-  height: calc(100% - 64px);
+  height: 100%;
 
   .container {
     display: flex;
@@ -18,6 +18,9 @@
       flex-wrap: wrap;
       gap: var(--spacing-md);
     }
+  }
+  .panes {
+    height: calc(100% - 64px);
   }
   .search {
     .logContainer {

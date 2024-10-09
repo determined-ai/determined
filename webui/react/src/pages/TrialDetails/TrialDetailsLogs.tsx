@@ -383,7 +383,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const renderSearch = useCallback(() => {
     const height = container.current?.getBoundingClientRect().height || 0;
     return (
-      <div className={css.search} style={{ height: `${height}px` }}>
+      <div className={css.search} style={{ height: `${height - 64}px` }}>
         <Checkbox
           checked={settings.enableRegex}
           onChange={(e) => updateSettings({ enableRegex: e.target.checked })}>
@@ -495,26 +495,28 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           </div>
           {rightButtons}
         </div>
-        <SplitPane
-          hidePane={searchOn && logViewerOn ? undefined : searchOn ? Pane.Right : Pane.Left}
-          initialWidth={searchWidth || INITIAL_SEARCH_WIDTH}
-          leftPane={renderSearch()}
-          minimumWidths={{ left: 300, right: 300 }}
-          rightPane={
-            <LogViewer
-              decoder={mapV1LogsResponse}
-              local={local}
-              logs={logs}
-              logsRef={logsRef}
-              selectedLog={selectedLog}
-              serverAddress={serverAddress}
-              setLogs={setLogs}
-              onError={handleError}
-              onFetch={handleFetch}
-            />
-          }
-          onChange={(w) => setSearchWidth(w)}
-        />
+        <div className={css.panes}>
+          <SplitPane
+            hidePane={searchOn && logViewerOn ? undefined : searchOn ? Pane.Right : Pane.Left}
+            initialWidth={searchWidth || INITIAL_SEARCH_WIDTH}
+            leftPane={renderSearch()}
+            minimumWidths={{ left: 300, right: 300 }}
+            rightPane={
+              <LogViewer
+                decoder={mapV1LogsResponse}
+                local={local}
+                logs={logs}
+                logsRef={logsRef}
+                selectedLog={selectedLog}
+                serverAddress={serverAddress}
+                setLogs={setLogs}
+                onError={handleError}
+                onFetch={handleFetch}
+              />
+            }
+            onChange={(w) => setSearchWidth(w)}
+          />
+        </div>
       </Spinner>
     </div>
   );
