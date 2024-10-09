@@ -2019,6 +2019,12 @@ jobs:
 
   test-e2e-react:
     parameters:
+      devcluster-config:
+        type: enum
+        enum:
+          - react.devcluster.yaml
+          - react-rbac.devcluster.yaml
+          - react-sso.devcluster.yaml
       ee:
         type: boolean
         default: false
@@ -2051,7 +2057,7 @@ jobs:
       - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster:
-          devcluster-config: react.devcluster.yaml
+          devcluster-config: <<parameters.devcluster-config>>
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
@@ -4012,6 +4018,7 @@ workflows:
           dev-mode: true
       - test-e2e-react:
           name: test-e2e-react-oss
+          devcluster-config: react.devcluster.yaml
           requires:
             - build-go-oss
           context:
@@ -4101,6 +4108,7 @@ workflows:
       - test-e2e-react:
           name: test-e2e-react-ee
           ee: true
+          devcluster-config: react-rbac.devcluster.yaml
           requires:
             - build-go-ee
           context:
@@ -4108,6 +4116,19 @@ workflows:
             - github-read
             - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
+      # this will be used once sso tests are prioritized (after rbac tests)
+      # - test-e2e-react:
+      #     name: test-e2e-react-ee-sso
+      #     ee: true
+      #     devcluster-config: react-sso.devcluster.yaml
+      #     playwright-options: "-g sso"
+      #     requires:
+      #       - build-go-ee
+      #     context:
+      #       - playwright
+      #       - github-read
+      #       - dev-ci-cluster-default-user-credentials
+      #     filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
@@ -5471,6 +5492,7 @@ workflows:
           context: github-read
       - test-e2e-react:
           ee: << pipeline.parameters.ee >>
+          devcluster-config: react.devcluster.yaml
           playwright-options: << pipeline.parameters.e2e-react >>
           requires:
             - build-go
