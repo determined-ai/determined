@@ -6,17 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/workspace"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -24,7 +24,7 @@ import (
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 5
+const experimentSnapshotVersion = 6
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -69,7 +69,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 			"cannot restore experiment %d with legacy searcher", expModel.ID,
 		)
 	}
-
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return err
@@ -134,79 +133,67 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	return nil
 }
 
-// restoreTrial takes the a searcher.Create and attempts to restore the trial that would be
-// associated with it. On failure, the trial is just reset to the start and errors are logged.
-func (e *internalExperiment) restoreTrial(
-	ckpt *model.Checkpoint, searcher experiment.TrialSearcherState,
+func (e *internalExperiment) restoreRun(
+	ckpt *model.Checkpoint, searcher experiment.RunSearcherState,
 ) {
-	l := e.syslog.WithField("request-id", searcher.Create.RequestID)
-	l.Debug("restoring trial")
+	syslog := e.syslog
+	syslog.Debug("restoring run")
 
+	var trial *model.Trial
 	var trialID *int
-	var terminal bool
-	switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(),
-		e.ID, searcher.Create.RequestID); {
-	case errors.Cause(err) == db.ErrNotFound:
-		l.Debug("trial was not previously persisted")
-	case err != nil:
-		// This is the only place we _have_ to error, because if the trial did previously exist
-		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
-		// new trial in the trials table with the same (experiment_id, request_id).
-		l.WithError(err).Error("failed to retrieve trial, aborting restore")
-		terminal = true
-	default:
-		trialID = &trial.ID
-		l = l.WithField("trial-id", trial.ID)
-		if model.TerminalStates[trial.State] {
-			l.Debugf("trial was in terminal state in restore: %s", trial.State)
-			terminal = true
+	var err error
+
+	if searcher.RunID != nil {
+		if _, ok := e.trials[*searcher.RunID]; ok {
+			syslog.Errorf("run %d was already restored, exiting", *searcher.RunID)
+			return
+		}
+		trial, err = db.TrialByID(context.TODO(), int(*searcher.RunID))
+		if err != nil {
+			syslog.WithError(err).Error("failed to retrieve previous run, restoring new run")
+		} else {
+			syslog = syslog.WithField("run-id", trial.ID)
 		}
 	}
 
-	taskID := trialTaskID(e.ID, searcher.Create.RequestID)
-	if !terminal && trialID != nil {
-		trialTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), *trialID)
-		switch {
-		case err != nil:
-			l.WithError(err).Error("failed to retrieve trial's tasks, stopping restore")
-			terminal = true
-		case len(trialTaskIDs) == 0:
-			l.Errorf("trial %d in restoring has no task IDs, stopping restore", *trialID)
-			terminal = true
-		default:
+	taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, model.NewTaskID()))
+
+	if trial != nil {
+		trialID = &trial.ID
+		// If the run being restored was in a terminal state, replay the close for the searcher and exit.
+		if model.TerminalStates[trial.State] {
+			syslog.Debugf("run was in terminal state in restore: %s", trial.State)
+			if !e.searcher.TrialIsClosed(*searcher.RunID) {
+				e.runClosed(*searcher.RunID, nil)
+			}
+			return
+		}
+		trialTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), trial.ID)
+		if err != nil {
+			syslog.WithError(err).Error("failed to retrieve tasks for run")
+		} else if len(trialTaskIDs) == 0 {
+			syslog.Errorf("no tasks for run with id %d", trial.ID)
+		} else {
 			taskID = trialTaskIDs[len(trialTaskIDs)-1].TaskID
 		}
-	}
-
-	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
-	if terminal {
-		if !e.searcher.TrialIsClosed(searcher.Create.RequestID) {
-			e.trialClosed(searcher.Create.RequestID, nil)
-		}
-		return
-	}
-	_, ok := e.trials[searcher.Create.RequestID]
-	if ok {
-		l.Errorf("trial %s was already restored", searcher.Create.RequestID)
-		return
 	}
 
 	config := schemas.Copy(e.activeConfig)
 	t, err := newTrial(
 		e.logCtx, taskID, e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
-		nil, e.TrialClosed,
+		nil, e.RunClosed,
 	)
 	if err != nil {
-		l.WithError(err).Error("failed restoring trial, aborting restore")
-		if !e.searcher.TrialIsClosed(searcher.Create.RequestID) {
-			e.trialClosed(searcher.Create.RequestID, ptrs.Ptr(model.Errored))
+		syslog.WithError(err).Error("failed restoring run, aborting restore")
+		if searcher.RunID != nil && !e.searcher.TrialIsClosed(*searcher.RunID) {
+			e.runClosed(*searcher.RunID, ptrs.Ptr(model.Errored))
 		}
 		return
 	}
 	e.trialCreated(t)
 
-	l.Debug("restored trial")
+	syslog.Debug("restored run")
 }
 
 // retrieveExperimentSnapshot retrieves a snapshot in from database if it exists.
@@ -218,7 +205,7 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
 	default:
-		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
+		if snapshot, err = shimExperimentSnapshot(expModel.ID, snapshot, version); err != nil {
 			return nil, errors.Wrap(err, "failed to shim experiment snapshot")
 		}
 		return snapshot, nil
@@ -246,16 +233,17 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	1: shimExperimentSnapshotV1,
 	2: shimExperimentSnapshotV2,
 	4: shimExperimentSnapshotV4,
+	5: shimExperimentSnapshotV5,
 }
 
 // shimExperimentSnapshot shims an experiment snapshot to the version required by the master,
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
-func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
-	return shimSnapshot(experimentSnapshotShims, snapshot, version)
+func shimExperimentSnapshot(experimentID int, snapshot []byte, version int) ([]byte, error) {
+	return shimSnapshot(experimentID, experimentSnapshotShims, snapshot, version)
 }
 
-func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
+func shimSnapshot(experimentID int, shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
 	if version > experimentSnapshotVersion {
 		return nil, fmt.Errorf("cannot shim from %d to %d", version, experimentSnapshotVersion)
 	}
@@ -265,7 +253,7 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 		if !ok {
 			return nil, fmt.Errorf("missing shim from %d to %d", version, experimentSnapshotVersion)
 		}
-		if snapshot, err = shim(snapshot); err != nil {
+		if snapshot, err = shim(experimentID, snapshot); err != nil {
 			return nil, errors.Wrapf(err, "failed to shim snapshot")
 		}
 		version++
@@ -274,7 +262,7 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 }
 
 // snapshotShimFunc is a shimming function.
-type snapshotShimFunc func([]byte) ([]byte, error)
+type snapshotShimFunc func(experimentID int, snapshot []byte) ([]byte, error)
 
 // Version 0 => 1 shims
 
@@ -283,7 +271,7 @@ type snapshotShimFunc func([]byte) ([]byte, error)
 // operations are removed from the operations requested of trials and any PBT operations
 // which are awaiting a particular checkpoint to finish added to the queue of trial operations,
 // since by other invariants in the system we can guarantee this checkpoint exists.
-func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV0(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV0 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV0); err != nil {
 		return nil, err
@@ -327,7 +315,7 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 // shimExperimentSnapshotV1 shims a v1 snapshot to a v2 snapshot. From v1 to v2,
 // progress was rewritten so that individual trial progress was tracked and aggregated
 // instead of just maintaining the total units completed.
-func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV1(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV1 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV1); err != nil {
 		return nil, err
@@ -344,11 +332,22 @@ func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
 
 // Version 2 => 3 shims
 
+// All the operation types that support serialization.
+const (
+	CreateOperation        OperationType = 0
+	TrainOperation         OperationType = 1
+	ValidateOperation      OperationType = 2
+	CloseOperation         OperationType = 4
+	ValidateAfterOperation OperationType = 5
+)
+
+type OperationType int
+
 // shimExperimentSnapshotV2 shims a v2 snapshot to a v3 snapshot. From v2 to v3,
 // Train and Validate operations were merged into a single ValidateAfter operation
 // that indicates to the trial the total units to train before reporting a validation
 // to the searcher.
-func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV2(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV2 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV2); err != nil {
 		return nil, err
@@ -361,15 +360,15 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 	var newOperationsList []map[string]interface{}
 	for _, iOp := range operationsList {
 		op := iOp.(map[string]interface{})
-		switch searcher.OperationType(op["OperationType"].(float64)) {
-		case searcher.TrainOperation:
+		switch OperationType(op["OperationType"].(float64)) {
+		case TrainOperation:
 			op := op["Operation"].(map[string]interface{})
 			requestID := op["RequestID"].(string)
 			length := op["Length"].(map[string]interface{})
 			for unit, units := range length {
 				totalUnitsForTrial[requestID] += units.(float64)
 				newOperationsList = append(newOperationsList, map[string]interface{}{
-					"OperationType": searcher.ValidateAfterOperation,
+					"OperationType": ValidateAfterOperation,
 					"Operation": map[string]interface{}{
 						"RequestID": requestID,
 						"Length": map[string]interface{}{
@@ -378,7 +377,7 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 					},
 				})
 			}
-		case searcher.ValidateOperation:
+		case ValidateOperation:
 			continue
 		default:
 			newOperationsList = append(newOperationsList, op)
@@ -401,7 +400,7 @@ func (e ExperimentSnapshotShimError) Error() string {
 
 // shimExperimentSnapshotV4 shims a v4 snapshot to a v4 snapshot. From v4 to v5,
 // Length lost its units and became just an int again.
-func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
+func shimExperimentSnapshotV4(experimentID int, snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV4 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV4); err != nil {
 		return nil, err
@@ -443,4 +442,154 @@ func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
 	}
 
 	return json.Marshal(experimentSnapshotV4)
+}
+
+// shimExperimentSnapshotV5 shims a v4 snapshot to a v5 snapshot. From v4 to v5:
+// - `searcher_state.TrialsRequested` -> `RunsRequested`
+// - `searcher_state.TrialsCreated` -> `RunsCreated`
+// - `searcher_state.TrialsClosed` -> `RunsClosed`
+// - `searcher_state.Exits` -> `Exits`
+// - `searcher_state.Cancels` -> `Cancels`
+// - `searcher_state.Failures` -> `Failures`
+// - `searcher_state.TrialProgress` -> `RunProgress`
+// - `searcher_state.CompletedOperations` -> dropped
+// - `searcher_state.Shutdown` -> dropped
+//
+// - `trial_searcher_state` -> `run_searcher_state`
+// - `trial_searcher_state.Create (searcher.Operation)` -> `run_searcher_state.Create (searcher.Action)`
+// - `trial_searcher_state.Complete` -> dropped
+// - `trial_searcher_state.Op (searcher.ValidateAfter)` -> dropped
+// - `trial_searcher_state.Stop` -> dropped
+// - `trial_searcher_state.Closed` -> `run_searcher_state.Closed`
+func shimExperimentSnapshotV5(experimentID int, snapshot []byte) ([]byte, error) {
+	type v4SearcherState struct {
+		TrialsRequested   int                         `json:"trials_requested"`
+		TrialsCreated     map[model.RequestID]bool    `json:"trials_created"`
+		TrialsClosed      map[model.RequestID]bool    `json:"trials_closed"`
+		Exits             map[model.RequestID]bool    `json:"exits"`
+		Cancels           map[model.RequestID]bool    `json:"cancels"`
+		Failures          map[model.RequestID]bool    `json:"failures"`
+		TrialProgress     map[model.RequestID]float64 `json:"trial_progress"`
+		Rand              *nprand.State               `json:"rand"`
+		SearchMethodState json.RawMessage             `json:"search_method_state"`
+	}
+	type v4CreateOp struct {
+		HParams   map[string]interface{} `json:"hparams"`
+		RequestID model.RequestID        `json:"request_id"`
+		TrialSeed uint32                 `json:"trial_seed"`
+	}
+
+	type v4TrialSearcherState struct {
+		Create   v4CreateOp
+		Stop     bool
+		Closed   bool
+		Complete bool
+	}
+	type experimentSnapshotV4 struct {
+		SearcherState      v4SearcherState                          `json:"searcher_state"`
+		TrialSearcherState map[model.RequestID]v4TrialSearcherState `json:"trial_searcher_state"`
+	}
+
+	v4ExperimentSnapshot := experimentSnapshotV4{}
+
+	if err := json.Unmarshal(snapshot, &v4ExperimentSnapshot); err != nil {
+		return nil, err
+	}
+
+	runsCreated, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialsCreated)
+	runsClosed, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialsClosed)
+	exits, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Exits)
+	cancels, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Cancels)
+	failures, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Failures)
+	runProgress, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialProgress)
+
+	searchMethodStateV4 := map[string]interface{}{}
+	err = json.Unmarshal(v4ExperimentSnapshot.SearcherState.SearchMethodState, &searchMethodStateV4)
+	searchMethodState, err := shimSearchMethodStateV5(searchMethodStateV4)
+	runSearcherStateV4, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.TrialSearcherState)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: "unable to parse searcher state"}
+	}
+
+	var runSearcherState map[int]interface{}
+
+	for rID, trialSearcherState := range runSearcherStateV4 {
+		// Only for ASHA
+		subsearchID, _ := searchMethodState.(map[string]interface{})["run_table"].(map[int]int)[rID]
+		runSearcherState[rID] = map[string]interface{}{
+			"Create": map[string]interface{}{
+				"hparams":       trialSearcherState.Create.HParams,
+				"run_seed":      trialSearcherState.Create.TrialSeed,
+				"sub_search_id": subsearchID,
+			},
+			"RunID":   rID,
+			"Stopped": trialSearcherState.Stop || trialSearcherState.Complete,
+			"Closed":  trialSearcherState.Closed,
+		}
+	}
+
+	experimentSnapshotV5 := map[string]interface{}{
+		"searcher_state": map[string]interface{}{
+			"runs_requested":      v4ExperimentSnapshot.SearcherState.TrialsRequested,
+			"runs_created":        runsCreated,
+			"runs_closed":         runsClosed,
+			"exits":               exits,
+			"cancels":             cancels,
+			"failures":            failures,
+			"run_progress":        runProgress,
+			"rand":                v4ExperimentSnapshot.SearcherState.Rand,
+			"search_method_state": searchMethodState,
+		},
+		"run_searcher_state": runSearcherState,
+	}
+
+	return json.Marshal(experimentSnapshotV5)
+}
+
+func shimSearchMethodStateV5(v4SearchMethodState map[string]interface{}) (interface{}, error) {
+	searchMethodType, ok := v4SearchMethodState["search_method_type"].(searcher.SearchMethodType)
+	if !ok {
+		return nil, ExperimentSnapshotShimError{Message: "search_method_type not recognized"}
+	}
+	switch searchMethodType {
+	case searcher.SingleSearch:
+		fallthrough
+	case searcher.RandomSearch:
+		createdTrials, ok := v4SearchMethodState["created_trials"].(int)
+		pendingTrials, ok := v4SearchMethodState["pending_trials"].(int)
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
+		}
+		return map[string]interface{}{
+			"created_runs":       createdTrials,
+			"pending_runs":       pendingTrials,
+			"search_method_type": v4SearchMethodState["search_method_type"],
+		}, nil
+	case searcher.GridSearch:
+		createdTrials, ok := v4SearchMethodState["created_trials"].(int)
+		remainingTrials, ok := v4SearchMethodState["remaining_trials"].(int)
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
+		}
+		return map[string]interface{}{
+			"created_runs":       createdTrials,
+			"remaining_runs":     remainingTrials,
+			"search_method_type": v4SearchMethodState["search_method_type"],
+		}, nil
+	default:
+		return nil, ExperimentSnapshotShimError{Message: "unsupported search_method_type"}
+	}
+}
+
+func mapRequestIDToRunID[T any](experimentID int, obj map[model.RequestID]T) (map[int]T, error) {
+	runIDMap := make(map[int]T)
+
+	for k, v := range obj {
+		tID, err := db.TrialIDByExperimentIDAndRequestID(context.TODO(), experimentID, k)
+		if err != nil {
+			return nil, err
+		}
+		runIDMap[*tID] = v
+	}
+	return runIDMap, nil
 }

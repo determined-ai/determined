@@ -14,53 +14,43 @@ var ExperimentRegistry = tasklist.NewRegistry[int, Experiment]()
 
 // Experiment-specific interface types.
 type (
-	// TrialCompleteOperation is a message sent to an experiment to indicate that a trial has
-	// completed an operation.
-	TrialCompleteOperation struct {
-		RequestID model.RequestID
-		Op        searcher.ValidateAfter
-		Metric    interface{}
-	}
-
-	// TrialReportProgress is a message sent to an experiment to indicate that a trial has
+	// RunReportProgress is a message sent to an experiment to indicate that a trial has
 	// reported progress.
-	TrialReportProgress struct {
-		RequestID model.RequestID
-		Progress  searcher.PartialUnits
-		IsRaw     bool
+	RunReportProgress struct {
+		Progress searcher.PartialUnits
+		IsRaw    bool
 	}
 
-	// UserInitiatedEarlyTrialExit is a user-injected message, provided through the early exit API. It
+	// UserInitiatedEarlyRunExit is a user-injected message, provided through the early exit API. It
 	// _should_ indicate the user is exiting, but in the event they don't, we will clean them up.
-	UserInitiatedEarlyTrialExit struct {
-		RequestID model.RequestID
-		Reason    model.ExitedReason
+	UserInitiatedEarlyRunExit struct {
+		RunID  int32
+		Reason model.ExitedReason
 	}
 
-	// PatchTrialState is a message sent to an experiment to indicate that a trial has
+	// PatchRunState is a message sent to an experiment to indicate that a trial has
 	// changed state.
-	PatchTrialState struct {
-		RequestID model.RequestID
-		State     model.StateWithReason
+	PatchRunState struct {
+		RunID int32
+		State model.StateWithReason
 	}
 
-	// TrialSearcherState is a message sent to an experiment to indicate that a trial has
+	// RunSearcherState is a message sent to an search to indicate that a run has
 	// changed searcher state.
-	TrialSearcherState struct {
-		Create   searcher.Create
-		Op       searcher.ValidateAfter
-		Complete bool
-		Closed   bool
+	RunSearcherState struct {
+		Create  searcher.Create
+		RunID   *int32
+		Stopped bool
+		Closed  bool
 	}
 )
 
 // Experiment is an interface that represents an experiment.
 type Experiment interface {
-	TrialCompleteOperation(msg TrialCompleteOperation) error
-	TrialReportProgress(msg TrialReportProgress) error
-	TrialGetSearcherState(requestID model.RequestID) (TrialSearcherState, error)
-	UserInitiatedEarlyTrialExit(msg UserInitiatedEarlyTrialExit) error
-	PatchTrialState(msg PatchTrialState) error
+	RunReportProgress(runID int32, msg RunReportProgress) error
+	RunReportValidation(runID int32, metrics map[string]interface{}) error
+	UserInitiatedEarlyRunExit(msg UserInitiatedEarlyRunExit) error
+	PatchRunState(msg PatchRunState) error
 	SetGroupMaxSlots(msg sproto.SetGroupMaxSlots)
 	SetGroupWeight(weight float64) error
 	SetGroupPriority(priority int) error

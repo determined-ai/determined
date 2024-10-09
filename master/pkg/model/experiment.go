@@ -556,7 +556,6 @@ type ProjectHparam struct {
 // will not be set.
 func NewTrial(
 	state State,
-	requestID RequestID,
 	experimentID int,
 	hparams JSONObj,
 	warmStartCheckpoint *Checkpoint,
@@ -568,7 +567,7 @@ func NewTrial(
 		warmStartCheckpointID = &warmStartCheckpoint.ID
 	}
 	return &Trial{
-		RequestID:             &requestID,
+		RequestID:             nil,
 		ExperimentID:          experimentID,
 		State:                 state,
 		StartTime:             time.Now().UTC(),

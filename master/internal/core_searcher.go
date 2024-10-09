@@ -48,9 +48,7 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	sm := searcher.NewSearchMethod(sc)
-	s := searcher.NewSearcher(0, sm, hc)
-	return searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher().Metric())
+	return searcher.Simulate(sc, hc)
 }
 
 // cleanUpExperimentSnapshots deletes all snapshots for terminal state experiments from

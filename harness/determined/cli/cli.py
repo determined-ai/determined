@@ -46,8 +46,32 @@ from determined.cli import (
     version,
     workspace,
 )
-from determined.common import api, util, yaml
+from determined.common import api, util
 from determined.common.api import bindings, certs
+
+
+def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
+    output = [
+        termcolor.colored("Using search configuration:", "green"),
+    ]
+
+    # For mypy
+    assert resp.summary and resp.summary.config and resp.summary.runs
+    config_str = render.format_object_as_yaml(resp.summary.config)
+    output.append(config_str)
+    headers = ["Runs", "Training Time"]
+    run_summaries = []
+    for run_summary in resp.summary.runs:
+        num_runs = run_summary.count
+        run_unit = run_summary.unit
+        if run_unit.maxLength:
+            run_summary = "maximum length of training code"
+        else:
+            run_summary = f"train for {run_unit.value} {run_unit.name}"
+        run_summaries.append([num_runs, run_summary])
+
+    output.append(tabulate.tabulate(run_summaries, headers, tablefmt="presto"))
+    return "\n".join(output)
 
 
 def preview_search(args: argparse.Namespace) -> None:
@@ -56,56 +80,16 @@ def preview_search(args: argparse.Namespace) -> None:
     args.config_file.close()
 
     if "searcher" not in experiment_config:
-        print("Experiment configuration must have 'searcher' section")
-        sys.exit(1)
-    r = sess.post("searcher/preview", json=experiment_config)
-    j = r.json()
+        raise errors.CliError("Missing 'searcher' config section in experiment config.")
 
-    def to_full_name(kind: str) -> str:
-        try:
-            # The unitless searcher case, for masters newer than 0.17.6.
-            length = int(kind)
-            return f"train for {length}"
-        except ValueError:
-            pass
-        if kind[-1] == "R":
-            return "train {} records".format(kind[:-1])
-        if kind[-1] == "B":
-            return "train {} batch(es)".format(kind[:-1])
-        if kind[-1] == "E":
-            return "train {} epoch(s)".format(kind[:-1])
-        if kind == "V":
-            return "validation"
-        raise ValueError("unexpected kind: {}".format(kind))
-
-    def render_sequence(sequence: List[str]) -> str:
-        if not sequence:
-            return "N/A"
-        instructions = []
-        current = sequence[0]
-        count = 0
-        for k in sequence:
-            if k != current:
-                instructions.append("{} x {}".format(count, to_full_name(current)))
-                current = k
-                count = 1
-            else:
-                count += 1
-        instructions.append("{} x {}".format(count, to_full_name(current)))
-        return ", ".join(instructions)
-
-    headers = ["Trials", "Breakdown"]
-    values = [
-        (count, render_sequence(operations.split())) for operations, count in j["results"].items()
-    ]
-
-    print(termcolor.colored("Using search configuration:", "green"))
-    yml = yaml.YAML()
-    yml.indent(mapping=2, sequence=4, offset=2)
-    yml.dump(experiment_config["searcher"], sys.stdout)
+    resp = bindings.post_PreviewHPSearch(
+        session=sess,
+        body=bindings.v1PreviewHPSearchRequest(
+            config=experiment_config,
+        ),
+    )
     print()
-    print("This search will create a total of {} trial(s).".format(sum(j["results"].values())))
-    print(tabulate.tabulate(values, headers, tablefmt="presto"), flush=False)
+    print(_render_search_summary(resp=resp))
 
 
 args_description = [
