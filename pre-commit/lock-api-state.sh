@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Regenerate proto/buf.image.bin
 make -C proto gen-buf-image
