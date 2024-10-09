@@ -276,7 +276,7 @@ test.describe('Project List', () => {
 
       const projectsTable = workspaceProjects.table.table;
 
-      const newProjectRow = (
+      let newProjectRow = (
         await projectsTable.filterRows(
           async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
         )
@@ -297,11 +297,13 @@ test.describe('Project List', () => {
       await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
       await newProjectRow.pwLocator.waitFor({ state: 'hidden' });
 
-      const projectsWithoutNewItem = await projectsTable.filterRows(
-        async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
-      );
+      newProjectRow = (
+        await projectsTable.filterRows(
+          async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
+        )
+      )[0];
 
-      await expect(projectsWithoutNewItem.length).toBe(0);
+      await expect(newProjectRow).toBeUndefined();
 
       await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
 
