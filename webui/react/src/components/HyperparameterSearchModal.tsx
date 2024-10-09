@@ -330,7 +330,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         pool,
         slots_per_trial,
         max_trials,
-        length_units,
         mode,
         stop_once,
         max_concurrent_trials,
@@ -350,7 +349,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           validMaxConcurrentTrials &&
           validMaxTrials &&
           pool != null &&
-          length_units != null &&
           (searcher !== SEARCH_METHODS.ASHA.id || (mode != null && isBoolean(stop_once)))
         ),
       );
@@ -577,7 +575,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   }, [
     entityCopy,
     experiment?.config?.searcher.max_trials,
-    experiment.configRaw?.records_per_epoch,
     experiment.configRaw?.resources?.slots_per_trial,
     experiment.configRaw.searcher.max_concurrent_trials,
     experiment.configRaw.searcher?.mode,
