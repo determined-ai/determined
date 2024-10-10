@@ -119,11 +119,11 @@ func (a *UserAuthZBasic) CanCreateAccessToken(
 // CanGetAccessTokens returns an error if the user does not have permission to view own or
 // another user's token based on own role.
 func (a *UserAuthZBasic) CanGetAccessTokens(
-	ctx context.Context, curUser model.User, query *bun.SelectQuery, filterUserID model.UserID,
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID model.UserID,
 ) (selectQuery *bun.SelectQuery, err error) {
 	err = canGetOthersAccessToken(ctx, curUser)
 	if err != nil {
-		if filterUserID > 0 && filterUserID != curUser.ID {
+		if targetUserID > 0 && targetUserID != curUser.ID {
 			return nil, err
 		}
 		err = canGetOwnAccessToken(ctx, curUser)
@@ -158,7 +158,7 @@ func (a *UserAuthZBasic) CanUpdateAccessToken(
 	targetTokenUserID model.UserID,
 ) error {
 	if !curUser.Admin {
-		return fmt.Errorf("only admin privileged users can update own/other users' tokens")
+		return fmt.Errorf("only admin privileged users can update access tokens")
 	}
 	return nil
 }

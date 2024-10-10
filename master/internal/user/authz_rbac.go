@@ -244,26 +244,14 @@ func (a *UserAuthZRBAC) CanCreateAccessToken(
 	return nil
 }
 
-func canAdministrateAccessTokens(ctx context.Context, curUserID model.UserID) (err error) {
-	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateAccessTokenOnUser(fields, curUserID,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
-	defer func() {
-		audit.LogFromErr(fields, err)
-	}()
-
-	return db.DoesPermissionMatch(ctx, curUserID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
-}
-
 // CanGetAccessTokens returns an error if the user does not have permission to view own or
 // another user's token based on own role permissions.
 func (a *UserAuthZRBAC) CanGetAccessTokens(
-	ctx context.Context, curUser model.User, query *bun.SelectQuery, filterUserID model.UserID,
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID model.UserID,
 ) (selectQuery *bun.SelectQuery, err error) {
 	err = canGetOthersAccessTokens(ctx, curUser)
 	if err != nil {
-		if filterUserID > 0 && filterUserID != curUser.ID {
+		if targetUserID > 0 && targetUserID != curUser.ID {
 			return nil, err
 		}
 		err = canGetOwnAccessTokens(ctx, curUser)
@@ -280,7 +268,17 @@ func (a *UserAuthZRBAC) CanGetAccessTokens(
 func canGetOthersAccessTokens(
 	ctx context.Context, curUser model.User,
 ) (err error) {
-	err = canAdministrateAccessTokens(ctx, curUser.ID)
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateAccessTokenOnUser(fields, curUser.ID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
+
+	defer func(err *error) {
+		audit.LogFromErr(fields, *err)
+	}(&err)
+
+	// Check if the user has permission to view other users' tokens
+	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
 	if err != nil {
 		return errors.New("unable to get token due to insufficient permissions")
 	}

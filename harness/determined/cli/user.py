@@ -309,7 +309,7 @@ def create_token(args: argparse.Namespace) -> None:
         print(output_string)
 
 
-def update_token(args: argparse.Namespace) -> None:
+def edit_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     try:
         if args.description and args.token_id:
@@ -468,10 +468,10 @@ args_description = [
                     cli.output_format_args["yaml"],
                 ),
             ]),
-            cli.Cmd("update", update_token, "update token info", [
-                cli.Arg("token_id", help="update given access token"),
+            cli.Cmd("edit", edit_token, "edit token info", [
+                cli.Arg("token_id", help="edit given access token"),
                 cli.Arg("--description", "-d", type=str, default=None,
-                        help="description of token to update"),
+                        help="description of token to edit"),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],

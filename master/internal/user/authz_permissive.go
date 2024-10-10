@@ -133,10 +133,10 @@ func (p *UserAuthZPermissive) CanCreateAccessToken(
 
 // CanGetAccessTokens calls RBAC authz but enforces basic authz.
 func (p *UserAuthZPermissive) CanGetAccessTokens(
-	ctx context.Context, curUser model.User, query *bun.SelectQuery, filterUserID model.UserID,
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID model.UserID,
 ) (*bun.SelectQuery, error) {
-	_, _ = (&UserAuthZRBAC{}).CanGetAccessTokens(ctx, curUser, query, filterUserID)
-	return (&UserAuthZBasic{}).CanGetAccessTokens(ctx, curUser, query, filterUserID)
+	_, _ = (&UserAuthZRBAC{}).CanGetAccessTokens(ctx, curUser, query, targetUserID)
+	return (&UserAuthZBasic{}).CanGetAccessTokens(ctx, curUser, query, targetUserID)
 }
 
 // CanUpdateAccessToken calls RBAC authz but enforces basic authz.

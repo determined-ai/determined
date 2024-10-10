@@ -71,7 +71,7 @@ type UserAuthZ interface {
 	CanCreateAccessToken(ctx context.Context, curUser, targetUser model.User) error
 	// GET /api/v1/user/tokens
 	CanGetAccessTokens(ctx context.Context, curUser model.User, query *bun.SelectQuery,
-		filterUserID model.UserID) (*bun.SelectQuery, error)
+		targetUserID model.UserID) (*bun.SelectQuery, error)
 	// PATCH /api/v1/users/token/:token_id
 	CanUpdateAccessToken(ctx context.Context, curUser model.User, targetTokenUserID model.UserID) error
 }
