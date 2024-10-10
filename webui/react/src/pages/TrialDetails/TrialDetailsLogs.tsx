@@ -300,7 +300,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         message: `${content.slice(0, i)}<span class=${css.key}>${content.slice(i, j)}</span>${content.slice(j)}`,
       });
     });
-    return formatted;
+    return formatted.sort((a, b) => dateTimeStringSorter(a.time as string, b.time as string));
   }, [searchResults, settings.searchText, settings.enableRegex]);
 
   useEffect(() => {
