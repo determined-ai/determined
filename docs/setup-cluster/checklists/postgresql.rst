@@ -123,6 +123,7 @@ Install PostgreSQL using ``apt`` or ``yum``
       postgres=# CREATE DATABASE determined;
       postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
       postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
+      postgres=# GRANT ALL ON SCHEMA public TO determined;
 
 ************
  Next Steps
