@@ -448,12 +448,12 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	activeConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
 	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawAction: &expconf.LogAction{
+		expconf.LogPolicy{RawPattern: "sub", RawActions: []expconf.LogAction{{
 			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: &expconf.LogAction{
+		}}},
+		expconf.LogPolicy{RawPattern: `\d{5}$`, RawActions: []expconf.LogAction{{
 			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
+		}}},
 	}
 
 	v, err := json.Marshal(activeConfig)
