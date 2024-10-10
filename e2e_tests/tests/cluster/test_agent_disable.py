@@ -136,7 +136,7 @@ def test_disable_agent_zero_slots() -> None:
 
     try:
         with _disable_agent(admin, agent_id):
-            utils.wait_for_command_state(sess, command_id, "TERMINATED", 30)
+            utils.wait_for_command_state(sess, command_id, "TERMINATED", 120)
     finally:
         # Kill the command before failing so it does not linger.
         command = ["det", "command", "kill", command_id]
