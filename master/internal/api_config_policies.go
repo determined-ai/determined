@@ -23,10 +23,16 @@ import (
 const (
 	noWorkloadErr          = "no workload type specified."
 	noPoliciesErr          = "no specified config policies."
+	globalPriorityErr      = "global priority limit already exists"
 	invalidWorkloadTypeErr = "invalid workload type"
 )
 
-func validatePoliciesAndWorkloadType(workloadType, configPolicies string) error {
+func (a *apiServer) validatePoliciesAndWorkloadType(
+	globalConfigPolicies *model.TaskConfigPolicies,
+	workloadType string,
+	configPolicies string,
+) error {
+	// Validate workload type
 	if !configpolicy.ValidWorkloadType(workloadType) {
 		errMessage := fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType)
 		if len(workloadType) == 0 {
@@ -35,29 +41,25 @@ func validatePoliciesAndWorkloadType(workloadType, configPolicies string) error 
 		return status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
+	// Validate policies.
 	if len(configPolicies) == 0 {
 		return status.Errorf(codes.InvalidArgument, noPoliciesErr)
 	}
 
 	// Validate the input config based on workload type.
-	if workloadType == model.ExperimentType {
-		_, err := configpolicy.UnmarshalExperimentConfigPolicy(configPolicies)
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err := configpolicy.UnmarshalNTSCConfigPolicy(configPolicies)
-		if err != nil {
-			return err
-		}
+	_, priorityEnabledErr := a.m.rm.SmallerValueIsHigherPriority()
+	switch workloadType {
+	case model.ExperimentType:
+		return configpolicy.ValidateExperimentConfig(globalConfigPolicies, configPolicies, priorityEnabledErr)
+	case model.NTSCType:
+		return configpolicy.ValidateNTSCConfig(globalConfigPolicies, configPolicies, priorityEnabledErr)
+	default:
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType))
 	}
-
-	// TODO (request validation): Verify that configs do not violate constraints.
-	return nil
 }
 
-func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface{},
-	invariantConfig *string, constraints *string, err error,
+func parseConfigPolicies(configAndConstraints string) (
+	tcps map[string]interface{}, invariantConfig *string, constraints *string, err error,
 ) {
 	if len(configAndConstraints) == 0 {
 		return nil, nil, nil, status.Error(codes.InvalidArgument, "nothing to parse, empty "+
@@ -68,7 +70,7 @@ func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error parsing config policies: %w", err)
 	}
-	// Extract individal config and constraints.
+	// Extract individual config and constraints.
 	var policies map[string]interface{}
 	dec := json.NewDecoder(bytes.NewReader(configPolicies))
 	err = dec.Decode(&policies)
@@ -120,7 +122,12 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
+	globalConfigPolicies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, req.WorkloadType)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.validatePoliciesAndWorkloadType(globalConfigPolicies, req.WorkloadType, req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +171,7 @@ func (a *apiServer) PutGlobalConfigPolicies(
 		return nil, err
 	}
 
-	err = validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
+	err = a.validatePoliciesAndWorkloadType(nil, req.WorkloadType, req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}
