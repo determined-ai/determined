@@ -4208,18 +4208,6 @@ workflows:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
 
-      - test-e2e-slurm:
-          name: test-e2e-slurm-gpu
-          mark: "e2e_slurm_gpu"
-          requires:
-            - package-and-push-system-local-ee
-          context:
-            - dev-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only:
-                - main
-
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
           context:
@@ -5105,16 +5093,6 @@ workflows:
             - request-hpc-tests
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-
-      - test-e2e-slurm:
-          name: test-e2e-slurm-gpu
-          context:
-            - dev-ci-cluster-default-user-credentials
-          filters: *upstream-feature-branch
-          mark: "e2e_slurm_gpu"
-          requires:
-            - package-and-push-system-local-ee
-            - request-hpc-tests
 
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
