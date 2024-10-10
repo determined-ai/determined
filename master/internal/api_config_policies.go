@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -48,177 +47,15 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 	}
 
 	// Validate the input config based on workload type.
-	var expConfigPolicies *expconf.ExperimentConfigV0
-	var ntscConfigPolicies *model.CommandConfig
-	var constraints *model.Constraints
-
-	if workloadType == model.ExperimentType {
-		cp, err := configpolicy.UnmarshalConfigPolicy[configpolicy.ExperimentConfigPolicies](
-			configPolicies, configpolicy.InvalidExperimentConfigPolicyErr)
-		if err != nil {
-			return err
-		}
-
-		expConfigPolicies = cp.InvariantConfig
-		constraints = cp.Constraints
-	} else {
-		cp, err := configpolicy.UnmarshalConfigPolicy[configpolicy.NTSCConfigPolicies](
-			configPolicies, configpolicy.InvalidNTSCConfigPolicyErr)
-		if err != nil {
-			return err
-		}
-
-		ntscConfigPolicies = cp.InvariantConfig
-		constraints = cp.Constraints
-	}
-
-	// Validate constraints if they exist
-	if constraints != nil {
-		if err := a.validateConstraints(globalConfigPolicies, constraints); err != nil {
-			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid constraints"+": %s.", err))
-		}
-	}
-
-	// Validate against specific configurations
-	if expConfigPolicies != nil {
-		if err := a.validateExperimentConfig(
-			globalConfigPolicies, expConfigPolicies, constraints,
-		); err != nil {
-			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid experiment config policy"+": %s.", err))
-		}
-	}
-
-	if ntscConfigPolicies != nil {
-		if err := a.validateNTSCConfig(globalConfigPolicies, ntscConfigPolicies, constraints); err != nil {
-			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid ntsc config policy"+": %s.", err))
-		}
-	}
-
-	return nil
-}
-
-func (a *apiServer) validateConstraints(
-	globalConfigPolicies *model.TaskConfigPolicies,
-	constraints *model.Constraints,
-) error {
-	if constraints != nil {
-		if err := a.checkAgainstGlobalPriority(constraints.PriorityLimit); err != nil {
-			return err
-		}
-	}
-
-	return checkAgainstGlobalConfig(globalConfigPolicies, constraints, nil, nil)
-}
-
-func (a *apiServer) validateExperimentConfig(
-	globalConfigPolicies *model.TaskConfigPolicies,
-	expConfigPolicies *expconf.ExperimentConfigV0,
-	constraints *model.Constraints,
-) error {
-	if expConfigPolicies.RawResources != nil {
-		if err := a.checkAgainstGlobalPriority(expConfigPolicies.RawResources.RawPriority); err != nil {
-			return err
-		}
-		if err := checkConstraintConflicts(constraints, expConfigPolicies.RawResources.RawMaxSlots,
-			expConfigPolicies.RawResources.RawSlotsPerTrial, expConfigPolicies.RawResources.RawPriority); err != nil {
-			return err
-		}
-	}
-
-	return checkAgainstGlobalConfig(globalConfigPolicies, nil, expConfigPolicies, nil)
-}
-
-func (a *apiServer) validateNTSCConfig(
-	globalConfigPolicies *model.TaskConfigPolicies,
-	ntscConfigPolicies *model.CommandConfig,
-	constraints *model.Constraints,
-) error {
-	if ntscConfigPolicies.Resources.Priority != nil {
-		if err := a.checkAgainstGlobalPriority(ntscConfigPolicies.Resources.Priority); err != nil {
-			return err
-		}
-	}
-	if err := checkConstraintConflicts(constraints, ntscConfigPolicies.Resources.MaxSlots,
-		&ntscConfigPolicies.Resources.Slots, ntscConfigPolicies.Resources.Priority); err != nil {
-		return err
-	}
-
-	return checkAgainstGlobalConfig(globalConfigPolicies, nil, nil, ntscConfigPolicies)
-}
-
-func (a *apiServer) checkAgainstGlobalPriority(taskPriority *int) error {
-	if taskPriority == nil {
-		return nil
-	}
-
 	_, priorityEnabledErr := a.m.rm.SmallerValueIsHigherPriority()
-	if priorityEnabledErr != nil {
-		return fmt.Errorf("task priority is not supported in this cluster: %w", priorityEnabledErr)
+	switch workloadType {
+	case model.ExperimentType:
+		return configpolicy.ValidateExperimentConfig(globalConfigPolicies, configPolicies, priorityEnabledErr)
+	case model.NTSCType:
+		return configpolicy.ValidateNTSCConfig(globalConfigPolicies, configPolicies, priorityEnabledErr)
+	default:
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType))
 	}
-
-	return nil
-}
-
-func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, priority *int) error {
-	if constraints == nil {
-		return nil
-	}
-	if priority != nil && *constraints.PriorityLimit != *priority {
-		return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
-	}
-	if maxSlots != nil && *constraints.ResourceConstraints.MaxSlots != *maxSlots {
-		return fmt.Errorf("invariant config & constraints are trying to set the max slots")
-	}
-	if slots != nil && *constraints.ResourceConstraints.MaxSlots > *slots {
-		return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot")
-	}
-
-	return nil
-}
-
-func checkAgainstGlobalConfig(
-	globalConfigPolicies *model.TaskConfigPolicies,
-	constraints *model.Constraints,
-	expConfig *expconf.ExperimentConfigV0,
-	ntscConfig *model.CommandConfig,
-) error {
-	if globalConfigPolicies == nil || globalConfigPolicies.InvariantConfig == nil {
-		return nil
-	}
-
-	if constraints != nil {
-		globalConstraints, err := configpolicy.UnmarshalConfigPolicy[model.Constraints](
-			*globalConfigPolicies.Constraints, "invalid constraints",
-		)
-		if err != nil {
-			return err
-		}
-		return configpolicy.ConfigPolicyConflict(globalConstraints, constraints)
-	}
-
-	if ntscConfig != nil {
-		globalInvConfig, err := configpolicy.UnmarshalConfigPolicy[model.CommandConfig](
-			*globalConfigPolicies.InvariantConfig, configpolicy.InvalidNTSCConfigPolicyErr,
-		)
-		if err != nil {
-			return err
-		}
-
-		return configpolicy.ConfigPolicyConflict(globalInvConfig, ntscConfig)
-	}
-
-	if expConfig != nil {
-		globalInvConfig, err := configpolicy.UnmarshalConfigPolicy[expconf.ExperimentConfig](
-			*globalConfigPolicies.InvariantConfig, configpolicy.InvalidExperimentConfigPolicyErr,
-		)
-		if err != nil {
-			return err
-		}
-
-		return configpolicy.ConfigPolicyConflict(globalInvConfig, expConfig)
-	}
-
-	return nil
 }
 
 func parseConfigPolicies(configAndConstraints string) (

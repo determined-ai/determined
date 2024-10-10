@@ -671,7 +671,7 @@ invariant_config:
 		},
 		{
 			"YAML experiment just config", model.ExperimentType,
-			`invariant_config:`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`invariant_config:`, nil,
 		},
 		{
 			"YAML experiment bad config spec", model.ExperimentType,
@@ -716,7 +716,7 @@ invariant_config:
 		},
 		{
 			"YAML NTSC just config", model.NTSCType,
-			`invariant_config:`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`invariant_config:`, nil,
 		},
 		{
 			"YAML NTSC bad config spec", model.NTSCType,
@@ -795,7 +795,7 @@ constraints:
 		},
 		{
 			"YAML experiment just constraints", model.ExperimentType,
-			`constraints:`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`constraints:`, nil,
 		},
 
 		// Invalid NTSC constraint policies (YAML).
@@ -833,7 +833,7 @@ constraints:
 		},
 		{
 			"YAML NTSC just constraints", model.NTSCType,
-			`constraints:`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`constraints:`, nil,
 		},
 
 		// Additional experiment combinatory tests (YAML).
@@ -893,9 +893,9 @@ invariant_config:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			api, _, _, ctx := setupWorkspaceAuthZTest(t, nil)
+			api, _, _, _ := setupWorkspaceAuthZTest(t, nil)
 
-			err := api.validatePoliciesAndWorkloadType(ctx, nil, test.workloadType, test.configPolicies)
+			err := api.validatePoliciesAndWorkloadType(nil, test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
@@ -984,7 +984,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		},
 		{
 			"JSON experiment just config", model.ExperimentType,
-			`{"invariant_config": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{"invariant_config": }`, nil,
 		},
 		{
 			"JSON experiment bad config spec", model.ExperimentType,
@@ -1032,7 +1032,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		},
 		{
 			"JSON NTSC just config", model.NTSCType,
-			`{ "invariant_config": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{ "invariant_config": }`, nil,
 		},
 		{
 			"JSON NTSC bad config spec", model.NTSCType,
@@ -1117,7 +1117,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		},
 		{
 			"JSON experiment just constraints", model.ExperimentType,
-			`{ "constraints": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{ "constraints": }`, nil,
 		},
 
 		// Invalid NTSC constraint policies (JSON).
@@ -1162,7 +1162,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		},
 		{
 			"JSON NTSC just constraints", model.NTSCType,
-			`{ "constraints": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{ "constraints": }`, nil,
 		},
 
 		// Additional experiment combinatory tests (JSON).
@@ -1229,9 +1229,9 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			api, _, _, ctx := setupWorkspaceAuthZTest(t, nil)
+			api, _, _, _ := setupWorkspaceAuthZTest(t, nil)
 
-			err := api.validatePoliciesAndWorkloadType(ctx, nil, test.workloadType, test.configPolicies)
+			err := api.validatePoliciesAndWorkloadType(nil, test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
@@ -2552,13 +2552,13 @@ invariant_config:
 		WorkloadType:   "bad type",
 		ConfigPolicies: validExperimentConfigPolicyYAML,
 	})
-	require.ErrorContains(t, err, "error retrieving bad type task config policies")
+	require.ErrorContains(t, err, "invalid workload type")
 	require.Nil(t, resp)
 
 	// Test empty workload type.
 	resp, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
 		ConfigPolicies: validExperimentConfigPolicyYAML,
 	})
-	require.ErrorContains(t, err, "error retrieving  task config policies")
+	require.ErrorContains(t, err, "no workload type specified")
 	require.Nil(t, resp)
 }
