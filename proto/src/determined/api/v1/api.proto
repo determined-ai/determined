@@ -183,7 +183,7 @@ service Determined {
   // Create a new user.
   rpc PostUser(PostUserRequest) returns (PostUserResponse) {
     option (google.api.http) = {
-      post: "/api/v1/users"
+      post: "/api/v1/users2"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
