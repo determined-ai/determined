@@ -76,7 +76,7 @@ func ValidateExperimentConfig(
 ) error {
 	cp, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](configPolicies, InvalidExperimentConfigPolicyErr)
 	if err != nil || cp == nil {
-		return err // Handle error for nil cp or unmarshalling error.
+		return err
 	}
 
 	if globalConfigPolicies != nil {
@@ -129,8 +129,13 @@ func ValidateNTSCConfig(
 			checkAgainstGlobalPriority(priorityEnabledErr, cp.InvariantConfig.Resources.Priority)
 		}
 
+		var slots *int
+		if cp.InvariantConfig.Resources.Slots != 0 {
+			slots = &cp.InvariantConfig.Resources.Slots
+		}
+
 		if err := checkConstraintConflicts(cp.Constraints, cp.InvariantConfig.Resources.MaxSlots,
-			&cp.InvariantConfig.Resources.Slots, cp.InvariantConfig.Resources.Priority); err != nil {
+			slots, cp.InvariantConfig.Resources.Priority); err != nil {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidNTSCConfigPolicyErr+": %s.", err))
 		}
 	}
@@ -155,7 +160,8 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 		return fmt.Errorf("invariant config & constraints are trying to set the max slots")
 	}
 	if slots != nil && *constraints.ResourceConstraints.MaxSlots > *slots {
-		return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot")
+		return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot123: %v vs %v",
+			*constraints.ResourceConstraints.MaxSlots, *slots)
 	}
 
 	return nil
