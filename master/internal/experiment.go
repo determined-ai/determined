@@ -588,13 +588,7 @@ func (e *internalExperiment) trialCreated(t *trial) {
 		ops, err := e.searcher.RunCreated(runID, t.searcher.Create)
 		e.handleSearcherActions(ops, err)
 	}
-	state, ok := e.RunSearcherState[runID]
-	if !ok {
-		e.syslog.WithField("runID", t.id).Error("run has no searcher state on create")
-		return
-	}
-	state.RunID = ptrs.Ptr(runID)
-	e.RunSearcherState[runID] = state
+	e.RunSearcherState[runID] = experiment.RunSearcherState{Create: t.searcher.Create, RunID: &runID}
 	e.trials[runID] = t
 }
 
