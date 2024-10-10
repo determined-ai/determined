@@ -216,3 +216,15 @@
     priority: null
     resource_pool: ''
     is_single_node: null
+
+- name: log policies defaults
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policies.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/log-policies.json
+  case: []
+  defaulted:
+    - pattern: .*uncorrectable ECC error encountered.*
+      signal: ECC Error
+    - pattern: .*CUDA out of memory.*
+      signal: CUDA OOM
