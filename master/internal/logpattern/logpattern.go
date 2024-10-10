@@ -76,24 +76,26 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 			}
 
 			if compiledRegex.MatchString(log.Log) {
-				if policy.Action() != nil {
-					switch policy.Action().GetUnionMember().(type) {
-					case expconf.LogActionCancelRetries:
-						if err := addDontRetry(
-							ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
-						); err != nil {
-							return fmt.Errorf("adding don't retry: %w", err)
-						}
+				if actions := policy.Actions(); len(actions) > 0 {
+					for _, a := range actions {
+						switch a.GetUnionMember().(type) {
+						case expconf.LogActionCancelRetries:
+							if err := addDontRetry(
+								ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
+							); err != nil {
+								return fmt.Errorf("adding don't retry: %w", err)
+							}
 
-					case expconf.LogActionExcludeNode:
-						if err := addRetryOnDifferentNode(
-							ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
-						); err != nil {
-							return fmt.Errorf("adding retry on different node: %w", err)
-						}
+						case expconf.LogActionExcludeNode:
+							if err := addRetryOnDifferentNode(
+								ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
+							); err != nil {
+								return fmt.Errorf("adding retry on different node: %w", err)
+							}
 
-					default:
-						return fmt.Errorf("unrecognized log pattern policy type")
+						default:
+							return fmt.Errorf("unrecognized log pattern policy type")
+						}
 					}
 				}
 

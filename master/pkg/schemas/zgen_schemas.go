@@ -1579,28 +1579,29 @@ var (
                 "string"
             ]
         },
-        "action": {
+        "actions": {
             "type": [
-                "object",
+                "array",
                 "null"
             ],
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-action.json",
-            "default": null
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            },
+            "default": []
         },
         "signal": {
             "type": [
                 "string",
                 "null"
-            ],
-            "default": null
+            ]
         }
     },
     "checks": {
-        "one of or both of action and signal must be set": {
+        "one of or both of actions and signal must be set": {
             "anyOf": [
                 {
                     "required": [
-                        "action"
+                        "actions"
                     ]
                 },
                 {

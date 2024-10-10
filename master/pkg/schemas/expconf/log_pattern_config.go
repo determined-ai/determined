@@ -3,8 +3,7 @@ package expconf
 import (
 	"encoding/json"
 	"fmt"
-
-	log "github.com/sirupsen/logrus"
+	"slices"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -34,17 +33,34 @@ func (b LogPoliciesConfigV0) Merge(
 	other LogPoliciesConfigV0,
 ) LogPoliciesConfigV0 {
 	var out LogPoliciesConfigV0
-	seen := make(map[string]bool)
-	for _, p := range append(other, b...) {
-		json, err := json.Marshal(p)
-		if err != nil {
-			log.Errorf("marshaling error %+v %v", p, err)
-		}
-		if seen[string(json)] {
-			continue
-		}
-		seen[string(json)] = true
 
+	patternToLp := make(map[string]LogPolicyV0)
+	for _, p := range b {
+		patternToLp[p.RawPattern] = p
+	}
+
+	for _, p := range other {
+		if v, ok := patternToLp[p.RawPattern]; ok {
+			// Union merge actions
+			existing_actions := patternToLp[p.RawPattern].RawActions
+			merged_actions := append([]LogActionV0{}, existing_actions...)
+			for _, a := range p.RawActions {
+				if ok := slices.Contains(existing_actions, a); !ok {
+					merged_actions = append(merged_actions, a)
+				}
+			}
+			v.RawActions = merged_actions
+			patternToLp[p.RawPattern] = v
+
+			// Other signal takes precedence
+			v.RawSignal = schemas.Merge(p.RawSignal, v.RawSignal)
+			patternToLp[p.RawPattern] = v
+		} else {
+			patternToLp[p.RawPattern] = p
+		}
+	}
+
+	for _, p := range patternToLp {
 		out = append(out, p)
 	}
 	return out
@@ -56,8 +72,8 @@ func (b LogPoliciesConfigV0) Merge(
 type LogPolicyV0 struct {
 	RawPattern string `json:"pattern"`
 
-	RawAction *LogActionV0 `json:"action,omitempty"`
-	RawSignal *string      `json:"signal,omitempty"`
+	RawActions []LogActionV0 `json:"actions,omitempty"`
+	RawSignal  *string       `json:"signal,omitempty"`
 }
 
 // LogActionV0 is a policy to take after matching.
