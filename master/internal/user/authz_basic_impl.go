@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -108,19 +110,43 @@ func (a *UserAuthZBasic) CanSetUsersDisplayName(
 func (a *UserAuthZBasic) CanCreateAccessToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {
-	if !curUser.Admin && curUser.ID != targetUser.ID {
-		return fmt.Errorf("only admin privileged users can create token for other users")
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can create token for own/other users")
 	}
 	return nil
 }
 
-// CanGetAccessTokens returns an error if the user is not an admin.
+// CanGetAccessTokens returns an error if the user does not have permission to view own or
+// another user's token based on own role.
 func (a *UserAuthZBasic) CanGetAccessTokens(
-	ctx context.Context, curUser, targetUser model.User,
-) error {
-	if !curUser.Admin && curUser.ID != targetUser.ID {
-		return fmt.Errorf("only admin privileged users can view token of other users")
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, filterUserID model.UserID,
+) (selectQuery *bun.SelectQuery, err error) {
+	err = canGetOthersAccessToken(ctx, curUser)
+	if err != nil {
+		if filterUserID > 0 && filterUserID != curUser.ID {
+			return nil, err
+		}
+		err = canGetOwnAccessToken(ctx, curUser)
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where("us.user_id = ?", curUser.ID)
 	}
+	return query, nil
+}
+
+// canGetOthersAccessTokens returns an error if the user is not an admin.
+func canGetOthersAccessToken(ctx context.Context, curUser model.User) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can view other users")
+	}
+	return nil
+}
+
+// canGetOwnAccessTokens returns an error if the user is not an admin.
+func canGetOwnAccessToken(
+	ctx context.Context, curUser model.User,
+) error {
 	return nil
 }
 
@@ -131,8 +157,8 @@ func (a *UserAuthZBasic) CanUpdateAccessToken(
 	curUser model.User,
 	targetTokenUserID model.UserID,
 ) error {
-	if !curUser.Admin && curUser.ID != targetTokenUserID {
-		return fmt.Errorf("only admin privileged users can update other users' tokens")
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can update own/other users' tokens")
 	}
 	return nil
 }

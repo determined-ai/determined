@@ -804,9 +804,9 @@ func (a *apiServer) GetAccessTokens(
 			}
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			for _, tokenId := range atf.TokenIDs {
-				if tokenId > 0 {
-					q = q.WhereOr("us.id = ?", tokenId)
+			for _, tokenID := range atf.TokenIDs {
+				if tokenID > 0 {
+					q = q.WhereOr("us.id = ?", tokenID)
 				}
 			}
 			return q
@@ -834,19 +834,7 @@ func (a *apiServer) GetAccessTokens(
 		return nil, err
 	}
 
-	userID := curUser.ID
-	if userIDForGivenUsername > 0 {
-		userID = userIDForGivenUsername
-	} else if !curUser.Admin {
-		query.Where("us.user_id = ?", curUser.ID)
-	}
-
-	targetFullUser, err := getFullModelUser(ctx, userID)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("User with id: {%d} not found", userID))
-	}
-	targetUser := targetFullUser.ToUser()
-	err = user.AuthZProvider.Get().CanGetAccessTokens(ctx, *curUser, targetUser)
+	query, err = user.AuthZProvider.Get().CanGetAccessTokens(ctx, *curUser, query, userIDForGivenUsername)
 	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}

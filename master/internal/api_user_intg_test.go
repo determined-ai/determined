@@ -15,6 +15,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -1090,9 +1091,10 @@ func TestAuthzOtherAccessToken(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// GET API Auth check
+	var query bun.SelectQuery
 	expectedErr = status.Error(codes.PermissionDenied, "canGetAccessTokens")
-	authzUsers.On("CanGetAccessTokens", mock.Anything, curUser, curUser).
-		Return(fmt.Errorf("canGetAccessTokens")).Once()
+	authzUsers.On("CanGetAccessTokens", mock.Anything, curUser, mock.Anything, curUser.ID).
+		Return(&query, fmt.Errorf("canGetAccessTokens")).Once()
 
 	filter := fmt.Sprintf(`{"username":"%s"}`, curUser.Username)
 	_, err = api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
@@ -1138,16 +1140,18 @@ func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model
 func createTestToken(ctx context.Context, t *testing.T, api *apiServer, userID model.UserID) {
 	if userID == 0 {
 		// Create a test token for current user without lifespan input
-		token, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{})
+		resp, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{})
 		require.NoError(t, err)
-		require.NotNil(t, token)
+		require.NotNil(t, resp.Token)
+		require.NotNil(t, resp.TokenId)
 	} else {
 		// Create a test token for user_id without lifespan input
-		token, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
+		resp, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
 			UserId: int32(userID),
 		})
 		require.NoError(t, err)
-		require.NotNil(t, token)
+		require.NotNil(t, resp.Token)
+		require.NotNil(t, resp.TokenId)
 	}
 }
 

@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -131,10 +133,10 @@ func (p *UserAuthZPermissive) CanCreateAccessToken(
 
 // CanGetAccessTokens calls RBAC authz but enforces basic authz.
 func (p *UserAuthZPermissive) CanGetAccessTokens(
-	ctx context.Context, curUser, targetUser model.User,
-) error {
-	_ = (&UserAuthZRBAC{}).CanGetAccessTokens(ctx, curUser, targetUser)
-	return (&UserAuthZBasic{}).CanGetAccessTokens(ctx, curUser, targetUser)
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, filterUserID model.UserID,
+) (*bun.SelectQuery, error) {
+	_, _ = (&UserAuthZRBAC{}).CanGetAccessTokens(ctx, curUser, query, filterUserID)
+	return (&UserAuthZBasic{}).CanGetAccessTokens(ctx, curUser, query, filterUserID)
 }
 
 // CanUpdateAccessToken calls RBAC authz but enforces basic authz.

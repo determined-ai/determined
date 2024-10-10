@@ -329,8 +329,8 @@ def login_with_token(args: argparse.Namespace) -> None:
     unauth_session = api.UnauthSession(master=args.master, cert=cli.cert)
     auth_headers = {"Authorization": f"Bearer {args.token}"}
     user_data = unauth_session.get("/api/v1/me", headers=auth_headers).json()
-    if 'user' in user_data and 'username' in user_data.get('user'):
-        username = user_data.get('user').get('username')
+    if "user" in user_data and "username" in user_data.get("user"):
+        username = user_data.get("user").get("username")
 
     token_store = authentication.TokenStore(args.master)
     token_store.set_token(username, args.token)
@@ -470,7 +470,7 @@ args_description = [
             ]),
             cli.Cmd("update", update_token, "update token info", [
                 cli.Arg("token_id", help="update given access token"),
-                cli.Arg("--description", "-e", type=str, default=None,
+                cli.Arg("--description", "-d", type=str, default=None,
                         help="description of token to update"),
                 cli.Group(
                     cli.output_format_args["json"],
