@@ -431,6 +431,8 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 
 	// Simulate the search.
 	testSearchRunner.run(900, 100, true)
+	progress := search.progress(map[int32]float64{}, map[int32]bool{})
+	require.Equal(t, 1.0, progress)
 
 	// Expect 10 total runs.
 	// Since we reported progressively worse metrics, only the first run should continue.

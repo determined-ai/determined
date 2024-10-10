@@ -514,7 +514,6 @@ func shimExperimentSnapshotV5(experimentID int, snapshot []byte) ([]byte, error)
 	var runSearcherState map[int]interface{}
 
 	for rID, trialSearcherState := range runSearcherStateV4 {
-		// Only for ASHA
 		subsearchID, _ := searchMethodState.(map[string]interface{})["run_table"].(map[int]int)[rID]
 		runSearcherState[rID] = map[string]interface{}{
 			"Create": map[string]interface{}{
