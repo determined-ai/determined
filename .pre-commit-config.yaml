@@ -86,6 +86,7 @@ repos:
         description: "Ensure all redirect URLs are generated at commit time."
         files: '^docs/'
         pass_filenames: false
+        verbose: true
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
