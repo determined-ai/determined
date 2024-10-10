@@ -81,6 +81,9 @@ export const paths = {
   clusters: (): string => {
     return '/clusters';
   },
+  configPolicies: (): string => {
+    return '/policies';
+  },
   customerAsset: (
     name: 'logo',
     orientation: 'vertical' | 'horizontal',
