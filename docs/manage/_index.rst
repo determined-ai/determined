@@ -30,6 +30,12 @@
             </a>
          </div>
          <div class="tile-container">
+            <a class="tile" href="task-config-policies.html">
+               <h2 class="tile-title">Config Policies</h2>
+               <p class="tile-description">Instructions for setting your own configuring policies at the workspace or cluster level.</p>
+            </a>
+         </div>
+         <div class="tile-container">
             <a class="tile" href="troubleshooting.html">
                <h2 class="tile-title">Troubleshooting</h2>
                <p class="tile-description">Common troubleshooting scenarios and their resolutions.</p>
