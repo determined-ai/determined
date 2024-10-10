@@ -522,6 +522,7 @@ type Run struct {
 	LogRetentionDays      *int16         `db:"log_retention_days"`
 	Metadata              map[string]any `db:"metadata" bun:"metadata,scanonly"`
 	LocalID               int            `db:"local_id"`
+	LogSignal             *string        `db:"log_signal"`
 }
 
 // RunTaskID represents a row from the `run_id_task_id` table.

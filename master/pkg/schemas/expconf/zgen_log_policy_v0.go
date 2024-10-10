@@ -16,12 +16,20 @@ func (l *LogPolicyV0) SetPattern(val string) {
 	l.RawPattern = val
 }
 
-func (l LogPolicyV0) Action() LogActionV0 {
-	return l.RawAction
+func (l LogPolicyV0) Actions() []LogActionV0 {
+	return l.RawActions
 }
 
-func (l *LogPolicyV0) SetAction(val LogActionV0) {
-	l.RawAction = val
+func (l *LogPolicyV0) SetActions(val []LogActionV0) {
+	l.RawActions = val
+}
+
+func (l LogPolicyV0) Signal() *string {
+	return l.RawSignal
+}
+
+func (l *LogPolicyV0) SetSignal(val *string) {
+	l.RawSignal = val
 }
 
 func (l LogPolicyV0) ParsedSchema() interface{} {

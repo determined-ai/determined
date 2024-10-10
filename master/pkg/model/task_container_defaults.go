@@ -49,7 +49,7 @@ type TaskContainerDefaultsConfig struct {
 
 	StartupHook string `json:"startup_hook"`
 
-	LogPolicies expconf.LogPoliciesConfig `json:"log_policies"`
+	LogPolicies *expconf.LogPoliciesConfig `json:"log_policies"`
 
 	PreemptionTimeout int `json:"preemption_timeout,omitempty"`
 
@@ -323,7 +323,8 @@ func (c TaskContainerDefaultsConfig) Merge(
 		if res.LogPolicies == nil {
 			res.LogPolicies = other.LogPolicies
 		} else {
-			res.LogPolicies = res.LogPolicies.Merge(other.LogPolicies)
+			logPolicies := res.LogPolicies.Merge(*other.LogPolicies)
+			res.LogPolicies = &logPolicies
 		}
 	}
 

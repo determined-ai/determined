@@ -4,31 +4,66 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
 // LogPoliciesConfigV0 is a list of log policies.
+//
+//go:generate ../gen.sh
 type LogPoliciesConfigV0 []LogPolicyV0
+
+// WithDefaults implements the Defaultable psuedointerface.
+func (b *LogPoliciesConfigV0) WithDefaults() *LogPoliciesConfigV0 {
+	eccErrorPattern := ECCErrorPattern
+	eccErrorSignal := ECCErrorSignal
+	cudaOomPattern := CUDAOOMPattern
+	cudaOomSignal := CUDAOOMSignal
+
+	if b != nil && len(*b) == 0 {
+		return &LogPoliciesConfigV0{
+			LogPolicyV0{RawPattern: eccErrorPattern, RawSignal: &eccErrorSignal},
+			LogPolicyV0{RawPattern: cudaOomPattern, RawSignal: &cudaOomSignal},
+		}
+	}
+	return b
+}
 
 // Merge implemenets the mergable interface.
 func (b LogPoliciesConfigV0) Merge(
 	other LogPoliciesConfigV0,
 ) LogPoliciesConfigV0 {
 	var out LogPoliciesConfigV0
-	seen := make(map[string]bool)
-	for _, p := range append(other, b...) {
-		json, err := json.Marshal(p)
-		if err != nil {
-			log.Errorf("marshaling error %+v %v", p, err)
-		}
-		if seen[string(json)] {
-			continue
-		}
-		seen[string(json)] = true
 
+	patternToLp := make(map[string]LogPolicyV0)
+	for _, p := range other {
+		patternToLp[p.RawPattern] = p
+	}
+
+	for _, p := range b {
+		if v, ok := patternToLp[p.RawPattern]; ok {
+			// Union merge actions
+			actions := make(set.Set[LogActionV0])
+			for _, a := range patternToLp[p.RawPattern].RawActions {
+				actions.Insert(a)
+			}
+			for _, a := range p.RawActions {
+				if !actions.Contains(a) {
+					v.RawActions = append(v.RawActions, a)
+				}
+			}
+			patternToLp[p.RawPattern] = v
+
+			// Other signal takes precedence
+			v.RawSignal = schemas.Merge(p.RawSignal, v.RawSignal)
+			patternToLp[p.RawPattern] = v
+		} else {
+			patternToLp[p.RawPattern] = p
+		}
+	}
+
+	for _, p := range patternToLp {
 		out = append(out, p)
 	}
 	return out
@@ -40,7 +75,8 @@ func (b LogPoliciesConfigV0) Merge(
 type LogPolicyV0 struct {
 	RawPattern string `json:"pattern"`
 
-	RawAction LogActionV0 `json:"action"`
+	RawActions []LogActionV0 `json:"actions,omitempty"`
+	RawSignal  *string       `json:"signal,omitempty"`
 }
 
 // LogActionV0 is a policy to take after matching.

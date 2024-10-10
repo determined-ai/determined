@@ -109,11 +109,14 @@ func (e *ExperimentConfigV0) SetLabels(val LabelsV0) {
 }
 
 func (e ExperimentConfigV0) LogPolicies() LogPoliciesConfigV0 {
-	return e.RawLogPolicies
+	if e.RawLogPolicies == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .LogPolicies")
+	}
+	return *e.RawLogPolicies
 }
 
 func (e *ExperimentConfigV0) SetLogPolicies(val LogPoliciesConfigV0) {
-	e.RawLogPolicies = val
+	e.RawLogPolicies = &val
 }
 
 func (e ExperimentConfigV0) RetentionPolicy() *RetentionPolicyConfigV0 {
