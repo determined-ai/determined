@@ -183,7 +183,7 @@ entries:
     version: 1.2.0-dev5+0eb0c668
   - apiVersion: v2
     appVersion: dev
-    created: "2024-10-10T16:29:24.394211553Z"
+    created: "2024-10-10T18:23:38.607237142Z"
     dependencies:
     - condition: oidc.enabled
       name: dex
@@ -206,7 +206,7 @@ entries:
       repository: https://prometheus-community.github.io/helm-charts
       version: '>=25.8.1'
     description: A Helm chart for AI On-Line Inferencing (Aioli)
-    digest: d2b98c2b3792d8f383173eab476d8efadb612966bdc92f8c439efdfb322f7938
+    digest: 094d82b43247bb36e14869c18c448f730e5b2d9eeb81a49a01e56cc3bd8a8d37
     home: https://github.com/determined-ai/aioli.git
     icon: https://github.com/determined-ai/aioli/blob/main/aioli-logo.png?raw=true
     name: aioli
@@ -215,8 +215,8 @@ entries:
     - https://github.com/grafana/grafana
     - https://github.com/grafana/loki
     urls:
-    - https://github.com/determined-ai/aioli/releases/download/1.2.0-dev42%2Be8f30b04/aioli-helm-chart_1.2.0-dev42%2Be8f30b04.tgz
-    version: 1.2.0-dev42+e8f30b04
+    - https://github.com/determined-ai/aioli/releases/download/1.2.0-dev42%2Bda1bcfd4/aioli-helm-chart_1.2.0-dev42%2Bda1bcfd4.tgz
+    version: 1.2.0-dev42+da1bcfd4
   - apiVersion: v2
     appVersion: dev
     created: "2024-10-09T16:14:58.512124711Z"
@@ -5055,4 +5055,4 @@ entries:
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.2/determined-helm-chart_0.18.2.tgz
     version: 0.18.2
-generated: "2024-10-10T16:29:24.370741476Z"
+generated: "2024-10-10T18:23:38.58178257Z"
