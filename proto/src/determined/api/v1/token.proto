@@ -9,6 +9,9 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Create the requested user's accessToken.
 message PostAccessTokenRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user_id" ] }
+  };
   // The id of the user.
   int32 user_id = 1;
   // Lifespan expressing how long the token should last. Should be a Go-format

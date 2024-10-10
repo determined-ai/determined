@@ -8104,7 +8104,7 @@ export interface V1PostAccessTokenRequest {
      * @type {number}
      * @memberof V1PostAccessTokenRequest
      */
-    userId?: number;
+    userId: number;
     /**
      * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
      * @type {string}

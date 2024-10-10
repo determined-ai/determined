@@ -11141,43 +11141,39 @@ class v1PostAccessTokenRequest(Printable):
     """Create the requested user's accessToken."""
     description: "typing.Optional[str]" = None
     lifespan: "typing.Optional[str]" = None
-    userId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
+        userId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
         lifespan: "typing.Union[str, None, Unset]" = _unset,
-        userId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        self.userId = userId
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(lifespan, Unset):
             self.lifespan = lifespan
-        if not isinstance(userId, Unset):
-            self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostAccessTokenRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "userId": obj["userId"],
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "lifespan" in obj:
             kwargs["lifespan"] = obj["lifespan"]
-        if "userId" in obj:
-            kwargs["userId"] = obj["userId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "userId": self.userId,
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "lifespan" in vars(self):
             out["lifespan"] = self.lifespan
-        if not omit_unset or "userId" in vars(self):
-            out["userId"] = self.userId
         return out
 
 class v1PostAccessTokenResponse(Printable):
