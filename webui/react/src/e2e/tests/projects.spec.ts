@@ -33,7 +33,7 @@ test.describe('Project UI CRUD', () => {
     }
   });
 
-  test.skip('Create a Project', async ({ authedPage, newWorkspace }) => {
+  test('Create a Project', async ({ authedPage, newWorkspace }) => {
     const projectName = safeName('test-project');
     const workspaceDetails = new WorkspaceDetails(authedPage);
     const projectDetails = new ProjectDetails(authedPage);
@@ -61,7 +61,7 @@ test.describe('Project UI CRUD', () => {
     });
   });
 
-  test.skip('Archive and Unarchive Project', async ({
+  test('Archive and Unarchive Project', async ({
     authedPage,
     newWorkspace,
     backgroundApiProject,
@@ -94,7 +94,7 @@ test.describe('Project UI CRUD', () => {
     });
   });
 
-  test.skip('Move a Project', async ({
+  test('Move a Project', async ({
     authedPage,
     newWorkspace,
     backgroundApiWorkspace,
@@ -260,9 +260,9 @@ test.describe('Project List', () => {
     let newProject: V1PostProjectResponse;
     let destinationWorkspace: V1Workspace;
 
-    test.beforeAll(async ({ newWorkspace, backgroundApiProject, backgroundApiWorkspace }) => {
+    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
       newProject = await backgroundApiProject.createProject(
-        newWorkspace.response.workspace.id,
+        workspaceIds[0],
         backgroundApiProject.new(),
       );
       destinationWorkspace = (
@@ -281,6 +281,8 @@ test.describe('Project List', () => {
     });
 
     test('move a project to a different workspace', async ({ authedPage }) => {
+      // eslint-disable-next-line no-console
+      console.log(newProject.project.name);
       const workspaceDetails = new WorkspaceDetails(authedPage);
       const workspaceProjects = workspaceDetails.workspaceProjects;
 
