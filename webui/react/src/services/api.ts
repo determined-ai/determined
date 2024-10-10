@@ -1030,3 +1030,21 @@ export const deleteGlobalConfigPolicies = generateDetApi<
   Api.V1DeleteGlobalConfigPoliciesResponse,
   Api.V1DeleteGlobalConfigPoliciesResponse
 >(Config.deleteGlobalConfigPolicies);
+
+export const getGlobalConfigPolicies = generateDetApi<
+  Service.GetGlobalConfigPolicies,
+  Api.V1GetGlobalConfigPoliciesResponse,
+  Api.V1GetGlobalConfigPoliciesResponse
+>(Config.getGlobalConfigPolicies);
+
+export const updateGlobalConfigPolicies = generateDetApi<
+  Service.UpdateGlobalConfigPolicies,
+  Api.V1PutGlobalConfigPoliciesResponse,
+  Api.V1PutGlobalConfigPoliciesResponse
+>(Config.updateGlobalConfigPolicies);
+
+export const deleteGlobalConfigPolicies = generateDetApi<
+  Service.DeleteGlobalConfigPolicies,
+  Api.V1DeleteGlobalConfigPoliciesResponse,
+  Api.V1DeleteGlobalConfigPoliciesResponse
+>(Config.deleteGlobalConfigPolicies);

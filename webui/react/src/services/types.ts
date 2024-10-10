@@ -592,3 +592,16 @@ export interface UpdateGlobalConfigPolicies {
 export interface DeleteGlobalConfigPolicies {
   workloadType: 'NTSC' | 'EXPERIMENT';
 }
+
+export interface GetGlobalConfigPolicies {
+  workloadType: 'NTSC' | 'EXPERIMENT';
+}
+
+export interface UpdateGlobalConfigPolicies {
+  workloadType: 'NTSC' | 'EXPERIMENT';
+  configPolicies: string;
+}
+
+export interface DeleteGlobalConfigPolicies {
+  workloadType: 'NTSC' | 'EXPERIMENT';
+}
