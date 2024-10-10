@@ -200,7 +200,7 @@ def set_master_port(config: str) -> None:
     conf.MASTER_PORT = port
 
 
-def get_run_by_exp_id(sess, exp_id) -> int:
+def get_run_by_exp_id(sess: api.Session, exp_id: int) -> bindings.v1SearchRunsResponse:
     return bindings.post_SearchRuns(
         sess,
         body=bindings.v1SearchRunsRequest(
