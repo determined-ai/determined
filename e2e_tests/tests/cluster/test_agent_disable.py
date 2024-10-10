@@ -85,7 +85,6 @@ def test_disable_agent_experiment_resume() -> None:
     assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
 
-    # Make the experiment preemptible.
     exp_ref = noop.create_experiment(sess, [noop.Sleep(100)], config={"max_restarts": 0})
     exp.wait_for_experiment_state(
         sess,
