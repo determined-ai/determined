@@ -192,7 +192,7 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 	}
 	if globalConfigPolicies.InvariantConfig != nil {
 		var tempConfig expconf.ExperimentConfigV0
-		err = json.Unmarshal([]byte(*globalConfigPolicies.InvariantConfig), &config)
+		err = json.Unmarshal([]byte(*globalConfigPolicies.InvariantConfig), &tempConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling global invariant config: %w", err)
 		}

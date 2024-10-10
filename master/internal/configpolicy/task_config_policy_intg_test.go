@@ -526,14 +526,12 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 			expconf.ExperimentConfigV0{})
 		require.NoError(t, err)
 		require.Equal(t, wkspConfigNoDefaults, *conf)
-
 	})
 
 	t.Run("test invalid workspace id", func(t *testing.T) {
 		conf, err := MergeWithInvariantExperimentConfigs(context.Background(), -1, defaultConfig)
 		require.NoError(t, err)
 		require.Equal(t, defaultConfig, *conf)
-
 	})
 
 	testMergeSlicesAndMaps(t)
@@ -557,8 +555,8 @@ func testMergeSlicesAndMaps(t *testing.T) {
 		"slots": 5,
 		"devices": [
 		  {
-			"host_path": "random/path/wksp",
-			"container_path": "random/container/path/wksp",
+			"host_path": "random/path",
+			"container_path": "random/container/path",
 			"mode": "slow"
 		  }
 		]
@@ -566,8 +564,8 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  "preemption_timeout": 2000,
 	  "bind_mounts": [
 		{
-		  "host_path": "random/path/wksp",
-		  "container_path": "random/container/path/wksp",
+		  "host_path": "random/path",
+		  "container_path": "random/container/path",
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		}
@@ -604,15 +602,15 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  "resources": {
 		"devices": [
 		  {
-			"host_path": "random/path",
-			"container_path": "random/container/path",
+			"host_path": "random/path/wksp",
+			"container_path": "random/container/path/wksp",
 			"mode": "fast"
 		  } ]
 		}, 
 	  "bind_mounts": [
 		{
-		  "host_path": "random/path",
-		  "container_path": "random/container/path",
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		}
@@ -647,14 +645,14 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  "resources": {
 		"slots": 5,
 		"devices": [
-		  {
-			"host_path": "random/path",
-			"container_path": "random/container/path",
+		 {
+			"host_path": "random/path/wksp",
+			"container_path": "random/container/path/wksp",
 			"mode": "fast"
 		  },
 		  {
-			"host_path": "random/path/wksp",
-			"container_path": "random/container/path/wksp",
+			"host_path": "random/path",
+			"container_path": "random/container/path",
 			"mode": "slow"
 		  }
 		]
@@ -662,14 +660,14 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  "preemption_timeout": 2000,
 	  "bind_mounts": [
 		{
-		  "host_path": "random/path",
-		  "container_path": "random/container/path",
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		},
 		 {
-		  "host_path": "random/path/wksp",
-		  "container_path": "random/container/path/wksp",
+		  "host_path": "random/path",
+		  "container_path": "random/container/path",
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		}
@@ -707,6 +705,134 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  ]
 	}
 	`
+
+		globalPartialConfig := `{
+	  "raw_data": { "3" : "data point 3" },
+	  "resources": {
+		"devices": [
+		  {
+			"host_path": "random/path/global",
+			"container_path": "random/container/path/global",
+			"mode": "fast"
+		  } ]
+		}, 
+	  "bind_mounts": [
+		{
+		  "host_path": "random/path/global",
+		  "container_path": "random/container/path/global",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu3:cpuval3"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 10195,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "gloablrepeat"
+		}
+	  ]
+	}`
+
+		mergedGlobalConfig := `
+	{
+	  "raw_data": { 
+			  "1" : "data point 1",
+			 "2" : "data point 2",
+			 "3" : "data point 3"
+		},
+	  "description": "random description workspace",
+	  "resources": {
+		"slots": 5,
+		"devices": [
+		{
+			"host_path": "random/path/global",
+			"container_path": "random/container/path/global",
+			"mode": "fast"
+		  },
+		 {
+			"host_path": "random/path/wksp",
+			"container_path": "random/container/path/wksp",
+			"mode": "fast"
+		  },
+		  {
+			"host_path": "random/path",
+			"container_path": "random/container/path",
+			"mode": "slow"
+		  }
+		]
+	  },
+	  "preemption_timeout": 2000,
+	  "bind_mounts": [
+	   {
+		  "host_path": "random/path/global",
+		  "container_path": "random/container/path/global",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		},
+		{
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		},
+		 {
+		  "host_path": "random/path",
+		  "container_path": "random/container/path",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu1:cpuval1", "cpu2:cpuval2", "cpu3:cpuval3"
+		  ],
+		   "cuda": [
+			"cuda1:cudaval"
+		  ],
+		   "rocm": [
+			"rocm1:rocmval1"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 9195,
+			  "proxy_tcp": true
+			},
+			{
+			  "proxy_port": 91950,
+			  "proxy_tcp": true
+			},
+			{
+			  "proxy_port": 10195,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		},
+		{
+		  "pattern": "repeat"    
+		},
+		{
+		  "pattern": "gloablrepeat"
+		}
+	  ]
+	}
+	`
 		var adminPartialInvariantConfig expconf.ExperimentConfigV0
 		err := json.Unmarshal([]byte(adminPartialConfig), &adminPartialInvariantConfig)
 		require.NoError(t, err)
@@ -721,10 +847,11 @@ func testMergeSlicesAndMaps(t *testing.T) {
 		userPartialInvariantConfig.RawName = defaultConfig.RawName
 		userPartialInvariantConfig = schemas.WithDefaults(userPartialInvariantConfig)
 
-		var mergedInvariantConfig expconf.ExperimentConfigV0
-		err = json.Unmarshal([]byte(mergedWkspConfig), &mergedInvariantConfig)
+		var mergedWkspInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(mergedWkspConfig), &mergedWkspInvariantConfig)
 		require.NoError(t, err)
 
+		// Test merging user-submitted config with workspace config policies only.
 		setConfigPolicies(ctx, t, &w.ID, &model.TaskConfigPolicies{
 			WorkspaceID:     &w.ID,
 			WorkloadType:    model.ExperimentType,
@@ -732,13 +859,42 @@ func testMergeSlicesAndMaps(t *testing.T) {
 			InvariantConfig: &adminPartialConfig,
 		}, nil)
 
-		mergedInvariantConfig.RawName = adminPartialInvariantConfig.RawName
-		mergedInvariantConfig = schemas.WithDefaults(mergedInvariantConfig)
+		mergedWkspInvariantConfig.RawName = adminPartialInvariantConfig.RawName
+		mergedWkspInvariantConfig = schemas.WithDefaults(mergedWkspInvariantConfig)
 		res, err := MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
 			userPartialInvariantConfig)
 
 		require.NoError(t, err)
-		require.EqualValues(t, mergedInvariantConfig, *res)
+		require.Equal(t, mergedWkspInvariantConfig, *res)
+
+		// Merge user-submitted config with workspace and global config policies.
+		setConfigPolicies(ctx, t, &w.ID, &model.TaskConfigPolicies{
+			WorkspaceID:     &w.ID,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   w.UserID,
+			InvariantConfig: &adminPartialConfig,
+		}, &model.TaskConfigPolicies{
+			WorkspaceID:     nil,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   w.UserID,
+			InvariantConfig: &globalPartialConfig,
+		})
+
+		var globalInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(globalPartialConfig), &globalInvariantConfig)
+		require.NoError(t, err)
+
+		var mergedGlobalInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(mergedGlobalConfig), &mergedGlobalInvariantConfig)
+		require.NoError(t, err)
+
+		mergedGlobalInvariantConfig.RawName = defaultConfig.RawName
+		mergedGlobalInvariantConfig = schemas.WithDefaults(mergedGlobalInvariantConfig)
+		res, err = MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
+			userPartialInvariantConfig)
+
+		require.NoError(t, err)
+		require.Equal(t, mergedGlobalInvariantConfig, *res)
 	})
 }
 
