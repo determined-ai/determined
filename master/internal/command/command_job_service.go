@@ -52,7 +52,7 @@ func (c *Command) SetJobPriority(priority int) error {
 
 	// Returns an error if RM does not implement priority.
 	if smallerHigher, err := c.rm.SmallerValueIsHigherPriority(); err == nil {
-		ok, err := configpolicy.PriorityAllowed(
+		ok, err := configpolicy.PriorityUpdateAllowed(
 			int(c.GenericCommandSpec.Metadata.WorkspaceID),
 			model.NTSCType,
 			priority,
