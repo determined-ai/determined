@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"encoding/json"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"

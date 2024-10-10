@@ -2,10 +2,12 @@
 package searcher
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestAdaptiveASHASearchMethod(t *testing.T) {

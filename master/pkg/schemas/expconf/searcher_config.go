@@ -216,7 +216,8 @@ type CustomConfigV0 struct {
 	RawUnit *Unit `json:"unit"`
 }
 
-// AssertCurrent distinguishes configs which are only parsable from those that are runnable.
+// AssertCurrent distinguishes configs which are only parsable from those that are runnable and logs deprecation
+// warnings for legacy fields.
 func (s SearcherConfig) AssertCurrent() error {
 	switch {
 	case s.RawAdaptiveASHAConfig != nil:

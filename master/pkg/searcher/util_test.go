@@ -41,7 +41,7 @@ func (sr *TestSearchRunner) run(maxUnits int, valPeriod int, increasing bool) {
 				metric = metric - 1
 			}
 			sr.reportValidationMetric(run.id, j, metric)
-			//fmt.Printf("run=%v, step=%v, metric=%v, created=%v, stopping=%v\n", run.id, j, startingMetric, creates, stops)
+			// fmt.Printf("run=%v, step=%v, metric=%v, created=%v, stopping=%v\n", run.id, j, startingMetric, creates, stops)
 			if run.stopped {
 				run.stoppedAt = j
 				break

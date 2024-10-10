@@ -3,10 +3,11 @@ package searcher
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"slices"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
