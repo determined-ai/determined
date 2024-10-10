@@ -242,6 +242,8 @@ message PostAccessTokenRequest {
 message PostAccessTokenResponse {
   // token value string.
   string token = 1;
+  // token id.
+  int32 token_id = 2;
 }
 
 // Get access tokens info for admin.

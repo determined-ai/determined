@@ -1,4 +1,3 @@
-import enum
 from typing import Optional
 
 from determined.common import api
@@ -119,56 +118,3 @@ class User:
         user = cls(session=session, user_id=user_bindings.id)
         user._hydrate(user_bindings)
         return user
-
-
-class TokenType(enum.Enum):
-    # UNSPECIFIED is internal to the bound API and is not be exposed to the front end
-    USER_SESSION = bindings.v1TokenType.USER_SESSION.value
-    ACCESS_TOKEN = bindings.v1TokenType.ACCESS_TOKEN.value
-
-
-class TokenInfo:
-    """
-    A class representing a TokenInfo object that contains information regarding either
-    an access token or a session token.
-
-    It can be obtained from :func:`determined.experimental.client.list_tokens`
-
-    Attributes:
-        session: HTTP request session.
-        id: (int) The ID of the token.
-        user_id: (int) Unique ID for the user.
-        expiry: (Mutable, Optional[str]) Timestamp expires at reported.
-        created_at: (Mutable, Optional[str]) Timestamp created at reported.
-        token_type: (Mutable, Optional[TokenType]) Type of the token.
-        revoked: (Mutable, Optional[bool]) Whether the token is revoked.
-        description: (Mutable, Optional[str]) Human-friendly description of token.
-    """
-
-    def __init__(self, token_id: int, session: api.Session):
-        self.id = token_id
-        self._session = session
-
-        self.user_id: Optional[int] = None
-        self.expiry: Optional[str] = None
-        self.created_at: Optional[str] = None
-        self.token_type: Optional[TokenType] = None
-        self.revoked: Optional[bool] = None
-        self.description: Optional[str] = None
-
-    def _hydrate(self, tokenInfo: bindings.v1TokenInfo) -> None:
-        self.user_id = tokenInfo.userId
-        self.expiry = tokenInfo.expiry
-        self.created_at = tokenInfo.createdAt
-        self.token_type = tokenInfo.tokenType.value
-        self.revoked = tokenInfo.revoked
-        self.description = tokenInfo.description
-
-    @classmethod
-    def _from_bindings(
-        cls, tokenInfo_bindings: bindings.v1TokenInfo, session: api.Session
-    ) -> "TokenInfo":
-        assert tokenInfo_bindings.id
-        tokenInfo = cls(session=session, token_id=tokenInfo_bindings.id)
-        tokenInfo._hydrate(tokenInfo_bindings)
-        return tokenInfo

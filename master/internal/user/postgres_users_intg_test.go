@@ -594,9 +594,10 @@ func TestCreateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add an access Token.
-	token, err := CreateAccessToken(context.TODO(), user.ID)
+	token, tokenID, err := CreateAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
+	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
 
@@ -624,10 +625,11 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 
 	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
 	expLifespan := DefaultTokenLifespan * 3
-	token, err := CreateAccessToken(context.TODO(), user.ID,
+	token, tokenID, err := CreateAccessToken(context.TODO(), user.ID,
 		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)
 	require.NotNil(t, token)
+	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
 
@@ -652,9 +654,10 @@ func TestUpdateAccessToken(t *testing.T) {
 	userID, _, _, err := addTestSession()
 	require.NoError(t, err)
 
-	token, err := CreateAccessToken(context.TODO(), userID)
+	token, tokenID, err := CreateAccessToken(context.TODO(), userID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
+	require.NotNil(t, tokenID)
 
 	accessToken := restoreTokenInfo(token, t)
 
@@ -682,9 +685,10 @@ func TestGetAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken.
-	token, err := CreateAccessToken(context.TODO(), user.ID)
+	token, tokenID, err := CreateAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
+	require.NotNil(t, tokenID)
 
 	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
