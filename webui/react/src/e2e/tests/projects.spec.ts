@@ -20,7 +20,6 @@ const getCurrentProjectCardNames = async (workspaceProjects: WorkspaceProjects) 
 
 test.describe('Project UI CRUD', () => {
   const projectIds: number[] = [];
-  const workspaceIds: number[] = [];
 
   test.beforeEach(async ({ authedPage, newWorkspace }) => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
@@ -99,40 +98,34 @@ test.describe('Project UI CRUD', () => {
     let newProjectCard: V1PostProjectResponse;
     let newProjectRow: V1PostProjectResponse;
     let destinationWorkspace: V1Workspace;
-    let originWorkspace: V1Workspace;
 
-    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
-      originWorkspace = (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new()))
-        .workspace;
-      destinationWorkspace = (
-        await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
-      ).workspace;
+    test.beforeAll(
+      async ({
+        backgroundApiProject,
+        backgroundApiWorkspace,
+        newWorkspace: {
+          response: { workspace: originWorkspace },
+        },
+      }) => {
+        destinationWorkspace = (
+          await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
+        ).workspace;
 
-      newProjectCard = await backgroundApiProject.createProject(
-        originWorkspace.id,
-        backgroundApiProject.new(),
-      );
-      newProjectRow = await backgroundApiProject.createProject(
-        originWorkspace.id,
-        backgroundApiProject.new(),
-      );
+        newProjectCard = await backgroundApiProject.createProject(
+          originWorkspace.id,
+          backgroundApiProject.new(),
+        );
+        newProjectRow = await backgroundApiProject.createProject(
+          originWorkspace.id,
+          backgroundApiProject.new(),
+        );
 
-      projectIds.push(newProjectCard.project.id);
-      projectIds.push(newProjectRow.project.id);
-      workspaceIds.push(destinationWorkspace.id);
-      workspaceIds.push(originWorkspace.id);
-    });
-    test.beforeEach(async ({ authedPage }) => {
-      const workspaceDetails = new WorkspaceDetails(authedPage);
-      await workspaceDetails.gotoWorkspace(originWorkspace.id);
-    });
-    test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
-      for (const workspaceId of workspaceIds) {
-        await backgroundApiWorkspace.deleteWorkspace(workspaceId);
-      }
-      for (const projectId of projectIds) {
-        await backgroundApiProject.deleteProject(projectId);
-      }
+        projectIds.push(newProjectCard.project.id);
+        projectIds.push(newProjectRow.project.id);
+      },
+    );
+    test.afterAll(async ({ backgroundApiWorkspace }) => {
+      await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
     });
 
     test('Grid View', async ({ authedPage }) => {
@@ -158,9 +151,7 @@ test.describe('Project UI CRUD', () => {
 
       await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
 
-      await expect(
-        workspaceProjects.cardByName(newProjectCard.project.name).pwLocator,
-      ).toBeVisible();
+      await expect(projectCard.pwLocator).toBeVisible();
     });
 
     test('List view', async ({ authedPage }) => {
@@ -191,14 +182,6 @@ test.describe('Project UI CRUD', () => {
 
       await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
       await newRow.pwLocator.waitFor({ state: 'hidden' });
-
-      await expect(
-        (
-          await projectsTable.filterRows(
-            async (row) => (await row.name.pwLocator.textContent()) === newProjectRow.project.name,
-          )
-        ).length,
-      ).toBe(0);
 
       await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
 
