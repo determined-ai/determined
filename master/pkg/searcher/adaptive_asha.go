@@ -11,13 +11,13 @@ import (
 )
 
 type bracket struct {
-	numRungs            int
-	maxTrials           int
-	maxConcurrentTrials int
+	numRungs          int
+	maxRuns           int
+	maxConcurrentRuns int
 }
 
 func (b *bracket) String() string {
-	return fmt.Sprintf("Bracket(%d, %d, %d)", b.numRungs, b.maxTrials, b.maxConcurrentTrials)
+	return fmt.Sprintf("Bracket{numRungs: %d, maxRuns: %d, maxConcurrentRuns: %d}", b.numRungs, b.maxRuns, b.maxConcurrentRuns)
 }
 
 func getBracketMaxTrials(
@@ -51,9 +51,9 @@ func getBracketMaxTrials(
 func getBracketMaxConcurrentTrials(
 	maxConcurrentTrials int, divisor float64, maxTrials []int,
 ) []int {
-	// If maxConcurrentTrials is provided, we will split that evenly across brackets
+	// If maxConcurrentRuns is provided, we will split that evenly across brackets
 	// and fill remainder from most aggressive early stopping bracket to least.
-	// Otherwise, we will default to minimum of the maxTrials across brackets
+	// Otherwise, we will default to minimum of the maxRuns across brackets
 	// to guarantee roughly equal work between brackets.
 	var minTrials int
 	remainder := 0
@@ -84,13 +84,14 @@ func makeBrackets(config expconf.AdaptiveASHAConfig) []bracket {
 	bracketRungs := config.BracketRungs()
 	if len(bracketRungs) == 0 {
 		maxRungs := config.MaxRungs()
+		// Ensure that the top rung will contain at least one run.
 		maxRungs = mathx.Min(
 			maxRungs,
 			int(math.Log(float64(config.Length().Units))/math.Log(config.Divisor()))+1,
 			int(math.Log(float64(config.MaxTrials()))/math.Log(config.Divisor()))+1)
 		bracketRungs = modeFunc(maxRungs)
 	}
-	// We prioritize bracketRungs that perform more early stopping to try to max speedups early on.
+	// We prioritize brackets that perform more early stopping to try to max speedups early on.
 	sort.Sort(sort.Reverse(sort.IntSlice(bracketRungs)))
 	bracketMaxTrials := getBracketMaxTrials(
 		config.MaxTrials(), config.Divisor(), bracketRungs)
@@ -100,9 +101,9 @@ func makeBrackets(config expconf.AdaptiveASHAConfig) []bracket {
 	brackets := make([]bracket, len(bracketRungs))
 	for i, bracketRung := range bracketRungs {
 		brackets[i] = bracket{
-			numRungs:            bracketRung,
-			maxTrials:           bracketMaxTrials[i],
-			maxConcurrentTrials: bracketMaxConcurrentTrials[i],
+			numRungs:          bracketRung,
+			maxRuns:           bracketMaxTrials[i],
+			maxConcurrentRuns: bracketMaxConcurrentTrials[i],
 		}
 	}
 	return brackets
@@ -115,9 +116,9 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 		c := expconf.AsyncHalvingConfig{
 			RawNumRungs:            ptrs.Ptr(bracket.numRungs),
 			RawMaxLength:           config.RawMaxLength,
-			RawMaxTrials:           &bracket.maxTrials,
+			RawMaxTrials:           &bracket.maxRuns,
 			RawDivisor:             ptrs.Ptr(config.Divisor()),
-			RawMaxConcurrentTrials: ptrs.Ptr(bracket.maxConcurrentTrials),
+			RawMaxConcurrentTrials: ptrs.Ptr(bracket.maxConcurrentRuns),
 			RawTimeMetric:          config.RawTimeMetric,
 			RawMaxTime:             config.RawMaxTime,
 		}

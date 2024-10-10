@@ -8,8 +8,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// tournamentSearch runs multiple search methods in tandem. Callbacks for completed operations
-// are sent to the originating search method that created the corresponding operation.
+// tournamentSearch runs multiple search methods in tandem. Callbacks for completed actions
+// are sent to the originating search method that initiated the corresponding action.
 type (
 	tournamentSearchState struct {
 		RunTable         map[int32]int     `json:"run_table"`
@@ -88,13 +88,13 @@ func (s *tournamentSearch) validationCompleted(
 	return s.markCreates(subSearchID, ops), err
 }
 
-// runClosed informs the searcher that the trial has been closed as a result of a Close operation.
-func (s *tournamentSearch) runClosed(
+// runExited informs the searcher that the run has exited.
+func (s *tournamentSearch) runExited(
 	ctx context, runID int32,
 ) ([]Action, error) {
 	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.runClosed(ctx, runID)
+	ops, err := subSearch.runExited(ctx, runID)
 	return s.markCreates(subSearchID, ops), err
 }
 

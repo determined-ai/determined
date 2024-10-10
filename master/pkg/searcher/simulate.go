@@ -82,7 +82,7 @@ func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (Sea
 		unitsPerRun := make(map[int]int)
 		for _, bracket := range brackets {
 			rungs := makeRungs(bracket.numRungs, ashaConfig.Divisor(), ashaConfig.Length().Units)
-			rungRuns := bracket.maxTrials
+			rungRuns := bracket.maxRuns
 			// For each rung, calculate number of runs that will be stopped before next rung.
 			for i, rung := range rungs {
 				rungUnits := int(rung.UnitsNeeded)

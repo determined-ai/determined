@@ -11,7 +11,7 @@ type context struct {
 	hparams expconf.Hyperparameters
 }
 
-// SearchMethod is the interface for hyper-parameter tuning methods. Implementations of this
+// SearchMethod is the interface for hyperparameter tuning methods. Implementations of this
 // interface should use pointer receivers to ensure interface equality is calculated through pointer
 // equality.
 type SearchMethod interface {
@@ -19,15 +19,14 @@ type SearchMethod interface {
 	// This should be called only once after the searcher has been created.
 	initialRuns(ctx context) ([]Action, error)
 	// runCreated informs the searcher that a run has been created as a result of a Create
-	// action and returns additional Actions to perform.
+	// action and returns any additional Actions to perform.
 	runCreated(ctx context, runID int32, action Create) ([]Action, error)
-	// validationCompleted informs the searcher that a validation metric has been reported.
-	// xxx: reword comments
+	// validationCompleted informs the searcher that a validation metric has been reported
+	// and returns any resulting actions.
 	validationCompleted(ctx context, runID int32,
 		metrics map[string]interface{}) ([]Action, error)
-	// runClosed informs the searcher that the trial has been closed as a result of a Close
-	// operation.
-	runClosed(ctx context, runID int32) ([]Action, error)
+	// runExited informs the searcher that the run has exited.
+	runExited(ctx context, runID int32) ([]Action, error)
 	// progress returns search progress as a float between 0.0 and 1.0.
 	progress(map[int32]float64, map[int32]bool) float64
 	// runExitedEarly informs the searcher that the run has exited earlier than expected.
@@ -86,7 +85,7 @@ func (defaultSearchMethod) validationCompleted(context, int32, map[string]interf
 }
 
 // nolint:unused
-func (defaultSearchMethod) runClosed(context, int32) ([]Action, error) {
+func (defaultSearchMethod) runExited(context, int32) ([]Action, error) {
 	return nil, nil
 }
 

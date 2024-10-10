@@ -14,7 +14,7 @@ type (
 	// randomSearchState stores the state for random.  Since not all trials are always created at
 	// initialization, we need to track CreatedRuns so we know whether we need to create more
 	// trials when workloads complete so that we reach MaxTrials.  PendingRuns tracks active
-	// workloads and is used to check max_concurrent_trials for the searcher is respected.
+	// runs and is used to check max_concurrent_trials for the searcher is respected.
 	// Tracking searcher type on restart gives us the ability to differentiate random searches
 	// in a shim if needed.
 	randomSearchState struct {
@@ -110,7 +110,7 @@ func (s *randomSearch) runExitedEarly(
 	return nil, nil
 }
 
-func (s *randomSearch) runClosed(ctx context, runID int32) ([]Action, error) {
+func (s *randomSearch) runExited(ctx context, runID int32) ([]Action, error) {
 	s.PendingRuns--
 	var actions []Action
 	if s.CreatedRuns < s.MaxTrials() {

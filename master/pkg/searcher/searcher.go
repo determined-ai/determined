@@ -162,13 +162,12 @@ func (s *Searcher) ValidationCompleted(
 	return operations, nil
 }
 
-// xxx: comment
-func (s *Searcher) RunClosed(runID int32) ([]Action, error) {
+func (s *Searcher) RunExited(runID int32) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.state.RunsClosed[runID] = true
-	actions, err := s.method.runClosed(s.context(), runID)
+	actions, err := s.method.runExited(s.context(), runID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %d", runID)
 	}
@@ -186,7 +185,7 @@ func (s *Searcher) RunClosed(runID int32) ([]Action, error) {
 	return actions, nil
 }
 
-// TrialIsClosed returns true if the close has been recorded with a RunClosed call.
+// TrialIsClosed returns true if the close has been recorded with a RunExited call.
 func (s *Searcher) TrialIsClosed(runID int32) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -206,7 +205,7 @@ func (s *Searcher) Progress() float64 {
 	return progress
 }
 
-// Record records operations that were requested by the searcher for a specific trial.
+// Record records actions that were requested by the searcher for a specific trial.
 func (s *Searcher) Record(ops []Action) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

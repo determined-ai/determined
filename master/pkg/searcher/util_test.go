@@ -95,7 +95,7 @@ func (sr *TestSearchRunner) reportValidationMetric(runID int32, stepNum int, met
 func (sr *TestSearchRunner) closeRun(runID int32) ([]testRun, []testRun) {
 	run := sr.runs[runID]
 	run.completed = true
-	actions, err := sr.searcher.RunClosed(runID)
+	actions, err := sr.searcher.RunExited(runID)
 	assert.NilError(sr.t, err, "error closing run")
 	return sr.handleActions(actions)
 }

@@ -12,8 +12,9 @@ import (
 
 type (
 	// gridSearchState stores the state for grid. The state will track the remaining hp settings
-	// that have yet to be created for evaluation.  RemainingRuns tracks how many trials have
-	// active workloads and is used to check max_concurrent_trials for the searcher is respected.
+	// that have yet to be created for evaluation.  RemainingRuns tracks how many runs are
+	// currently in progress and is used to check max_concurrent_trials for the searcher is
+	// respected.
 	// Tracking searcher type on restart gives us the ability to differentiate grid searches
 	// in a shim if needed.
 	gridSearchState struct {
@@ -43,11 +44,10 @@ func newGridSearch(config expconf.GridConfig) SearchMethod {
 
 func (s *gridSearch) initialRuns(ctx context) ([]Action, error) {
 	grid := newHyperparameterGrid(ctx.hparams)
-	s.trials = len(grid)
 	s.RemainingRuns = append(s.RemainingRuns, grid...)
-	initialTrials := s.trials
+	initialTrials := len(grid)
 	if s.MaxConcurrentTrials() > 0 {
-		initialTrials = mathx.Min(s.trials, s.MaxConcurrentTrials())
+		initialTrials = mathx.Min(initialTrials, s.MaxConcurrentTrials())
 	}
 	var actions []Action
 	for trial := 0; trial < initialTrials; trial++ {
@@ -68,10 +68,10 @@ func (s *gridSearch) progress(
 		panic("pending trials is greater than max_concurrent_trials")
 	}
 	// Progress is calculated as follows:
-	//   - InvalidHP trials contribute max_length units since they represent one config within the grid
+	//   - InvalidHP runs contribute max_length units since they represent one config within the grid
 	//     and are not replaced with a new config as with random search
-	//   - Other early-exit trials contribute max_length units
-	//   - In progress trials contribute units trained
+	//   - Other early-exit runs contribute max_length units
+	//   - In progress runs contribute units trained
 	runProgresses := 0.
 
 	for k, v := range runProgress {
@@ -93,7 +93,7 @@ func (s *gridSearch) runExitedEarly(
 	return nil, nil
 }
 
-func (s *gridSearch) runClosed(ctx context, _ int32) ([]Action, error) {
+func (s *gridSearch) runExited(ctx context, _ int32) ([]Action, error) {
 	s.PendingRuns--
 	var actions []Action
 	if len(s.RemainingRuns) > 0 {

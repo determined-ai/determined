@@ -532,20 +532,20 @@ func (e *internalExperiment) KillExperiment() error {
 	return nil
 }
 
-func (e *internalExperiment) RunClosed(runID int32, reason *model.ExitedReason) {
+func (e *internalExperiment) RunExited(runID int32, reason *model.ExitedReason) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.runClosed(runID, reason)
+	e.runExited(runID, reason)
 }
 
-func (e *internalExperiment) runClosed(runID int32, reason *model.ExitedReason) {
+func (e *internalExperiment) runExited(runID int32, reason *model.ExitedReason) {
 	if reason != nil {
 		e.trialReportEarlyExit(runID, *reason)
 	}
 	delete(e.trials, runID)
 
-	ops, err := e.searcher.RunClosed(runID)
+	ops, err := e.searcher.RunExited(runID)
 	e.handleSearcherActions(ops, err)
 	if e.canTerminate() {
 		if err := e.stop(); err != nil {
@@ -637,7 +637,7 @@ func (e *internalExperiment) handleSearcherActions(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, e.warmStartCheckpoint, clonedSpec, e.generatedKeys, false,
-				nil, nil, e.RunClosed,
+				nil, nil, e.RunExited,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")

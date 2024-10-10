@@ -164,7 +164,7 @@ func (e *internalExperiment) restoreRun(
 		if model.TerminalStates[trial.State] {
 			syslog.Debugf("run was in terminal state in restore: %s", trial.State)
 			if !e.searcher.TrialIsClosed(*searcher.RunID) {
-				e.runClosed(*searcher.RunID, nil)
+				e.runExited(*searcher.RunID, nil)
 			}
 			return
 		}
@@ -182,12 +182,12 @@ func (e *internalExperiment) restoreRun(
 	t, err := newTrial(
 		e.logCtx, taskID, e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
-		nil, e.RunClosed,
+		nil, e.RunExited,
 	)
 	if err != nil {
 		syslog.WithError(err).Error("failed restoring run, aborting restore")
 		if searcher.RunID != nil && !e.searcher.TrialIsClosed(*searcher.RunID) {
-			e.runClosed(*searcher.RunID, ptrs.Ptr(model.Errored))
+			e.runExited(*searcher.RunID, ptrs.Ptr(model.Errored))
 		}
 		return
 	}

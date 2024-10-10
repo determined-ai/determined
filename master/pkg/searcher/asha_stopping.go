@@ -13,12 +13,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-// AsyncHalvingStoppingSearch implements a modified version of the asynchronous successive
-// halving algorithm (ASHA) that does not require fault tolerance to perform early-stopping.
-// For each trial, after a train and validation workload, the algorithm will decide whether
-// to stop or continue training the trial based on the ranking of the validation metric
-// compared to other trials in a particular rung.  Once a trial has been stopped, it will not
-// be resumed later; this is why the algorithm does not require fault tolerance.
+// AsyncHalvingStoppingSearch implements a version of the asynchronous successive halving
+// algorithm (ASHA) that early-stops worse performing runs rather than actively promoting better
+// performing runs. When a new validation metric is reported, the searcher decides if the run
+// should be stopped based on the ranking of the metric compared to other runs' metrics in the
+// same rung.
 type asyncHalvingStoppingSearch struct {
 	expconf.AsyncHalvingConfig
 	SmallerIsBetter bool
@@ -47,7 +46,7 @@ type (
 )
 
 func (r *rung) String() string {
-	return fmt.Sprintf("Rung(%d, %v)", r.UnitsNeeded, r.Metrics)
+	return fmt.Sprintf("Rung{UnitsNeeded: %d, Metrics: %v}", r.UnitsNeeded, r.Metrics)
 }
 
 const ashaExitedMetricValue = math.MaxFloat64
@@ -93,10 +92,9 @@ func (s *asyncHalvingStoppingSearch) Restore(state json.RawMessage) error {
 	return json.Unmarshal(state, &s.asyncHalvingSearchState)
 }
 
-// Insert a completed validation metric in the rung.
-// Return the insert index.
+// insertMetric adds a completed validation metric to the rung in the appropriate order of all
+// the metrics in the rung thus far and returns the insert index.
 func (r *rung) insertMetric(runID int32, metric float64) int {
-	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
 		len(r.Metrics),
 		func(i int) bool { return float64(r.Metrics[i].Metric) >= metric },
@@ -112,17 +110,16 @@ func (r *rung) insertMetric(runID int32, metric float64) int {
 	return insertIndex
 }
 
+// initialRuns specifies the initial runs that the search will create.
+// Since each run can only stop and create a new run, this effectively controls the degree of
+// parallelism of the search.
 func (s *asyncHalvingStoppingSearch) initialRuns(ctx context) ([]Action, error) {
-	// The number of initialOperations will control the degree of parallelism
-	// of the search experiment since we guarantee that each validationComplete
-	// call will return a new train workload until we reach MaxTrials.
-	// xxx: comment
-	// We will use searcher config field if available.
-	// Otherwise we will default to a number of trials that will
-	// guarantee at least one trial at the top rung.
 	var actions []Action
 	var maxConcurrentTrials int
 
+	// Use searcher config fields to determine number of runs if set.
+	// Otherwise, default to a number of runs that guarantees at least one run will continue
+	// to the top rung.
 	if s.MaxConcurrentTrials() > 0 {
 		maxConcurrentTrials = mathx.Min(s.MaxConcurrentTrials(), s.MaxTrials())
 	} else {
@@ -148,13 +145,15 @@ func (s *asyncHalvingStoppingSearch) runCreated(
 	return nil, nil
 }
 
-func (s *asyncHalvingStoppingSearch) runClosed(
+func (s *asyncHalvingStoppingSearch) runExited(
 	ctx context, runID int32,
 ) ([]Action, error) {
 	s.RunsCompleted++
 	return nil, nil
 }
 
+// validationCompleted handles every validation metric reported by a run and returns any resulting
+// actions the searcher would like to take.
 func (s *asyncHalvingStoppingSearch) validationCompleted(
 	ctx context, runID int32, metrics map[string]interface{},
 ) ([]Action, error) {
@@ -163,24 +162,21 @@ func (s *asyncHalvingStoppingSearch) validationCompleted(
 		return nil, err
 	}
 
-	if !s.SmallerIsBetter {
-		*value *= -1
-	}
 	ops := s.stopRun(runID, *timeStep, *value)
 	allTrials := len(s.RunRungs) - s.InvalidRuns
 	if len(ops) > 0 && allTrials < s.MaxTrials() {
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand))
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand))
 		ops = append(ops, create)
 	}
 	return ops, nil
 }
 
+// getMetric reads the searcher metric and time step value from the reported validation metrics.
 func (s *asyncHalvingStoppingSearch) getMetric(metrics map[string]interface{}) (*uint64, *float64, error) {
 	searcherMetric, ok := metrics[s.Metric].(float64)
 
 	if !ok {
-		return nil, nil, fmt.Errorf("error parsing searcher metric %s from validation metrics %v", s.Metric, metrics)
+		return nil, nil, fmt.Errorf("error parsing searcher metric (%s) from validation metrics: %v", s.Metric, metrics)
 	}
 	if !s.SmallerIsBetter {
 		searcherMetric *= -1
@@ -189,19 +185,23 @@ func (s *asyncHalvingStoppingSearch) getMetric(metrics map[string]interface{}) (
 	unit := string(s.Length().Unit)
 	stepNum, ok := metrics[unit].(float64)
 	if !ok {
-		return nil, nil, fmt.Errorf("error parsing searcher time metric (%s) in validation metrics (%v)", unit, metrics)
+		return nil, nil, fmt.Errorf("error parsing searcher time metric (%s) in validation metrics: %v", unit, metrics)
 	}
 
 	return ptrs.Ptr(uint64(stepNum)), &searcherMetric, nil
 }
 
+// stopRun handles early-stopping and record-keeping logic for a validation metric reported to the
+// searcher.
+// If the metric qualifies the run for a rung but is not in the top 1/divisor runs for that rung,
+// stopRun will return a single `searcher.Stop` action. Otherwise, no actions will be returned.
 func (s *asyncHalvingStoppingSearch) stopRun(
 	runID int32, timeStep uint64, metric float64,
 ) []Action {
 	rungIndex := s.RunRungs[runID]
 	var actions []Action
 
-	// Starting at current rung, check for runs to early-stop.
+	// Starting at current rung, check if run should continue to next rung or early-stop.
 	// Since validations aren't controlled by searcher, they could complete > 1 rungs at a time.
 	for r := rungIndex; r < s.NumRungs(); r++ {
 		rung := s.Rungs[r]
@@ -221,7 +221,7 @@ func (s *asyncHalvingStoppingSearch) stopRun(
 		}
 
 		// Top 1/divisor runs should continue, runs - 1/divisor runs should be stopped.
-		// If runs < divisor, continue if this is the best performing run so far.
+		// If runs < divisor, continue only if this is the best performing run so far.
 		numContinue := mathx.Max(int(float64(len(rung.Metrics))/s.Divisor()), 1)
 
 		if insertIndex >= numContinue {
@@ -238,7 +238,7 @@ func (s *asyncHalvingStoppingSearch) progress(
 	map[int32]float64, map[int32]bool,
 ) float64 {
 	allTrials := len(s.Rungs[0].Metrics)
-	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
+	// Give ourselves an overhead of 20% of maxRuns when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.MaxTrials()))
 	if allTrials == s.MaxTrials() {
 		numValidTrials := float64(s.RunsCompleted) - float64(s.InvalidRuns)
@@ -268,8 +268,7 @@ func (s *asyncHalvingStoppingSearch) runExitedEarly(
 			}
 		}
 		// Add new trial to searcher queue
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand))
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand))
 		actions = append(actions, create)
 		return actions, nil
 	}
@@ -283,8 +282,7 @@ func (s *asyncHalvingStoppingSearch) runExitedEarly(
 
 	allTrials := len(s.RunRungs) - s.InvalidRuns
 	if allTrials < s.MaxTrials() {
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand))
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand))
 		actions = append(actions, create)
 	}
 	return actions, nil
