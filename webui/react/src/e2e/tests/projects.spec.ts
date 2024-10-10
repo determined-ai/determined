@@ -20,6 +20,7 @@ const getCurrentProjectCardNames = async (workspaceProjects: WorkspaceProjects) 
 
 test.describe('Project UI CRUD', () => {
   const projectIds: number[] = [];
+  const workspaceIds: number[] = [];
 
   test.beforeEach(async ({ authedPage, newWorkspace }) => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
@@ -94,46 +95,117 @@ test.describe('Project UI CRUD', () => {
     });
   });
 
-  test('Move a Project', async ({
-    authedPage,
-    newWorkspace,
-    backgroundApiWorkspace,
-    backgroundApiProject,
-  }) => {
-    const workspaceDetails = new WorkspaceDetails(authedPage);
+  test.describe('Move Project', () => {
+    let newProjectCard: V1PostProjectResponse;
+    let newProjectRow: V1PostProjectResponse;
+    let destinationWorkspace: V1Workspace;
+    let originWorkspace: V1Workspace;
 
-    const destinationWorkspace = (
-      await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
-    ).workspace;
+    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+      originWorkspace = (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new()))
+        .workspace;
+      destinationWorkspace = (
+        await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
+      ).workspace;
 
-    const newProject = await backgroundApiProject.createProject(
-      newWorkspace.response.workspace.id,
-      backgroundApiProject.new(),
-    );
-    projectIds.push(newProject.project.id);
+      newProjectCard = await backgroundApiProject.createProject(
+        originWorkspace.id,
+        backgroundApiProject.new(),
+      );
+      newProjectRow = await backgroundApiProject.createProject(
+        originWorkspace.id,
+        backgroundApiProject.new(),
+      );
 
-    await authedPage.reload();
+      projectIds.push(newProjectCard.project.id);
+      projectIds.push(newProjectRow.project.id);
+      workspaceIds.push(destinationWorkspace.id);
+      workspaceIds.push(originWorkspace.id);
+    });
+    test.beforeEach(async ({ authedPage }) => {
+      const workspaceDetails = new WorkspaceDetails(authedPage);
+      await workspaceDetails.gotoWorkspace(originWorkspace.id);
+    });
+    test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+      for (const workspaceId of workspaceIds) {
+        await backgroundApiWorkspace.deleteWorkspace(workspaceId);
+      }
+      for (const projectId of projectIds) {
+        await backgroundApiProject.deleteProject(projectId);
+      }
+    });
 
-    const workspaceProjects = workspaceDetails.workspaceProjects;
-    const projectCard = workspaceProjects.cardByName(newProject.project.name);
-    const moveMenuItem = projectCard.actionMenu.move;
+    test('Grid View', async ({ authedPage }) => {
+      const workspaceDetails = new WorkspaceDetails(authedPage);
 
-    await projectCard.actionMenu.open();
-    await moveMenuItem.pwLocator.click();
-    await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
-      destinationWorkspace.name,
-    );
-    await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
-    await workspaceProjects.moveModal.footer.submit.pwLocator.click();
+      const workspaceProjects = workspaceDetails.workspaceProjects;
 
-    await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
-    await projectCard.pwLocator.waitFor({ state: 'hidden' });
+      await workspaceProjects.gridListRadioGroup.grid.pwLocator.click(); // switch to the Grid View
 
-    await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+      const projectCard = workspaceProjects.cardByName(newProjectCard.project.name);
+      const moveMenuItem = projectCard.actionMenu.move;
 
-    await projectCard.pwLocator.waitFor();
+      await projectCard.actionMenu.open();
+      await moveMenuItem.pwLocator.click();
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
+        destinationWorkspace.name,
+      );
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
+      await workspaceProjects.moveModal.footer.submit.pwLocator.click();
 
-    await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
+      await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
+      await projectCard.pwLocator.waitFor({ state: 'hidden' });
+
+      await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+
+      await expect(
+        workspaceProjects.cardByName(newProjectCard.project.name).pwLocator,
+      ).toBeVisible();
+    });
+
+    test('List view', async ({ authedPage }) => {
+      const workspaceDetails = new WorkspaceDetails(authedPage);
+      const workspaceProjects = workspaceDetails.workspaceProjects;
+
+      await workspaceProjects.gridListRadioGroup.list.pwLocator.click(); // switch to the List View
+
+      const projectsTable = workspaceProjects.table.table;
+
+      const newRow = (
+        await projectsTable.filterRows(
+          async (row) => (await row.name.pwLocator.textContent()) === newProjectRow.project.name,
+        )
+      )[0];
+
+      await expect(newRow.name.pwLocator).toHaveText(newProjectRow.project.name);
+
+      const moveMenuItem = newRow.action;
+
+      await moveMenuItem.open();
+      await moveMenuItem.move.pwLocator.click();
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
+        destinationWorkspace.name,
+      );
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
+      await workspaceProjects.moveModal.footer.submit.pwLocator.click();
+
+      await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
+      await newRow.pwLocator.waitFor({ state: 'hidden' });
+
+      await expect(
+        (
+          await projectsTable.filterRows(
+            async (row) => (await row.name.pwLocator.textContent()) === newProjectRow.project.name,
+          )
+        ).length,
+      ).toBe(0);
+
+      await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+
+      const projectCard = workspaceProjects.cardByName(newProjectRow.project.name);
+
+      await expect(projectCard.pwLocator).toBeVisible();
+    });
   });
 });
 
@@ -254,70 +326,5 @@ test.describe('Project List', () => {
     await workspaceProjects.gridListRadioGroup.grid.pwLocator.click();
     await firstRow.pwLocator.waitFor({ state: 'hidden' });
     await firstCard.pwLocator.waitFor();
-  });
-
-  test.describe('List View', () => {
-    let newProject: V1PostProjectResponse;
-    let destinationWorkspace: V1Workspace;
-
-    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
-      newProject = await backgroundApiProject.createProject(
-        workspaceIds[0],
-        backgroundApiProject.new(),
-      );
-      destinationWorkspace = (
-        await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
-      ).workspace;
-    });
-    test.beforeEach(async ({ authedPage }) => {
-      const workspaceDetails = new WorkspaceDetails(authedPage);
-
-      const workspaceProjects = workspaceDetails.workspaceProjects;
-
-      await workspaceProjects.gridListRadioGroup.list.pwLocator.click();
-    });
-    test.afterAll(async ({ backgroundApiWorkspace }) => {
-      await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
-    });
-
-    test('move a project to a different workspace', async ({ authedPage }) => {
-      const workspaceDetails = new WorkspaceDetails(authedPage);
-      const workspaceProjects = workspaceDetails.workspaceProjects;
-
-      const projectsTable = workspaceProjects.table.table;
-
-      const newProjectRow = (
-        await projectsTable.filterRows(
-          async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
-        )
-      )[0];
-
-      await expect(newProjectRow.name.pwLocator).toHaveText(newProject.project.name);
-
-      const moveMenuItem = newProjectRow.action;
-
-      await moveMenuItem.open();
-      await moveMenuItem.move.pwLocator.click();
-      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
-        destinationWorkspace.name,
-      );
-      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
-      await workspaceProjects.moveModal.footer.submit.pwLocator.click();
-
-      await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
-      await newProjectRow.pwLocator.waitFor({ state: 'hidden' });
-
-      await expect(
-        await projectsTable.filterRows(
-          async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
-        ),
-      ).toBe(0);
-
-      await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
-
-      const projectCard = workspaceProjects.cardByName(newProject.project.name);
-
-      await expect(projectCard.pwLocator).toBeVisible();
-    });
   });
 });
