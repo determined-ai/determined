@@ -98,7 +98,7 @@ anything other than `/latest`.
 
 ## Version Switcher
 
-To provide a docs version dropdown for users to select the version of docs they want to use, we configured the bumpversion tool to read/update the version information stored in the `versions.json` file located at `docs/_static/version-switcher/‘ within the project directory.
+To provide a docs version dropdown for users to select the version of docs they want to use, we dynamically generate the `versions.json` file required by the Sphinx theme. This was previously managed statically by `bump2version`, but as part of a release redesign, the build process now generates the file dynamically and places it in its previous location: `docs/_static/version-switcher/versions.json`. See `gen-versions.py` for more information.
 
 ## Theming
 

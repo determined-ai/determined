@@ -1,4 +1,4 @@
-export VERSION := $(shell cat ../VERSION)
+export VERSION := $(shell ../version.sh)
 .DEFAULT_GOAL := build
 
 SPHINXOPTS    = -W
@@ -52,8 +52,12 @@ build/swagger.stamp: ../proto/build/swagger/determined/api/v1/api.swagger.json s
 	mkdir -p build
 	touch $@
 
+.PHONY: gen-versions
+gen-versions:
+	python3 gen-versions.py -o _static/version-switcher/versions.json
+
 .PHONY: build
-build: build/sp-html.stamp
+build: gen-versions build/sp-html.stamp
 
 .PHONY: xml
 xml: build/sp-xml.stamp

@@ -40,6 +40,7 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 		panic(errors.Wrapf(err, "error finding Python wheel files for version %s in path: %s",
 			version.Version, harnessPath))
 	}
+
 	for _, path := range wheelPaths {
 		info, err := os.Stat(path)
 		if err != nil {
