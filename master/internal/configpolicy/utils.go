@@ -87,7 +87,6 @@ func ValidateExperimentConfig(
 	}
 
 	if cp.Constraints != nil {
-		// TODO CAROLINA -- do we need this?
 		checkAgainstGlobalPriority(priorityEnabledErr, cp.Constraints.PriorityLimit)
 	}
 
