@@ -4,6 +4,7 @@ import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment'
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
 import { GridListRadioGroup } from 'e2e/models/components/GridListRadioGroup';
+import { ProjectActionDropdown } from 'e2e/models/components/ProjectActionDropdown';
 import { ProjectCard } from 'e2e/models/components/ProjectCard';
 import { ProjectCreateModal } from 'e2e/models/components/ProjectCreateModal';
 import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
@@ -15,12 +16,71 @@ class ProjectHeadRow extends HeadRow {
     parent: this,
     selector: '[data-testid="Name"]',
   });
+  readonly description = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Description"]',
+  });
+  readonly numExperiments = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="NumExperiments"]',
+  });
+  readonly lastUpdated = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="LastUpdated"]',
+  });
+  readonly userId = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="UserId"]',
+  });
+  readonly archived = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Archived"]',
+  });
+  readonly state = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="State"]',
+  });
+  readonly action = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Action"]',
+  });
 }
 
 class ProjectRow extends Row {
   readonly name = new BaseComponent({
     parent: this,
     selector: '[data-testid="name"]',
+  });
+  readonly description = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="description"]',
+  });
+  readonly numExperiments = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="numExperiments"]',
+  });
+  readonly lastUpdated = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="lastUpdated"]',
+  });
+  readonly userId = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="userId"]',
+  });
+  readonly archived = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="archived"]',
+  });
+  readonly state = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="state"]',
+  });
+  readonly action = new ProjectActionDropdown({
+    clickThisComponentToOpen: new BaseComponent({
+      parent: this,
+      selector: '[data-testid="actionMenu"]',
+    }),
+    root: this.root,
   });
 }
 

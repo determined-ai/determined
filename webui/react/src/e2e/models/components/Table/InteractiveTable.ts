@@ -42,4 +42,6 @@ export class InteractiveTable<
 
   readonly table: Table<RowType, HeadRowType>;
   readonly skeleton = new SkeletonTable({ parent: this });
+
+  // TODO: add getRowByColumnValue (maybe base on the DataGrid model)
 }
