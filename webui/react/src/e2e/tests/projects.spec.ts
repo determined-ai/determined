@@ -281,20 +281,18 @@ test.describe('Project List', () => {
     });
 
     test('move a project to a different workspace', async ({ authedPage }) => {
-      // eslint-disable-next-line no-console
-      console.log(newProject.project.name);
       const workspaceDetails = new WorkspaceDetails(authedPage);
       const workspaceProjects = workspaceDetails.workspaceProjects;
 
       const projectsTable = workspaceProjects.table.table;
 
-      let newProjectRow = (
+      const newProjectRow = (
         await projectsTable.filterRows(
           async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
         )
       )[0];
 
-      expect(await newProjectRow.name.pwLocator.innerText()).toBe(newProject.project.name);
+      await expect(newProjectRow.name.pwLocator).toHaveText(newProject.project.name);
 
       const moveMenuItem = newProjectRow.action;
 
@@ -309,13 +307,11 @@ test.describe('Project List', () => {
       await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
       await newProjectRow.pwLocator.waitFor({ state: 'hidden' });
 
-      newProjectRow = (
+      await expect(
         await projectsTable.filterRows(
           async (row) => (await row.name.pwLocator.textContent()) === newProject.project.name,
-        )
-      )[0];
-
-      await expect(newProjectRow).toBeUndefined();
+        ),
+      ).toBe(0);
 
       await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
 
