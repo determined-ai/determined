@@ -300,9 +300,6 @@ export const SELECTED_EXPERIMENTS = [
         },
         scheduling_unit: 100,
         searcher: {
-          max_length: {
-            batches: 2,
-          },
           metric: 'validation_loss',
           name: 'single',
           smaller_is_better: true,

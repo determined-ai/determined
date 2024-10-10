@@ -177,7 +177,6 @@ export const generateTestExperimentData = (): {
         bracket_rungs: [],
         divisor: 4,
         max_concurrent_trials: 16,
-        max_length: { batches: 937 },
         max_rungs: 5,
         max_trials: 16,
         metric: 'validation_loss',
@@ -225,7 +224,6 @@ export const generateTestExperimentData = (): {
       name: mnist_pytorch_adaptive_search
       records_per_epoch: 10
       searcher:
-        max_length: {batches: 937}
         max_trials: 16
         metric: validation_loss
         name: adaptive_asha
