@@ -3,13 +3,15 @@ package expconf
 import (
 	"encoding/json"
 	"fmt"
-	"slices"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
 // LogPoliciesConfigV0 is a list of log policies.
+//
+//go:generate ../gen.sh
 type LogPoliciesConfigV0 []LogPolicyV0
 
 // WithDefaults implements the Defaultable psuedointerface.
@@ -35,21 +37,22 @@ func (b LogPoliciesConfigV0) Merge(
 	var out LogPoliciesConfigV0
 
 	patternToLp := make(map[string]LogPolicyV0)
-	for _, p := range b {
+	for _, p := range other {
 		patternToLp[p.RawPattern] = p
 	}
 
-	for _, p := range other {
+	for _, p := range b {
 		if v, ok := patternToLp[p.RawPattern]; ok {
 			// Union merge actions
-			existing_actions := patternToLp[p.RawPattern].RawActions
-			merged_actions := append([]LogActionV0{}, existing_actions...)
+			actions := make(set.Set[LogActionV0])
+			for _, a := range patternToLp[p.RawPattern].RawActions {
+				actions.Insert(a)
+			}
 			for _, a := range p.RawActions {
-				if ok := slices.Contains(existing_actions, a); !ok {
-					merged_actions = append(merged_actions, a)
+				if !actions.Contains(a) {
+					v.RawActions = append(v.RawActions, a)
 				}
 			}
-			v.RawActions = merged_actions
 			patternToLp[p.RawPattern] = v
 
 			// Other signal takes precedence

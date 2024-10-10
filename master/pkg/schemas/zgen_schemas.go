@@ -850,7 +850,7 @@ var (
             ],
             "default": [],
             "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/log-policy.json"
+                "optionalref": "http://determined.ai/schemas/expconf/v0/log-policies.json"
             }
         },
         "retention_policy": {
@@ -1561,6 +1561,16 @@ var (
     ],
     "properties": {
         "type": true
+    }
+}
+`)
+	textLogPoliciesConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-policies.json",
+    "title": "LogPoliciesConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/log-policy.json"
     }
 }
 `)
@@ -3485,6 +3495,8 @@ var (
 
 	schemaLogActionV0 interface{}
 
+	schemaLogPoliciesConfigV0 interface{}
+
 	schemaLogPolicyV0 interface{}
 
 	schemaOptimizationsConfigV0 interface{}
@@ -4178,6 +4190,26 @@ func ParsedLogActionV0() interface{} {
 		panic("invalid embedded json for LogActionV0")
 	}
 	return schemaLogActionV0
+}
+
+func ParsedLogPoliciesConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogPoliciesConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogPoliciesConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogPoliciesConfigV0 != nil {
+		return schemaLogPoliciesConfigV0
+	}
+	err := json.Unmarshal(textLogPoliciesConfigV0, &schemaLogPoliciesConfigV0)
+	if err != nil {
+		panic("invalid embedded json for LogPoliciesConfigV0")
+	}
+	return schemaLogPoliciesConfigV0
 }
 
 func ParsedLogPolicyV0() interface{} {
@@ -4937,6 +4969,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textLogActionExcludeNodeV0
 	url = "http://determined.ai/schemas/expconf/v0/log-action.json"
 	cachedSchemaBytesMap[url] = textLogActionV0
+	url = "http://determined.ai/schemas/expconf/v0/log-policies.json"
+	cachedSchemaBytesMap[url] = textLogPoliciesConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/log-policy.json"
 	cachedSchemaBytesMap[url] = textLogPolicyV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"

@@ -193,3 +193,53 @@
     save_experiment_best: null
     save_trial_best: null
     save_trial_latest: null
+
+- name: unique actions when merged
+  merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
+  case:
+    - pattern: a
+      actions:
+        - type: cancel_retries
+  merge_src:
+    - pattern: a
+      actions:
+        - type: exclude_node
+  merged:
+    - pattern: a
+      actions:
+        - type: exclude_node
+        - type: cancel_retries
+
+- name: no duplicated actions when merged
+  merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
+  case:
+    - pattern: a
+      actions:
+        - type: cancel_retries
+        - type: exclude_node
+  merge_src:
+    - pattern: a
+      actions:
+        - type: exclude_node
+  merged:
+    - pattern: a
+      actions:
+        - type: exclude_node
+        - type: cancel_retries
+
+- name: no duplicated actions when merged 2
+  merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
+  case:
+    - pattern: a
+      actions:
+        - type: exclude_node
+  merge_src:
+    - pattern: a
+      actions:
+        - type: cancel_retries
+        - type: exclude_node
+  merged:
+    - pattern: a
+      actions:
+        - type: cancel_retries
+        - type: exclude_node

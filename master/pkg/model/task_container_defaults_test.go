@@ -483,9 +483,6 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 			expconf.LogPolicy{RawPattern: "b", RawActions: []expconf.LogAction{{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
 			}}},
-			expconf.LogPolicy{RawPattern: "b", RawActions: []expconf.LogAction{{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}}},
 			expconf.LogPolicy{RawPattern: "c", RawActions: []expconf.LogAction{{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
 			}}},
