@@ -306,7 +306,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'actionMenu' }),
         render: actionRenderer,
         title: '',
       },
