@@ -1465,9 +1465,30 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	}
 	mergedConfig := schemas.Merge(providedConfig, activeConfig)
 	if overrideName := mergedConfig.Searcher().AsLegacy().Name; isSingle && overrideName != "single" {
-		return nil, false, status.Errorf(codes.InvalidArgument,
+		return nil, false, status.Errorf(codes.Internal,
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
+
+	// Determine which workspace the experiment is in.
+	wkspName := activeConfig.Workspace()
+	if wkspName == "" {
+		wkspName = model.DefaultWorkspaceName
+	}
+	ctx := context.TODO()
+	w, err := workspace.WorkspaceByName(ctx, wkspName)
+	if err != nil {
+		return nil, false, status.Errorf(codes.Internal,
+			fmt.Sprintf("failed to get workspace %s", activeConfig.Workspace()))
+	}
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+		w.ID, mergedConfig)
+	if err != nil {
+		return nil, false,
+			fmt.Errorf("failed to merge invariant experiment configs: %w", err)
+	}
+	mergedConfig = *configWithInvariantDefaults
 
 	bytes, err := mergedConfig.Value()
 	if err != nil {

@@ -2,6 +2,7 @@ package configpolicy
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -29,7 +31,7 @@ func TestPriorityAllowed(t *testing.T) {
 
 	wkspLimit := 50
 	user := db.RequireMockUser(t, pgDB)
-	w := addWorkspacePriorityLimit(t, user, wkspLimit, model.NTSCType)
+	w := createWorkspaceWithPriorityLimit(t, user, wkspLimit, model.NTSCType)
 
 	// Priority is outside workspace limit.
 	smallerValueIsHigherPriority := true
@@ -70,7 +72,7 @@ func TestCheckNTSCConstraints(t *testing.T) {
 	})
 
 	t.Run("running in wksp with constraints - not ok", func(t *testing.T) {
-		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
+		w := createWorkspaceWithPriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
@@ -129,7 +131,7 @@ func TestCheckNTSCConstraints(t *testing.T) {
 	})
 
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
-		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
+		w := createWorkspaceWithPriorityLimit(t, user, wkspPriorityLimit, model.NTSCType)
 		rm1 := mocks.ResourceManager{}
 		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
 
@@ -181,7 +183,7 @@ func TestCheckExperimentConstraints(t *testing.T) {
 	})
 
 	t.Run("running in wksp with constraints - not ok", func(t *testing.T) {
-		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
+		w := createWorkspaceWithPriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
@@ -222,7 +224,7 @@ func TestCheckExperimentConstraints(t *testing.T) {
 	})
 
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
-		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
+		w := createWorkspaceWithPriorityLimit(t, user, wkspPriorityLimit, model.ExperimentType)
 		rm1 := mocks.ResourceManager{}
 		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
 
@@ -272,7 +274,7 @@ func TestGetMergedConstraints(t *testing.T) {
 	// Workspace priority limit set.
 	wkspLimit := 42
 	user := db.RequireMockUser(t, pgDB)
-	w := addWorkspacePriorityLimit(t, user, wkspLimit, model.NTSCType)
+	w := createWorkspaceWithPriorityLimit(t, user, wkspLimit, model.NTSCType)
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Nil(t, constraints.ResourceConstraints)
@@ -294,14 +296,16 @@ func TestGetMergedConstraints(t *testing.T) {
 	require.Equal(t, globalLimit, *constraints.PriorityLimit)      // global constraint overrides workspace value
 }
 
-func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int, workloadType string) model.Workspace {
-	ctx := context.Background()
-
-	// add a workspace to use
-	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+func createWorkspaceWithUser(ctx context.Context, t *testing.T, userID model.UserID) model.Workspace {
+	w := model.Workspace{Name: uuid.NewString(), UserID: userID}
 	_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
 	require.NoError(t, err)
+	return w
+}
 
+func addWorkspacePriorityLimit(ctx context.Context, t *testing.T, user model.User,
+	w model.Workspace, limit int, workloadType string,
+) {
 	constraints := fmt.Sprintf(`{"priority_limit": %d}`, limit)
 	input := model.TaskConfigPolicies{
 		WorkloadType:  workloadType,
@@ -309,9 +313,16 @@ func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int, workloa
 		Constraints:   &constraints,
 		LastUpdatedBy: user.ID,
 	}
-	err = SetTaskConfigPolicies(ctx, &input)
+	err := SetTaskConfigPolicies(ctx, &input)
 	require.NoError(t, err)
+}
 
+func createWorkspaceWithPriorityLimit(t *testing.T, user model.User, wkspLimit int,
+	workloadType string,
+) model.Workspace {
+	ctx := context.Background()
+	w := createWorkspaceWithUser(ctx, t, user.ID)
+	addWorkspacePriorityLimit(ctx, t, user, w, wkspLimit, workloadType)
 	return w
 }
 
@@ -351,4 +362,558 @@ func defaultExperimentConfig() expconf.ExperimentConfigV0 {
 	config.SetResources(resources)
 
 	return config
+}
+
+var defaultConfig = schemas.WithDefaults(expconf.ExperimentConfigV0{})
+
+func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+	user := db.RequireMockUser(t, pgDB)
+	ctx := context.Background()
+	w := createWorkspaceWithUser(ctx, t, user.ID)
+
+	wkspDefaultConfig := `{
+	"description": "random description workspace",
+	"resources": {
+		"slots": 5
+	}, 
+	"preemption_timeout": 2000,
+	"bind_mounts": [
+		{
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	   "log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		}
+	  ]
+}`
+
+	var defaultInvariantConfig expconf.ExperimentConfigV0
+	err := json.Unmarshal([]byte(*DefaultInvariantConfig()), &defaultInvariantConfig)
+	require.NoError(t, err)
+
+	var wkspInvariantConfig expconf.ExperimentConfigV0
+	err = json.Unmarshal([]byte(wkspDefaultConfig), &wkspInvariantConfig)
+	require.NoError(t, err)
+
+	wkspConfigNoDefaults := wkspInvariantConfig
+	// We assign the config name because it is otherwise auto-generated randomly (and this will not
+	// be equal to defaultConfig Name).
+	wkspInvariantConfig.RawName = defaultConfig.RawName
+	wkspInvariantConfig = schemas.WithDefaults(wkspInvariantConfig)
+
+	wkspConfigMergedWithGlobal := schemas.WithDefaults(wkspInvariantConfig)
+	err = json.Unmarshal([]byte(*DefaultInvariantConfig()), &wkspConfigMergedWithGlobal)
+	require.NoError(t, err)
+
+	defaultInvariantConfig.RawName = defaultConfig.RawName
+	defaultInvariantConfig = schemas.WithDefaults(defaultInvariantConfig)
+
+	tests := []struct {
+		name           string
+		globalTCPs     *model.TaskConfigPolicies
+		workspaceTCPs  *model.TaskConfigPolicies
+		expectedConfig *expconf.ExperimentConfigV0
+	}{
+		{
+			name: "constraint policy no config",
+			workspaceTCPs: &model.TaskConfigPolicies{
+				WorkspaceID:   &w.ID,
+				WorkloadType:  model.ExperimentType,
+				LastUpdatedBy: user.ID,
+				Constraints:   DefaultConstraints(),
+			},
+			expectedConfig: &defaultConfig,
+		},
+		{
+			name: "constraint policy no config global",
+			globalTCPs: &model.TaskConfigPolicies{
+				WorkloadType:    model.ExperimentType,
+				LastUpdatedBy:   user.ID,
+				InvariantConfig: DefaultInvariantConfig(),
+				Constraints:     DefaultConstraints(),
+			},
+			workspaceTCPs: &model.TaskConfigPolicies{
+				WorkspaceID:   &w.ID,
+				WorkloadType:  model.ExperimentType,
+				LastUpdatedBy: user.ID,
+				Constraints:   DefaultConstraints(),
+			},
+			expectedConfig: &defaultInvariantConfig,
+		},
+		{
+			name:           "no config policies for wksp",
+			expectedConfig: &defaultConfig,
+		},
+		{
+			name: "no config policies for wksp global",
+			globalTCPs: &model.TaskConfigPolicies{
+				WorkspaceID:     nil,
+				WorkloadType:    model.ExperimentType,
+				LastUpdatedBy:   user.ID,
+				InvariantConfig: DefaultInvariantConfig(),
+				Constraints:     DefaultConstraints(),
+			},
+			expectedConfig: &defaultInvariantConfig,
+		},
+		{
+			name: "invariant config policy wksp only",
+			workspaceTCPs: &model.TaskConfigPolicies{
+				WorkspaceID:     &w.ID,
+				WorkloadType:    model.ExperimentType,
+				LastUpdatedBy:   user.ID,
+				InvariantConfig: &wkspDefaultConfig,
+			},
+			expectedConfig: &wkspInvariantConfig,
+		},
+		{
+			name: "invariant config policy wksp and global",
+			globalTCPs: &model.TaskConfigPolicies{
+				WorkloadType:    model.ExperimentType,
+				LastUpdatedBy:   user.ID,
+				InvariantConfig: DefaultInvariantConfig(),
+				Constraints:     DefaultConstraints(),
+			},
+			workspaceTCPs: &model.TaskConfigPolicies{
+				WorkspaceID:     &w.ID,
+				WorkloadType:    model.ExperimentType,
+				LastUpdatedBy:   user.ID,
+				InvariantConfig: &wkspDefaultConfig,
+				Constraints:     DefaultConstraints(),
+			},
+			expectedConfig: &wkspConfigMergedWithGlobal,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			setConfigPolicies(ctx, t, &w.ID, test.workspaceTCPs, test.globalTCPs)
+
+			config := &expconf.ExperimentConfigV0{}
+			config.RawName = defaultConfig.RawName
+			config.RawReproducibility = defaultConfig.RawReproducibility
+			config.RawReproducibility.RawExperimentSeed = test.expectedConfig.
+				RawReproducibility.RawExperimentSeed
+			config = schemas.WithDefaults(config)
+
+			config, err := MergeWithInvariantExperimentConfigs(context.Background(), w.ID, *config)
+			require.NoError(t, err)
+
+			require.Equal(t, *test.expectedConfig, *config)
+		})
+	}
+
+	t.Run("test empty user config", func(t *testing.T) {
+		setConfigPolicies(ctx, t, &w.ID,
+			&model.TaskConfigPolicies{
+				WorkspaceID:     &w.ID,
+				WorkloadType:    model.ExperimentType,
+				LastUpdatedBy:   w.UserID,
+				InvariantConfig: &wkspDefaultConfig,
+			},
+			nil)
+
+		conf, err := MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
+			expconf.ExperimentConfigV0{})
+		require.NoError(t, err)
+		require.Equal(t, wkspConfigNoDefaults, *conf)
+	})
+
+	t.Run("test invalid workspace id", func(t *testing.T) {
+		conf, err := MergeWithInvariantExperimentConfigs(context.Background(), -1, defaultConfig)
+		require.NoError(t, err)
+		require.Equal(t, defaultConfig, *conf)
+	})
+
+	testMergeSlicesAndMaps(t)
+}
+
+func testMergeSlicesAndMaps(t *testing.T) {
+	t.Run("test merge slices and maps", func(t *testing.T) {
+		require.NoError(t, etc.SetRootPath(db.RootFromDB))
+		pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+		defer cleanup()
+		db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+		user := db.RequireMockUser(t, pgDB)
+		ctx := context.Background()
+		w := createWorkspaceWithUser(ctx, t, user.ID)
+
+		userPartialConfig := `{
+		"description": "random description workspace",
+		"raw_data": { "1" : "data point 1" },
+		  "resources": {
+		"slots": 5,
+		"devices": [
+		  {
+			"host_path": "random/path",
+			"container_path": "random/container/path",
+			"mode": "slow"
+		  }
+		]
+	  },
+	  "preemption_timeout": 2000,
+	  "bind_mounts": [
+		{
+		  "host_path": "random/path",
+		  "container_path": "random/container/path",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu1:cpuval1"
+		  ],
+		   "cuda": [
+			"cuda1:cudaval"
+		  ],
+		   "rocm": [
+			"rocm1:rocmval1"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 91950,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		}
+	  ]
+	}
+	`
+
+		adminPartialConfig := `{
+	  "raw_data": { "2" : "data point 2" },
+	  "resources": {
+		"devices": [
+		  {
+			"host_path": "random/path/wksp",
+			"container_path": "random/container/path/wksp",
+			"mode": "fast"
+		  } ]
+		}, 
+	  "bind_mounts": [
+		{
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu2:cpuval2"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 9195,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "repeat"
+		}
+	  ]
+	}`
+
+		mergedWkspConfig := `
+	{
+	  "raw_data": { 
+			  "1" : "data point 1",
+			 "2" : "data point 2"
+		},
+	  "description": "random description workspace",
+	  "resources": {
+		"slots": 5,
+		"devices": [
+		 {
+			"host_path": "random/path/wksp",
+			"container_path": "random/container/path/wksp",
+			"mode": "fast"
+		  },
+		  {
+			"host_path": "random/path",
+			"container_path": "random/container/path",
+			"mode": "slow"
+		  }
+		]
+	  },
+	  "preemption_timeout": 2000,
+	  "bind_mounts": [
+		{
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		},
+		 {
+		  "host_path": "random/path",
+		  "container_path": "random/container/path",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu1:cpuval1", "cpu2:cpuval2"
+		  ],
+		   "cuda": [
+			"cuda1:cudaval"
+		  ],
+		   "rocm": [
+			"rocm1:rocmval1"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 9195,
+			  "proxy_tcp": true
+			},
+			{
+			  "proxy_port": 91950,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		},
+		{
+		  "pattern": "repeat"    
+		}
+	  ]
+	}
+	`
+
+		globalPartialConfig := `{
+	  "raw_data": { "3" : "data point 3" },
+	  "resources": {
+		"devices": [
+		  {
+			"host_path": "random/path/global",
+			"container_path": "random/container/path/global",
+			"mode": "fast"
+		  } ]
+		}, 
+	  "bind_mounts": [
+		{
+		  "host_path": "random/path/global",
+		  "container_path": "random/container/path/global",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu3:cpuval3"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 10195,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "gloablrepeat"
+		}
+	  ]
+	}`
+
+		mergedGlobalConfig := `
+	{
+	  "raw_data": { 
+			  "1" : "data point 1",
+			 "2" : "data point 2",
+			 "3" : "data point 3"
+		},
+	  "description": "random description workspace",
+	  "resources": {
+		"slots": 5,
+		"devices": [
+		{
+			"host_path": "random/path/global",
+			"container_path": "random/container/path/global",
+			"mode": "fast"
+		  },
+		 {
+			"host_path": "random/path/wksp",
+			"container_path": "random/container/path/wksp",
+			"mode": "fast"
+		  },
+		  {
+			"host_path": "random/path",
+			"container_path": "random/container/path",
+			"mode": "slow"
+		  }
+		]
+	  },
+	  "preemption_timeout": 2000,
+	  "bind_mounts": [
+	   {
+		  "host_path": "random/path/global",
+		  "container_path": "random/container/path/global",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		},
+		{
+		  "host_path": "random/path/wksp",
+		  "container_path": "random/container/path/wksp",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		},
+		 {
+		  "host_path": "random/path",
+		  "container_path": "random/container/path",
+		  "read_only": true,
+		  "propagation": "cluster-wide"
+		}
+	  ],
+	  "environment": {
+		"environment_variables": {
+		  "cpu": [
+			"cpu1:cpuval1", "cpu2:cpuval2", "cpu3:cpuval3"
+		  ],
+		   "cuda": [
+			"cuda1:cudaval"
+		  ],
+		   "rocm": [
+			"rocm1:rocmval1"
+		  ],
+		  "proxy_ports": [
+			{
+			  "proxy_port": 9195,
+			  "proxy_tcp": true
+			},
+			{
+			  "proxy_port": 91950,
+			  "proxy_tcp": true
+			},
+			{
+			  "proxy_port": 10195,
+			  "proxy_tcp": true
+			}
+		  ]
+		}
+	  },
+	  "log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		},
+		{
+		  "pattern": "repeat"    
+		},
+		{
+		  "pattern": "gloablrepeat"
+		}
+	  ]
+	}
+	`
+		var adminPartialInvariantConfig expconf.ExperimentConfigV0
+		err := json.Unmarshal([]byte(adminPartialConfig), &adminPartialInvariantConfig)
+		require.NoError(t, err)
+
+		adminPartialInvariantConfig.RawName = defaultConfig.RawName
+		adminPartialInvariantConfig = schemas.WithDefaults(adminPartialInvariantConfig)
+
+		var userPartialInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(userPartialConfig), &userPartialInvariantConfig)
+		require.NoError(t, err)
+
+		userPartialInvariantConfig.RawName = defaultConfig.RawName
+		userPartialInvariantConfig = schemas.WithDefaults(userPartialInvariantConfig)
+
+		var mergedWkspInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(mergedWkspConfig), &mergedWkspInvariantConfig)
+		require.NoError(t, err)
+
+		// Test merging user-submitted config with workspace config policies only.
+		setConfigPolicies(ctx, t, &w.ID, &model.TaskConfigPolicies{
+			WorkspaceID:     &w.ID,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   w.UserID,
+			InvariantConfig: &adminPartialConfig,
+		}, nil)
+
+		mergedWkspInvariantConfig.RawName = adminPartialInvariantConfig.RawName
+		mergedWkspInvariantConfig = schemas.WithDefaults(mergedWkspInvariantConfig)
+		res, err := MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
+			userPartialInvariantConfig)
+
+		require.NoError(t, err)
+		require.Equal(t, mergedWkspInvariantConfig, *res)
+
+		// Merge user-submitted config with workspace and global config policies.
+		setConfigPolicies(ctx, t, &w.ID, &model.TaskConfigPolicies{
+			WorkspaceID:     &w.ID,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   w.UserID,
+			InvariantConfig: &adminPartialConfig,
+		}, &model.TaskConfigPolicies{
+			WorkspaceID:     nil,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   w.UserID,
+			InvariantConfig: &globalPartialConfig,
+		})
+
+		var globalInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(globalPartialConfig), &globalInvariantConfig)
+		require.NoError(t, err)
+
+		var mergedGlobalInvariantConfig expconf.ExperimentConfigV0
+		err = json.Unmarshal([]byte(mergedGlobalConfig), &mergedGlobalInvariantConfig)
+		require.NoError(t, err)
+
+		mergedGlobalInvariantConfig.RawName = defaultConfig.RawName
+		mergedGlobalInvariantConfig = schemas.WithDefaults(mergedGlobalInvariantConfig)
+		res, err = MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
+			userPartialInvariantConfig)
+
+		require.NoError(t, err)
+		require.Equal(t, mergedGlobalInvariantConfig, *res)
+	})
+}
+
+func setConfigPolicies(ctx context.Context, t *testing.T, wID *int, workspaceTCPs,
+	globalTCPs *model.TaskConfigPolicies,
+) {
+	if workspaceTCPs == nil {
+		err := DeleteConfigPolicies(ctx, wID, model.ExperimentType)
+		require.NoError(t, err)
+	} else {
+		err := SetTaskConfigPolicies(ctx, workspaceTCPs)
+		require.NoError(t, err)
+	}
+
+	if globalTCPs == nil {
+		err := DeleteConfigPolicies(ctx, nil, model.ExperimentType)
+		require.NoError(t, err)
+	} else {
+		err := SetTaskConfigPolicies(ctx, globalTCPs)
+		require.NoError(t, err)
+	}
 }
