@@ -19283,7 +19283,7 @@ def get_GetAccessTokens(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetAccessTokensRequestSortBy]" = None,
 ) -> "v1GetAccessTokensResponse":
-    """Get list of all access token info
+    """Get a list of all access token records.
 
     - filter: Filter by username or expression.
     - limit: Limit the number of projects. A value of 0 denotes no limit.
@@ -19313,7 +19313,7 @@ denote number of projects to skip from the end before returning results.
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/user/tokens",
+        path="/api/v1/tokens",
         params=_params,
         json=None,
         data=None,
@@ -23083,14 +23083,14 @@ def patch_PatchAccessToken(
     body: "v1PatchAccessTokenRequest",
     tokenId: int,
 ) -> "v1PatchAccessTokenResponse":
-    """Patch an access tokens mutable fields.
+    """Patch an access token's mutable fields.
 
     - tokenId: The id of the token.
     """
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/users/token/{tokenId}",
+        path=f"/api/v1/tokens/{tokenId}",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -23551,16 +23551,12 @@ def post_PostAccessToken(
     session: "api.BaseSession",
     *,
     body: "v1PostAccessTokenRequest",
-    userId: int,
 ) -> "v1PostAccessTokenResponse":
-    """Create and get a user's access token
-
-    - userId: The id of the user.
-    """
+    """Create and get a user's access token"""
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/users/{userId}/token",
+        path="/api/v1/tokens",
         params=_params,
         json=body.to_json(True),
         data=None,
