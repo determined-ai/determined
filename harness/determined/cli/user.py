@@ -9,16 +9,6 @@ from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.experimental import client
 
-TOKEN_HEADERS = [
-    "ID",
-    "User ID",
-    "Description",
-    "Created At",
-    "Expires At",
-    "Revoked",
-    "Token Type",
-]
-
 FullUser = collections.namedtuple(
     "FullUser",
     [
@@ -248,7 +238,7 @@ args_description = [
             ),
         ], is_default=True),
         cli.Cmd("login", log_in_user, "log in user", [
-            cli.Arg("username", nargs="?", default=None, help="name of user to log in as"),
+            cli.Arg("username", nargs="?", default=None, help="name of user to log in as")
         ]),
         cli.Cmd("rename", rename, "change username for user", [
             cli.Arg(
