@@ -57,7 +57,10 @@ def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
 
     # For mypy
     assert resp.summary and resp.summary.config and resp.summary.runs
-    config_str = render.format_object_as_yaml(resp.summary.config)
+    # Exclude empty configs from rendering.
+    searcher_config = {k: v for k, v in resp.summary.config.items() if v is not None}
+
+    config_str = render.format_object_as_yaml(searcher_config)
     output.append(config_str)
     headers = ["Runs", "Training Time"]
     run_summaries = []
@@ -88,7 +91,6 @@ def preview_search(args: argparse.Namespace) -> None:
             config=experiment_config,
         ),
     )
-    print()
     print(_render_search_summary(resp=resp))
 
 

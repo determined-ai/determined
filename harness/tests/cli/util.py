@@ -168,4 +168,4 @@ def check_cli_output(args: List[str], expected: str) -> None:
     act_lines = actual.splitlines(keepends=True)
     diff_lines = difflib.ndiff(act_lines, exp_lines)
     diff = "".join(diff_lines)
-    assert expected == actual, f"CLI output for {args} does not match expected output: {diff}"
+    assert expected == actual, f"CLI output for {args} does not match expected output:\n {diff}"

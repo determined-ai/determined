@@ -15,6 +15,7 @@ import requests
 import requests_mock
 from responses import matchers
 
+from common.check import false
 from determined.cli import cli, ntsc, render
 from determined.common import constants, context
 from determined.common.api import bindings
@@ -573,13 +574,13 @@ def test_dev_bindings_call_arg_unmarshal(case: Tuple[List[str], Dict[str, Any]])
 
 
 def test_preview_search(tmp_path: pathlib.Path) -> None:
-    # Save a test experiment config file to a temporary path.
+    # Random
     max_trials = 10
     searcher_config = {
         "hyperparameters": {
             "x": 12,
         },
-        "name": "test preview search",
+        "name": "test preview search (random)",
         "searcher": {
             "name": "random",
             "metric": "loss",
@@ -614,11 +615,70 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             ],
             json=mock_resp.to_json(),
         )
-        expected_output = f"""
-Using search configuration:
+        expected_output = f"""Using search configuration:
 {render.format_object_as_yaml(searcher_config)}
    Runs | Training Time
 --------+---------------------------------
      10 | maximum length of training code
+"""
+        util.check_cli_output(["preview-search", str(conf_path)], expected_output)
+
+    # ASHA
+    searcher_config = {
+        "hyperparameters": {
+            "x": 12,
+        },
+        "name": "test preview search (asha)",
+        "searcher": {
+            "bracket_rungs": [],
+            "divisor": 5,
+            "max_concurrent_trials": 5,
+            "max_rungs": 5,
+            "max_time": 1000,
+            "max_trials": 10,
+            "metric": "loss",
+            "mode": "standard",
+            "name": "adaptive_asha",
+            "time_metric": "batches",
+        },
+    }
+    conf_path = tmp_path / "config.yaml"
+    with conf_path.open("w") as tmp_file:
+        tmp_file.write(json.dumps(searcher_config))
+
+    mock_resp = bindings.v1PreviewHPSearchResponse(
+        summary=bindings.v1SearchSummary(
+            config=searcher_config,
+            runs=[
+                bindings.v1RunSummary(
+                    count=7,
+                    unit=bindings.v1SearchUnit(name="batches", value=200),
+                ),
+                bindings.v1RunSummary(
+                    count=3,
+                    unit=bindings.v1SearchUnit(name="batches", value=1000),
+                )
+            ],
+        )
+    )
+    with util.standard_cli_rsps() as rsps:
+        rsps.post(
+            f"{MASTER_HOST}/api/v1/preview-hp-search",
+            status=200,
+            match=[
+                matchers.json_params_matcher(
+                    params={
+                        "config": searcher_config,
+                    }
+                )
+            ],
+            json=mock_resp.to_json(),
+        )
+        expected_output = f"""Using search configuration:
+{render.format_object_as_yaml(searcher_config)}
+   Runs | Training Time
+--------+------------------------
+      7 | train for 200 batches
+      3 | train for 1000 batches
 """
         util.check_cli_output(["preview-search", str(conf_path)], expected_output)
