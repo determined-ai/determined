@@ -138,13 +138,12 @@ def login_with_token(args: argparse.Namespace) -> None:
 # fmt: off
 
 args_description = [
-    cli.Cmd("t|oken", None, "manage access tokens", [
+    cli.Cmd("to|ken", None, "manage access tokens", [
         cli.Cmd("describe", describe_token, "describe token info", [
             cli.Arg("token_id", type=int, nargs=argparse.ONE_OR_MORE, default=None,
                     help="token id(s) specifying access tokens to describe"),
             cli.Group(
                 cli.output_format_args["json"],
-              
                 cli.output_format_args["yaml"],
             ),
         ]),
