@@ -8,7 +8,7 @@ import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
@@ -116,8 +116,6 @@ const ExperimentContinueModalComponent = ({
     : [ExperimentCopyMapping, experimentEntityCopyMap];
   const actionCopy = actionCopyMap[modalState.type];
 
-  const requiredFields = useMemo(() => [EXPERIMENT_NAME], []);
-
   const handleModalClose = () => {
     setModalState(DEFAULT_MODAL_STATE);
     onClose?.();
@@ -139,7 +137,7 @@ const ExperimentContinueModalComponent = ({
     const hasError = hasErrors(form);
     const values = form.getFieldsValue();
     const missingRequiredFields = Object.entries(values).some(([key, value]) => {
-      return requiredFields.includes(key) && !value;
+      return EXPERIMENT_NAME === key && !value;
     });
     setDisabled(hasError || missingRequiredFields);
   };
@@ -330,8 +328,8 @@ const ExperimentContinueModalComponent = ({
       };
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
-    form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [entityCopyMap, experiment, trial, type, isReactivate, form, requiredFields]);
+    form.validateFields([EXPERIMENT_NAME]); // initial disabled state set here, gets updated later in handleFieldsChange
+  }, [entityCopyMap, experiment, trial, type, isReactivate, form]);
 
   if (!experiment || (!isReactivate && !trial)) return <></>;
 

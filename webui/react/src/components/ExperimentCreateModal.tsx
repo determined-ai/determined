@@ -117,8 +117,6 @@ const ExperimentCreateModalComponent = ({
     ? `Fork ${capitalize(entityCopy.experiment)} ${experiment.id}`
     : `Continue ${capitalize(entityCopy.trial)} ${trial?.id}`;
 
-  const requiredFields = useMemo(() => [EXPERIMENT_NAME], []);
-
   const handleModalClose = () => {
     setModalState(DEFAULT_MODAL_STATE);
     onClose?.();
@@ -140,7 +138,7 @@ const ExperimentCreateModalComponent = ({
     const hasError = hasErrors(form);
     const values = form.getFieldsValue();
     const missingRequiredFields = Object.entries(values).some(([key, value]) => {
-      return requiredFields.includes(key) && !value;
+      return EXPERIMENT_NAME === key && !value;
     });
     setDisabled(hasError || missingRequiredFields);
   };
@@ -315,8 +313,8 @@ const ExperimentCreateModalComponent = ({
       };
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
-    form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [entityCopy, experiment, trial, type, isFork, form, requiredFields]);
+    form.validateFields([EXPERIMENT_NAME]); // initial disabled state set here, gets updated later in handleFieldsChange
+  }, [entityCopy, experiment, trial, type, isFork, form]);
 
   if (!experiment || (!isFork && !trial)) return <></>;
 
