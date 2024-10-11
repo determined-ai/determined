@@ -1,5 +1,3 @@
-// Test
-// Test2
 syntax = "proto3";
 
 package determined.api.v1;
