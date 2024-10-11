@@ -4837,7 +4837,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4852,7 +4852,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4869,7 +4869,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4884,7 +4884,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4899,7 +4899,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4919,7 +4919,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4937,7 +4937,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4955,7 +4955,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4971,7 +4971,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4986,7 +4986,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -5002,7 +5002,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -5018,7 +5018,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -5034,7 +5034,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -5049,7 +5049,7 @@ workflows:
           matrix:
             parameters:
               agent-version: ["0.17.10"]
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
           upgrade: true
 
       - test-e2e:
@@ -5066,7 +5066,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-saml
@@ -5081,7 +5081,7 @@ workflows:
           upgrade: true
           matrix:
             parameters:
-              det-version: << pipeline.parameters.SUPPORTED_VERSIONS >>
+              det-version: *det-versions
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
