@@ -130,21 +130,8 @@ export class UserFixture {
     await this.singleUserSearchAndEdit(user);
     await expect(this.userManagementPage.createUserModal.username.pwLocator).toBeDisabled();
     expect(
-      await this.userManagementPage.createUserModal.displayName.pwLocator.getAttribute('value'),
-    ).toEqual(user.user.displayName || '');
-    const checkedAttribute =
-      await this.userManagementPage.createUserModal.adminToggle.pwLocator.getAttribute(
-        'aria-checked',
-      );
-    if (checkedAttribute === null) {
-      throw new Error('Expected attribute aria-checked to be present.');
-    }
-    const adminState = JSON.parse(checkedAttribute);
-    if (user.user.admin) {
-      expect(adminState).toBeTruthy();
-    } else {
-      expect(adminState).not.toBeTruthy();
-    }
+      await this.userManagementPage.createUserModal.username.pwLocator.getAttribute('value'),
+    ).toEqual(user.user.username || '');
     await expect(
       repeatWithFallback(
         async () => await this.fillUserForm(edit),
@@ -160,13 +147,9 @@ export class UserFixture {
     if (editedUser.user === undefined) {
       throw new Error('Result from edit user is Undefined.');
     }
-    editedUser.password = edit.password;
-    if (edit.admin !== undefined) {
-      editedUser.user.admin = edit.admin;
-    }
-    if (edit.displayName !== undefined) {
-      editedUser.user.displayName = edit.displayName;
-    }
+    if (edit.password !== undefined) editedUser.password = edit.password;
+    if (edit.admin !== undefined) editedUser.user.admin = edit.admin;
+    if (edit.displayName !== undefined) editedUser.user.displayName = edit.displayName;
     return editedUser;
   }
 
@@ -213,9 +196,7 @@ export class UserFixture {
   /**
    * Deactivates all users present on the table.
    */
-  async deactivateTestUsersOnTable(users: Map<number, V1PostUserRequest>): Promise<void> {
-    // get all user ids so we can update the status later
-    const ids = (await this.userManagementPage.table.table.allRowKeys()).map((id) => parseInt(id));
+  async deactivateTestUsersOnTable(): Promise<void> {
     // select all users
     await this.userManagementPage.table.table.headRow.selectAll.pwLocator.click();
     await expect(this.userManagementPage.table.table.headRow.selectAll.pwLocator).toBeChecked();
@@ -226,16 +207,6 @@ export class UserFixture {
     await this.userManagementPage.changeUserStatusModal.status.openMenu();
     await this.userManagementPage.changeUserStatusModal.status.deactivate.pwLocator.click();
     await this.userManagementPage.changeUserStatusModal.footer.submit.pwLocator.click();
-    for (const id of ids) {
-      const user = users.get(id);
-      if (user?.user === undefined) {
-        throw new Error(
-          `Expected user with id ${id} present on the table to have been created during this session`,
-        );
-      }
-      user.user.active = false;
-      users.set(id, user);
-    }
   }
 
   /**

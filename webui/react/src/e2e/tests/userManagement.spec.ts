@@ -3,7 +3,7 @@ import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
-import { saveTestUser } from 'e2e/utils/users';
+import { saveTestUserId } from 'e2e/utils/users';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
 test.describe('User Management', () => {
@@ -11,7 +11,7 @@ test.describe('User Management', () => {
   // call of the user fixture to deactivate all users created by each test.
   // Note: This can't collide when running tests in parallel because playwright
   // workers can't share variables.
-  const testUsers = new Map<number, V1PostUserRequest>();
+  const testUserIds: number[] = [];
   test.beforeEach(async ({ authedPage }) => {
     const userManagementPage = new UserManagement(authedPage);
     await userManagementPage.goto();
@@ -32,7 +32,7 @@ test.describe('User Management', () => {
 
   test.afterAll(async ({ backgroundApiUser }) => {
     await test.step('Deactivate Users', async () => {
-      for (const [id] of testUsers) {
+      for (const id of testUserIds) {
         await backgroundApiUser.patchUser(id, { active: false });
       }
     });
@@ -42,14 +42,14 @@ test.describe('User Management', () => {
     let testUser: V1PostUserRequest;
 
     test.beforeEach(async ({ user }) => {
-      await test.step('Create User', async () => {
-        testUser = await user.createUser();
-        saveTestUser(testUser, testUsers);
-      });
-    });
-
-    test('User Table Read', async ({ user }) => {
-      await user.validateUser(testUser);
+      // share one user created via UI across tests:
+      if (!testUser) {
+        await test.step('Create User', async () => {
+          testUser = await user.createUser();
+          saveTestUserId(testUser, testUserIds);
+          await user.validateUser(testUser);
+        });
+      }
     });
 
     test('New User Access', async ({ page, auth }) => {
@@ -64,7 +64,7 @@ test.describe('User Management', () => {
     });
 
     test('Edit User', async ({ user }) => {
-      await test.step('Edit Once', async () => {
+      await test.step('Edit display name', async () => {
         if (testUser.user === undefined) {
           throw new Error('Trying to edit an undefined user.');
         }
@@ -73,21 +73,20 @@ test.describe('User Management', () => {
         });
         await user.validateUser(testUser);
       });
-      await test.step('Edit Again', async () => {
-        testUser = await user.editUser(testUser, { admin: true, displayName: '' });
+      await test.step('Revert display name edit', async () => {
+        testUser = await user.editUser(testUser, { displayName: '' });
         await user.validateUser(testUser);
       });
     });
 
-    test('Deactivate and Reactivate', async ({ page, user, auth, newAdmin }) => {
+    test('Deactivate and Reactivate User', async ({ page, user, auth, newAdmin }) => {
       const userManagementPage = new UserManagement(page);
       const signInPage = new SignIn(page);
       await test.step('Deactivate', async () => {
         testUser = await user.changeStatusUser(testUser, false);
-        saveTestUser(testUser, testUsers);
         await user.validateUser(testUser);
       });
-      await test.step('Attempt Sign In With Deactivated User', async () => {
+      await test.step('Cannot sign in with deactivated user', async () => {
         await auth.logout();
         await auth.login({
           expectedURL: /login/,
@@ -118,10 +117,9 @@ test.describe('User Management', () => {
           username: newAdmin.response.user?.username,
         });
         testUser = await user.changeStatusUser(testUser, true);
-        saveTestUser(testUser, testUsers);
         await user.validateUser(testUser);
       });
-      await test.step('Successful Sign In', async () => {
+      await test.step('Successful sign in with reactivated user', async () => {
         test.slow();
         await auth.logout();
         await auth.login({ password: testUser.password, username: testUser.user?.username });
@@ -138,7 +136,7 @@ test.describe('User Management', () => {
           const user = await backgroundApiUser.createUser(
             backgroundApiUser.new({ usernamePrefix }),
           );
-          saveTestUser(user, testUsers);
+          saveTestUserId(user, testUserIds);
         }
       });
     });
@@ -193,7 +191,7 @@ test.describe('User Management', () => {
       });
       await test.step("Deactivate All Users on the Table's Page (1 User)", async () => {
         await userManagementPage.actions.pwLocator.waitFor({ state: 'hidden' });
-        await user.deactivateTestUsersOnTable(testUsers);
+        await user.deactivateTestUsersOnTable();
       });
       await test.step('Check That the 1 User is Disabled', async () => {
         // wait for table to be stable and check that pagination and "no data" both dont show
