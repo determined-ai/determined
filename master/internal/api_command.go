@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
+	masterConfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -143,6 +144,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	fillTaskConfig(resources.Slots, taskSpec, &config.Environment)
 	config.Resources.ResourcePool = poolName.String()
 	config.Resources.Slots = resources.Slots
+
+	// Apply the scheduler's default priority.
+	if config.Resources.Priority == nil {
+		prio := masterConfig.DefaultPriorityForPool(poolName.String())
+		config.Resources.Priority = &prio
+	}
 
 	var contextDirectory []byte
 	config.WorkDir, contextDirectory, err = fillContextDir(config.WorkDir, workDirInDefaults, req.Files)

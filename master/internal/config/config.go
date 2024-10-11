@@ -616,7 +616,6 @@ func readRMPreemptionStatus(config *ResourceManagerWithPoolsConfig, rpName strin
 
 // ReadPriority resolves the priority value for a job.
 func ReadPriority(rpName string, jobConf interface{}) int {
-	config := GetMasterConfig()
 	var prio *int
 	// look at the individual job config
 	switch conf := jobConf.(type) {
@@ -628,13 +627,18 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 	if prio != nil {
 		return *prio
 	}
-
 	// if not found, fall back to the resource pools config
+	return DefaultPriorityForPool(rpName)
+}
+
+// DefaultPriorityForPool returns the default priority for any jobs (user-defined if provided, otherwise our default).
+func DefaultPriorityForPool(rpName string) int {
+	config := GetMasterConfig()
 	for _, rm := range config.ResourceManagers() {
 		for _, rpConfig := range rm.ResourcePools {
 			if rpConfig.PoolName == rpName {
 				schedulerConf := rpConfig.Scheduler
-				prio = readPriorityFromScheduler(schedulerConf)
+				prio := readPriorityFromScheduler(schedulerConf)
 				if prio != nil {
 					return *prio
 				}
@@ -647,16 +651,13 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 						return *prio
 					}
 				}
-
 				if rm.ResourceManager.KubernetesRM != nil {
 					return KubernetesDefaultPriority
 				}
-
-				break
+				return DefaultSchedulingPriority
 			}
 		}
 	}
-
 	return DefaultSchedulingPriority
 }
 
