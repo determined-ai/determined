@@ -25,6 +25,7 @@ import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
+import "determined/api/v1/token.proto";
 import "determined/api/v1/user.proto";
 import "determined/api/v1/webhook.proto";
 import "determined/api/v1/workspace.proto";
@@ -2887,38 +2888,38 @@ service Determined {
     };
   }
 
-  // Patch an access tokens mutable fields.
-  rpc PatchAccessToken(PatchAccessTokenRequest)
-      returns (PatchAccessTokenResponse) {
-    option (google.api.http) = {
-      patch: "/api/v1/users/token/{token_id}"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
-    };
-  }
-
   // Create and get a user's access token
   rpc PostAccessToken(PostAccessTokenRequest)
       returns (PostAccessTokenResponse) {
     option (google.api.http) = {
-      post: "/api/v1/users/{user_id}/token",
+      post: "/api/v1/tokens",
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
+      tags: "Tokens"
     };
   }
 
-  // Get list of all access token info
+  // Get a list of all access token records.
   rpc GetAccessTokens(GetAccessTokensRequest)
       returns (GetAccessTokensResponse) {
     option (google.api.http) = {
-      get: "/api/v1/user/tokens"
+      get: "/api/v1/tokens"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
+      tags: "Tokens"
+    };
+  }
+
+  // Patch an access token's mutable fields.
+  rpc PatchAccessToken(PatchAccessTokenRequest)
+      returns (PatchAccessTokenResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/tokens/{token_id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tokens"
     };
   }
 }

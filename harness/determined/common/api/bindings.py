@@ -11157,43 +11157,39 @@ class v1PostAccessTokenRequest(Printable):
     """Create the requested user's accessToken."""
     description: "typing.Optional[str]" = None
     lifespan: "typing.Optional[str]" = None
-    userId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
+        userId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
         lifespan: "typing.Union[str, None, Unset]" = _unset,
-        userId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        self.userId = userId
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(lifespan, Unset):
             self.lifespan = lifespan
-        if not isinstance(userId, Unset):
-            self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostAccessTokenRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "userId": obj["userId"],
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "lifespan" in obj:
             kwargs["lifespan"] = obj["lifespan"]
-        if "userId" in obj:
-            kwargs["userId"] = obj["userId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "userId": self.userId,
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "lifespan" in vars(self):
             out["lifespan"] = self.lifespan
-        if not omit_unset or "userId" in vars(self):
-            out["userId"] = self.userId
         return out
 
 class v1PostAccessTokenResponse(Printable):
@@ -19316,7 +19312,7 @@ def get_GetAccessTokens(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetAccessTokensRequestSortBy]" = None,
 ) -> "v1GetAccessTokensResponse":
-    """Get list of all access token info
+    """Get a list of all access token records.
 
     - filter: Filter by username or expression.
     - limit: Limit the number of projects. A value of 0 denotes no limit.
@@ -19346,7 +19342,7 @@ denote number of projects to skip from the end before returning results.
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/user/tokens",
+        path="/api/v1/tokens",
         params=_params,
         json=None,
         data=None,
@@ -23116,14 +23112,14 @@ def patch_PatchAccessToken(
     body: "v1PatchAccessTokenRequest",
     tokenId: int,
 ) -> "v1PatchAccessTokenResponse":
-    """Patch an access tokens mutable fields.
+    """Patch an access token's mutable fields.
 
     - tokenId: The id of the token.
     """
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/users/token/{tokenId}",
+        path=f"/api/v1/tokens/{tokenId}",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -23584,16 +23580,12 @@ def post_PostAccessToken(
     session: "api.BaseSession",
     *,
     body: "v1PostAccessTokenRequest",
-    userId: int,
 ) -> "v1PostAccessTokenResponse":
-    """Create and get a user's access token
-
-    - userId: The id of the user.
-    """
+    """Create and get a user's access token"""
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/users/{userId}/token",
+        path="/api/v1/tokens",
         params=_params,
         json=body.to_json(True),
         data=None,

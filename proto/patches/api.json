@@ -23,6 +23,10 @@
     {
       "name": "Models",
       "description": "Manage models"
+    },
+    {
+      "name": "Tokens",
+      "description": "Manage tokens"
     }
   ],
   "paths": {},

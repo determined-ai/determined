@@ -8116,7 +8116,7 @@ export interface V1PostAccessTokenRequest {
      * @type {number}
      * @memberof V1PostAccessTokenRequest
      */
-    userId?: number;
+    userId: number;
     /**
      * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
      * @type {string}
@@ -33762,6 +33762,317 @@ export class TensorboardsApi extends BaseAPI {
 }
 
 /**
+ * TokensApi - fetch parameter creator
+ * @export
+ */
+export const TokensApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get a list of all access token records.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [filter] Filter by username or expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/tokens`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Patch an access token's mutable fields.
+         * @param {number} tokenId The id of the token.
+         * @param {V1PatchAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'tokenId' is not null or undefined
+            if (tokenId === null || tokenId === undefined) {
+                throw new RequiredError('tokenId','Required parameter tokenId was null or undefined when calling patchAccessToken.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchAccessToken.');
+            }
+            const localVarPath = `/api/v1/tokens/{tokenId}`
+                .replace(`{${"tokenId"}}`, encodeURIComponent(String(tokenId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create and get a user's access token
+         * @param {V1PostAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAccessToken(body: V1PostAccessTokenRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAccessToken.');
+            }
+            const localVarPath = `/api/v1/tokens`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * TokensApi - functional programming interface
+ * @export
+ */
+export const TokensApiFp = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get a list of all access token records.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [filter] Filter by username or expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokensResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Patch an access token's mutable fields.
+         * @param {number} tokenId The id of the token.
+         * @param {V1PatchAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchAccessTokenResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).patchAccessToken(tokenId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create and get a user's access token
+         * @param {V1PostAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAccessToken(body: V1PostAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAccessTokenResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).postAccessToken(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * TokensApi - factory interface
+ * @export
+ */
+export const TokensApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Get a list of all access token records.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [filter] Filter by username or expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
+            return TokensApiFp(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch an access token's mutable fields.
+         * @param {number} tokenId The id of the token.
+         * @param {V1PatchAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any) {
+            return TokensApiFp(configuration).patchAccessToken(tokenId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create and get a user's access token
+         * @param {V1PostAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAccessToken(body: V1PostAccessTokenRequest, options?: any) {
+            return TokensApiFp(configuration).postAccessToken(body, options)(fetch, basePath);
+        },
+    }
+};
+
+/**
+ * TokensApi - object-oriented interface
+ * @export
+ * @class
+ * @extends {BaseAPI}
+ */
+export class TokensApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get a list of all access token records.
+     * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+     * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+     * @param {string} [filter] Filter by username or expression.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TokensApi
+     */
+    public getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
+        return TokensApiFp(this.configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch an access token's mutable fields.
+     * @param {number} tokenId The id of the token.
+     * @param {V1PatchAccessTokenRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TokensApi
+     */
+    public patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any) {
+        return TokensApiFp(this.configuration).patchAccessToken(tokenId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Create and get a user's access token
+     * @param {V1PostAccessTokenRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TokensApi
+     */
+    public postAccessToken(body: V1PostAccessTokenRequest, options?: any) {
+        return TokensApiFp(this.configuration).postAccessToken(body, options)(this.fetch, this.basePath)
+    }
+    
+}
+
+/**
  * TrialsApi - fetch parameter creator
  * @export
  */
@@ -34823,61 +35134,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
-         * @summary Get list of all access token info
-         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
-         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [filter] Filter by username or expression.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/user/tokens`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy
-            }
-            
-            if (orderBy !== undefined) {
-                localVarQueryParameter['orderBy'] = orderBy
-            }
-            
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset
-            }
-            
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit
-            }
-            
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35080,50 +35336,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Patch an access tokens mutable fields.
-         * @param {number} tokenId The id of the token.
-         * @param {V1PatchAccessTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'tokenId' is not null or undefined
-            if (tokenId === null || tokenId === undefined) {
-                throw new RequiredError('tokenId','Required parameter tokenId was null or undefined when calling patchAccessToken.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling patchAccessToken.');
-            }
-            const localVarPath = `/api/v1/users/token/{tokenId}`
-                .replace(`{${"tokenId"}}`, encodeURIComponent(String(tokenId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'PATCH', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Patch a user's fields.
          * @param {number} userId The id of the user.
          * @param {V1PatchUser} body The updated user.
@@ -35143,50 +35355,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Create and get a user's access token
-         * @param {number} userId The id of the user.
-         * @param {V1PostAccessTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postAccessToken(userId: number, body: V1PostAccessTokenRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling postAccessToken.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling postAccessToken.');
-            }
-            const localVarPath = `/api/v1/users/{userId}/token`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -35410,29 +35578,6 @@ export const UsersApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get list of all access token info
-         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
-         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [filter] Filter by username or expression.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokensResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35533,26 +35678,6 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Patch an access tokens mutable fields.
-         * @param {number} tokenId The id of the token.
-         * @param {V1PatchAccessTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchAccessTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchAccessToken(tokenId, body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Patch a user's fields.
          * @param {number} userId The id of the user.
          * @param {V1PatchUser} body The updated user.
@@ -35561,26 +35686,6 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         patchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(userId, body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Create and get a user's access token
-         * @param {number} userId The id of the user.
-         * @param {V1PostAccessTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postAccessToken(userId: number, body: V1PostAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAccessTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postAccessToken(userId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35697,20 +35802,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
-         * @summary Get list of all access token info
-         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
-         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [filter] Filter by username or expression.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
-            return UsersApiFp(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35766,17 +35857,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
-         * @summary Patch an access tokens mutable fields.
-         * @param {number} tokenId The id of the token.
-         * @param {V1PatchAccessTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any) {
-            return UsersApiFp(configuration).patchAccessToken(tokenId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Patch a user's fields.
          * @param {number} userId The id of the user.
          * @param {V1PatchUser} body The updated user.
@@ -35785,17 +35865,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         patchUser(userId: number, body: V1PatchUser, options?: any) {
             return UsersApiFp(configuration).patchUser(userId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Create and get a user's access token
-         * @param {number} userId The id of the user.
-         * @param {V1PostAccessTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postAccessToken(userId: number, body: V1PostAccessTokenRequest, options?: any) {
-            return UsersApiFp(configuration).postAccessToken(userId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -35857,22 +35926,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
  * @extends {BaseAPI}
  */
 export class UsersApi extends BaseAPI {
-    /**
-     * 
-     * @summary Get list of all access token info
-     * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
-     * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
-     * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-     * @param {string} [filter] Filter by username or expression.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
-        return UsersApiFp(this.configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(this.fetch, this.basePath)
-    }
-    
     /**
      * 
      * @summary Get the current user.
@@ -35940,19 +35993,6 @@ export class UsersApi extends BaseAPI {
     
     /**
      * 
-     * @summary Patch an access tokens mutable fields.
-     * @param {number} tokenId The id of the token.
-     * @param {V1PatchAccessTokenRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any) {
-        return UsersApiFp(this.configuration).patchAccessToken(tokenId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Patch a user's fields.
      * @param {number} userId The id of the user.
      * @param {V1PatchUser} body The updated user.
@@ -35962,19 +36002,6 @@ export class UsersApi extends BaseAPI {
      */
     public patchUser(userId: number, body: V1PatchUser, options?: any) {
         return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Create and get a user's access token
-     * @param {number} userId The id of the user.
-     * @param {V1PostAccessTokenRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public postAccessToken(userId: number, body: V1PostAccessTokenRequest, options?: any) {
-        return UsersApiFp(this.configuration).postAccessToken(userId, body, options)(this.fetch, this.basePath)
     }
     
     /**
