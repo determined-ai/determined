@@ -31,7 +31,14 @@ def describe_token(args: argparse.Namespace) -> None:
     filter_data = json.dumps({"Token_Ids": args.token_id})
     try:
         resp = bindings.get_GetAccessTokens(session=sess, filter=filter_data)
-        render_token_info(resp.tokenInfo)
+        if args.json or args.yaml:
+            json_data = [t.to_json() for t in resp.tokenInfo]
+            if args.json:
+                render.print_json(json_data)
+            else:
+                print(util.yaml_safe_dump(json_data, default_flow_style=False))
+        else:
+            render_token_info(resp.tokenInfo)
     except api.errors.APIException as e:
         raise errors.CliError(f"Caught APIException: {str(e)}")
     except Exception as e:
@@ -79,9 +86,10 @@ def create_token(args: argparse.Namespace) -> None:
 
     request = None
     request = bindings.v1PostAccessTokenRequest(
-        lifespan=args.expiration_duration, userId=user_id, description=args.description
+        userId=user_id, lifespan=args.expiration_duration, description=args.description
     )
-    resp = bindings.post_PostAccessToken(sess, userId=user_id, body=request).to_json()
+
+    resp = bindings.post_PostAccessToken(sess, body=request).to_json()
 
     output_string = None
     if args.yaml:
@@ -136,6 +144,7 @@ args_description = [
                     help="token id(s) specifying access tokens to describe"),
             cli.Group(
                 cli.output_format_args["json"],
+              
                 cli.output_format_args["yaml"],
             ),
         ]),
