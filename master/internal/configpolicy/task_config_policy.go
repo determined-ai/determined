@@ -161,7 +161,7 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 	return &constraints, nil
 }
 
-func findAllowedPriority(scope *int, workloadType string) (limit int, found bool, err error) {
+func findAllowedPriority(scope *int, workloadType string) (limit int, exists bool, err error) {
 	configPolicies, err := GetTaskConfigPolicies(context.TODO(), scope, workloadType)
 	if err != nil {
 		return 0, false, fmt.Errorf("unable to fetch task config policies: %w", err)
@@ -215,7 +215,7 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, found bool
 func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smallerHigher bool) (bool, error) {
 	// Check if a priority limit has been set with a constraint policy.
 	// Global policies have highest precedence.
-	globalLimit, globalFound, err := findAllowedPriority(nil, workloadType)
+	globalLimit, globalExists, err := findAllowedPriority(nil, workloadType)
 
 	if errors.Is(err, errPriorityImmutable) && globalLimit == priority {
 		// If task config policies have updated since the workload was originally scheduled, allow users
@@ -228,7 +228,7 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 
 	// TODO use COALESCE instead once postgres updates are complete.
 	// Workspace policies have second precedence.
-	wkspLimit, wkspFound, err := findAllowedPriority(&wkspID, workloadType)
+	wkspLimit, wkspExists, err := findAllowedPriority(&wkspID, workloadType)
 
 	if errors.Is(err, errPriorityImmutable) && wkspLimit == priority {
 		// If task config policies have updated since the workload was originally scheduled, allow users
@@ -240,10 +240,10 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 	}
 
 	// No invariant configs. Check for constraints.
-	if globalFound {
+	if globalExists {
 		return priorityWithinLimit(priority, globalLimit, smallerHigher), nil
 	}
-	if wkspFound {
+	if wkspExists {
 		return priorityWithinLimit(priority, wkspLimit, smallerHigher), nil
 	}
 

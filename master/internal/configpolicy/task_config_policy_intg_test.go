@@ -23,23 +23,23 @@ func TestFindAllowedPriority(t *testing.T) {
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 
 	// No priority limit to find.
-	_, found, err := findAllowedPriority(nil, model.ExperimentType)
+	_, exists, err := findAllowedPriority(nil, model.ExperimentType)
 	require.NoError(t, err)
-	require.False(t, found)
+	require.False(t, exists)
 
 	// Priority limit set.
 	globalLimit := 10
 	user := db.RequireMockUser(t, pgDB)
 	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit), model.ExperimentType)
-	limit, found, err := findAllowedPriority(nil, model.ExperimentType)
+	limit, exists, err := findAllowedPriority(nil, model.ExperimentType)
 	require.Equal(t, globalLimit, limit)
-	require.True(t, found)
+	require.True(t, exists)
 	require.NoError(t, err)
 
 	// NTSC priority set.
 	configPriority := 15
 	invariantConfig := fmt.Sprintf(`{"resources": {"priority": %d}}`, configPriority)
-	addConfigs(t, user, nil, invariantConfig, model.NTSCType)
+	addConfig(t, user, nil, invariantConfig, model.NTSCType)
 	limit, _, err = findAllowedPriority(nil, model.NTSCType)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	require.Equal(t, configPriority, limit)
@@ -47,7 +47,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	// Experiment priority set.
 	configPriority = 7
 	invariantConfig = fmt.Sprintf(`{"resources": {"priority": %d}}`, configPriority)
-	addConfigs(t, user, nil, invariantConfig, model.ExperimentType)
+	addConfig(t, user, nil, invariantConfig, model.ExperimentType)
 	limit, _, err = findAllowedPriority(nil, model.ExperimentType)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	require.Equal(t, configPriority, limit)
@@ -92,13 +92,14 @@ func TestPriorityUpdateAllowed(t *testing.T) {
 	ok, err = PriorityUpdateAllowed(w.ID+1, model.NTSCType, globalLimit-1, true)
 	require.NoError(t, err)
 	require.False(t, ok)
+	// No config policies set for experiments.
 	ok, err = PriorityUpdateAllowed(w.ID+1, model.ExperimentType, globalLimit-1, true)
 	require.NoError(t, err)
 	require.True(t, ok)
 
 	// Priority cannot be updated if invariant_config.resources.priority is set.
 	invariantConfig := `{"resources": {"priority": 1}}`
-	addConfigs(t, user, &w.ID, invariantConfig, model.NTSCType)
+	addConfig(t, user, &w.ID, invariantConfig, model.NTSCType)
 	_, err = PriorityUpdateAllowed(w.ID, model.NTSCType, 11, true)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	ok, err = PriorityUpdateAllowed(w.ID, model.ExperimentType, 10, true)
@@ -112,7 +113,7 @@ func TestPriorityUpdateAllowed(t *testing.T) {
 
 	globalLimit = 15
 	globalConfig := fmt.Sprintf(`{"resources": {"priority": %d}}`, globalLimit)
-	addConfigs(t, user, nil, globalConfig, model.NTSCType)
+	addConfig(t, user, nil, globalConfig, model.NTSCType)
 	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, globalLimit, true)
 	require.NoError(t, err)
 	require.True(t, ok)
@@ -395,13 +396,13 @@ func addConstraints(t *testing.T, user model.User, wkspID *int, constraints stri
 	require.NoError(t, err)
 }
 
-func addConfigs(t *testing.T, user model.User, wkspID *int, configs string, workloadType string) {
+func addConfig(t *testing.T, user model.User, wkspID *int, config string, workloadType string) {
 	ctx := context.Background()
 
 	input := model.TaskConfigPolicies{
 		WorkloadType:    workloadType,
 		WorkspaceID:     wkspID,
-		InvariantConfig: &configs,
+		InvariantConfig: &config,
 		LastUpdatedBy:   user.ID,
 	}
 	err := SetTaskConfigPolicies(ctx, &input)
