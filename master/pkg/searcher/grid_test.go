@@ -74,6 +74,20 @@ func TestHyperparameterGridMethod(t *testing.T) {
 		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawConstHyperparameter: &constParam})[0]),
 		1,
 	)
+	// Regression test: make sure empty nested hyperparameters don't disappear during sampling.
+	nestedParam := map[string]expconf.Hyperparameter{
+		"empty": {RawNestedHyperparameter: &map[string]expconf.Hyperparameter{}},
+		"full":  {RawCategoricalHyperparameter: &catParam},
+	}
+	result := getGridAxes([]string{"x"}, expconf.Hyperparameter{RawNestedHyperparameter: &nestedParam})
+	assert.DeepEqual(t, result, []gridAxis{
+		[]axisValue{{Route: []string{"x", "empty"}, Value: map[string]interface{}{}}},
+		[]axisValue{
+			{Route: []string{"x", "full"}, Value: 1},
+			{Route: []string{"x", "full"}, Value: 2},
+			{Route: []string{"x", "full"}, Value: 3},
+		},
+	})
 }
 
 func TestGrid(t *testing.T) {

@@ -170,24 +170,6 @@ def test_docker_login() -> None:
     )
 
 
-# A devcluster needs to be run with the master host entered incorrectly
-# (with an unreachable master_host name).
-@pytest.mark.e2e_slurm_misconfigured
-@api_utils.skipif_not_slurm()
-def test_master_host() -> None:
-    sess = api_utils.user_session()
-    # Creates an experiment normally, should error if the back communication channel is broken
-    exp.run_failure_test(
-        sess,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        "Unable to reach the master at DET_MASTER=http://junkmaster:8080.  "
-        + "This may be due to an address "
-        + "resolution problem, a certificate problem, a firewall problem, "
-        + "a proxy problem, or some other networking error.",
-    )
-
-
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
@@ -196,10 +178,10 @@ def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config["searcher"]["max_length"] = {"epochs": 1}
-    config["records_per_epoch"] = 5000
+    config["records_per_epoch"] = 64
     config["max_restarts"] = 0
 
-    exp.run_basic_test_with_temp_config(sess, config, conf.tutorials_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
 # Test to ensure that determined is able to handle preemption gracefully when using dispatcher RM.

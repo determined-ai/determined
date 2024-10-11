@@ -1,3 +1,5 @@
+.. _zapier-integration:
+
 ########
  Zapier
 ########

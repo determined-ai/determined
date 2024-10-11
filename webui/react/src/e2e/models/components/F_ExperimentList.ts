@@ -32,7 +32,7 @@ class ExperimentHeadRow extends HeadRow<ExperimentRow> {}
 /**
  * Represents the ExperimentRow in the F_ExperimentList component
  */
-class ExperimentRow extends Row<ExperimentHeadRow> {
+export class ExperimentRow extends Row<ExperimentHeadRow> {
   constructor(args: RowArgs<ExperimentRow, ExperimentHeadRow>) {
     super(args);
     this.columnPositions.set('ID', 50);

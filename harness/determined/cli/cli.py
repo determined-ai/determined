@@ -20,6 +20,7 @@ from determined.cli import (
     agent,
     checkpoint,
     command,
+    config_policies,
     dev,
     errors,
     experiment,
@@ -163,6 +164,7 @@ all_args_description: cli.ArgsDescription = (
     + sso.args_description
     + oauth.args_description
     + dev.args_description
+    + config_policies.args_description
 )
 
 

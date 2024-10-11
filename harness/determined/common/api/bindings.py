@@ -727,6 +727,7 @@ class trialv1Trial(Printable):
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     logRetentionDays: "typing.Optional[int]" = None
+    logSignal: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
@@ -753,6 +754,7 @@ class trialv1Trial(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
+        logSignal: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
@@ -782,6 +784,8 @@ class trialv1Trial(Printable):
             self.latestValidation = latestValidation
         if not isinstance(logRetentionDays, Unset):
             self.logRetentionDays = logRetentionDays
+        if not isinstance(logSignal, Unset):
+            self.logSignal = logSignal
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(runnerState, Unset):
@@ -824,6 +828,8 @@ class trialv1Trial(Printable):
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "logRetentionDays" in obj:
             kwargs["logRetentionDays"] = obj["logRetentionDays"]
+        if "logSignal" in obj:
+            kwargs["logSignal"] = obj["logSignal"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "runnerState" in obj:
@@ -866,6 +872,8 @@ class trialv1Trial(Printable):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "logRetentionDays" in vars(self):
             out["logRetentionDays"] = self.logRetentionDays
+        if not omit_unset or "logSignal" in vars(self):
+            out["logSignal"] = self.logSignal
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "runnerState" in vars(self):
@@ -4392,6 +4400,7 @@ class v1FlatRun(Printable):
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     localId: "typing.Optional[str]" = None
+    logSignal: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -4418,6 +4427,7 @@ class v1FlatRun(Printable):
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         localId: "typing.Union[str, None, Unset]" = _unset,
+        logSignal: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -4448,6 +4458,8 @@ class v1FlatRun(Printable):
             self.labels = labels
         if not isinstance(localId, Unset):
             self.localId = localId
+        if not isinstance(logSignal, Unset):
+            self.logSignal = logSignal
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(searcherMetricValue, Unset):
@@ -4486,6 +4498,8 @@ class v1FlatRun(Printable):
             kwargs["labels"] = obj["labels"]
         if "localId" in obj:
             kwargs["localId"] = obj["localId"]
+        if "logSignal" in obj:
+            kwargs["logSignal"] = obj["logSignal"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "searcherMetricValue" in obj:
@@ -4524,6 +4538,8 @@ class v1FlatRun(Printable):
             out["labels"] = self.labels
         if not omit_unset or "localId" in vars(self):
             out["localId"] = self.localId
+        if not omit_unset or "logSignal" in vars(self):
+            out["logSignal"] = self.logSignal
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "searcherMetricValue" in vars(self):
@@ -5256,7 +5272,7 @@ class v1GetGenericTaskConfigResponse(Printable):
         return out
 
 class v1GetGlobalConfigPoliciesResponse(Printable):
-    """Response to GetGlobalConfigPolicies request."""
+    """Response to GetGlobalConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -12431,6 +12447,35 @@ class v1PutExperimentsRetainLogsResponse(Printable):
         }
         return out
 
+class v1PutGlobalConfigPoliciesRequest(Printable):
+    """PutGlobalConfigPoliciesRequest sets global config
+    policies for the workload type.
+    """
+
+    def __init__(
+        self,
+        *,
+        configPolicies: str,
+        workloadType: str,
+    ):
+        self.configPolicies = configPolicies
+        self.workloadType = workloadType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutGlobalConfigPoliciesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": obj["configPolicies"],
+            "workloadType": obj["workloadType"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": self.configPolicies,
+            "workloadType": self.workloadType,
+        }
+        return out
+
 class v1PutGlobalConfigPoliciesResponse(Printable):
     """Response to PutGlobalConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -12628,45 +12673,33 @@ class v1PutWorkspaceConfigPoliciesRequest(Printable):
     """PutWorkspaceConfigPoliciesRequest sets config
     policies for the workspace and workload type.
     """
-    configPolicies: "typing.Optional[str]" = None
-    workloadType: "typing.Optional[str]" = None
-    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        configPolicies: "typing.Union[str, None, Unset]" = _unset,
-        workloadType: "typing.Union[str, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        configPolicies: str,
+        workloadType: str,
+        workspaceId: int,
     ):
-        if not isinstance(configPolicies, Unset):
-            self.configPolicies = configPolicies
-        if not isinstance(workloadType, Unset):
-            self.workloadType = workloadType
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
+        self.configPolicies = configPolicies
+        self.workloadType = workloadType
+        self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PutWorkspaceConfigPoliciesRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": obj["configPolicies"],
+            "workloadType": obj["workloadType"],
+            "workspaceId": obj["workspaceId"],
         }
-        if "configPolicies" in obj:
-            kwargs["configPolicies"] = obj["configPolicies"]
-        if "workloadType" in obj:
-            kwargs["workloadType"] = obj["workloadType"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": self.configPolicies,
+            "workloadType": self.workloadType,
+            "workspaceId": self.workspaceId,
         }
-        if not omit_unset or "configPolicies" in vars(self):
-            out["configPolicies"] = self.configPolicies
-        if not omit_unset or "workloadType" in vars(self):
-            out["workloadType"] = self.workloadType
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
         return out
 
 class v1PutWorkspaceConfigPoliciesResponse(Printable):
@@ -24134,6 +24167,7 @@ def put_PutExperimentsRetainLogs(
 def put_PutGlobalConfigPolicies(
     session: "api.BaseSession",
     *,
+    body: "v1PutGlobalConfigPoliciesRequest",
     workloadType: str,
 ) -> "v1PutGlobalConfigPoliciesResponse":
     """Add or update global task config policies.
@@ -24147,7 +24181,7 @@ def put_PutGlobalConfigPolicies(
         method="PUT",
         path=f"/api/v1/config-policies/global/{workloadType}",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -24916,6 +24950,7 @@ def get_TaskLogs(
     agentIds: "typing.Optional[typing.Sequence[str]]" = None,
     allocationIds: "typing.Optional[typing.Sequence[str]]" = None,
     containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+    enableRegex: "typing.Optional[bool]" = None,
     follow: "typing.Optional[bool]" = None,
     levels: "typing.Optional[typing.Sequence[v1LogLevel]]" = None,
     limit: "typing.Optional[int]" = None,
@@ -24933,6 +24968,7 @@ def get_TaskLogs(
     - agentIds: Limit the trial logs to a subset of agents.
     - allocationIds: Limit the task logs to particular allocations.
     - containerIds: Limit the trial logs to a subset of containers.
+    - enableRegex: Search text is regex. Default to false.
     - follow: Continue following logs until the trial stops.
     - levels: Limit the trial logs to a subset of agents.
 
@@ -24960,6 +24996,7 @@ def get_TaskLogs(
         "agentIds": agentIds,
         "allocationIds": allocationIds,
         "containerIds": containerIds,
+        "enableRegex": str(enableRegex).lower() if enableRegex is not None else None,
         "follow": str(follow).lower() if follow is not None else None,
         "levels": [x.value for x in levels] if levels is not None else None,
         "limit": limit,
@@ -25069,6 +25106,7 @@ def get_TrialLogs(
     trialId: int,
     agentIds: "typing.Optional[typing.Sequence[str]]" = None,
     containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+    enableRegex: "typing.Optional[bool]" = None,
     follow: "typing.Optional[bool]" = None,
     levels: "typing.Optional[typing.Sequence[v1LogLevel]]" = None,
     limit: "typing.Optional[int]" = None,
@@ -25085,6 +25123,7 @@ def get_TrialLogs(
     - trialId: The id of the trial.
     - agentIds: Limit the trial logs to a subset of agents.
     - containerIds: Limit the trial logs to a subset of containers.
+    - enableRegex: Search text is regex. Default to false.
     - follow: Continue following logs until the trial stops.
     - levels: Limit the trial logs to a subset of agents.
 
@@ -25111,6 +25150,7 @@ def get_TrialLogs(
     _params = {
         "agentIds": agentIds,
         "containerIds": containerIds,
+        "enableRegex": str(enableRegex).lower() if enableRegex is not None else None,
         "follow": str(follow).lower() if follow is not None else None,
         "levels": [x.value for x in levels] if levels is not None else None,
         "limit": limit,

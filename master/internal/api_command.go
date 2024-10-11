@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
@@ -147,6 +148,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	config.WorkDir, contextDirectory, err = fillContextDir(config.WorkDir, workDirInDefaults, req.Files)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Check submitted config against task config policies.
+	err = configpolicy.CheckNTSCConstraints(ctx, int(cmdSpec.Metadata.WorkspaceID), config, a.m.rm)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.InvalidArgument, "failed constraint check: %v", err)
 	}
 
 	token, err := getTaskSessionToken(ctx, userModel)

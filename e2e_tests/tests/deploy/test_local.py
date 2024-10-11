@@ -10,9 +10,10 @@ import pytest
 
 from determined.common import api
 from determined.common.api import authentication
+from determined.experimental import client
 from tests import config as conf
 from tests import detproc
-from tests import experiment as exp
+from tests.experiment import noop
 
 
 class Resource(enum.Enum):
@@ -158,12 +159,8 @@ def test_custom_etc() -> None:
         ["no-gpu", "delete-db"],
     ):
         sess = mksess("localhost", 8080)
-        exp.run_basic_test(
-            sess,
-            conf.fixtures_path("no_op/single-default-ckpt.yaml"),
-            conf.fixtures_path("no_op"),
-            1,
-        )
+        exp_ref = noop.create_experiment(sess, [noop.Checkpoint()])
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
         assert os.path.exists("/tmp/ckpt-test/")
 
 
@@ -221,12 +218,8 @@ def test_custom_port() -> None:
         ["no-gpu", "delete-db"],
     ):
         sess = mksess("localhost", custom_port)
-        exp.run_basic_test(
-            sess,
-            conf.fixtures_path("no_op/single-one-short-step.yaml"),
-            conf.fixtures_path("no_op"),
-            1,
-        )
+        exp_ref = noop.create_experiment(sess, [noop.Checkpoint()])
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
 
 @pytest.mark.det_deploy_local

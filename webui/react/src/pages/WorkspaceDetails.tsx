@@ -1,3 +1,4 @@
+import { BrandingType } from 'hew/internal/types';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
@@ -6,6 +7,7 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import ConfigPolicies from 'components/ConfigPolicies';
 import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -35,6 +37,7 @@ type Params = {
 };
 
 export const WorkspaceDetailsTab = {
+  ConfigPolicies: 'policies',
   Members: 'members',
   ModelRegistry: 'models',
   Projects: 'projects',
@@ -75,7 +78,13 @@ const WorkspaceDetails: React.FC = () => {
   const workspaceId = workspaceID ?? '';
   const id = Number(workspaceId);
   const navigate = useNavigate();
-  const { canViewWorkspace, canViewModelRegistry, loading: rbacLoading } = usePermissions();
+  const {
+    canViewWorkspaceConfigPolicies,
+    canViewWorkspace,
+    canViewModelRegistry,
+    loading: rbacLoading,
+  } = usePermissions();
+  const info = useObservable(determinedStore.info);
 
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(id));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
@@ -223,6 +232,14 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
+    if (info.branding === BrandingType.HPE && canViewWorkspaceConfigPolicies) {
+      items.push({
+        children: <ConfigPolicies workspaceId={workspace.id} />,
+        key: WorkspaceDetailsTab.ConfigPolicies,
+        label: 'Config Policies',
+      });
+    }
+
     return items;
   }, [
     addableUsersAndGroups,
@@ -238,6 +255,8 @@ const WorkspaceDetails: React.FC = () => {
     workspaceAssignments,
     rpBindingFlagOn,
     templatesOn,
+    info.branding,
+    canViewWorkspaceConfigPolicies,
   ]);
 
   const canViewWorkspaceFlag = canViewWorkspace({ workspace: { id } });

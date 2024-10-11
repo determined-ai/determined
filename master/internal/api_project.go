@@ -174,6 +174,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
+	{
+		Column:      "archived",
+		DisplayName: "Archived",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED, // no boolean type
+	},
 }
 
 func getRunSummaryMetrics(ctx context.Context, whereClause string, group []int) ([]*projectv1.ProjectColumn, error) {
@@ -403,6 +409,12 @@ func (a *apiServer) getProjectColumnsByID(
 			DisplayName: "External Trial ID",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "archived",
+			DisplayName: "Archived",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED, // no boolean type
 		},
 	}
 

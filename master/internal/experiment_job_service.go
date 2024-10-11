@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 
@@ -9,7 +10,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -53,7 +56,30 @@ func (e *internalExperiment) SetJobPriority(priority int) error {
 	if priority < 1 || priority > 99 {
 		return fmt.Errorf("priority must be between 1 and 99")
 	}
-	err := e.setPriority(&priority, true)
+
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return err
+	}
+	wkspID := resolveWorkspaceID(workspaceModel)
+
+	// Returns an error if RM does not implement priority.
+	if smallerHigher, err := e.rm.SmallerValueIsHigherPriority(); err == nil {
+		ok, err := configpolicy.PriorityAllowed(
+			wkspID,
+			model.ExperimentType,
+			priority,
+			smallerHigher,
+		)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("priority exceeds task config policy's priority_limit")
+		}
+	}
+
+	err = e.setPriority(&priority, true)
 	if err != nil {
 		e.syslog.WithError(err).Info("setting experiment job priority")
 	}

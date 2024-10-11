@@ -427,7 +427,8 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatch(ctx, userIDWorkspaceAdmin, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
-		require.NoError(t, err)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
 
 		err = DoesPermissionMatch(ctx, userIDWorkspaceAdmin, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
@@ -530,7 +531,8 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceID)
-		require.NoError(t, err)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
 
 		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceID)
@@ -653,7 +655,8 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
-		require.NoError(t, err)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
 
 		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
@@ -832,7 +835,8 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoPermissionsExist(ctx, userIDWorkspaceAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
-		require.NoError(t, err)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
 
 		err = DoPermissionsExist(ctx, userIDWorkspaceAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)

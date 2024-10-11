@@ -249,7 +249,7 @@ Some constraints are due to differences in behavior between Docker and Singulari
 *********************
 
 -  Enroot uses ``XDG_RUNTIME_DIR`` which is not provided to the compute jobs by Slurm/PBS by
-   default. The error ``mkdir: cannot create directory ‘/run/enroot’: Permission denied`` indicates
+   default. The error ``mkdir: cannot create directory ' /run/enroot': Permission denied`` indicates
    that the environment variable ``XDG_RUNTIME_DIR`` is not defined on the compute nodes. See
    :ref:`podman-config-requirements` for recommendations.
 

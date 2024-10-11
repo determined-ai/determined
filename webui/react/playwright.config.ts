@@ -95,5 +95,5 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
 
-  workers: process.env.CI ? 4 : 1,
+  workers: process.env.CI ? 3 : undefined,
 });

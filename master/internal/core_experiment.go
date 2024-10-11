@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/checkpoints"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -227,6 +228,7 @@ func getCreateExperimentsProject(
 	m *Master, req *apiv1.CreateExperimentRequest, user *model.User, config expconf.ExperimentConfig,
 ) (*projectv1.Project, error) {
 	// Place experiment in Uncategorized, unless project set in request params or config.
+	// Request params supersede the project specified in the config.
 	var err error
 	projectID := model.DefaultProjectID
 	errProjectNotFound := api.NotFoundErrs("project", strconv.Itoa(projectID), true)
@@ -263,7 +265,8 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
-func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExperimentRequest, owner *model.User) (
+func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExperimentRequest,
+	owner *model.User) (
 	*model.Experiment, []byte, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
 	// Read the config as the user provided it.
@@ -271,6 +274,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
+
 	if config.RawResources != nil && config.RawResources.Slots() != nil {
 		return nil, nil, config, nil, nil, fmt.Errorf("<config>.resources: additionalProperties \"slots\" not allowed")
 	}
@@ -352,6 +356,16 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	configWithInvariantOverrides, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+		workspaceID, config)
+	if err != nil {
+		return nil, nil, config, nil, nil,
+			fmt.Errorf("error merging invariant experiment configs: %w", err)
+	}
+
+	config = *configWithInvariantOverrides
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
 		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")

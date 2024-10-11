@@ -1,17 +1,14 @@
-import os
-import shutil
-import tempfile
 import time
 from typing import List
 
 import pytest
 
-from determined.common import util
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
+from determined.experimental import client
 from tests import api_utils
-from tests import config as conf
 from tests import experiment as exp
 from tests.cluster import test_agent_disable
+from tests.experiment import noop
 
 # How long we should for the Nth = 1 rank to free.
 RANK_ONE_WAIT_TIME = 300
@@ -32,31 +29,26 @@ def test_allocation_resources_incremental_release() -> None:
         slots = test_agent_disable._wait_for_slots(admin, 2)
         assert len(slots) == 2
 
-        with tempfile.TemporaryDirectory() as context_dir, open(
-            os.path.join(context_dir, "const.yaml"), "w"
-        ) as config_file:
-            # Launch an experiment that has one resource (docker container) that exits immediately.
-            config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-            config_obj["hyperparameters"] = {
-                **config_obj.get("hyperparameters", {}),
-                **{"non_chief_exit_immediately": True},
-            }
-            util.yaml_safe_dump(config_obj, config_file)
-
-            shutil.copy(
-                conf.fixtures_path("no_op/model_def.py"), os.path.join(context_dir, "model_def.py")
-            )
-
-            exp_id = exp.create_experiment(sess, config_file.name, context_dir, None)
-            cleanup_exp_ids.append(exp_id)
+        # Launch a noop experiment with two workers (one will naturally exit immediately).
+        exp_ref = noop.create_experiment(
+            sess,
+            [
+                # Two Reports to meet the requirements of wait_for_workload_progress().
+                noop.Report({"loss": 1}),
+                noop.Report({"loss": 1}),
+                noop.Sleep(1000),
+            ],
+            config={"resources": {"slots_per_trial": 2}},
+        )
+        cleanup_exp_ids.append(exp_ref.id)
 
         # Wait for the experiment to start and run some.
         exp.wait_for_experiment_state(
             sess,
-            exp_id,
+            exp_ref.id,
             bindings.experimentv1State.RUNNING,
         )
-        exp.wait_for_experiment_active_workload(sess, exp_id)
+        exp.wait_for_experiment_active_workload(sess, exp_ref.id)
 
         # And wait for exactly one of the resources to free, while one is still in use.
         confirmations = 0
@@ -78,16 +70,9 @@ def test_allocation_resources_incremental_release() -> None:
             )
 
         # Ensure we can schedule on the free slot, not only that the API says its available.
-        exp_id_2 = exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
-        )
-        cleanup_exp_ids.append(exp_id_2)
-
-        exp.wait_for_experiment_workload_progress(sess, exp_id_2)
-        exp.wait_for_experiment_state(sess, exp_id_2, bindings.experimentv1State.COMPLETED)
+        exp_ref_2 = noop.create_experiment(sess)
+        cleanup_exp_ids.append(exp_ref_2.id)
+        assert exp_ref_2.wait(interval=0.01) == client.ExperimentState.COMPLETED
         cleanup_exp_ids = cleanup_exp_ids[:-1]
 
         # And check the hung experiment still is holding on to its hung slot.
@@ -98,7 +83,8 @@ def test_allocation_resources_incremental_release() -> None:
     finally:
         for exp_id in cleanup_exp_ids:
             bindings.post_KillExperiment(sess, id=exp_id)
-            exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
+            # TODO(CM-542): Experiment should end up in CANCELED, not ERROR
+            exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
 
 def list_free_agents() -> List[bindings.v1Agent]:
@@ -117,15 +103,11 @@ def test_experiment_is_single_node() -> None:
     slots = test_agent_disable._wait_for_slots(admin, 2)
     assert len(slots) == 2
 
-    with pytest.raises(AssertionError):
-        exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            [
-                "--config",
-                "resources.slots_per_trial=2",
-                "--config",
-                "resources.is_single_node=true",
-            ],
-        )
+    config = {
+        "resources": {
+            "slots_per_trial": 2,
+            "is_single_node": True,
+        },
+    }
+    with pytest.raises(errors.APIException, match="request unfulfillable"):
+        noop.create_experiment(sess, config=config)

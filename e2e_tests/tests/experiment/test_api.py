@@ -5,8 +5,8 @@ import pytest
 
 from determined.common.api import bindings
 from tests import api_utils
-from tests import config as conf
 from tests import experiment as exp
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -37,14 +37,9 @@ def test_archived_proj_exp_list() -> None:
 
         for p in workspace_projects:
             for _ in range(count):
-                expID = exp.create_experiment(
-                    admin,
-                    conf.fixtures_path("no_op/single.yaml"),
-                    conf.fixtures_path("no_op"),
-                    ["--project_id", str(p), "--paused"],
-                )
-                experimentMap[p] = experimentMap.get(p, []) + [expID]
-                experiments.append(expID)
+                exp_ref = noop.create_paused_experiment(admin, p)
+                experimentMap[p] = experimentMap.get(p, []) + [exp_ref.id]
+                experiments.append(exp_ref.id)
 
         projects.extend(workspace_projects)
 

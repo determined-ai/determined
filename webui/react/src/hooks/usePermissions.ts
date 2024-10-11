@@ -111,6 +111,10 @@ export interface PermissionsHook {
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
   canViewResourceQuotas: boolean;
+  canViewWorkspaceConfigPolicies: boolean;
+  canModifyWorkspaceConfigPolicies: boolean;
+  canViewGlobalConfigPolicies: boolean;
+  canModifyGlobalConfigPolicies: boolean;
   loading: boolean;
 }
 
@@ -179,6 +183,7 @@ const usePermissions = (): PermissionsHook => {
         canModifyExperimentMetadata(rbacOpts, args.workspace),
       canModifyFlatRun: (args: WorkspacePermissionsArgs) =>
         canModifyFlatRun(rbacOpts, args.workspace),
+      canModifyGlobalConfigPolicies: canModifyGlobalConfigPolicies(rbacOpts),
       canModifyGroups: canModifyGroups(rbacOpts),
       canModifyModel: (args: ModelPermissionsArgs) => canModifyModel(rbacOpts, args.model),
       canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
@@ -195,6 +200,7 @@ const usePermissions = (): PermissionsHook => {
         canModifyWorkspaceAgentUserGroup(rbacOpts, args.workspace),
       canModifyWorkspaceCheckpointStorage: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceCheckpointStorage(rbacOpts, args.workspace),
+      canModifyWorkspaceConfigPolicies: canModifyWorkspaceConfigPolicies(rbacOpts),
       canModifyWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceNSC(rbacOpts, args.workspace),
       canMoveExperiment: (args: ExperimentPermissionsArgs) =>
@@ -212,12 +218,14 @@ const usePermissions = (): PermissionsHook => {
       canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
+      canViewGlobalConfigPolicies: canViewGlobalConfigPolicies(rbacOpts),
       canViewGroups: canViewGroups(rbacOpts),
       canViewModelRegistry: (args: WorkspacePermissionsArgs) =>
         canViewModelRegistry(rbacOpts, args.workspace),
       canViewResourceQuotas: canViewResourceQuotas(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
+      canViewWorkspaceConfigPolicies: canViewWorkspaceConfigPolicies(rbacOpts),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
       loading:
         rbacOpts.rbacEnabled &&
@@ -809,6 +817,49 @@ const canMoveFlatRun = (
       ? srcPermit.has(V1PermissionType.DELETEEXPERIMENT)
       : currentUser.isAdmin || currentUser.id === run.userId)
   );
+};
+
+// Config Policies:
+const canViewWorkspaceConfigPolicies = ({
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !rbacEnabled || permitted.has(V1PermissionType.VIEWWORKSPACECONFIGPOLICIES);
+};
+
+const canModifyWorkspaceConfigPolicies = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.MODIFYWORKSPACECONFIGPOLICIES)
+    : !!currentUser && currentUser.isAdmin;
+};
+
+const canViewGlobalConfigPolicies = ({
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !rbacEnabled || permitted.has(V1PermissionType.VIEWGLOBALCONFIGPOLICIES);
+};
+
+const canModifyGlobalConfigPolicies = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.MODIFYGLOBALCONFIGPOLICIES)
+    : !!currentUser && currentUser.isAdmin;
 };
 
 export default usePermissions;

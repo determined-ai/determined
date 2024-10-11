@@ -5,11 +5,11 @@ import time
 
 import pytest
 
-from determined.common import util
 from determined.common.api import bindings, errors
 from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -17,14 +17,28 @@ def test_completed_experiment_and_checkpoint_apis(tmp_path: pathlib.Path) -> Non
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
 
-    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = util.yaml_safe_load(f)
-    config["hyperparameters"]["num_validation_metrics"] = 2
+    config = noop.generate_config(
+        [
+            noop.Report({"x": 3, "z": 1}, group="training"),
+            noop.Report({"x": 3, "z": 1}, group="validation"),
+            noop.Checkpoint(),
+            noop.Report({"x": 2, "z": 2}, group="training"),
+            noop.Report({"x": 2, "z": 2}, group="validation"),
+            noop.Checkpoint(),
+            noop.Report({"x": 1, "z": 3}, group="training"),
+            noop.Report({"x": 1, "z": 3}, group="validation"),
+            noop.Checkpoint(),
+        ]
+    )
+    # Test creation of experiment without a model definition.
+    exp = detobj.create_experiment(config)
+    exp.kill()
     # Test the use of the includes parameter, by feeding the model definition file via includes.
     emptydir = tmp_path
-    model_def = conf.fixtures_path("no_op/model_def.py")
+    model_def = conf.fixtures_path("noop/train.py")
     exp = detobj.create_experiment(config, emptydir, includes=[model_def])
-    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
+    exp.kill()
+    exp = detobj.create_experiment(config, conf.fixtures_path("noop"))
 
     # Await first trial is safe to call before a trial has started.
     trial = exp.await_first_trial()
@@ -32,7 +46,7 @@ def test_completed_experiment_and_checkpoint_apis(tmp_path: pathlib.Path) -> Non
     # .logs(follow=True) block until the trial completes.
     all_logs = list(trial.logs(follow=True))
 
-    assert exp.wait() == client.ExperimentState.COMPLETED
+    assert exp.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     assert all_logs == list(trial.logs())
     assert list(trial.logs(head=10)) == all_logs[:10]
@@ -54,12 +68,9 @@ def test_completed_experiment_and_checkpoint_apis(tmp_path: pathlib.Path) -> Non
     assert trial.select_checkpoint(latest=True).uuid == ckpt.uuid
     assert trial.select_checkpoint(best=True).uuid == ckpt.uuid
     assert (
-        trial.select_checkpoint(
-            best=True, sort_by="validation_metric_1", smaller_is_better=True
-        ).uuid
-        == ckpt.uuid
+        trial.select_checkpoint(best=True, sort_by="z", smaller_is_better=False).uuid == ckpt.uuid
     )
-    assert len(trial.get_checkpoints()) == 1
+    assert len(trial.get_checkpoints()) == 3
     assert trial.get_checkpoints()[0].uuid == ckpt.uuid
 
     assert exp.top_checkpoint().uuid == ckpt.uuid
@@ -83,31 +94,20 @@ def test_completed_experiment_and_checkpoint_apis(tmp_path: pathlib.Path) -> Non
     assert ckpt.metadata
     assert "newkey" not in ckpt.metadata
 
-    # Test creation of experiment without a model definition
-    with open(conf.fixtures_path("no_op/empty_model_dir.yaml")) as f:
-        config = util.yaml_safe_load(f)
-    exp = detobj.create_experiment(config)
-
 
 @pytest.mark.e2e_cpu
 def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
-    with open(conf.fixtures_path("no_op/single-default-ckpt.yaml")) as f:
-        config = util.yaml_safe_load(f)
-
-    # Test for 100 batches/checkpoint every 10 = 10 checkpoints.
-    config["min_checkpoint_period"]["batches"] = 10
-    config["min_validation_period"]["batches"] = 10
-    config["checkpoint_storage"] = {}
-    config["checkpoint_storage"]["save_trial_best"] = 10
-
-    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
+    # Create and keep 10 checkpoitns.
+    config = {"checkpoint_storage": {"save_trial_best": 10}}
+    config = noop.generate_config(noop.traininglike_steps(10, metric_scale=0.9), config=config)
+    exp = detobj.create_experiment(config, conf.fixtures_path("noop"))
 
     # Await first trial is safe to call before a trial has started.
     trial = exp.await_first_trial()
 
-    assert exp.wait() == client.ExperimentState.COMPLETED
+    assert exp.wait(interval=0.01) == client.ExperimentState.COMPLETED
     trials = exp.get_trials()
     assert len(trials) == 1, trials
 
@@ -149,19 +149,15 @@ def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     assert all(x >= y for x, y in zip(batch_numbers, batch_numbers[1:]))
 
     # Validate metric sorting.
-    checkpoints = trial.get_checkpoints(sort_by="validation_error", order_by=client.OrderBy.ASC)
+    checkpoints = trial.get_checkpoints(sort_by="x", order_by=client.OrderBy.ASC)
     validation_metrics = [
-        checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]  # type: ignore
+        checkpoint.training.validation_metrics["avgMetrics"]["x"]  # type: ignore
         for checkpoint in checkpoints
     ]
     assert all(x <= y for x, y in zip(validation_metrics, validation_metrics[1:]))
 
     # Expect 10 completed checkpoints.
-    checkpoints = [
-        checkpoint
-        for checkpoint in checkpoints
-        if checkpoint.state == client.CheckpointState.COMPLETED
-    ]
+    checkpoints = [c for c in checkpoints if c.state == client.CheckpointState.COMPLETED]
     assert len(checkpoints) == 10
 
     # Delete first checkpoint.
@@ -180,15 +176,15 @@ def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
         ]
         if deleted_checkpoints:
             break
-        assert time.time() < deadline, "experiment took too long to start trials"
+        assert time.time() < deadline, "checkpoint deletion took too long"
         time.sleep(0.1)
 
     assert len(deleted_checkpoints) == 1
     assert deleted_checkpoints[0].uuid == deleted_checkpoint.uuid
 
-    # Partially delete first checkpoint.
+    # Partially delete next checkpoint.
     partially_deleted_checkpoint = checkpoints[1]
-    partially_deleted_checkpoint.remove_files(["*.pkl"])
+    partially_deleted_checkpoint.remove_files(["state"])
 
     # Wait for status to be PARTIALLY_DELETED
     partially_deleted_checkpoints = []
@@ -208,13 +204,13 @@ def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     assert len(partially_deleted_checkpoints) == 1
     assert partially_deleted_checkpoints[0].uuid == partially_deleted_checkpoint.uuid
     assert partially_deleted_checkpoints[0].resources
-    assert "workload_sequencer.pkl" not in partially_deleted_checkpoints[0].resources
+    assert "state" not in partially_deleted_checkpoints[0].resources
 
     # Ensure we can download the partially deleted checkpoint.
     downloaded_path = partially_deleted_checkpoints[0].download(path=os.path.join(tmp_path, "c"))
     files = os.listdir(downloaded_path)
-    assert "no_op_checkpoint" in files
-    assert "workload_sequencer.pkl" not in files
+    assert "metadata.json" in files
+    assert "state" not in files
 
     # Ensure we can delete a partially deleted checkpoint.
     partially_deleted_checkpoints[0].delete()
@@ -234,31 +230,20 @@ def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
         time.sleep(0.1)
 
 
-def _make_live_experiment(detobj: client.Determined) -> client.Experiment:
-    # Create an experiment that takes a long time to run
-    with open(conf.fixtures_path("no_op/single-very-many-long-steps.yaml")) as f:
-        config = util.yaml_safe_load(f)
-
-    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
-    # Wait for a trial to actually start.
-    start = time.time()
-    deadline = start + 90
-    while True:
-        trials = exp.get_trials()
-        if trials:
-            break
-        assert time.time() < deadline, "experiment took too long to start trials"
-        time.sleep(0.1)
-
-    return exp
-
-
 @pytest.mark.e2e_cpu
 def test_experiment_manipulation() -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
-    exp = _make_live_experiment(detobj)
 
+    def make_live_experiment() -> client.Experiment:
+        # Create an experiment that takes a long time to run.
+        actions = [noop.Sleep(1) for _ in range(100)]
+        exp = noop.create_experiment(sess, actions)
+        # Wait for a trial to actually start
+        exp.await_first_trial()
+        return exp
+
+    exp = make_live_experiment()
     exp.pause()
     with pytest.raises(ValueError, match="Make sure the experiment is active"):
         # Wait throws an error if the experiment is paused by a user.
@@ -276,7 +261,7 @@ def test_experiment_manipulation() -> None:
     deleting_exp = exp
 
     # Create another experiment and kill it.
-    exp = _make_live_experiment(detobj)
+    exp = make_live_experiment()
     exp.kill()
     assert exp.wait() == client.ExperimentState.CANCELED
 
@@ -288,7 +273,7 @@ def test_experiment_manipulation() -> None:
     assert not bindings.get_GetExperiment(sess, experimentId=exp.id).experiment.archived
 
     # Create another experiment and kill its trial.
-    exp = _make_live_experiment(detobj)
+    exp = make_live_experiment()
     trial = exp.get_trials()[0]
     trial.kill()
     assert exp.wait() == client.ExperimentState.CANCELED
@@ -350,29 +335,23 @@ def test_models() -> None:
 def test_stream_metrics() -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
-    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = util.yaml_safe_load(f)
-    config["hyperparameters"]["num_validation_metrics"] = 2
-    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
-    assert exp.wait() == client.ExperimentState.COMPLETED
+    exp = noop.create_experiment(sess, noop.traininglike_steps(10, metric_scale=0.5))
+    assert exp.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-    trials = exp.get_trials()
-    assert len(trials) == 1
-    trial = trials[0]
+    trial = exp.get_trials()[0]
 
     for metrics in [
         list(trial.stream_metrics("training")),
         list(detobj.stream_trials_metrics([trial.id], "training")),
     ]:
-        assert len(metrics) == config["searcher"]["max_length"]["batches"]
+        assert len(metrics) == 10
         for i, actual in enumerate(metrics):
             assert actual == client.TrialMetrics(
                 trial_id=trial.id,
                 trial_run_id=1,
                 steps_completed=i + 1,
                 end_time=actual.end_time,
-                metrics={"loss": config["hyperparameters"]["metrics_base"] ** (i + 1)},
-                batch_metrics=[{"loss": config["hyperparameters"]["metrics_base"] ** (i + 1)}],
+                metrics={"x": 0.5**i},
                 group="training",
             )
 
@@ -380,27 +359,23 @@ def test_stream_metrics() -> None:
         list(trial.stream_metrics("validation")),
         list(detobj.stream_trials_metrics([trial.id], "validation")),
     ]:
-        assert len(val_metrics) == 1
-        assert val_metrics[0] == client.TrialMetrics(
-            trial_id=trial.id,
-            trial_run_id=1,
-            steps_completed=100,
-            end_time=val_metrics[0].end_time,
-            metrics={
-                "validation_error": config["hyperparameters"]["metrics_base"] ** 100,
-                "validation_metric_1": config["hyperparameters"]["metrics_base"] ** 100,
-            },
-            group="validation",
-        )
+        assert len(val_metrics) == 10
+        for i, actual in enumerate(val_metrics):
+            assert actual == client.TrialMetrics(
+                trial_id=trial.id,
+                trial_run_id=1,
+                steps_completed=i + 1,
+                end_time=actual.end_time,
+                metrics={"x": 0.5**i},
+                group="validation",
+            )
 
 
 @pytest.mark.e2e_cpu
 def test_model_versions() -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
-    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = util.yaml_safe_load(f)
-    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
+    exp = noop.create_experiment(sess, [noop.Checkpoint()])
     assert exp.wait() == client.ExperimentState.COMPLETED
     ckpt = exp.top_checkpoint()
 
@@ -472,7 +447,6 @@ def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
     # Wait until a trial has started to ensure experiment creation has no errors
     # Verify that the content in template is indeed applied
     sess = api_utils.user_session()
-    detobj = client.Determined._from_session(sess)
     template_name = "test_template"
     template_config_key = "description"
     template_config_value = "test_sdk_template"
@@ -486,17 +460,10 @@ def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
             workspaceId=1,
         )
         tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
-        # create experiment with template
-        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-            config = util.yaml_safe_load(f)
-        model_def = conf.fixtures_path("no_op/model_def.py")
-        exp = detobj.create_experiment(
-            config, tmp_path, includes=[model_def], template=tpl_resp.template.name
-        )
-        exp.await_first_trial()
-
-        assert exp.config is not None
-        assert exp.config[template_config_key] == template_config_value, exp.config
+        exp_ref = noop.create_paused_experiment(sess, template=tpl_resp.template.name)
+        assert exp_ref.config is not None
+        assert exp_ref.config[template_config_key] == template_config_value, exp_ref.config
+        exp_ref.kill()
 
     finally:
         bindings.delete_DeleteTemplate(sess, templateName=template_name)

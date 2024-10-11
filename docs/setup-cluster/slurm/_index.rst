@@ -24,14 +24,20 @@
 
    Slurm/PBS deployment applies to the Enterprise Edition.
 
-This document describes how Determined can be configured to utilize HPC cluster scheduling systems
+This section describes how Determined can be configured to utilize HPC cluster scheduling systems
 via the Determined HPC launcher. In this type of configuration, Determined delegates all job
 scheduling and prioritization to the HPC workload manager (either Slurm or PBS). This integration
 enables existing HPC workloads and Determined workloads to coexist and Determined workloads to
 access all of the advanced capabilities of the HPC workload manager.
 
-To install Determined on the HPC cluster, ensure that the :ref:`slurm-requirements` are met, then
-follow the steps in the :ref:`install-on-slurm` document.
+To install Determined on the HPC cluster, ensure that the :ref:`hpc-environment-requirements` and
+:ref:`slurm-requirements` are met, then follow the steps in the :ref:`install-on-slurm` document.
+
+.. note::
+
+   Determined supports installations without root access. For non-root installations, ensure that
+   the prerequisites in :ref:`hpc-environment-requirements` have been completed by your system
+   administrator before proceeding.
 
 ***********
  Reference
@@ -52,6 +58,7 @@ follow the steps in the :ref:`install-on-slurm` document.
    :hidden:
 
    slurm-requirements
+   hpc-environment-requirements
    hpc-launching-architecture
    hpc-security-considerations
    install-on-slurm
