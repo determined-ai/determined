@@ -1517,18 +1517,20 @@ commands:
   read-supported-versions:
     steps:
       - run:
-          name: Read Versions from File
+          name: Read Versions from supported_versions.txt file
           command: |
             VERSION_FILE="supported_versions.txt"
-            if [ -f "$VERSION_FILE" ]; then
-              SUPPORTED_VERSIONS=$(cat "$VERSION_FILE" | tr '\n' ' ')
-              # Export the variable to use in the matrix job
-              echo "export SUPPORTED_VERSIONS=\"$SUPPORTED_VERSIONS\"" >> $BASH_ENV
-            else
-              echo "Version file not found!"
-              exit 1
-            fi
+            YAML_FILE ="real_config.yaml"
 
+            VERSIONS=$(awk '{ print "  - \"" $0 "\"" }' $INPUT_FILE)
+
+            # Replace the existing values under det-versions with the new ones from the text file
+            sed -i.bak "/det-versions: &det-versions/{n;N;N;d}" $YAML_FILE
+            sed -i "/det-versions: &det-versions/r /dev/stdin" $YAML_FILE <<< "$VERSIONS"
+
+            echo "Updated real_config.yaml:"
+            cat $YAML_FILE
+          
   make-component:
     description: "Basic parameterized version of make for building Determined components."
     parameters:
