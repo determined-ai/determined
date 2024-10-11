@@ -63,7 +63,7 @@ def list_tokens(args: argparse.Namespace) -> None:
         else:
             render_token_info(resp.tokenInfo)
     except Exception as e:
-        print(f"Error fetching tokens: {e}")
+        raise errors.CliError(f"Error fetching tokens: {e}")
 
 
 def revoke_token(args: argparse.Namespace) -> None:
@@ -76,7 +76,7 @@ def revoke_token(args: argparse.Namespace) -> None:
         print(json.dumps(resp.to_json(), indent=2))
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
-    print(f"Successfully updated token with ID: {args.token_id}.")
+    print(f"Successfully revoked token {args.token_id}.")
 
 
 def create_token(args: argparse.Namespace) -> None:
@@ -87,7 +87,6 @@ def create_token(args: argparse.Namespace) -> None:
     if user is None or user.id is None:
         raise errors.CliError(f"User '{username}' not found or does not have an ID")
 
-    request = None
     request = bindings.v1PostAccessTokenRequest(
         userId=user.id, lifespan=args.expiration_duration, description=args.description
     )
@@ -99,13 +98,9 @@ def create_token(args: argparse.Namespace) -> None:
     elif args.json:
         output_string = json.dumps(resp, indent=2)
     else:
-        output_string = f'{resp["token"]}\n{resp["tokenId"]}'
+        output_string = f'TokenID: {resp["tokenId"]}\nAccess-Token: {resp["token"]}'
 
-    if args.output_file:
-        with open(args.output_file, "w") as file:
-            file.write(output_string)
-    else:
-        print(output_string)
+    print(output_string)
 
 
 def edit_token(args: argparse.Namespace) -> None:
@@ -128,8 +123,7 @@ def login_with_token(args: argparse.Namespace) -> None:
     unauth_session = api.UnauthSession(master=args.master, cert=cli.cert)
     auth_headers = {"Authorization": f"Bearer {args.token}"}
     user_data = unauth_session.get("/api/v1/me", headers=auth_headers).json()
-    if "user" in user_data and "username" in user_data.get("user"):
-        username = user_data.get("user").get("username")
+    username = user_data.get("user").get("username")
 
     token_store = authentication.TokenStore(args.master)
     token_store.set_token(username, args.token)
@@ -140,7 +134,7 @@ def login_with_token(args: argparse.Namespace) -> None:
 # fmt: off
 
 args_description = [
-    cli.Cmd("to|ken", None, "manage access tokens", [
+    cli.Cmd("token tkn", None, "manage access tokens", [
         cli.Cmd("describe", describe_token, "describe token info", [
             cli.Arg("token_id", type=int, nargs=argparse.ONE_OR_MORE, default=None,
                     help="token id(s) specifying access tokens to describe"),
@@ -149,7 +143,7 @@ args_description = [
                 cli.output_format_args["yaml"],
             ),
         ]),
-        cli.Cmd("list ls", list_tokens, "list all active access tokens", [
+        cli.Cmd("list ls", list_tokens, "list access tokens for all users", [
             cli.Arg("username", type=str, nargs=argparse.OPTIONAL,
                     help="list token for the given username", default=None),
             cli.Arg("--only-active", action="store_true", default=None,
@@ -169,7 +163,6 @@ args_description = [
                     help="give expiry duration like 2h or 5m or 10s"),
             cli.Arg("--description", "-d", type=str, default=None,
                     help="description of new token"),
-            cli.Arg("--output-file", "-o", type=str, help="write token to a file"),
             cli.Group(
                 cli.output_format_args["json"],
                 cli.output_format_args["yaml"],

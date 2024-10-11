@@ -102,11 +102,10 @@ func (a *apiServer) GetAccessTokens(
 		}
 
 		if atf.Username != "" {
-			nameFilterExpr := "%" + atf.Username + "%"
 			err := db.Bun().NewSelect().
 				Table("users").
 				Column("id").
-				Where("username ILIKE ?", nameFilterExpr).
+				Where("username = ?", atf.Username).
 				Scan(ctx, &userIDForGivenUsername)
 			if err != nil {
 				return nil, err
@@ -181,7 +180,7 @@ func (a *apiServer) PatchAccessToken(
 		return nil, err
 	}
 
-	targetUserID, err := getUserIDFromTokenID(ctx, req.TokenId)
+	targetUserID, err := token.GetUserIDFromTokenID(ctx, req.TokenId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Token with id: {%d} not found", req.TokenId))
 	}
@@ -199,17 +198,4 @@ func (a *apiServer) PatchAccessToken(
 		return nil, err
 	}
 	return &apiv1.PatchAccessTokenResponse{TokenInfo: patchedTokenInfo.Proto()}, nil
-}
-
-func getUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, error) {
-	var userID model.UserID
-	err := db.Bun().NewSelect().
-		Table("user_sessions").
-		Column("user_id").
-		Where("id = ?", tokenID).
-		Scan(ctx, &userID)
-	if err != nil {
-		return 0, err
-	}
-	return userID, nil
 }

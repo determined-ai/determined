@@ -115,8 +115,8 @@ func UpdateAccessToken(
 			return err
 		}
 
-		if tokenInfo.Revoked {
-			return fmt.Errorf("unable to update revoked token with ID %v", tokenID)
+		if tokenInfo.Revoked || tokenInfo.Expiry.Before(time.Now().UTC()) {
+			return fmt.Errorf("unable to update inactive token with ID %v", tokenID)
 		}
 
 		if options.Description != nil {
@@ -141,4 +141,17 @@ func UpdateAccessToken(
 		return nil, err
 	}
 	return &tokenInfo, nil
+}
+
+func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, error) {
+	var userID model.UserID
+	err := db.Bun().NewSelect().
+		Table("user_sessions").
+		Column("user_id").
+		Where("id = ?", tokenID).
+		Scan(ctx, &userID)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
 }
