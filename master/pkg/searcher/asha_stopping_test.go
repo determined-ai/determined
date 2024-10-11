@@ -15,14 +15,14 @@ import (
 func TestMakeRungs(t *testing.T) {
 	cases := []struct {
 		numRungs      int
-		maxLength     uint64
+		maxTime       uint64
 		divisor       float64
 		expectedRungs []*rung
 	}{
 		{
-			numRungs:  3,
-			maxLength: 9,
-			divisor:   float64(3),
+			numRungs: 3,
+			maxTime:  9,
+			divisor:  float64(3),
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 1,
@@ -36,9 +36,9 @@ func TestMakeRungs(t *testing.T) {
 			},
 		},
 		{
-			numRungs:  4,
-			maxLength: 10,
-			divisor:   float64(2),
+			numRungs: 4,
+			maxTime:  10,
+			divisor:  float64(2),
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 1,
@@ -55,9 +55,9 @@ func TestMakeRungs(t *testing.T) {
 			},
 		},
 		{
-			numRungs:  1,
-			maxLength: 9,
-			divisor:   float64(3),
+			numRungs: 1,
+			maxTime:  9,
+			divisor:  float64(3),
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 9,
@@ -65,9 +65,9 @@ func TestMakeRungs(t *testing.T) {
 			},
 		},
 		{
-			numRungs:  3,
-			maxLength: 900,
-			divisor:   float64(3),
+			numRungs: 3,
+			maxTime:  900,
+			divisor:  float64(3),
 			expectedRungs: []*rung{
 				{
 					UnitsNeeded: 100,
@@ -82,7 +82,7 @@ func TestMakeRungs(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		rungs := makeRungs(c.numRungs, c.divisor, c.maxLength)
+		rungs := makeRungs(c.numRungs, c.divisor, c.maxTime)
 		require.Equal(t, c.expectedRungs, rungs)
 	}
 }

@@ -72,12 +72,7 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 				//nolint:exhaustruct
 				single := expconf.SearcherConfig{
 					//nolint:exhaustruct
-					RawSingleConfig: &expconf.SingleConfig{
-						RawMaxLength: &expconf.Length{
-							Unit:  expconf.Batches,
-							Units: 937,
-						},
-					},
+					RawSingleConfig: &expconf.SingleConfig{},
 				}
 				sm := searcher.NewSearchMethod(single)
 				e.searcher = searcher.NewSearcher(0, sm, expconf.Hyperparameters{})
@@ -94,13 +89,10 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 				asha := expconf.SearcherConfig{
 					//nolint:exhaustruct
 					RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-						RawNumRungs: ptrs.Ptr(4),
-						RawStopOnce: ptrs.Ptr(false),
-						RawMaxLength: &expconf.Length{
-							Unit:  expconf.Batches,
-							Units: 937,
-						},
-						RawDivisor: ptrs.Ptr[float64](4),
+						RawNumRungs:   ptrs.Ptr(4),
+						RawMaxTime:    ptrs.Ptr(937),
+						RawTimeMetric: ptrs.Ptr("batches"),
+						RawDivisor:    ptrs.Ptr[float64](4),
 					},
 					RawSmallerIsBetter: ptrs.Ptr(true),
 				}
