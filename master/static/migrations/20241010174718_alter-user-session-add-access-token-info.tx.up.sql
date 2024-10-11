@@ -1,9 +1,3 @@
-DROP TYPE IF EXISTS token_type CASCADE;
-ALTER TABLE user_sessions DROP COLUMN created_at;
--- ALTER TABLE user_sessions DROP COLUMN token_type;
-ALTER TABLE user_sessions DROP COLUMN revoked;
-ALTER TABLE user_sessions DROP COLUMN description;
-
 CREATE TYPE token_type AS ENUM ('USER_SESSION', 'ACCESS_TOKEN');
 
 ALTER TABLE user_sessions ADD COLUMN created_at TIMESTAMP DEFAULT NULL;
