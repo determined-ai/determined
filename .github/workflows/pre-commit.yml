@@ -23,11 +23,11 @@ jobs:
         with:
           python-version: '3.9'
           cache: 'pip'
-      # - uses: actions/setup-go@v5
-      #   with:
-      #     go-version: '1.22.0'
-      # - name: "Install protobuf dependencies."
-      #   run: "make get-deps-proto"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.0'
+      - name: "Install protobuf dependencies."
+        run: "make get-deps-proto"
       # this action is not getting new features, but isn't deprecated yet
       # switch to just running pre-commit locally when/if that happens that's
       # why this one specifies a full version; presumably there will be a
