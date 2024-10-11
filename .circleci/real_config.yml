@@ -1541,6 +1541,8 @@ commands:
 
 jobs:
   read-supported-versions:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - run:
           name: Read Versions from supported_versions.txt file
@@ -1556,7 +1558,7 @@ jobs:
 
             echo "Updated real_config.yaml:"
             cat $YAML_FILE
-            
+
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
