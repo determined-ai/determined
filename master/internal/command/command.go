@@ -12,6 +12,7 @@ import (
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -278,6 +279,16 @@ func (c *Command) garbageCollect() {
 }
 
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
+	if smallerHigher, err := c.rm.SmallerValueIsHigherPriority(); err == nil {
+		ok, err := configpolicy.PriorityAllowed(int(c.Metadata.WorkspaceID), model.NTSCType, priority, smallerHigher)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("priority exceeds task config policy's priority_limit")
+		}
+	}
+
 	if forward {
 		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
 			Priority:     priority,
