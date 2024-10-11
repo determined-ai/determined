@@ -61,7 +61,7 @@
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": null
         },
         "metric": {
             "type": [

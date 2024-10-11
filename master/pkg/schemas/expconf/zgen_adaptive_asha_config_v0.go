@@ -95,15 +95,12 @@ func (a *AdaptiveASHAConfigV0) SetMaxLength(val *LengthV0) {
 	a.RawMaxLength = val
 }
 
-func (a AdaptiveASHAConfigV0) StopOnce() bool {
-	if a.RawStopOnce == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .StopOnce")
-	}
-	return *a.RawStopOnce
+func (a AdaptiveASHAConfigV0) StopOnce() *bool {
+	return a.RawStopOnce
 }
 
-func (a *AdaptiveASHAConfigV0) SetStopOnce(val bool) {
-	a.RawStopOnce = &val
+func (a *AdaptiveASHAConfigV0) SetStopOnce(val *bool) {
+	a.RawStopOnce = val
 }
 
 func (a AdaptiveASHAConfigV0) ParsedSchema() interface{} {

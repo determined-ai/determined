@@ -2297,7 +2297,7 @@ var (
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": null
         },
         "metric": {
             "type": [
@@ -2591,7 +2591,7 @@ var (
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": null
         },
         "metric": {
             "type": [

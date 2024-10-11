@@ -76,15 +76,12 @@ func (a *AsyncHalvingConfigV0) SetMaxLength(val *LengthV0) {
 	a.RawMaxLength = val
 }
 
-func (a AsyncHalvingConfigV0) StopOnce() bool {
-	if a.RawStopOnce == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .StopOnce")
-	}
-	return *a.RawStopOnce
+func (a AsyncHalvingConfigV0) StopOnce() *bool {
+	return a.RawStopOnce
 }
 
-func (a *AsyncHalvingConfigV0) SetStopOnce(val bool) {
-	a.RawStopOnce = &val
+func (a *AsyncHalvingConfigV0) SetStopOnce(val *bool) {
+	a.RawStopOnce = val
 }
 
 func (a AsyncHalvingConfigV0) ParsedSchema() interface{} {
