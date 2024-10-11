@@ -115,20 +115,12 @@ describe('Experiment Utilities', () => {
           output: { min_validation_period: { batches: 3200 } },
         },
         {
-          input: { searcher: { max_steps: 10 } },
-          output: { searcher: { max_length: { batches: 1000 } } },
-        },
-        {
           input: { searcher: { step_budget: 100 } },
           output: { searcher: { budget: { batches: 10000 } } },
         },
         {
           input: { searcher: { steps_per_round: 2 } },
           output: { searcher: { length_per_round: { batches: 200 } } },
-        },
-        {
-          input: { searcher: { target_trial_steps: 10 } },
-          output: { searcher: { max_length: { batches: 1000 } } },
         },
       ];
       tests.forEach((test) => {
