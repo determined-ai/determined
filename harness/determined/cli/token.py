@@ -82,13 +82,15 @@ def revoke_token(args: argparse.Namespace) -> None:
 def create_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     username = args.username or sess.username
-    user_id = bindings.get_GetUserByUsername(session=sess, username=username).user.id
+    user = bindings.get_GetUserByUsername(session=sess, username=username).user
+
+    if user is None or user.id is None:
+        raise errors.CliError(f"User '{username}' not found or does not have an ID")
 
     request = None
     request = bindings.v1PostAccessTokenRequest(
-        userId=user_id, lifespan=args.expiration_duration, description=args.description
+        userId=user.id, lifespan=args.expiration_duration, description=args.description
     )
-
     resp = bindings.post_PostAccessToken(sess, body=request).to_json()
 
     output_string = None
