@@ -407,6 +407,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     let mounted = true;
     (async () => {
       try {
+        const metadataColumns = new Map<string, number[]>(); // a map of metadata columns and found indexes
         const columns = await getProjectColumns({
           id: project.id,
           tableType: V1TableType.EXPERIMENT,
@@ -418,8 +419,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             : 0,
         );
 
+        for (const [index, { column }] of columns.entries()) {
+          if (experimentColumns.indexOf(column as ExperimentColumn) === -1) {
+            metadataColumns.set(column, [...(metadataColumns.get(column) ?? []), index]);
+          }
+        }
+
         if (mounted) {
-          setProjectColumns(Loaded(columns));
+          setProjectColumns(
+            Loaded(
+              columns.map(({ column, type, ...rest }) => {
+                const found = metadataColumns.get(column);
+
+                if (found !== undefined && found.length > 1)
+                  column = `${column} - ${type.replace('COLUMN_TYPE_', '').toLowerCase()}`;
+
+                return { ...rest, column, type };
+              }),
+            ),
+          );
         }
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch project columns' });
