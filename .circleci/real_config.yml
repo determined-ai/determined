@@ -1548,12 +1548,13 @@ jobs:
           name: Read Versions from supported_versions.txt file
           command: |
             VERSION_FILE="supported_versions.txt"
+            YAML_FILE="real_config.yaml"
 
             VERSIONS=$(awk '{ print "  - \"" $0 "\"" }' $INPUT_FILE)
 
             # Replace the existing values under det-versions with the new ones from the text file
             sed -i.bak "/det-versions: &det-versions/{n;N;N;d}" .
-            sed -i "/det-versions: &det-versions/r /dev/stdin" . \<<< "$VERSIONS"
+            sed -i "/det-versions: &det-versions/r /dev/stdin" $YAML_FILE \<<< "$VERSIONS"
 
             echo "Updated real_config.yaml:"
             cat $YAML_FILE
