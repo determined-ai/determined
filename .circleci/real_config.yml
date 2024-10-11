@@ -1548,7 +1548,9 @@ jobs:
           name: Read Versions from supported_versions.txt file
           command: |
             VERSION_FILE="supported_versions.txt"
-            YAML_FILE="real_config.yaml"
+            YAML_FILE=".circleci/real_config.yaml"
+            pwd
+            ls -la
 
             VERSIONS=$(awk '{ print "  - \"" $0 "\"" }' $INPUT_FILE)
 
