@@ -1554,7 +1554,7 @@ jobs:
 
             # Replace the existing values under det-versions with the new ones from the text file
             sed -i.bak "/det-versions: &det-versions/{n;N;N;d}" $YAML_FILE
-            sed -i "/det-versions: &det-versions/r /dev/stdin" $YAML_FILE <<< "$VERSIONS"
+            sed -i "/det-versions: &det-versions/r /dev/stdin" $YAML_FILE \<<< "$VERSIONS"
 
             echo "Updated real_config.yaml:"
             cat $YAML_FILE
