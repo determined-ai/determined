@@ -112,7 +112,7 @@ service Determined {
   // Get a list of users.
   rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {
     option (google.api.http) = {
-      get: "/api/v1/users"
+      get: "/api/v1/users2"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"
