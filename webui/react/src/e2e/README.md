@@ -10,6 +10,8 @@ Determined AI uses [Playwright 🎭](https://playwright.dev/).
 
 Everything you need before running tests
 
+**Before you follow the steps bellow, make sure that your VSCode is up-to-date, or you might face issues**
+
 ### `.env`
 
 Create `.env` file in `webui/react` like `webui/react/.env` and env variables. (`PW_` prefix stands for Playwright)
@@ -54,6 +56,10 @@ CI is setup as `test-e2e-react` in `.circleci/config.yml`.
 ### Manual CI
 
 Run individual tests on ci with `e2e-react` `-g [your test]`.
+
+you can also run using the following script (which will run your test, but with the UI open)
+
+`npx playwright test -g "[your_test]" --ui`
 
 ![trigger pipeline](./docs/images/trigger-pipeline.png)
 

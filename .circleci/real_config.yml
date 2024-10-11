@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.36.1-dev0
+    default: 0.37.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -4158,68 +4158,6 @@ workflows:
               only:
                 - main
 
-      - test-e2e-slurm:
-          name: test-e2e-slurm-misconfigured
-          requires:
-            - package-and-push-system-local-ee
-          context:
-            - dev-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only:
-                - main
-          mark: e2e_slurm_misconfigured
-          master_config: |
-            task_container_defaults:
-              slurm:
-                sbatch_args:
-                  - --time=04:00:00
-              environment_variables:
-                # Some ports are not working, disable them so distributed jobs work.
-                - NCCL_IB_HCA=mlx6_0:0
-            checkpoint_storage:
-              type: shared_fs
-              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-              storage_path: determined-checkpoint
-              save_experiment_best: 0
-              save_trial_best: 1
-              save_trial_latest: 1
-            db:
-              user: postgres
-              host: localhost
-              port: 5432
-              name: determined
-              password: ${HPC_DB_PASSWD}
-            resource_manager:
-              type: slurm
-              master_host: junkmaster
-              master_port: 8080
-              host: localhost
-              port: 8181
-              protocol: http
-              slot_type: cuda
-              user_name: launcher
-              group_name: hpcd
-              singularity_image_root: /lustre/hdd/foundation_engineering/images
-              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
-              auth_file: /home/launcher/.launcher.$HOSTNAME.token
-              path: /opt/singularity/bin:/usr/local/bin:${PATH}
-              ld_library_path:
-            security:
-              initial_user_password: ${INITIAL_USER_PASSWORD}
-
-      - test-e2e-slurm:
-          name: test-e2e-slurm-gpu
-          mark: "e2e_slurm_gpu"
-          requires:
-            - package-and-push-system-local-ee
-          context:
-            - dev-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only:
-                - main
-
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
           context:
@@ -5047,54 +4985,6 @@ workflows:
           filters: *upstream-feature-branch
 
       - test-e2e-slurm:
-          name: test-e2e-slurm-misconfigured
-          context:
-            - dev-ci-cluster-default-user-credentials
-          filters: *upstream-feature-branch
-          requires:
-            - package-and-push-system-local-ee
-            - request-hpc-tests
-          mark: e2e_slurm_misconfigured
-          master_config: |
-            task_container_defaults:
-              slurm:
-                sbatch_args:
-                  - --time=04:00:00
-              environment_variables:
-                # Some ports are not working, disable them so distributed jobs work.
-                - NCCL_IB_HCA=mlx6_0:0
-            checkpoint_storage:
-              type: shared_fs
-              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-              storage_path: determined-checkpoint
-              save_experiment_best: 0
-              save_trial_best: 1
-              save_trial_latest: 1
-            db:
-              user: postgres
-              host: localhost
-              port: 5432
-              name: determined
-              password: ${HPC_DB_PASSWD}
-            resource_manager:
-              type: slurm
-              master_host: junkmaster
-              master_port: 8080
-              host: localhost
-              port: 8181
-              protocol: http
-              slot_type: cuda
-              user_name: launcher
-              group_name: hpcd
-              singularity_image_root: /lustre/hdd/foundation_engineering/images
-              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
-              auth_file: /home/launcher/.launcher.$HOSTNAME.token
-              path: /opt/singularity/bin:/usr/local/bin:${PATH}
-              ld_library_path:
-            security:
-              initial_user_password: ${INITIAL_USER_PASSWORD}
-
-      - test-e2e-slurm:
           name: test-e2e-slurm-restart
           context:
             - dev-ci-cluster-default-user-credentials
@@ -5105,16 +4995,6 @@ workflows:
             - request-hpc-tests
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-
-      - test-e2e-slurm:
-          name: test-e2e-slurm-gpu
-          context:
-            - dev-ci-cluster-default-user-credentials
-          filters: *upstream-feature-branch
-          mark: "e2e_slurm_gpu"
-          requires:
-            - package-and-push-system-local-ee
-            - request-hpc-tests
 
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode

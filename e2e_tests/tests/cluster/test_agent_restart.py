@@ -8,11 +8,13 @@ import pytest
 
 from determined.common import api
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
 from tests.cluster import managed_cluster, utils
+from tests.experiment import noop
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
@@ -69,14 +71,17 @@ def test_agent_restart_exp_container_failure(
     sess = api_utils.user_session()
     restartable_managed_cluster.ensure_agent_ok()
     try:
-        exp_id = exp.create_experiment(
+        exp_ref = noop.create_experiment(
             sess,
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
+            [
+                # Two Reports to meet the requirements of wait_for_workload_progress().
+                noop.Report({"loss": 1}),
+                noop.Report({"loss": 1}),
+                noop.Sleep(5),
+            ],
         )
-        exp.wait_for_experiment_workload_progress(sess, exp_id)
-        container_ids = list(_local_container_ids_for_experiment(exp_id))
+        exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
+        container_ids = list(_local_container_ids_for_experiment(exp_ref.id))
         if len(container_ids) != 1:
             pytest.fail(
                 f"unexpected number of local containers for the experiment: {len(container_ids)}"
@@ -95,16 +100,16 @@ def test_agent_restart_exp_container_failure(
         restartable_managed_cluster.restart_agent()
         # As soon as the agent is back, the original allocation should be considered dead,
         # but the new one should be allocated.
-        state = exp.experiment_state(sess, exp_id)
+        exp_ref.reload()
         # old STATE_ACTIVE got divided into three states
-        assert state in [
-            bindings.experimentv1State.ACTIVE,
-            bindings.experimentv1State.QUEUED,
-            bindings.experimentv1State.PULLING,
-            bindings.experimentv1State.STARTING,
-            bindings.experimentv1State.RUNNING,
+        assert exp_ref.state in [
+            client.ExperimentState.ACTIVE,
+            client.ExperimentState.QUEUED,
+            client.ExperimentState.PULLING,
+            client.ExperimentState.STARTING,
+            client.ExperimentState.RUNNING,
         ]
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+        exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.RUNNING)
         tasks_data = _task_list_json(sess)
         assert len(tasks_data) == 1
         exp_task_after = list(tasks_data.values())[0]
@@ -112,7 +117,8 @@ def test_agent_restart_exp_container_failure(
         assert exp_task_before["taskId"] == exp_task_after["taskId"]
         assert exp_task_before["allocationId"] != exp_task_after["allocationId"]
 
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
+        exp_ref.kill()
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.managed_devcluster
@@ -193,25 +199,30 @@ def test_agent_restart_recover_experiment(
     sess = api_utils.user_session()
     restartable_managed_cluster.ensure_agent_ok()
     try:
-        exp_id = exp.create_experiment(
+        exp_ref = noop.create_experiment(
             sess,
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
+            [
+                # Two Reports to meet the requirements of wait_for_workload_progress().
+                noop.Report({"loss": 1}),
+                noop.Report({"loss": 1}),
+                noop.Sleep(5),
+                # A third Report to prove we finished successfully.
+                noop.Report({"loss": 1}),
+            ],
         )
-        exp.wait_for_experiment_workload_progress(sess, exp_id)
+        exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
 
         if downtime >= 0:
             restartable_managed_cluster.kill_agent()
             time.sleep(downtime)
             restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
-        trials = exp.experiment_trials(sess, exp_id)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+        trials = exp.experiment_trials(sess, exp_ref.id)
 
         assert len(trials) == 1
         train_wls = exp.workloads_with_training(trials[0].workloads)
-        assert len(train_wls) == 5
+        assert len(train_wls) == 3
     except Exception:
         restartable_managed_cluster.restart_agent()
         raise
@@ -223,24 +234,29 @@ def test_agent_reconnect_keep_experiment(
 ) -> None:
     sess = api_utils.user_session()
     try:
-        exp_id = exp.create_experiment(
+        exp_ref = noop.create_experiment(
             sess,
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
+            [
+                # Two Reports to meet the requirements of wait_for_workload_progress().
+                noop.Report({"loss": 1}),
+                noop.Report({"loss": 1}),
+                noop.Sleep(5),
+                # A third Report to prove we finished successfully.
+                noop.Report({"loss": 1}),
+            ],
         )
-        exp.wait_for_experiment_workload_progress(sess, exp_id)
+        exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
 
         restartable_managed_cluster.kill_proxy()
         time.sleep(1)
         restartable_managed_cluster.restart_proxy()
 
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
-        trials = exp.experiment_trials(sess, exp_id)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+        trials = exp.experiment_trials(sess, exp_ref.id)
 
         assert len(trials) == 1
         train_wls = exp.workloads_with_training(trials[0].workloads)
-        assert len(train_wls) == 5
+        assert len(train_wls) == 3
     except Exception:
         restartable_managed_cluster.restart_proxy(wait_for_reconnect=False)
         restartable_managed_cluster.restart_agent()
@@ -294,13 +310,9 @@ def test_queued_experiment_restarts_with_correct_allocation_id(
     restartable_managed_cluster: managed_cluster.ManagedCluster,
 ) -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--config", "resources.slots_per_trial=9999"],
-    )
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.QUEUED)
+    config = {"resources": {"slots_per_trial": 9999}}
+    exp_ref = noop.create_experiment(sess, config=config)
+    assert exp_ref.state == client.ExperimentState.QUEUED, exp_ref.state
 
     restartable_managed_cluster.kill_master()
     log_marker = str(uuid.uuid4())

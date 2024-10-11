@@ -155,6 +155,13 @@ const routes: RouteConfig[] = [
     title: 'Manage Templates',
   },
   {
+    icon: 'options',
+    id: 'configPolicies',
+    needAuth: true,
+    path: '/policies',
+    title: 'Config Policies',
+  },
+  {
     icon: 'cluster',
     id: 'clusterHistorical',
     needAuth: true,

@@ -38,8 +38,8 @@ checkpoints for downstream serving.
  Adaptive Search
 *****************
 
-Our default recommended search method is `Adaptive (ASHA) <https://arxiv.org/pdf/1810.05934.pdf>`_,
-a state-of-the-art early-stopping based technique that speeds up traditional techniques like random
+Our default recommended search method is `Adaptive (ASHA) <http://arxiv.org/pdf/1810.05934>`_, a
+state-of-the-art early-stopping based technique that speeds up traditional techniques like random
 search by periodically abandoning low-performing hyperparameter configurations in a principled
 fashion.
 

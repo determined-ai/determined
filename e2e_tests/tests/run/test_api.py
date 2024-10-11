@@ -5,8 +5,7 @@ import pytest
 from determined.common import api
 from determined.common.api import bindings
 from tests import api_utils
-from tests import config as conf
-from tests import experiment as exp
+from tests.experiment import noop
 
 
 def wait_for_run_state(
@@ -51,9 +50,7 @@ def wait_for_run_state(
 @pytest.mark.e2e_cpu
 def test_run_kill() -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
-    )
+    exp_ref = noop.create_experiment(sess)
 
     searchResp = bindings.post_SearchRuns(
         sess,
@@ -76,7 +73,7 @@ def test_run_kill() -> None:
     },
     "showArchived": false
     }"""
-            % exp_id,
+            % exp_ref.id,
         ),
     )
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
@@ -85,7 +82,7 @@ def test_run_kill() -> None:
     killResp = bindings.post_KillRuns(
         sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1)
     )
-    assert len(killResp.results) == 1, f"failed to kill run {run_id} from exp {exp_id}"
+    assert len(killResp.results) == 1, f"failed to kill run {run_id} from exp {exp_ref.id}"
     assert killResp.results[0].id == run_id
     assert killResp.results[0].error == ""
 
@@ -100,7 +97,7 @@ def test_run_kill() -> None:
     # validate response
     assert (
         len(killResp.results) == 1
-    ), f"error when trying to terminate run {run_id} from exp {exp_id} a second time"
+    ), f"error when trying to terminate run {run_id} from exp {exp_ref.id} a second time"
     assert killResp.results[0].id == run_id
     assert killResp.results[0].error == ""
 
@@ -108,11 +105,13 @@ def test_run_kill() -> None:
 @pytest.mark.e2e_cpu
 def test_run_kill_filter() -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/grid-long-run.yaml"),
-        conf.fixtures_path("no_op"),
-    )
+    config = {
+        "searcher": {"name": "grid"},
+        "hyperparameters": {
+            "x": {"type": "categorical", "vals": [1, 2]},
+        },
+    }
+    exp_ref = noop.create_experiment(sess, config=config)
 
     runFilter = (
         """{
@@ -124,15 +123,15 @@ def test_run_kill_filter() -> None:
         "location": "LOCATION_TYPE_RUN",
         "operator": "=",
         "type": "COLUMN_TYPE_NUMBER",
-        "value": %s
+        "value": %d
       },
       {
-        "columnName": "hp.unique_id",
+        "columnName": "x",
         "kind": "field",
         "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
         "operator": ">=",
         "type": "COLUMN_TYPE_NUMBER",
-        "value": 3
+        "value": 2
       }
     ],
     "conjunction": "and",
@@ -140,39 +139,36 @@ def test_run_kill_filter() -> None:
   },
   "showArchived": false
 }"""
-        % exp_id
+        % exp_ref.id
     )
 
     killResp = bindings.post_KillRuns(
         sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
     )
-
     searchResp = bindings.post_SearchRuns(sess, body=bindings.v1SearchRunsRequest(filter=runFilter))
 
-    # validate response
-    assert len(killResp.results) > 0, f"failed to kill runs in exp {exp_id}"
-    assert len(searchResp.runs) > 0, f"failed to search runs in exp {exp_id}"
-    assert len(killResp.results) == len(searchResp.runs)
-    for res in killResp.results:
-        assert res.error == ""
-        wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+    # Expect one of the two grid runs to match our filter.
+    assert len(killResp.results) == 1, killResp.results
+    assert len(searchResp.runs) == 1, searchResp.runs
+    res = killResp.results[0]
+    assert res.error == "", res.error
+    wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+    exp_ref.kill()
 
 
 @pytest.mark.e2e_cpu
 def test_run_pause_and_resume() -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
-    )
+    exp_ref = noop.create_experiment(sess)
 
     searchResp = bindings.post_SearchRuns(
         sess,
         body=bindings.v1SearchRunsRequest(
             limit=1,
             filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-        "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-            + str(exp_id)
-            + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":%d}],
+            "conjunction":"and","kind":"group"},"showArchived":false}"""
+            % (exp_ref.id),
         ),
     )
 
@@ -207,13 +203,10 @@ def test_run_pause_and_resume() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_run_pause_and_resume_filter_skip_empty() -> None:
+def test_run_in_search_not_pausable_or_resumable() -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.fixtures_path("mnist_pytorch"),
-    )
+    config = {"searcher": {"name": "random", "max_trials": 2}}
+    exp_ref = noop.create_experiment(sess, config=config)
 
     runFilter = (
         """{
@@ -226,14 +219,6 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
         "operator": "=",
         "type": "COLUMN_TYPE_NUMBER",
         "value": %s
-      },
-      {
-        "columnName": "hp.n_filters2",
-        "kind": "field",
-        "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
-        "operator": ">=",
-        "type": "COLUMN_TYPE_NUMBER",
-        "value": 40
       }
     ],
     "conjunction": "and",
@@ -241,7 +226,7 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
   },
   "showArchived": false
 }"""
-        % exp_id
+        % exp_ref.id
     )
     pauseResp = bindings.post_PauseRuns(
         sess,
@@ -252,7 +237,7 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
         ),
     )
 
-    # validate response
+    assert pauseResp.results
     for r in pauseResp.results:
         assert r.error == "Cannot pause/unpause run '" + str(r.id) + "' (part of multi-trial)."
 
@@ -261,13 +246,8 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
         body=bindings.v1ResumeRunsRequest(runIds=[], projectId=1, filter=runFilter),
     )
 
+    assert resumeResp.results
     for res in resumeResp.results:
         assert res.error == "Cannot pause/unpause run '" + str(res.id) + "' (part of multi-trial)."
-        wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
 
-    # kill run for cleanup
-    if len(resumeResp.results) > 0:
-        _ = bindings.post_KillRuns(
-            sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1)
-        )
-        wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+    exp_ref.kill()

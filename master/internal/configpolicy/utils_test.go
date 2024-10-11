@@ -100,7 +100,7 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalExperimentConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](tt.input, InvalidExperimentConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
@@ -164,7 +164,7 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalNTSCConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[NTSCConfigPolicies](tt.input, InvalidNTSCConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
@@ -255,7 +255,7 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalExperimentConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](tt.input, InvalidExperimentConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
@@ -301,7 +301,7 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalNTSCConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[NTSCConfigPolicies](tt.input, InvalidNTSCConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)

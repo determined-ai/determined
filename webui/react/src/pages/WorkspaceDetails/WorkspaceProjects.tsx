@@ -262,18 +262,20 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         dataIndex: 'description',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         key: V1GetWorkspaceProjectsRequestSortBy.DESCRIPTION,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'description' }),
         render: descriptionRenderer,
         title: 'Description',
       },
       {
         dataIndex: 'numExperiments',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['numExperiments'],
+        onCell: () => ({ 'data-testid': 'numExperiments' }),
         title: 'Experiments',
       },
       {
         dataIndex: 'lastUpdated',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdated'],
+        onCell: () => ({ 'data-testid': 'lastUpdated' }),
         render: (_: number, record: Project): React.ReactNode =>
           record.lastExperimentStartedAt
             ? relativeTimeRenderer(new Date(record.lastExperimentStartedAt))
@@ -283,6 +285,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
+        onCell: () => ({ 'data-testid': 'userId' }),
         render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
@@ -290,6 +293,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
+        onCell: () => ({ 'data-testid': 'archived' }),
         render: checkmarkRenderer,
         title: 'Archived',
       },
@@ -297,6 +301,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         key: 'state',
+        onCell: () => ({ 'data-testid': 'state' }),
         render: stateRenderer,
         title: 'State',
       },
@@ -306,7 +311,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'actionMenu' }),
         render: actionRenderer,
         title: '',
       },

@@ -1,42 +1,28 @@
-import tempfile
-
 import pytest
-import yaml
 
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
-from tests import config as conf
 from tests import experiment as exp
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_policy_cancel_retries(should_match: bool) -> None:
     sess = api_utils.user_session()
-    regex = r"assert not self\.crash_on_startup"
+    regex = r"executing.*action.*exit.*code.*7"
     if not should_match:
         regex = r"(.*) this should not match (.*)"
 
-    config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
-    config["log_policies"] = [
-        {
-            "pattern": regex,
-            "action": {
-                "type": "cancel_retries",
-            },
-        },
-    ]
-    config["hyperparameters"]["crash_on_startup"] = True
-    config["max_restarts"] = 1
+    config = {
+        "log_policies": [{"pattern": regex, "action": {"type": "cancel_retries"}}],
+        "max_restarts": 1,
+    }
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-        exp_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"))
-
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
-
-    experiment_trials = exp.experiment_trials(sess, exp_id)
+    experiment_trials = exp.experiment_trials(sess, exp_ref.id)
     assert len(experiment_trials) == 1
     trial_logs = "\n".join(exp.trial_logs(sess, experiment_trials[0].trial.id))
 
@@ -52,55 +38,39 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
     sess = api_utils.user_session()
-    regex = r"assert not self\.crash_on_startup"
+    regex = r"executing.*action.*exit.*code.*7"
     if not should_match:
-        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
-
-    config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
-    config["log_policies"] = [
-        {
-            "pattern": regex,
-            "action": {
-                "type": "exclude_node",
-            },
-        },
-    ]
-    config["hyperparameters"]["crash_on_startup"] = True
-    config["max_restarts"] = 1
+        regex = r"(.*) this should not match (.*)"
 
     agents = bindings.get_GetAgents(sess).agents
     assert len(agents) == 1
     assert agents[0].slots is not None
-    config["resources"] = {"slots_per_trial": len(agents[0].slots)}
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-        exp_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"))
-
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+    config = {
+        "log_policies": [{"pattern": regex, "action": {"type": "exclude_node"}}],
+        "resources": {"slots_per_trial": len(agents[0].slots)},
+        "max_restarts": 1,
+    }
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.RUNNING)
 
     if should_match:
-        second_exp_id = exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single-one-short-step.yaml"),
-            conf.fixtures_path("no_op"),
-        )
-        exp.wait_for_experiment_state(sess, second_exp_id, bindings.experimentv1State.COMPLETED)
+        exp_ref_2 = noop.create_experiment(sess)
+        assert exp_ref_2.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.QUEUED)
+        exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.QUEUED)
 
-        experiment_trials = exp.experiment_trials(sess, exp_id)
+        experiment_trials = exp.experiment_trials(sess, exp_ref.id)
         assert len(experiment_trials) == 1
         assert experiment_trials[0].trial.restarts == 1
         trial_logs = "\n".join(exp.trial_logs(sess, experiment_trials[0].trial.id))
         assert "therefore will not schedule on" in trial_logs
 
-        exp.kill_experiments(sess, [exp_id], -1)
+        exp.kill_experiments(sess, [exp_ref.id], -1)
     else:
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
-        experiment_trials = exp.experiment_trials(sess, exp_id)
+        experiment_trials = exp.experiment_trials(sess, exp_ref.id)
         assert len(experiment_trials) == 1
         assert experiment_trials[0].trial.restarts == 1
         trial_logs = "\n".join(exp.trial_logs(sess, experiment_trials[0].trial.id))
@@ -111,45 +81,33 @@ def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
     sess = api_utils.user_session()
-    regex = r"assert not self\.crash_on_startup"
+    regex = r"executing.*action.*exit.*code.*7"
     if not should_match:
-        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
-
-    config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
-    config["log_policies"] = [
-        {
-            "pattern": regex,
-            "action": {
-                "type": "exclude_node",
-            },
-        },
-    ]
-    config["hyperparameters"]["crash_on_startup"] = True
-    config["max_restarts"] = 1
+        regex = r"(.*) this should not match (.*)"
 
     agents = bindings.get_GetAgents(sess).agents
     assert len(agents) == 1
     assert agents[0].slots is not None
-    config["resources"] = {"slots_per_trial": len(agents[0].slots)}
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-        exp_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"))
-
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+    config = {
+        "log_policies": [{"pattern": regex, "action": {"type": "exclude_node"}}],
+        "resources": {"slots_per_trial": len(agents[0].slots)},
+        "max_restarts": 1,
+    }
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.RUNNING)
 
     master_config = bindings.get_GetMasterConfig(api_utils.admin_session()).config
     if master_config.get("launch_error"):
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
     else:
         if should_match:
-            exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.QUEUED)
-            exp.kill_experiments(sess, [exp_id], -1)
+            exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.QUEUED)
+            exp.kill_experiments(sess, [exp_ref.id], -1)
         else:
-            exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+            assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
-    experiment_trials = exp.experiment_trials(sess, exp_id)
+    experiment_trials = exp.experiment_trials(sess, exp_ref.id)
     assert len(experiment_trials) == 1
     assert experiment_trials[0].trial.restarts == 1
     trial_logs = "\n".join(exp.trial_logs(sess, experiment_trials[0].trial.id))
@@ -170,29 +128,18 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
     if len(agents) != 1:
         pytest.skip("can only be run on a single agent cluster")
 
-    regex = r"assert not self\.crash_on_startup"
+    regex = r"executing.*action.*exit.*code.*7"
     if not should_match:
-        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+        regex = r"(.*) this should not match (.*)"
 
-    config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
-    config["log_policies"] = [
-        {
-            "pattern": regex,
-            "action": {
-                "type": "exclude_node",
-            },
-        },
-    ]
-    config["hyperparameters"]["crash_on_startup"] = True
-    config["max_restarts"] = 1
+    config = {
+        "log_policies": [{"pattern": regex, "action": {"type": "exclude_node"}}],
+        "max_restarts": 1,
+    }
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-        exp_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"))
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
-
-    trials = exp.experiment_trials(sess, exp_id)
+    trials = exp.experiment_trials(sess, exp_ref.id)
     assert len(trials) == 1
     assert trials[0].trial.restarts == 1
 

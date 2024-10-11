@@ -6,8 +6,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -47,6 +49,23 @@ func (c *Command) SetJobPriority(priority int) error {
 	if priority < 1 || priority > 99 {
 		return fmt.Errorf("priority must be between 1 and 99")
 	}
+
+	// Returns an error if RM does not implement priority.
+	if smallerHigher, err := c.rm.SmallerValueIsHigherPriority(); err == nil {
+		ok, err := configpolicy.PriorityAllowed(
+			int(c.GenericCommandSpec.Metadata.WorkspaceID),
+			model.NTSCType,
+			priority,
+			smallerHigher,
+		)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("priority exceeds task config policy's priority_limit")
+		}
+	}
+
 	err := c.setNTSCPriority(priority, true)
 	if err != nil {
 		c.syslog.WithError(err).Info("setting command job priority")

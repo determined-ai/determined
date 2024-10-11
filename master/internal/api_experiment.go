@@ -30,6 +30,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
@@ -1464,9 +1465,30 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	}
 	mergedConfig := schemas.Merge(providedConfig, activeConfig)
 	if overrideName := mergedConfig.Searcher().AsLegacy().Name; isSingle && overrideName != "single" {
-		return nil, false, status.Errorf(codes.InvalidArgument,
+		return nil, false, status.Errorf(codes.Internal,
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
+
+	// Determine which workspace the experiment is in.
+	wkspName := activeConfig.Workspace()
+	if wkspName == "" {
+		wkspName = model.DefaultWorkspaceName
+	}
+	ctx := context.TODO()
+	w, err := workspace.WorkspaceByName(ctx, wkspName)
+	if err != nil {
+		return nil, false, status.Errorf(codes.Internal,
+			fmt.Sprintf("failed to get workspace %s", activeConfig.Workspace()))
+	}
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+		w.ID, mergedConfig)
+	if err != nil {
+		return nil, false,
+			fmt.Errorf("failed to merge invariant experiment configs: %w", err)
+	}
+	mergedConfig = *configWithInvariantDefaults
 
 	bytes, err := mergedConfig.Value()
 	if err != nil {
@@ -1679,6 +1701,18 @@ func (a *apiServer) CreateExperiment(
 
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	wkspIDs, err := workspace.WorkspaceIDsFromNames(ctx, []string{taskSpec.Workspace})
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if len(wkspIDs) != 1 {
+		return nil, status.Error(codes.InvalidArgument, "expected exactly one workspace")
+	}
+	err = configpolicy.CheckExperimentConstraints(ctx, int(wkspIDs[0]), activeConfig, a.m.rm)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	if req.ValidateOnly {
@@ -2706,6 +2740,7 @@ func (a *apiServer) SearchExperiments(
 		Column("searcher_metric_value").
 		Column("trials.external_trial_id").
 		ColumnExpr("nullif(trials.metadata, 'null') as metadata").
+		ColumnExpr("NULL as log_signal").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

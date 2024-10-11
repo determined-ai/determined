@@ -130,7 +130,7 @@ const parseSortString = (sortString: string): Sort[] => {
   });
 };
 
-const formStore = new FilterFormStore();
+const formStore = new FilterFormStore(V1LocationType.EXPERIMENT);
 
 export const PAGE_SIZE = 100;
 const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(PAGE_SIZE).fill(

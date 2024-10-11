@@ -12,7 +12,6 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_gpu
-@pytest.mark.e2e_slurm_gpu
 @pytest.mark.timeout(30 * 60)
 def test_streaming_observability_metrics_apis() -> None:
     sess = api_utils.user_session()

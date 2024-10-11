@@ -2257,3 +2257,8 @@ func (m *DispatcherResourceManager) DisableSlot(*apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	return nil, errNotSupportedOnHpcCluster
 }
+
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (m *DispatcherResourceManager) SmallerValueIsHigherPriority() (bool, error) {
+	return false, fmt.Errorf("priority not implemented")
+}

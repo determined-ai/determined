@@ -1,21 +1,112 @@
 package internal
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/test/testutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+)
+
+const (
+	validConstraintsPolicyYAML = `
+constraints:
+  resources:
+    max_slots: 4
+  priority_limit: 10
+`
+
+	validExperimentConfigPolicyYAML = `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    force_pull_image: false
+    add_capabilities:
+      - "cap1"
+      - "cap2"
+  resources:
+    slots: 1
+  name: my_experiment_config
+`
+
+	validNTSCConfigPolicyYAML = `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    force_pull_image: false
+    add_capabilities:
+      - "cap1"
+      - "cap2"
+  resources:
+    slots: 1
+  work_dir: my/working/directory
+`
+
+	validConstraintsPolicyJSON = `
+ 	"constraints": {
+        "resources": {
+            "max_slots": 4
+        },
+        "priority_limit": 10
+    }`
+
+	validExperimentConfigPolicyJSON = `
+	"invariant_config": {
+        "description": "test\nspecial\tchar",
+        "environment": {
+            "force_pull_image": false,
+            "add_capabilities": ["cap1", "cap2"]
+        },
+        "resources": {
+            "slots": 1
+        },
+		"name": "my_experiment_config"
+    }`
+	validNTSCConfigPolicyJSON = `
+	"invariant_config": {
+		"description": "test\nspecial\tchar",
+		"environment": {
+			"force_pull_image": false,
+			"add_capabilities": ["cap1", "cap2"]
+		},
+		"resources": {
+			"slots": 1
+		},
+		"work_dir": "my/working/directory"
+	}`
+
+	updatedExperimentConfigPolicyJSON = `
+	"invariant_config": {
+        "description": "test\nspecial\tchar",
+        "environment": {
+            "force_pull_image": false,
+            "add_capabilities": ["cap1", "cap2"]
+        },
+        "resources": {
+            "slots": 1
+        },
+		"name": "my_experiment_config",
+		"entrypoint": "start from here"
+    }
+`
+
+	entrypointYAML = `
+  entrypoint: "start from here"
+`
 )
 
 func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
@@ -80,8 +171,9 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 
 			// Policies removed?
 			policies, err := configpolicy.GetTaskConfigPolicies(ctx, ptrs.Ptr(int(workspaceID)), test.req.WorkloadType)
-			require.Nil(t, policies)
-			require.ErrorIs(t, err, sql.ErrNoRows)
+			require.NoError(t, err)
+			require.Nil(t, policies.InvariantConfig)
+			require.Nil(t, policies.Constraints)
 		})
 	}
 
@@ -147,8 +239,9 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 
 			// Policies removed?
 			policies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, test.req.WorkloadType)
-			require.Nil(t, policies)
-			require.ErrorIs(t, err, sql.ErrNoRows)
+			require.NoError(t, err)
+			require.Nil(t, policies.InvariantConfig)
+			require.Nil(t, policies.Constraints)
 		})
 	}
 }
@@ -204,6 +297,33 @@ func TestBasicRBACConfigPolicyPerms(t *testing.T) {
 			},
 			fmt.Errorf("PermissionDenied"),
 		},
+		{
+			"put workspace config policies",
+			func() error {
+				_, err := api.PutWorkspaceConfigPolicies(ctx,
+					&apiv1.PutWorkspaceConfigPoliciesRequest{
+						WorkspaceId:    wkspID,
+						WorkloadType:   model.NTSCType,
+						ConfigPolicies: validNTSCConfigPolicyYAML + validConstraintsPolicyYAML,
+					},
+				)
+				return err
+			},
+			fmt.Errorf("only admins may set config policies for workspaces"),
+		},
+		{
+			"put global config policies",
+			func() error {
+				_, err := api.PutGlobalConfigPolicies(ctx,
+					&apiv1.PutGlobalConfigPoliciesRequest{
+						WorkloadType:   model.NTSCType,
+						ConfigPolicies: validNTSCConfigPolicyYAML + validConstraintsPolicyYAML,
+					},
+				)
+				return err
+			},
+			fmt.Errorf("PermissionDenied"),
+		},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -213,110 +333,100 @@ func TestBasicRBACConfigPolicyPerms(t *testing.T) {
 	}
 }
 
-func TestGetWorkspaceConfigPolicies(t *testing.T) {
+func TestGetConfigPolicies(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 
+	defer func() {
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.ExperimentType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+	}()
+
 	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
-	workspaceID1 := wkspResp.Workspace.Id
+	workspaceID1 := ptrs.Ptr(int(wkspResp.Workspace.Id))
 	wkspResp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
-	workspaceID2 := wkspResp.Workspace.Id
+	workspaceID2 := ptrs.Ptr(int(wkspResp.Workspace.Id))
 
-	// set only config policy
-	taskConfigPolicies := &model.TaskConfigPolicies{
-		WorkspaceID:     ptrs.Ptr(int(workspaceID1)),
-		WorkloadType:    model.NTSCType,
-		LastUpdatedBy:   curUser.ID,
-		InvariantConfig: ptrs.Ptr(configpolicy.DefaultInvariantConfigStr),
-	}
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
-
-	// set only constraints policy
-	taskConfigPolicies = &model.TaskConfigPolicies{
-		WorkspaceID:   ptrs.Ptr(int(workspaceID1)),
-		WorkloadType:  model.ExperimentType,
-		LastUpdatedBy: curUser.ID,
-		Constraints:   ptrs.Ptr(configpolicy.DefaultConstraintsStr),
-	}
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
-
-	// set both config and constraints policy
-	taskConfigPolicies = &model.TaskConfigPolicies{
-		WorkspaceID:     ptrs.Ptr(int(workspaceID2)),
-		WorkloadType:    model.NTSCType,
-		LastUpdatedBy:   curUser.ID,
-		InvariantConfig: ptrs.Ptr(configpolicy.DefaultInvariantConfigStr),
-		Constraints:     ptrs.Ptr(configpolicy.DefaultConstraintsStr),
-	}
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
+	setUpTaskConfigPolicies(ctx, t, workspaceID1, workspaceID2, curUser.ID)
 
 	cases := []struct {
 		name           string
-		req            *apiv1.GetWorkspaceConfigPoliciesRequest
+		workspaceID    *int
+		workloadType   string
 		err            error
 		hasConfig      bool
 		hasConstraints bool
 	}{
 		{
 			"invalid workload type",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: "bad workload type",
-			},
+			workspaceID1,
+			"bad workload type",
 			fmt.Errorf("invalid workload type"),
 			false,
 			false,
 		},
 		{
 			"empty workload type",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: "",
-			},
+			workspaceID1,
+			"",
 			fmt.Errorf(noWorkloadErr),
 			false,
 			false,
 		},
 		{
-			"valid request only config",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: model.NTSCType,
-			},
+			"valid workspace request, only config",
+			workspaceID1,
+			model.NTSCType,
 			nil,
 			true,
 			false,
 		},
 		{
-			"valid request only constraints",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: model.ExperimentType,
-			},
+			"valid workspace request, only constraints",
+			workspaceID1,
+			model.ExperimentType,
 			nil,
 			false,
 			true,
 		},
 		{
-			"valid request both configs and constraints",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID2,
-				WorkloadType: model.NTSCType,
-			},
+			"valid workspace request both configs and constraints",
+			workspaceID2,
+			model.NTSCType,
 			nil,
 			true,
 			true,
+		},
+		{
+			"valid global request both configs and constraints",
+			nil,
+			model.NTSCType,
+			nil,
+			true,
+			true,
+		},
+		{
+			"no global config policy",
+			nil,
+			model.ExperimentType,
+			nil,
+			false,
+			false,
 		},
 	}
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			resp, err := api.GetWorkspaceConfigPolicies(ctx, test.req)
+			resp, err := api.getConfigPolicies(ctx, test.workspaceID, test.workloadType)
 			if test.err != nil {
 				require.ErrorContains(t, err, test.err.Error())
 				return
@@ -325,16 +435,2130 @@ func TestGetWorkspaceConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			if test.hasConfig {
-				require.Contains(t, resp.ConfigPolicies.String(), "config")
+				require.Contains(t, resp.String(), "invariant_config")
 			} else {
-				require.NotContains(t, resp.ConfigPolicies.String(), "config")
+				require.NotContains(t, resp.String(), "invariant_config")
 			}
 
 			if test.hasConstraints {
-				require.Contains(t, resp.ConfigPolicies.String(), "constraints")
+				require.Contains(t, resp.String(), "constraints")
 			} else {
-				require.NotContains(t, resp.ConfigPolicies.String(), "constraints")
+				require.NotContains(t, resp.String(), "constraints")
 			}
 		})
 	}
+}
+
+func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
+	workspaceID1 *int, workspaceID2 *int, userID model.UserID,
+) {
+	// set only Experiment constraints policy for workspace 1
+	taskConfigPolicies := &model.TaskConfigPolicies{
+		WorkspaceID:   workspaceID1,
+		WorkloadType:  model.ExperimentType,
+		LastUpdatedBy: userID,
+		Constraints:   ptrs.Ptr(configpolicy.DefaultConstraintsStr),
+	}
+	err := configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set only NTSC config policy for workspace 1
+	taskConfigPolicies.WorkloadType = model.NTSCType
+	taskConfigPolicies.Constraints = nil
+	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy for workspace 2 (NTSC)
+	taskConfigPolicies.WorkspaceID = workspaceID2
+	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy globally (NTSC)
+	taskConfigPolicies.WorkspaceID = nil
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+}
+
+func TestAuthZCanModifyConfigPolicies(t *testing.T) {
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+	configPolicyAuthZ := setupConfigPolicyAuthZ()
+
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+
+	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := wkspResp.Workspace.Id
+
+	// (Workspace-level) Deny with permission access error.
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Twice()
+	expectedErr := fmt.Errorf("canModifyConfigPoliciesError")
+	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
+		mock.Anything).Return(expectedErr).Twice()
+
+	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{
+			WorkspaceId:  workspaceID,
+			WorkloadType: model.NTSCType,
+		})
+	require.Equal(t, expectedErr, err)
+
+	_, err = api.PutWorkspaceConfigPolicies(ctx,
+		&apiv1.PutWorkspaceConfigPoliciesRequest{
+			WorkspaceId:    workspaceID,
+			WorkloadType:   model.NTSCType,
+			ConfigPolicies: validConstraintsPolicyYAML,
+		})
+	require.Equal(t, expectedErr, err)
+
+	// (Workspace-level) Nil error returns whatever the request returned.
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Twice()
+	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
+		mock.Anything).Return(nil).Twice()
+
+	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{
+			WorkspaceId:  workspaceID,
+			WorkloadType: model.NTSCType,
+		})
+	require.NoError(t, err)
+
+	_, err = api.PutWorkspaceConfigPolicies(ctx,
+		&apiv1.PutWorkspaceConfigPoliciesRequest{
+			WorkspaceId:    workspaceID,
+			WorkloadType:   model.NTSCType,
+			ConfigPolicies: validConstraintsPolicyYAML,
+		})
+	require.NoError(t, err)
+
+	// (Global) Deny with permission access error.
+	expectedErr = fmt.Errorf("canModifyGlobalConfigPoliciesError")
+	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+		Return(expectedErr, nil).Twice()
+
+	_, err = api.DeleteGlobalConfigPolicies(ctx,
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
+	require.Equal(t, expectedErr, err)
+
+	_, err = api.PutGlobalConfigPolicies(ctx,
+		&apiv1.PutGlobalConfigPoliciesRequest{
+			WorkloadType:   model.NTSCType,
+			ConfigPolicies: validNTSCConfigPolicyYAML,
+		})
+	require.Equal(t, expectedErr, err)
+
+	// (Global) Nil error returns whatever the request returned.
+	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+		Return(nil, nil).Twice()
+
+	_, err = api.DeleteGlobalConfigPolicies(ctx,
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
+	require.NoError(t, err)
+
+	_, err = api.PutGlobalConfigPolicies(ctx,
+		&apiv1.PutGlobalConfigPoliciesRequest{
+			WorkloadType:   model.NTSCType,
+			ConfigPolicies: validNTSCConfigPolicyYAML,
+		})
+	require.NoError(t, err)
+}
+
+var cpAuthZ *mocks.ConfigPolicyAuthZ
+
+func setupConfigPolicyAuthZ() *mocks.ConfigPolicyAuthZ {
+	if cpAuthZ == nil {
+		cpAuthZ = &mocks.ConfigPolicyAuthZ{}
+		configpolicy.AuthZProvider.Register("mock", cpAuthZ)
+	}
+	return cpAuthZ
+}
+
+func TestValidatePoliciesAndWorkloadTypeYAML(t *testing.T) {
+	tests := []struct {
+		name           string
+		workloadType   string
+		configPolicies string
+		err            error
+	}{
+		{
+			"YAML invalid workload type valid config policies", "random", validExperimentConfigPolicyYAML,
+			fmt.Errorf(invalidWorkloadTypeErr),
+		},
+		{
+			"YAML no workload type valid config policies", "", validExperimentConfigPolicyYAML,
+			fmt.Errorf(noWorkloadErr),
+		},
+		{
+			"YAML valid workload type no config policies", model.ExperimentType, "",
+			fmt.Errorf(noPoliciesErr),
+		},
+
+		// Valid experiment invariant config policies (YAML).
+		{
+			"YAML simple experiment config with description", model.ExperimentType,
+			`
+invariant_config:
+  description: "test\nspecial\nchar"
+`, nil,
+		},
+		{
+			"YAML simple experiment config with resources", model.ExperimentType,
+			`
+invariant_config:
+  resources:
+    slots: 1
+`, nil,
+		},
+		{
+			"YAML partial experiment config", model.ExperimentType, validExperimentConfigPolicyYAML, nil,
+		},
+
+		// Valid NTSC invariant config policies (YAML).
+		{
+			"YAML simple NTSC config with description", model.NTSCType,
+			`
+invariant_config:
+  description: "test\nspecial\tchar"
+`, nil,
+		},
+		{
+			"YAML simple NTSC config with resources", model.NTSCType,
+			`
+invariant_config:
+  resources:
+    slots: 1
+`, nil,
+		},
+		{
+			"YAML partial NTSC config", model.NTSCType, validNTSCConfigPolicyYAML, nil,
+		},
+
+		// Invalid experiment invariant config policies (YAML).
+		{
+			"YAML experiment config with null key", model.ExperimentType,
+			`
+invariant_config:
+  : "test\nspecial\tchar"
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment config invalid type for key", model.ExperimentType,
+			`
+invariant_config:
+  resources:
+    slots: "this should be a number"
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment config nonexistent key", model.ExperimentType,
+			`
+invariant_config:
+  nonexistent_description: "test\nspecial\tchar"
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment config extra nonexistent key", model.ExperimentType,
+			`
+invariant_config:
+  resources:
+    slots: 1
+  extra_key: 2
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment just config", model.ExperimentType,
+			`invariant_config:`, nil,
+		},
+		{
+			"YAML experiment bad config spec", model.ExperimentType,
+			`
+bad_config_spec:
+  resources:
+    slots: 1
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+
+		// Invalid NTSC invariant config policies (YAML).
+		{
+			"YAML NTSC config with null key", model.NTSCType,
+			`
+invariant_config:
+  : "test\nspecial\tchar"
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC invalid NTSC type for key", model.NTSCType,
+			`
+invariant_config:
+  resources:
+    slots: "this should be a number"
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC nonexistent key", model.NTSCType,
+			`
+invariant_config:
+  nonexistent_description: "test\nspecial\tchar"
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC extra nonexistent key", model.NTSCType,
+			`
+invariant_config:
+  resources:
+    slots: 1
+  extra_key: 2
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC just config", model.NTSCType,
+			`invariant_config:`, nil,
+		},
+		{
+			"YAML NTSC bad config spec", model.NTSCType,
+			`
+bad_config_spec:
+  resources:
+    slots: 1
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		// Valid constraint policies (YAML).
+		{"YAML experiment valid constraints policy", model.ExperimentType, validConstraintsPolicyYAML, nil},
+		{"YAML NTSC valid constraints policy", model.NTSCType, validConstraintsPolicyYAML, nil},
+		{
+			"YAML experiment simple valid constraints policy priority limit", model.ExperimentType,
+			`
+constraints:
+  priority_limit: 10
+`, nil,
+		},
+		{
+			"YAML NTSC simple valid constraints policy priority limit", model.NTSCType,
+			`
+constraints:
+  priority_limit: 10
+`, nil,
+		},
+		{
+			"YAML experiment simple valid constraints policy resources", model.ExperimentType,
+			`
+constraints:
+  resources:
+    max_slots: 4
+`, nil,
+		},
+		{
+			"YAML NTSC simple valid constraints policy resources", model.NTSCType,
+			`
+constraints:
+  resources:
+    max_slots: 4
+`, nil,
+		},
+
+		// Invalid experiment constraint policies (YAML).
+		{
+			"experiment constraint with null key", model.ExperimentType,
+			`
+constraints:
+  : 10
+`,
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment constraints invalid type for key", model.ExperimentType,
+			`
+constraints:
+  resources:
+    max_slots: "this should be a number"
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment constraints nonexistent key", model.ExperimentType,
+			`
+constraints:
+  nonexistent_priority_limit: 10
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment constraints extra nonexistent key", model.ExperimentType,
+			`
+constraints:
+  resources:
+    max_slots: 1
+  extra_key: 2
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment just constraints", model.ExperimentType,
+			`constraints:`, nil,
+		},
+
+		// Invalid NTSC constraint policies (YAML).
+		{
+			"YAML NTSC constraint with null key", model.NTSCType,
+			`
+constraints:
+  : 10
+`,
+			fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC constraints invalid type for key", model.NTSCType,
+			`
+constraints:
+  resources:
+    max_slots: "this should be a number"
+`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC constraints nonexistent key", model.NTSCType,
+			`
+constraints:
+  nonexistent_priority_limit: 10
+`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC constraints extra nonexistent key", model.NTSCType,
+			`
+constraints:
+		     resources:
+		       max_slots: 1
+		     extra_key: 2
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML NTSC just constraints", model.NTSCType,
+			`constraints:`, nil,
+		},
+
+		// Additional experiment combinatory tests (YAML).
+		{
+			"YAML experiment valid config valid constraints", model.ExperimentType,
+			validExperimentConfigPolicyYAML + validConstraintsPolicyYAML, nil,
+		},
+		{
+			"YAML experiment valid constraints invalid constraints", model.ExperimentType,
+			validExperimentConfigPolicyYAML + `
+constraints:
+  resources:
+    max_slots: "this should be a number"
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"YAML experiment invalid config valid constraints", model.ExperimentType,
+			`
+invariant_config:
+  resources:
+    slots: "this should be a number"
+` + validConstraintsPolicyYAML, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+
+		// Additional NTSC combinatory tests (YAML).
+		{
+			"YAML NTSC valid config valid constraints", model.NTSCType,
+			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, fmt.Errorf("invalid ntsc config policy"),
+		},
+		{
+			"YAML NTSC valid constraints invalid constraints", model.NTSCType,
+			validNTSCConfigPolicyYAML + `
+constraints:
+  resources:
+    max_slots: "this should be a number"
+`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"NTSC invalid config valid constraints", model.NTSCType,
+			`
+invariant_config:
+  resources:
+    slots: "this should be a number"
+` + validConstraintsPolicyYAML, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+
+		// Experiment-NTSC mismatch test error (YAML).
+		{
+			"YAML valid experiment config with NTSC workload type", model.NTSCType,
+			validExperimentConfigPolicyYAML, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"YAML valid NTSC config with experiment workload type", model.ExperimentType,
+			validNTSCConfigPolicyYAML, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			api, _, _, _ := setupWorkspaceAuthZTest(t, nil)
+
+			err := api.validatePoliciesAndWorkloadType(nil, test.workloadType, test.configPolicies)
+			if test.err != nil {
+				require.Error(t, err)
+				require.ErrorContains(t, err, test.err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
+	tests := []struct {
+		name           string
+		workloadType   string
+		configPolicies string
+		err            error
+	}{
+		// Valid experiment invariant config policies.
+		{
+			"JSON simple experiment config with description", model.ExperimentType,
+			`{ "invariant_config": {
+		 "description": "test\nspecial\tchar"
+		}
+	}`, nil,
+		},
+		{
+			"JSON simple experiment config with resources", model.ExperimentType,
+			`{ "invariant_config": {
+			 "resources": {
+				 "slots": 1 }
+			}
+	}`, nil,
+		},
+		{"JSON partial experiment config", model.ExperimentType, "{" +
+			validExperimentConfigPolicyJSON + "}", nil},
+
+		// Valid NTSC invariant config policies (JSON).
+		{
+			"JSON simple NTSC config with description", model.NTSCType,
+			`{ "invariant_config": {
+		"description": "test\nspecial\tchar"
+		}
+	}`, nil,
+		},
+		{
+			"JSON simple NTSC config with resources", model.NTSCType,
+			`{ "invariant_config": {
+			"resources": {
+				"slots": 1
+			}
+		}
+	}`, nil,
+		},
+		{"JSON partial NTSC config", model.NTSCType, "{" + validNTSCConfigPolicyJSON + "}", nil},
+
+		// Invalid experiment invariant config policies (JSON).
+		{
+			"JSON experiment config with null key", model.ExperimentType,
+			`{ "invariant_config":
+			  : "test\nspecial\tchar"
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment config invalid type for key", model.ExperimentType,
+			`{ "invariant_config:
+		  "resources": {
+			slots: "this should be a number"
+		}
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment config nonexistent key", model.ExperimentType,
+			`{ "invariant_config":
+		"nonexistent_description": "test\nspecial\tchar" 
+}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment config extra nonexistent key", model.ExperimentType,
+			`{ "invariant_config": {
+			"resources": {
+				"slots": 1
+			},
+			"extra_key": 2
+		}
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment just config", model.ExperimentType,
+			`{"invariant_config": }`, nil,
+		},
+		{
+			"JSON experiment bad config spec", model.ExperimentType,
+			`{ "bad_config_spec": {
+			"resources": {
+				"slots": 1
+			}				}
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+
+		// Invalid NTSC invariant config policies (JSON).
+		{
+			"JSON NTSC config with null key", model.NTSCType,
+			`{ "invariant_config": {
+		   : "test\nspecial\tchar"
+	 }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC config with empty key", model.NTSCType,
+			`{ "invariant_config": {
+		   "": "test\nspecial\tchar"
+	 }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC invalid NTSC type for key", model.NTSCType,
+			`{ "invariant_config":
+		"resources": {
+			"slots": "this should be a number"
+		}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC nonexistent key", model.NTSCType,
+			`{ "invariant_config": {
+		   "nonexistent_description": "test\nspecial\tchar"
+	 }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC extra nonexistent key", model.NTSCType,
+			`{ "invariant_config": {
+			"resources": {
+				 "slots": 1
+		  },
+		"extra_key": 2
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC just config", model.NTSCType,
+			`{ "invariant_config": }`, nil,
+		},
+		{
+			"JSON NTSC bad config spec", model.NTSCType,
+			`{ "bad_config_spec": {
+			"resources": {
+				"slots": 1
+			}				
+		}
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		// Valid constraint policies (JSON).
+		{
+			"JSON experiment valid constraints policy", model.ExperimentType,
+			"{" + validConstraintsPolicyJSON + "}", nil,
+		},
+		{"JSON NTSC valid constraints policy", model.NTSCType, "{" + validConstraintsPolicyJSON +
+			"}", nil},
+		{
+			"JSON experiment simple valid constraints policy priority limit", model.ExperimentType,
+			`{ "constraints": {
+			"priority_limit": 10
+		}
+	}`, nil,
+		},
+		{
+			"JSON NTSC simple valid constraints policy priority limit", model.NTSCType,
+			`{ "constraints": {
+			"priority_limit": 10
+		}
+	}`, nil,
+		},
+		{
+			"JSON experiment simple valid constraints policy resources", model.ExperimentType,
+			`{ "constraints": {
+			"resources": {
+				"max_slots": 4
+			}
+		}
+	}`, nil,
+		},
+		{
+			"JSON NTSC simple valid constraints policy resources", model.NTSCType,
+			`{ "constraints": {
+			"resources": {
+				"max_slots": 4
+			}
+		}
+	}`, nil,
+		},
+
+		// Invalid experiment constraint policies (JSON).
+		{
+			"JSON experiment constraint with null key", model.ExperimentType,
+			`{ "constraints": {
+		: 10 
+		}
+	}`,
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment constraints invalid type for key", model.ExperimentType,
+			`{ "constraints": {
+			"resources": {
+				"max_slots": "this should be a number"
+			}
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment constraints nonexistent key", model.ExperimentType,
+			`{ "constraints": {
+		"nonexistent_priority_limit": 10
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment constraints extra nonexistent key", model.ExperimentType,
+			`{ "constraints": {
+			"resources": {
+				"max_slots": 1
+			},
+			"extra_key": 2 
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment just constraints", model.ExperimentType,
+			`{ "constraints": }`, nil,
+		},
+
+		// Invalid NTSC constraint policies (JSON).
+		{
+			"JSON NTSC constraint with null key", model.ExperimentType,
+			`{ "constraints": {
+		: 10 
+		}
+	}`,
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON NTSC constraint with empty key", model.ExperimentType,
+			`{ "constraints": {
+		"": 10 
+		}
+	}`,
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON NTSC constraints invalid type for key", model.NTSCType,
+			`"constraints": {
+		"resources": {
+			"max_slots": "this should be a number"
+		}
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC constraints nonexistent key", model.NTSCType,
+			`{ "constraints":
+			  "nonexistent_priority_limit": 10 
+	  }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC constraints extra nonexistent key", model.NTSCType,
+			`{ "constraints": {
+		"resources": {
+			"max_slots": 1
+		},
+	  "extra_key": 2
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC just constraints", model.NTSCType,
+			`{ "constraints": }`, nil,
+		},
+
+		// Additional experiment combinatory tests (JSON).
+		{
+			"JSON experiment valid config valid constraints", model.ExperimentType,
+			"{" + validExperimentConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", nil,
+		},
+		{
+			"JSON experiment valid constraints invalid constraints", model.ExperimentType,
+			"{" + validExperimentConfigPolicyJSON + "," +
+				` 
+		"constraints: {
+			"resources": {
+				"max_slots": "this should be a number" 
+			}
+		}
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			"JSON experiment invalid config valid constraints", model.ExperimentType,
+			`{ "invariant_config": {
+			"resources": {
+				"slots": "this should be a number"
+			}
+	},` + validConstraintsPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+
+		// Additional NTSC combinatory tests (JSON).
+		{
+			"JSON NTSC valid config invalid constraints", model.NTSCType,
+			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", fmt.Errorf("invalid ntsc config policy"),
+		},
+		{
+			"JSON NTSC valid constraints invalid constraints", model.NTSCType,
+			"{" + validNTSCConfigPolicyJSON + "," +
+				`
+		"constraints": {
+			"resources": {
+				"max_slots": "this should be a number"
+			}
+		}
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON NTSC invalid config valid constraints", model.NTSCType,
+			`{ "invariant_config": {
+			"resources": {
+				"slots": "this should be a number"
+			}
+	},
+` + validConstraintsPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+
+		// Experiment-NTSC mismatch test error (JSON).
+		{
+			"JSON valid experiment config with NTSC workload type", model.NTSCType,
+			"{" + validExperimentConfigPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+		{
+			"JSON valid NTSC config with experiment workload type", model.ExperimentType,
+			"{" + validNTSCConfigPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			api, _, _, _ := setupWorkspaceAuthZTest(t, nil)
+
+			err := api.validatePoliciesAndWorkloadType(nil, test.workloadType, test.configPolicies)
+			if test.err != nil {
+				require.Error(t, err)
+				require.ErrorContains(t, err, test.err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestParseConfigPolicies(t *testing.T) {
+	validExperimentConfigYAML := `
+description: "test\nspecial\tchar"
+environment:
+  force_pull_image: false
+  add_capabilities:
+    - "cap1"
+    - "cap2"
+resources:
+  slots: 1
+name: my_experiment_config
+`
+	validConstraintsYAML := `
+resources:
+  max_slots: 4
+priority_limit: 10
+`
+
+	validNTSCConfigYAML := `
+description: "test\nspecial\tchar"
+environment:
+  force_pull_image: false
+  add_capabilities:
+    - "cap1"
+    - "cap2"
+resources:
+  slots: 1
+work_dir: my/working/directory
+`
+	validExperimentConfigJSON := "{" + validExperimentConfigPolicyJSON + "}"
+	validConstraintsJSON := "{" + validConstraintsPolicyJSON + "}"
+
+	// We create experiment and NTSC config and constraints maps to generate the expected
+	// configuration without replicating the marshaling code used in the parseConfigPolicies
+	// function to generate our expected output. So we compare configuration maps instead of the
+	// directly outputted strings since identical maps imply identical configuration in differently
+	// formatted strings.
+	// This further assures correct function logic since our expected values were derived without
+	// replicating any function logic.
+	var validExperimentConfigMap map[string]interface{}
+	err := yaml.Unmarshal([]byte(validExperimentConfigYAML), &validExperimentConfigMap)
+	require.NoError(t, err)
+
+	var validConstraintsMap map[string]interface{}
+	err = yaml.Unmarshal([]byte(validConstraintsYAML), &validConstraintsMap)
+	require.NoError(t, err)
+
+	var validNTSCConfigMap map[string]interface{}
+	err = yaml.Unmarshal([]byte(validNTSCConfigYAML), &validNTSCConfigMap)
+	require.NoError(t, err)
+
+	// We cast the integers to float64 throughout the tcps maps because yaml.Unmarshal decodes all
+	// objects of numbers type into float64 by default.
+	tests := []struct {
+		name            string
+		configPolicies  string
+		tcps            map[string]interface{}
+		invariantConfig map[string]interface{}
+		constraints     map[string]interface{}
+	}{
+		{
+			"valid YAML exp config and constraints", validExperimentConfigPolicyYAML +
+				validConstraintsPolicyYAML,
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"name":      "my_experiment_config",
+				},
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(4)},
+					"priority_limit": float64(10),
+				},
+			},
+			validExperimentConfigMap, validConstraintsMap,
+		},
+
+		{
+			"valid JSON experiment config and constraints", "{" + validExperimentConfigPolicyJSON +
+				"," + validConstraintsPolicyJSON + "}",
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"name":      "my_experiment_config",
+				},
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(4)},
+					"priority_limit": float64(10),
+				},
+			},
+			validExperimentConfigMap, validConstraintsMap,
+		},
+		{
+			"valid YAML NTSC config and constraints", validNTSCConfigPolicyYAML +
+				validConstraintsPolicyYAML,
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"work_dir":  "my/working/directory",
+				},
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(4)},
+					"priority_limit": float64(10),
+				},
+			},
+			validNTSCConfigMap, validConstraintsMap,
+		},
+		{
+			"valid JSON NTSC config and constraints", "{" + validNTSCConfigPolicyJSON +
+				"," + validConstraintsPolicyJSON + "}",
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"work_dir":  "my/working/directory",
+				},
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(4)},
+					"priority_limit": float64(10),
+				},
+			},
+			validNTSCConfigMap, validConstraintsMap,
+		},
+		{
+			"just constraints YAML", validConstraintsPolicyYAML,
+			map[string]interface{}{
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(4)},
+					"priority_limit": float64(10),
+				},
+			},
+			nil, validConstraintsMap,
+		},
+		{
+			"just constraints JSON", validConstraintsJSON, map[string]interface{}{
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(4)},
+					"priority_limit": float64(10),
+				},
+			}, nil, validConstraintsMap,
+		},
+		{
+			"just experiment config YAML", validExperimentConfigPolicyYAML,
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"name":      "my_experiment_config",
+				},
+			},
+			validExperimentConfigMap, nil,
+		},
+		{
+			"just experiment config JSON", validExperimentConfigJSON,
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"name":      "my_experiment_config",
+				},
+			},
+			validExperimentConfigMap, nil,
+		},
+		{
+			"just NTSC config YAML", validNTSCConfigPolicyYAML,
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"work_dir":  "my/working/directory",
+				},
+			},
+			validNTSCConfigMap, nil,
+		},
+		{
+			"just NTSC config JSON", "{" + validNTSCConfigPolicyJSON + "}",
+			map[string]interface{}{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+
+					"resources": map[string]interface{}{"slots": float64(1)},
+					"work_dir":  "my/working/directory",
+				},
+			},
+			validNTSCConfigMap, nil,
+		},
+		{
+			"random valid YAML with neither config nor constraint",
+			`
+a_key: "a_value"
+another_key:
+  sub_key: 1
+`,
+			map[string]interface{}{
+				"a_key":       "a_value",
+				"another_key": map[string]interface{}{"sub_key": float64(1)},
+			},
+			nil, nil,
+		},
+		{
+			"random valid JSON with neither config nor constraint",
+
+			`{
+			"a_key": "a_value",
+			"another_key": {
+				"sub_key": 1
+				}
+			}`,
+			map[string]interface{}{
+				"a_key":       "a_value",
+				"another_key": map[string]interface{}{"sub_key": float64(1)},
+			},
+			nil, nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tcps, invariantConfig, constraints, err := parseConfigPolicies(test.configPolicies)
+			require.NoError(t, err)
+
+			// Verify invariant config output is correct
+			if test.invariantConfig != nil {
+				require.NotNil(t, invariantConfig)
+
+				var invariantConfigMap map[string]interface{}
+				err = yaml.Unmarshal([]byte(*invariantConfig), &invariantConfigMap)
+				require.NoError(t, err)
+				require.Equal(t, test.invariantConfig, invariantConfigMap)
+			} else {
+				require.Nil(t, invariantConfig)
+			}
+
+			// Verify constraints output is correct.
+			if test.constraints != nil {
+				require.NotNil(t, constraints)
+
+				var constraintsMap map[string]interface{}
+				err = yaml.Unmarshal([]byte(*constraints), &constraintsMap)
+				require.NoError(t, err)
+				require.Equal(t, test.constraints, constraintsMap)
+			} else {
+				require.Nil(t, constraints)
+			}
+
+			// Verify map output is correct.
+			require.Equal(t, test.tcps, tcps)
+		})
+	}
+
+	// Test empty string fails.
+	tcps, invariantConfig, constraints, err := parseConfigPolicies("")
+	require.Nil(t, tcps)
+	require.Nil(t, invariantConfig)
+	require.Nil(t, constraints)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "nothing to parse, empty config and constraints input")
+
+	// Test non-JSON and non-YAML formatted strings fail.
+	tcps, invariantConfig, constraints, err = parseConfigPolicies("{\"bad_json\",: 1}")
+	require.Nil(t, tcps)
+	require.Nil(t, invariantConfig)
+	require.Nil(t, constraints)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "error parsing config policies")
+
+	tcps, invariantConfig, constraints, err = parseConfigPolicies("bad_yaml:1")
+	require.Nil(t, tcps)
+	require.Nil(t, invariantConfig)
+	require.Nil(t, constraints)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "error unmarshaling config policies")
+
+	tcps, invariantConfig, constraints, err = parseConfigPolicies("random string")
+	require.Nil(t, tcps)
+	require.Nil(t, invariantConfig)
+	require.Nil(t, constraints)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "error unmarshaling config policies")
+}
+
+func TestPutWorkspaceConfigPolicies(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
+	workspaceIDs := []int32{}
+	defer func() {
+		err := db.CleanupMockWorkspace(workspaceIDs)
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
+
+	tests := []struct {
+		name                  string
+		req                   *apiv1.PutWorkspaceConfigPoliciesRequest
+		configPolicies        map[string]any
+		updatedPoliciesReq    *apiv1.PutWorkspaceConfigPoliciesRequest
+		updatedConfigPolicies map[string]any
+		err                   error
+	}{
+		{
+			name: "invalid workload type",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType:   "bad type",
+				ConfigPolicies: validExperimentConfigPolicyYAML,
+			},
+			configPolicies:        nil,
+			updatedPoliciesReq:    nil,
+			updatedConfigPolicies: nil,
+			err:                   fmt.Errorf("error retrieving bad type task config policies"),
+		},
+		{
+			name: "empty workload type",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				ConfigPolicies: validExperimentConfigPolicyYAML,
+			},
+			configPolicies:        nil,
+			updatedPoliciesReq:    nil,
+			updatedConfigPolicies: nil,
+			err:                   fmt.Errorf("error retrieving  task config policies"),
+		},
+		{
+			name: "valid experiment invariant config add update YAML",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: validExperimentConfigPolicyYAML,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: validExperimentConfigPolicyYAML + entrypointYAML,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "valid experiment invariant config add update JSON",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: "{" + validExperimentConfigPolicyJSON + "}",
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: "{" + updatedExperimentConfigPolicyJSON + "}",
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment config YAML",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "test\nspecial\tchar"
+  name: my_experiment_config
+`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"name":        "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "new description!"
+  name: my_experiment_config
+`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "new description!",
+					"name":        "my_experiment_config",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment config JSON",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+				"invariant_config": {
+					"description": "test\nspecial\tchar",
+					"name": "my_experiment_config"
+					}
+				}`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"name":        "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+				"invariant_config": {
+					"description": "new description!",
+					"name": "my_experiment_config"
+					}
+				}`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "new description!",
+					"name":        "my_experiment_config",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment constraints delete and modify update YAML",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+constraints:
+  resources:
+    max_slots: 10
+  priority_limit: 20
+`,
+			},
+			configPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(10)},
+					"priority_limit": float64(20),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+constraints:
+  priority_limit: 30
+`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"priority_limit": float64(30),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment constraints delete and modify update JSON",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+					"constraints": {
+						"resources": {
+							"max_slots": 10
+						},
+						"priority_limit": 20
+					}
+			}`,
+			},
+			configPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(10)},
+					"priority_limit": float64(20),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+					"constraints": {
+						"priority_limit": 30
+					}
+				}`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"priority_limit": float64(30),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "experiment config and constraints YAML",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    force_pull_image: false
+    add_capabilities:
+      - cap1
+      - cap2
+  resources:
+    slots: 1
+  name: my_experiment_config
+constraints:
+  resources:
+    max_slots: 4
+  priority_limit: 10
+`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(4),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    add_capabilities:
+      - cap1
+  resources:
+    slots: 5
+  name: my_experiment_config
+  entrypoint: "start from here"
+constraints:
+  resources:
+    max_slots: 8
+  priority_limit: 10
+`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"add_capabilities": []interface{}{"cap1"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(5),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(8),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "experiment config and constraints JSON",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{
+					"invariant_config": {
+						"description": "test\nspecial\tchar",
+						"environment": {
+							"force_pull_image": false,
+							"add_capabilities": ["cap1", "cap2"]
+						},
+						"resources": {
+							"slots": 1
+						},
+						"name": "my_experiment_config"
+					},
+					"constraints": {
+						"resources": {
+							"max_slots": 4
+						},
+						"priority_limit": 10
+					}
+				}`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(4),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{
+					"invariant_config": {
+						"description": "test\nspecial\tchar",
+						"environment": {
+							"add_capabilities": ["cap1"]
+						},
+						"resources": {
+							"slots": 5
+						},
+						"name": "my_experiment_config",
+						"entrypoint": "start from here",
+					},
+					"constraints": {
+						"resources": {
+							"max_slots": 8
+						},
+						"priority_limit": 10
+					}
+				}`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"add_capabilities": []interface{}{"cap1"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(5),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(8),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "invalid constraints JSON",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{
+					"constraints": {
+						"resources": {
+							"max_slots": a_string_not_int
+						}					
+					}
+				}`,
+			},
+			configPolicies:        nil,
+			updatedPoliciesReq:    nil,
+			updatedConfigPolicies: nil,
+			err:                   fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			name: "invalid NTSC config YAML",
+			req: &apiv1.PutWorkspaceConfigPoliciesRequest{
+				WorkloadType: model.NTSCType,
+				ConfigPolicies: `
+invariant_config:
+  : "null key"
+`,
+			},
+			configPolicies:        nil,
+			updatedPoliciesReq:    nil,
+			updatedConfigPolicies: nil,
+			err:                   fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			wkspResp, err := api.PostWorkspace(ctx,
+				&apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+			workspaceID := wkspResp.Workspace.Id
+			workspaceIDs = append(workspaceIDs, workspaceID)
+			require.NoError(t, err)
+
+			test.req.WorkspaceId = workspaceID
+			resp, err := api.PutWorkspaceConfigPolicies(ctx, test.req)
+			if test.err != nil {
+				require.ErrorContains(t, err, test.err.Error())
+				require.Nil(t, resp)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, test.configPolicies, resp.ConfigPolicies.AsMap())
+
+			// Verify that we can retrieve the input config policies.
+			getResp, err := api.GetWorkspaceConfigPolicies(ctx,
+				&apiv1.GetWorkspaceConfigPoliciesRequest{
+					WorkspaceId:  workspaceID,
+					WorkloadType: test.req.WorkloadType,
+				})
+			require.NoError(t, err)
+
+			configPolicies := getResp.ConfigPolicies.AsMap()
+			require.Equal(t, test.configPolicies, configPolicies)
+
+			test.updatedPoliciesReq.WorkspaceId = workspaceID
+			resp, err = api.PutWorkspaceConfigPolicies(ctx, test.updatedPoliciesReq)
+			require.NoError(t, err)
+			require.Equal(t, test.updatedConfigPolicies, resp.ConfigPolicies.AsMap())
+
+			// Verify that config policies were updated correctly.
+			getResp, err = api.GetWorkspaceConfigPolicies(ctx,
+				&apiv1.GetWorkspaceConfigPoliciesRequest{
+					WorkspaceId:  workspaceID,
+					WorkloadType: test.req.WorkloadType,
+				})
+			require.NoError(t, err)
+
+			updatedConfigPolicies := getResp.ConfigPolicies.AsMap()
+			require.Equal(t, test.updatedConfigPolicies, updatedConfigPolicies)
+		})
+	}
+
+	// Test invalid workspace ID
+	resp, err := api.PutWorkspaceConfigPolicies(ctx,
+		&apiv1.PutWorkspaceConfigPoliciesRequest{
+			WorkspaceId:    int32(-1),
+			WorkloadType:   model.NTSCType,
+			ConfigPolicies: validExperimentConfigPolicyYAML,
+		})
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "NotFound")
+}
+
+func TestPutGlobalConfigPolicies(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
+	updatedExperimentConfigPolicyJSON := `
+	"invariant_config": {
+        "description": "test\nspecial\tchar",
+        "environment": {
+            "force_pull_image": false,
+            "add_capabilities": ["cap1", "cap2"]
+        },
+        "resources": {
+            "slots": 1
+        },
+		"name": "my_experiment_config",
+		"entrypoint": "start from here"
+    }
+`
+
+	tests := []struct {
+		name                  string
+		req                   *apiv1.PutGlobalConfigPoliciesRequest
+		configPolicies        map[string]any
+		updatedPoliciesReq    *apiv1.PutGlobalConfigPoliciesRequest
+		updatedConfigPolicies map[string]any
+		err                   error
+	}{
+		{
+			name: "valid experiment invariant config add update YAML",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: validExperimentConfigPolicyYAML,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: validExperimentConfigPolicyYAML + entrypointYAML,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "valid experiment invariant config add update JSON",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: "{" + validExperimentConfigPolicyJSON + "}",
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType:   model.ExperimentType,
+				ConfigPolicies: "{" + updatedExperimentConfigPolicyJSON + "}",
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment config YAML",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "test\nspecial\tchar"
+  name: my_experiment_config
+`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"name":        "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "new description!"
+  name: my_experiment_config
+`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "new description!",
+					"name":        "my_experiment_config",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment config JSON",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+				"invariant_config": {
+					"description": "test\nspecial\tchar",
+					"name": "my_experiment_config"
+					}
+				}`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"name":        "my_experiment_config",
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+				"invariant_config": {
+					"description": "new description!",
+					"name": "my_experiment_config"
+					}
+				}`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "new description!",
+					"name":        "my_experiment_config",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment constraints delete and modify update YAML",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+constraints:
+  resources:
+    max_slots: 10
+  priority_limit: 20
+`,
+			},
+			configPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(10)},
+					"priority_limit": float64(20),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+constraints:
+  priority_limit: 30
+`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"priority_limit": float64(30),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "simple valid experiment constraints delete and modify update JSON",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+					"constraints": {
+						"resources": {
+							"max_slots": 10
+						},
+						"priority_limit": 20
+					}
+			}`,
+			},
+			configPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"resources":      map[string]interface{}{"max_slots": float64(10)},
+					"priority_limit": float64(20),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{ 
+					"constraints": {
+						"priority_limit": 30
+					}
+				}`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"constraints": map[string]interface{}{
+					"priority_limit": float64(30),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "experiment config and constraints YAML",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    force_pull_image: false
+    add_capabilities:
+      - cap1
+      - cap2
+  resources:
+    slots: 1
+  name: my_experiment_config
+constraints:
+  resources:
+    max_slots: 4
+  priority_limit: 10
+`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(4),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    add_capabilities:
+      - cap1
+  resources:
+    slots: 5
+  name: my_experiment_config
+  entrypoint: "start from here"
+constraints:
+  resources:
+    max_slots: 8
+  priority_limit: 10
+`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"add_capabilities": []interface{}{"cap1"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(5),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(8),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "experiment config and constraints JSON",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{
+					"invariant_config": {
+						"description": "test\nspecial\tchar",
+						"environment": {
+							"force_pull_image": false,
+							"add_capabilities": ["cap1", "cap2"]
+						},
+						"resources": {
+							"slots": 1
+						},
+						"name": "my_experiment_config"
+					},
+					"constraints": {
+						"resources": {
+							"max_slots": 4
+						},
+						"priority_limit": 10
+					}
+				}`,
+			},
+			configPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"force_pull_image": false,
+						"add_capabilities": []interface{}{"cap1", "cap2"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(1),
+					},
+					"name": "my_experiment_config",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(4),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			updatedPoliciesReq: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{
+					"invariant_config": {
+						"description": "test\nspecial\tchar",
+						"environment": {
+							"add_capabilities": ["cap1"]
+						},
+						"resources": {
+							"slots": 5
+						},
+						"name": "my_experiment_config",
+						"entrypoint": "start from here",
+					},
+					"constraints": {
+						"resources": {
+							"max_slots": 8
+						},
+						"priority_limit": 10
+					}
+				}`,
+			},
+			updatedConfigPolicies: map[string]any{
+				"invariant_config": map[string]interface{}{
+					"description": "test\nspecial\tchar",
+					"environment": map[string]interface{}{
+						"add_capabilities": []interface{}{"cap1"},
+					},
+					"resources": map[string]interface{}{
+						"slots": float64(5),
+					},
+					"name":       "my_experiment_config",
+					"entrypoint": "start from here",
+				},
+				"constraints": map[string]interface{}{
+					"resources": map[string]interface{}{
+						"max_slots": float64(8),
+					},
+					"priority_limit": float64(10),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "invalid constraints JSON",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.ExperimentType,
+				ConfigPolicies: `{
+					"constraints": {
+						"resources": {
+							"max_slots": a_string_not_int
+						}					
+					}
+				}`,
+			},
+			configPolicies:        nil,
+			updatedPoliciesReq:    nil,
+			updatedConfigPolicies: nil,
+			err:                   fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
+		},
+		{
+			name: "invalid NTSC config YAML",
+			req: &apiv1.PutGlobalConfigPoliciesRequest{
+				WorkloadType: model.NTSCType,
+				ConfigPolicies: `
+invariant_config:
+  : "null key"
+`,
+			},
+			configPolicies:        nil,
+			updatedPoliciesReq:    nil,
+			updatedConfigPolicies: nil,
+			err:                   fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := api.DeleteGlobalConfigPolicies(ctx,
+				&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: test.req.WorkloadType})
+			require.NoError(t, err)
+
+			resp, err := api.PutGlobalConfigPolicies(ctx, test.req)
+			if test.err != nil {
+				require.ErrorContains(t, err, test.err.Error())
+				require.Nil(t, resp)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, test.configPolicies, resp.ConfigPolicies.AsMap())
+
+			// Verify that we can retrieve the input config policies.
+			getResp, err := api.GetGlobalConfigPolicies(ctx,
+				&apiv1.GetGlobalConfigPoliciesRequest{
+					WorkloadType: test.req.WorkloadType,
+				})
+			require.NoError(t, err)
+
+			configPolicies := getResp.ConfigPolicies.AsMap()
+			require.Equal(t, test.configPolicies, configPolicies)
+
+			// Delete before PUT-ing again
+			_, err = api.DeleteGlobalConfigPolicies(ctx,
+				&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: test.req.WorkloadType})
+			require.NoError(t, err)
+
+			resp, err = api.PutGlobalConfigPolicies(ctx, test.updatedPoliciesReq)
+			require.NoError(t, err)
+			require.Equal(t, test.updatedConfigPolicies, resp.ConfigPolicies.AsMap())
+
+			// Verify that config policies were updated correctly.
+			getResp, err = api.GetGlobalConfigPolicies(ctx,
+				&apiv1.GetGlobalConfigPoliciesRequest{
+					WorkloadType: test.req.WorkloadType,
+				})
+			require.NoError(t, err)
+
+			updatedConfigPolicies := getResp.ConfigPolicies.AsMap()
+			require.Equal(t, test.updatedConfigPolicies, updatedConfigPolicies)
+		})
+	}
+
+	// Test invalid workload type.
+	resp, err := api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
+		WorkloadType:   "bad type",
+		ConfigPolicies: validExperimentConfigPolicyYAML,
+	})
+	require.ErrorContains(t, err, "invalid workload type")
+	require.Nil(t, resp)
+
+	// Test empty workload type.
+	resp, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
+		ConfigPolicies: validExperimentConfigPolicyYAML,
+	})
+	require.ErrorContains(t, err, "no workload type specified")
+	require.Nil(t, resp)
 }

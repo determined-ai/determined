@@ -777,6 +777,50 @@ func TestGetRM(t *testing.T) {
 	}
 }
 
+func TestSmallerValueIsHigherPriority(t *testing.T) {
+	t.Run("both RMs same type", func(t *testing.T) {
+		defaultRM, otherRM, m := mockMultiRM()
+		defaultRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+		smallerIsHigher, err := m.SmallerValueIsHigherPriority()
+		require.NoError(t, err)
+		require.True(t, smallerIsHigher)
+	})
+
+	t.Run("RMs different type", func(t *testing.T) {
+		// This is not a supported mode in Determined but we still need to test it.
+		defaultRM, otherRM, m := mockMultiRM()
+		defaultRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
+		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+		_, err := m.SmallerValueIsHigherPriority()
+		require.Error(t, err)
+	})
+
+	t.Run("RMs with error", func(t *testing.T) {
+		// This is not a supported mode in Determined but we still need to test it.
+		defaultRM, otherRM, m := mockMultiRM()
+		defaultRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, fmt.Errorf("error"))
+		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
+		_, err := m.SmallerValueIsHigherPriority()
+		require.Error(t, err)
+	})
+}
+
+func mockMultiRM() (*mocks.ResourceManager, *mocks.ResourceManager, *MultiRMRouter) {
+	defaultRM := &mocks.ResourceManager{}
+	otherRM := &mocks.ResourceManager{}
+
+	m := &MultiRMRouter{
+		defaultClusterName: defaultClusterName,
+		rms: map[string]rm.ResourceManager{
+			defaultClusterName: defaultRM,
+			"rm1":              otherRM,
+		},
+	}
+
+	return defaultRM, otherRM, m
+}
+
 func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM := mocks.ResourceManager{}
 	mockRM.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
@@ -810,5 +854,6 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("DisableSlot", mock.Anything).Return(&apiv1.DisableSlotResponse{}, nil)
 	mockRM.On("DefaultNamespace", mock.Anything).Return("default", nil)
 	mockRM.On("VerifyNamespaceExists", mock.Anything).Return(nil)
+
 	return &mockRM
 }

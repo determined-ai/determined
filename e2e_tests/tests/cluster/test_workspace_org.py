@@ -11,11 +11,12 @@ import pytest
 
 from determined.common import api
 from determined.common.api import bindings, errors
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import detproc
-from tests import experiment as exp
 from tests.cluster import test_agent_user_group
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -23,7 +24,6 @@ def test_workspace_org() -> None:
     sess = api_utils.user_session()
     admin_sess = api_utils.admin_session()
 
-    test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []
     test_workspaces: List[bindings.v1Workspace] = []
 
@@ -312,23 +312,19 @@ def test_workspace_org() -> None:
         assert len(returned_notes) == 1
 
         # Create an experiment in the default project.
-        test_exp_id = exp.run_basic_test(
-            sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-        )
-        test_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
-        test_experiments.append(test_exp)
-        exp.wait_for_experiment_state(sess, test_exp_id, bindings.experimentv1State.COMPLETED)
-        assert test_exp.projectId == default_project.id
+        test_exp = noop.create_experiment(sess)
+        assert test_exp.project_id == default_project.id
+        assert test_exp.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
         # Move the test experiment into a user-made project
         dproj_exp = bindings.get_GetExperiments(sess, projectId=default_project.id).experiments
         exp_count = len(bindings.get_GetExperiments(sess, projectId=made_project.id).experiments)
         assert exp_count == 0
         mbody = bindings.v1MoveExperimentRequest(
-            destinationProjectId=made_project.id, experimentId=test_exp_id
+            destinationProjectId=made_project.id, experimentId=test_exp.id
         )
-        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
-        modified_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
+        bindings.post_MoveExperiment(sess, experimentId=test_exp.id, body=mbody)
+        modified_exp = bindings.get_GetExperiment(sess, experimentId=test_exp.id).experiment
         assert modified_exp.projectId == made_project.id
 
         # Confirm the test experiment is in the new project, no longer in old project.
@@ -340,19 +336,19 @@ def test_workspace_org() -> None:
         # Cannot move an experiment out of an archived project
         bindings.post_ArchiveProject(sess, id=made_project.id)
         mbody2 = bindings.v1MoveExperimentRequest(
-            destinationProjectId=default_project.id, experimentId=test_exp_id
+            destinationProjectId=default_project.id, experimentId=test_exp.id
         )
         with pytest.raises(errors.APIException):
-            bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody2)
+            bindings.post_MoveExperiment(sess, experimentId=test_exp.id, body=mbody2)
         bindings.post_UnarchiveProject(sess, id=made_project.id)
 
         # Moving an experiment into default project
-        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody2)
+        bindings.post_MoveExperiment(sess, experimentId=test_exp.id, body=mbody2)
 
         # Cannot move an experiment into an archived project
         bindings.post_ArchiveProject(sess, id=made_project.id)
         with pytest.raises(errors.APIException):
-            bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
+            bindings.post_MoveExperiment(sess, experimentId=test_exp.id, body=mbody)
 
         # Refuse to create a workspace with a duplicate name
         r7 = bindings.post_PostWorkspace(

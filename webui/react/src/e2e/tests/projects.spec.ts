@@ -5,9 +5,9 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { WorkspaceDetails } from 'e2e/models/pages/WorkspaceDetails';
 import { WorkspaceProjects } from 'e2e/models/pages/WorkspaceDetails/WorkspaceProjects';
 import { randId, safeName } from 'e2e/utils/naming';
-import { V1Project } from 'services/api-ts-sdk';
+import { V1PostProjectResponse, V1Project, V1Workspace } from 'services/api-ts-sdk';
 
-const getCurrentProjectNames = async (workspaceProjects: WorkspaceProjects) => {
+const getCurrentProjectCardNames = async (workspaceProjects: WorkspaceProjects) => {
   await workspaceProjects.projectCards.pwLocator.nth(0).waitFor();
 
   const cardTitles = await workspaceProjects.projectCards.title.pwLocator.all();
@@ -94,73 +94,135 @@ test.describe('Project UI CRUD', () => {
     });
   });
 
-  test('Move a Project', async ({
-    authedPage,
-    newWorkspace,
-    backgroundApiWorkspace,
-    backgroundApiProject,
-  }) => {
-    const workspaceDetails = new WorkspaceDetails(authedPage);
+  test.describe('Move Project', () => {
+    let newProjectCard: V1PostProjectResponse;
+    let newProjectRow: V1PostProjectResponse;
+    let destinationWorkspace: V1Workspace;
 
-    const destinationWorkspace = (
-      await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
-    ).workspace;
+    test.beforeAll(
+      async ({
+        backgroundApiProject,
+        backgroundApiWorkspace,
+        newWorkspace: {
+          response: { workspace: originWorkspace },
+        },
+      }) => {
+        destinationWorkspace = (
+          await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
+        ).workspace;
 
-    const newProject = await backgroundApiProject.createProject(
-      newWorkspace.response.workspace.id,
-      backgroundApiProject.new(),
+        newProjectCard = await backgroundApiProject.createProject(
+          originWorkspace.id,
+          backgroundApiProject.new(),
+        );
+        newProjectRow = await backgroundApiProject.createProject(
+          originWorkspace.id,
+          backgroundApiProject.new(),
+        );
+
+        projectIds.push(newProjectCard.project.id);
+        projectIds.push(newProjectRow.project.id);
+      },
     );
-    projectIds.push(newProject.project.id);
+    test.afterAll(async ({ backgroundApiWorkspace }) => {
+      await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
+    });
 
-    await authedPage.reload();
+    test('Grid View', async ({ authedPage }) => {
+      const workspaceDetails = new WorkspaceDetails(authedPage);
 
-    const workspaceProjects = workspaceDetails.workspaceProjects;
-    const projectCard = workspaceProjects.cardByName(newProject.project.name);
-    const moveMenuItem = projectCard.actionMenu.move;
+      const workspaceProjects = workspaceDetails.workspaceProjects;
 
-    await projectCard.actionMenu.open();
-    await moveMenuItem.pwLocator.click();
-    await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
-      destinationWorkspace.name,
-    );
-    await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
-    await workspaceProjects.moveModal.footer.submit.pwLocator.click();
+      await workspaceProjects.gridListRadioGroup.grid.pwLocator.click(); // switch to the Grid View
 
-    await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
-    await projectCard.pwLocator.waitFor({ state: 'hidden' });
+      const projectCard = workspaceProjects.cardByName(newProjectCard.project.name);
+      const moveMenuItem = projectCard.actionMenu.move;
 
-    await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+      await projectCard.actionMenu.open();
+      await moveMenuItem.pwLocator.click();
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
+        destinationWorkspace.name,
+      );
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
+      await workspaceProjects.moveModal.footer.submit.pwLocator.click();
 
-    await projectCard.pwLocator.waitFor();
+      await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
+      await projectCard.pwLocator.waitFor({ state: 'hidden' });
 
-    await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
+      await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+
+      await expect(projectCard.pwLocator).toBeVisible();
+    });
+
+    test('List view', async ({ authedPage }) => {
+      const workspaceDetails = new WorkspaceDetails(authedPage);
+      const workspaceProjects = workspaceDetails.workspaceProjects;
+
+      await workspaceProjects.gridListRadioGroup.list.pwLocator.click(); // switch to the List View
+
+      const projectsTable = workspaceProjects.table.table;
+
+      const newRow = (
+        await projectsTable.filterRows(
+          async (row) => (await row.name.pwLocator.textContent()) === newProjectRow.project.name,
+        )
+      )[0];
+
+      await expect(newRow.name.pwLocator).toHaveText(newProjectRow.project.name);
+
+      const moveMenuItem = newRow.action;
+
+      await moveMenuItem.open();
+      await moveMenuItem.move.pwLocator.click();
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.fill(
+        destinationWorkspace.name,
+      );
+      await workspaceProjects.moveModal.destinationWorkspace.pwLocator.press('Enter');
+      await workspaceProjects.moveModal.footer.submit.pwLocator.click();
+
+      await workspaceProjects.moveModal.pwLocator.waitFor({ state: 'hidden' });
+      await newRow.pwLocator.waitFor({ state: 'hidden' });
+
+      await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+
+      const projectCard = workspaceProjects.cardByName(newProjectRow.project.name);
+
+      await expect(projectCard.pwLocator).toBeVisible();
+    });
   });
 });
 
 test.describe('Project List', () => {
   const projects: V1Project[] = [];
-  test.beforeAll(async ({ backgroundApiProject, newWorkspace }) => {
-    const olderProject = await backgroundApiProject.createProject(
-      newWorkspace.response.workspace.id,
-      {
+  const workspaceIds: number[] = [];
+
+  test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+    // Shared 'newWorkspace' fixture can sometimes contain projects from other test runs.
+    // Avoid this issue by creating a workspace specifically for Project List tests:
+    workspaceIds.push(
+      (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())).workspace.id,
+    );
+
+    const olderProject = (
+      await backgroundApiProject.createProject(workspaceIds[0], {
         name: safeName('a-test-project'),
-        workspaceId: newWorkspace.response.workspace.id,
-      },
-    );
-    projects.push(olderProject.project);
-    const newerProject = await backgroundApiProject.createProject(
-      newWorkspace.response.workspace.id,
-      {
+        workspaceId: workspaceIds[0],
+      })
+    ).project;
+    projects.push(olderProject);
+
+    const newerProject = (
+      await backgroundApiProject.createProject(workspaceIds[0], {
         name: safeName('b-test-project'),
-        workspaceId: newWorkspace.response.workspace.id,
-      },
-    );
-    projects.push(newerProject.project);
+        workspaceId: workspaceIds[0],
+      })
+    ).project;
+    projects.push(newerProject);
   });
 
-  test.beforeEach(async ({ authedPage, newWorkspace }) => {
+  test.beforeEach(async ({ authedPage }) => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
-    await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+    await workspaceDetails.gotoWorkspace(workspaceIds[0]);
     const workspaceProjects = workspaceDetails.workspaceProjects;
 
     await workspaceProjects.whoseSelect.selectMenuOption('All Projects');
@@ -168,9 +230,12 @@ test.describe('Project List', () => {
     await workspaceProjects.gridListRadioGroup.grid.pwLocator.click();
   });
 
-  test.afterAll(async ({ backgroundApiProject }) => {
+  test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
     for (const project of projects) {
       await backgroundApiProject.deleteProject(project.id);
+    }
+    for (const workspaceId of workspaceIds) {
+      await backgroundApiWorkspace.deleteWorkspace(workspaceId);
     }
   });
 
@@ -178,7 +243,7 @@ test.describe('Project List', () => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
     const workspaceProjects = workspaceDetails.workspaceProjects;
 
-    const namesAfterNewest = await getCurrentProjectNames(workspaceProjects);
+    const namesAfterNewest = await getCurrentProjectCardNames(workspaceProjects);
     const idSortedProjectNames = _.orderBy(projects, 'id', 'desc').map((p) => p.name);
     expect(idSortedProjectNames).toEqual(
       namesAfterNewest.filter((n) => {
@@ -188,7 +253,7 @@ test.describe('Project List', () => {
 
     await workspaceProjects.sortSelect.selectMenuOption('Alphabetical');
 
-    const namesAfterAlphabetical = await getCurrentProjectNames(workspaceProjects);
+    const namesAfterAlphabetical = await getCurrentProjectCardNames(workspaceProjects);
     const nameSortedProjectNames = _.orderBy(projects, 'name', 'asc').map((p) => p.name);
     expect(nameSortedProjectNames).toEqual(
       namesAfterAlphabetical.filter((n) => {
@@ -197,14 +262,14 @@ test.describe('Project List', () => {
     );
   });
 
-  test('Filter', async ({ authedPage, apiProject, newWorkspace }) => {
+  test('Filter', async ({ authedPage, apiProject }) => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
     const workspaceProjects = workspaceDetails.workspaceProjects;
 
     const currentUserProject = (
-      await apiProject.createProject(newWorkspace.response.workspace.id, {
+      await apiProject.createProject(workspaceIds[0], {
         name: safeName('current-user-project'),
-        workspaceId: newWorkspace.response.workspace.id,
+        workspaceId: workspaceIds[0],
       })
     ).project;
 
@@ -213,17 +278,17 @@ test.describe('Project List', () => {
 
     await authedPage.reload();
 
-    const namesAfterAll = await getCurrentProjectNames(workspaceProjects);
+    const namesAfterAll = await getCurrentProjectCardNames(workspaceProjects);
     expect(namesAfterAll).toContain(otherUserProjectName);
     expect(namesAfterAll).toContain(currentUserProjectName);
 
     await workspaceProjects.whoseSelect.selectMenuOption("Others' Projects");
-    const namesAfterOthers = await getCurrentProjectNames(workspaceProjects);
+    const namesAfterOthers = await getCurrentProjectCardNames(workspaceProjects);
     expect(namesAfterOthers).toContain(otherUserProjectName);
     expect(namesAfterOthers).not.toContain(currentUserProjectName);
 
     await workspaceProjects.whoseSelect.selectMenuOption('My Projects');
-    const namesAfterMy = await getCurrentProjectNames(workspaceProjects);
+    const namesAfterMy = await getCurrentProjectCardNames(workspaceProjects);
     expect(namesAfterMy).toContain(currentUserProjectName);
     expect(namesAfterMy).not.toContain(otherUserProjectName);
 

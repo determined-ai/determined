@@ -44,7 +44,7 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
 
   if (qParams.toString().length !== 0) {
     for (const param of qParams.keys()) {
-      if (settings[param] === undefined) {
+      if (!(param in settings)) {
         // passing all non-setting param into the retval
         retVal.append(param, qParams.get(param) as string);
       }
@@ -248,13 +248,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
             });
 
             userSettings.remove(config.storagePath);
-
+            const mappedSettings = settingsToQuery(config, news);
+            const url = mappedSettings ? `?${mappedSettings}` : '';
+            navigate(url, { replace: true });
             return news;
           });
         });
       });
     },
-    [config, currentUser, rawState],
+    [config, currentUser, rawState, navigate],
   );
 
   const updateSettings = useCallback(

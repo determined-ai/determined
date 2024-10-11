@@ -547,3 +547,21 @@ func (m *MultiRMRouter) fanOutRMCommand(f func(rm.ResourceManager) error) error 
 	}
 	return nil
 }
+
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (m *MultiRMRouter) SmallerValueIsHigherPriority() (bool, error) {
+	set := false
+	var smallerIsHigher bool
+	for _, rm := range m.rms {
+		s, err := rm.SmallerValueIsHigherPriority()
+		if err != nil {
+			return false, err
+		}
+		if set && s != smallerIsHigher {
+			return false, fmt.Errorf("multiRM resource managers use different priority ordering")
+		}
+		smallerIsHigher = s
+		set = true
+	}
+	return smallerIsHigher, nil
+}

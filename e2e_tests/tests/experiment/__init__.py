@@ -43,4 +43,6 @@ from .experiment import (
     experiment_first_trial,
     has_at_least_one_checkpoint,
     wait_for_at_least_one_checkpoint,
+    set_priority,
+    TrialPlusWorkload,
 )

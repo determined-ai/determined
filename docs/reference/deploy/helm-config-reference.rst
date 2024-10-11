@@ -77,6 +77,25 @@
       PersistentVolumes is disabled, users must manually create a PersistentVolume that will match
       the PersistentVolumeClaim.
 
+   -  ``claimSuffix``: Optional configuration that defines the persistent volume claim name for the
+      Determined database. If not undefined, a new PVC is created, with the name
+      ``determined-db-pvc-$releaseName``. If specified, the provided value will be used as the
+      suffix to ``determined-db-pvc-``.
+
+   -  ``snapshotSuffix``: Optional configuration for naming the volume snapshot, which serves as a
+      backup of the Determined database's persistentVolume. If defined, Helm will create a snapshot
+      of the database during the next upgrade, creating a volumeSnapshot named
+      ``determined-db-snapsnot-$snapshotSuffix``. This **must** **not** match the name of an
+      existing persistent volume claim, such as ``determined-db-pvc-$releaseName``, because the
+      ``snapshotSuffix`` will be used to create a new persistent volume claim when restoring.
+
+   -  ``restoreSnapshotSuffix``: Optional configuration of the volumeSnapshot to restore from during
+      an upgrade. If this is set during an upgrade, a new persistentVolume will be created and
+      swapped into Determined's database by creating a new persistent volume claim named
+      ``determined-db-pvc-$restoreSnapshotSuffix``, restoring data from
+      ``determined-db-snapsnot-$restoreSnapshotSuffix``. This **must not** match the name of an
+      existing persistent volume claim (PVC), such as ``$releaseName``.
+
 -  ``checkpointStorage``: Specifies where model checkpoints will be stored. This can be overridden
    on a per-experiment basis in the :ref:`experiment-config-reference`. A checkpoint contains the
    architecture and weights of the model being trained. Determined currently supports several kinds

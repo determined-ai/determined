@@ -2,6 +2,7 @@ import csv
 import datetime
 import io
 import re
+import sys
 import uuid
 from typing import Optional
 
@@ -9,13 +10,18 @@ import pytest
 import requests
 
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
 from tests import command as cmd
-from tests import config as conf
-from tests import experiment as exp
 from tests.cluster import utils as cluster_utils
+from tests.experiment import noop
 
 API_URL = "/resources/allocation/allocations-csv?"
+
+
+def timestamp_with_offset(delta: int) -> str:
+    dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=delta)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def validate_trial_csv_rows(
@@ -31,7 +37,7 @@ def validate_trial_csv_rows(
     assert len(workspace_matches) >= 1, f"could not find any rows for workspace {workspace_name}"
 
 
-# Create a No_Op experiment and Check training/validation times
+# Create a noop experiment and Check training/validation times
 @pytest.mark.e2e_cpu
 def test_experiment_capture() -> None:
     sess = api_utils.admin_session()
@@ -51,21 +57,18 @@ def test_experiment_capture() -> None:
         workspaceId=w1.id,
     ).project
 
-    start_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Avoid any rounding or inclusion errors.
+    start_time = timestamp_with_offset(-2)
 
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("core_api/whoami.yaml"),
-        conf.fixtures_path("core_api"),
-        ["--project_id", str(p1.id)],
-    )
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
+    exp_ref = noop.create_experiment(sess, project_id=p1.id)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
+    # Avoid any rounding or inclusion errors.
+    end_time = timestamp_with_offset(+2)
     # Check if an entry exists for experiment that just ran
-    end_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
-    validate_trial_csv_rows(r.text, experiment_id, w1.name)
+    validate_trial_csv_rows(r.text, exp_ref.id, w1.name)
 
     # Move project to new workspace,
     # and confirm that allocation csv still persists the old workspace id
@@ -87,14 +90,14 @@ def test_experiment_capture() -> None:
 
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
-    validate_trial_csv_rows(r.text, experiment_id, w1.name)
+    validate_trial_csv_rows(r.text, exp_ref.id, w1.name)
 
     # Delete the experiment, and confirm that allocation csv still persists the experiment id
-    bindings.delete_DeleteExperiment(session=sess, experimentId=experiment_id)
+    bindings.delete_DeleteExperiment(session=sess, experimentId=exp_ref.id)
 
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
-    validate_trial_csv_rows(r.text, experiment_id, w1.name)
+    validate_trial_csv_rows(r.text, exp_ref.id, w1.name)
 
     # Clean up test workspaces
     bindings.delete_DeleteWorkspace(session=sess, id=w1.id)
@@ -104,7 +107,8 @@ def test_experiment_capture() -> None:
 @pytest.mark.e2e_cpu
 def test_notebook_capture() -> None:
     sess = api_utils.admin_session()
-    start_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Avoid any rounding or inclusion errors.
+    start_time = timestamp_with_offset(-2)
 
     task_id = None
     with cmd.interactive_command(sess, ["notebook", "start"]) as notebook:
@@ -116,52 +120,58 @@ def test_notebook_capture() -> None:
 
     assert task_id is not None
 
+    # Avoid any rounding or inclusion errors.
+    end_time = timestamp_with_offset(+2)
     end_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     sess = api_utils.admin_session()
-    r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
+    url = f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}"
+    r = sess.get(url)
     assert r.status_code == requests.codes.ok, r.text
 
-    assert re.search(f"{task_id}.*,NOTEBOOK", r.text) is not None
+    if re.search(f"{task_id}.*,NOTEBOOK", r.text) is None:
+        msg = f"did not find task_id={task_id} @ {url} in output:\n{r.text}"
+        print(msg, file=sys.stderr)
+        raise ValueError(msg)
 
     workspace = cluster_utils.get_task_info(sess, "notebook", task_id).get("workspaceName", None)
     assert workspace is not None
     assert re.search(f"{workspace},,", r.text) is not None
 
 
-# Create a No_Op Experiment/Tensorboard & Confirm Tensorboard task is captured
+# Create a noop Experiment/Tensorboard & Confirm Tensorboard task is captured
 @pytest.mark.e2e_cpu
 def test_tensorboard_experiment_capture() -> None:
     sess = api_utils.admin_session()
-    start_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Avoid any rounding or inclusion errors.
+    start_time = timestamp_with_offset(-2)
 
-    experiment_id = exp.create_experiment(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
-    )
-
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
+    exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     with cmd.interactive_command(
         sess,
-        ["tensorboard", "start", "--detach", str(experiment_id)],
+        ["tensorboard", "start", "--detach", str(exp_ref.id)],
     ) as tb:
         assert tb.task_id
         cluster_utils.wait_for_task_state(sess, "tensorboard", tb.task_id, "RUNNING")
     cluster_utils.wait_for_task_state(sess, "tensorboard", tb.task_id, "TERMINATED")
 
-    # Ensure that end_time captures tensorboard
-    end_time = (
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=1)
-    ).strftime("%Y-%m-%dT%H:%M:%SZ")
-    r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
+    # Avoid any rounding or inclusion errors.
+    end_time = timestamp_with_offset(+2)
+    url = f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}"
+    r = sess.get(url)
     assert r.status_code == requests.codes.ok, r.text
 
     # Confirm Experiment is captured and valid
     reader = csv.DictReader(io.StringIO(r.text))
-    matches = list(filter(lambda row: row["experiment_id"] == str(experiment_id), reader))
+    matches = list(filter(lambda row: row["experiment_id"] == str(exp_ref.id), reader))
     assert len(matches) >= 1
 
     # Confirm Tensorboard task is captured
-    assert re.search(f"{tb.task_id}.*,TENSORBOARD", r.text) is not None
+    if re.search(f"{tb.task_id}.*,TENSORBOARD", r.text) is None:
+        msg = f"did not find task_id={tb.task_id} @ {url} in output:\n{r.text}"
+        print(msg, file=sys.stderr)
+        raise ValueError(msg)
 
     workspace = cluster_utils.get_task_info(sess, "tensorboard", tb.task_id).get(
         "workspaceName", None
@@ -174,7 +184,8 @@ def test_tensorboard_experiment_capture() -> None:
 @pytest.mark.e2e_cpu
 def test_cmd_capture() -> None:
     sess = api_utils.admin_session()
-    start_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Avoid any rounding or inclusion errors.
+    start_time = timestamp_with_offset(-2)
 
     task_id = None
     with cmd.interactive_command(sess, ["cmd", "run", "sleep 10s"]) as sleep_cmd:
@@ -186,12 +197,18 @@ def test_cmd_capture() -> None:
 
     assert task_id is not None
 
-    end_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Avoid any rounding or inclusion errors.
+    end_time = timestamp_with_offset(+2)
+
     sess = api_utils.admin_session()
-    r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
+    url = f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}"
+    r = sess.get(url)
     assert r.status_code == requests.codes.ok, r.text
 
-    assert re.search(f"{task_id}.*,COMMAND", r.text) is not None
+    if re.search(f"{task_id}.*,COMMAND", r.text) is None:
+        msg = f"did not find task_id={task_id} @ {url} in output:\n{r.text}"
+        print(msg, file=sys.stderr)
+        raise ValueError(msg)
 
     workspace = cluster_utils.get_task_info(sess, "command", task_id).get("workspaceName", None)
     assert workspace is not None

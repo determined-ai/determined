@@ -24,6 +24,7 @@ CREATE VIEW trials AS
     r.experiment_id,
     r.warm_start_checkpoint_id,
     r.runner_state,
+    r.log_signal,
     rm.metadata AS metadata
    FROM trials_v2 t
      JOIN runs r ON t.run_id = r.id

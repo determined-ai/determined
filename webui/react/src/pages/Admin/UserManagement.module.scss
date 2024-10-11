@@ -1,3 +1,15 @@
+.actionBar {
+  align-items: center;
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template:
+    'input roleSelect statusSelect buttonGroup' auto
+    / minmax(auto, max-content) minmax(min-content, 120px) minmax(min-content, 170px) auto;
+  margin-bottom: 8px;
+}
+.gridButtons {
+  grid-area: buttonGroup;
+}
 .usersTable {
   .overflow {
     &:hover {
@@ -5,9 +17,14 @@
     }
   }
 }
-.rightAligned {
-  text-align: right;
-}
-.actionBar {
-  margin-bottom: 8px;
+
+@media only screen and (max-width: $breakpoint-tablet) {
+  .actionBar {
+    grid-template:
+      'input' auto
+      'roleSelect' auto
+      'statusSelect' auto
+      'buttonGroup' auto
+      / 100%;
+  }
 }

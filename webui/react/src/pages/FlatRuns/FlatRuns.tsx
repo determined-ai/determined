@@ -111,12 +111,17 @@ const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotL
 
 const STATIC_COLUMNS = [MULTISELECT];
 
-const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal', 'parentArchived', 'isExpMultitrial']);
+const BANNED_FILTER_COLUMNS = new Set([
+  'searcherMetricsVal',
+  'parentArchived',
+  'isExpMultitrial',
+  'archived',
+]);
 const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const NO_PINS_WIDTH = 200;
 
-export const formStore = new FilterFormStore();
+export const formStore = new FilterFormStore(V1LocationType.RUN);
 
 interface Props {
   projectId: number;
@@ -362,8 +367,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             dataPath = currentColumn.column;
             break;
           case V1LocationType.HYPERPARAMETERS:
-          case V1LocationType.RUNHYPERPARAMETERS:
             dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
+            break;
+          case V1LocationType.RUNHYPERPARAMETERS:
+            dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}`;
             break;
           case V1LocationType.VALIDATIONS:
             dataPath = `summaryMetrics.validationMetrics.${currentColumn.column.replace(

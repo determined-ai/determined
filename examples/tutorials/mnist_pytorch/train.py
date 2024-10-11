@@ -32,10 +32,6 @@ class MNistTrial(pytorch.PyTorchTrial):
 
         # Trial-level constants.
         self.data_dir = pathlib.Path("data")
-        self.data_url = (
-            "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
-        )
-
         self.batch_size = 64
         self.per_slot_batch_size = self.batch_size // self.context.distributed.get_size()
 

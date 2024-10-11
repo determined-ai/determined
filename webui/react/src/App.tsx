@@ -5,7 +5,7 @@ import { notification } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -182,7 +182,9 @@ const AppView: React.FC = () => {
                     />
                     <Omnibar />
                     <main>
-                      <Router routes={appRoutes} />
+                      <Suspense fallback={<Spinner center spinning />}>
+                        <Router routes={appRoutes} />
+                      </Suspense>
                     </main>
                   </Navigation>
                 </ConfirmationProvider>
