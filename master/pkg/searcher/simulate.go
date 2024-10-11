@@ -1,7 +1,6 @@
 package searcher
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -43,10 +42,6 @@ func (rs RunSummary) Proto() *experimentv1.RunSummary {
 	}
 }
 
-func (su SearchUnit) String() string {
-	return fmt.Sprintf("%s(%d)", su.Name, su.Value)
-}
-
 func (s SearchSummary) Proto() *experimentv1.SearchSummary {
 	var runSummaries []*experimentv1.RunSummary
 	for _, v := range s.Runs {
@@ -83,7 +78,8 @@ func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (Sea
 		for _, bracket := range brackets {
 			rungs := makeRungs(bracket.numRungs, ashaConfig.Divisor(), ashaConfig.Length().Units)
 			rungRuns := bracket.maxRuns
-			// For each rung, calculate number of runs that will be stopped before next rung.
+			// For each rung, calculate number of runs that will be stopped before next rung
+			// to determine the number of runs that will only train to the current rung.
 			for i, rung := range rungs {
 				rungUnits := int(rung.UnitsNeeded)
 				runsContinued := mathx.Max(int(float64(rungRuns)/ashaConfig.Divisor()), 1)
