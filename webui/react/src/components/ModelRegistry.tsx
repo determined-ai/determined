@@ -513,7 +513,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         filterIcon: tableSearchIcon,
         isFiltered: (settings: Settings) => !!settings.name,
         key: V1GetModelsRequestSortBy.NAME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'name' }),
         render: modelNameRenderer,
         sorter: true,
         title: 'Name',
@@ -577,6 +577,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'archived' }),
         render: checkmarkRenderer,
         title: 'Archived',
       },
@@ -597,6 +598,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'actions' }),
         render: actionRenderer,
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
@@ -704,7 +706,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
           {canCreateModels ? (
-            <Button onClick={showCreateModelModal}>New Model</Button>
+            <Button test-id="new-model-button" onClick={showCreateModelModal}>
+              New Model
+            </Button>
           ) : (
             <Tooltip content="User lacks permission to create models" placement="leftBottom">
               <div>
@@ -727,6 +731,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
             </>
           }
           icon="model"
+          testId="no-models-registered"
           title="No Models Registered"
         />
       ) : (

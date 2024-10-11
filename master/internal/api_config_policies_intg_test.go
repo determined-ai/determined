@@ -89,9 +89,6 @@ invariant_config:
 		"work_dir": "my/working/directory"
 	}`
 
-	invalidExperimentConfigPolicyErr = "invalid experiment config policy"
-	invalidNTSCtConfigPolicyErr      = "invalid NTSC config policy"
-
 	updatedExperimentConfigPolicyJSON = `
 	"invariant_config": {
         "description": "test\nspecial\tchar",
@@ -339,6 +336,18 @@ func TestBasicRBACConfigPolicyPerms(t *testing.T) {
 func TestGetConfigPolicies(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
+	defer func() {
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.ExperimentType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+
+		if _, err := api.DeleteGlobalConfigPolicies(ctx,
+			&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType}); err != nil {
+			log.Errorf("error when cleaning up mock task config policies")
+		}
+	}()
 
 	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
@@ -593,7 +602,7 @@ func TestValidatePoliciesAndWorkloadTypeYAML(t *testing.T) {
 			"YAML simple experiment config with description", model.ExperimentType,
 			`
 invariant_config:
-  description: "test\nspecial\tchar"
+  description: "test\nspecial\nchar"
 `, nil,
 		},
 		{
@@ -604,7 +613,9 @@ invariant_config:
     slots: 1
 `, nil,
 		},
-		{"YAML partial experiment config", model.ExperimentType, validExperimentConfigPolicyYAML, nil},
+		{
+			"YAML partial experiment config", model.ExperimentType, validExperimentConfigPolicyYAML, nil,
+		},
 
 		// Valid NTSC invariant config policies (YAML).
 		{
@@ -622,7 +633,9 @@ invariant_config:
     slots: 1
 `, nil,
 		},
-		{"YAML partial NTSC config", model.NTSCType, validNTSCConfigPolicyYAML, nil},
+		{
+			"YAML partial NTSC config", model.NTSCType, validNTSCConfigPolicyYAML, nil,
+		},
 
 		// Invalid experiment invariant config policies (YAML).
 		{
@@ -630,7 +643,7 @@ invariant_config:
 			`
 invariant_config:
   : "test\nspecial\tchar"
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment config invalid type for key", model.ExperimentType,
@@ -638,14 +651,14 @@ invariant_config:
 invariant_config:
   resources:
     slots: "this should be a number"
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment config nonexistent key", model.ExperimentType,
 			`
 invariant_config:
   nonexistent_description: "test\nspecial\tchar"
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment config extra nonexistent key", model.ExperimentType,
@@ -654,13 +667,11 @@ invariant_config:
   resources:
     slots: 1
   extra_key: 2
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment just config", model.ExperimentType,
-			`
-invariant_config:
-`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`invariant_config:`, nil,
 		},
 		{
 			"YAML experiment bad config spec", model.ExperimentType,
@@ -668,7 +679,7 @@ invariant_config:
 bad_config_spec:
   resources:
     slots: 1
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 
 		// Invalid NTSC invariant config policies (YAML).
@@ -677,7 +688,7 @@ bad_config_spec:
 			`
 invariant_config:
   : "test\nspecial\tchar"
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC invalid NTSC type for key", model.NTSCType,
@@ -685,14 +696,14 @@ invariant_config:
 invariant_config:
   resources:
     slots: "this should be a number"
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC nonexistent key", model.NTSCType,
 			`
 invariant_config:
   nonexistent_description: "test\nspecial\tchar"
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC extra nonexistent key", model.NTSCType,
@@ -701,13 +712,11 @@ invariant_config:
   resources:
     slots: 1
   extra_key: 2
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC just config", model.NTSCType,
-			`
-invariant_config:
-`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`invariant_config:`, nil,
 		},
 		{
 			"YAML NTSC bad config spec", model.NTSCType,
@@ -715,7 +724,7 @@ invariant_config:
 bad_config_spec:
   resources:
     slots: 1
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		// Valid constraint policies (YAML).
 		{"YAML experiment valid constraints policy", model.ExperimentType, validConstraintsPolicyYAML, nil},
@@ -756,9 +765,9 @@ constraints:
 			"experiment constraint with null key", model.ExperimentType,
 			`
 constraints:
- : 10
+  : 10
 `,
-			fmt.Errorf(invalidExperimentConfigPolicyErr),
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment constraints invalid type for key", model.ExperimentType,
@@ -766,14 +775,14 @@ constraints:
 constraints:
   resources:
     max_slots: "this should be a number"
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment constraints nonexistent key", model.ExperimentType,
 			`
 constraints:
   nonexistent_priority_limit: 10
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment constraints extra nonexistent key", model.ExperimentType,
@@ -782,13 +791,11 @@ constraints:
   resources:
     max_slots: 1
   extra_key: 2
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment just constraints", model.ExperimentType,
-			`
-constraints:
-`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`constraints:`, nil,
 		},
 
 		// Invalid NTSC constraint policies (YAML).
@@ -796,9 +803,9 @@ constraints:
 			"YAML NTSC constraint with null key", model.NTSCType,
 			`
 constraints:
-: 10
+  : 10
 `,
-			fmt.Errorf(invalidNTSCtConfigPolicyErr),
+			fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC constraints invalid type for key", model.NTSCType,
@@ -806,29 +813,27 @@ constraints:
 constraints:
   resources:
     max_slots: "this should be a number"
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC constraints nonexistent key", model.NTSCType,
 			`
 constraints:
   nonexistent_priority_limit: 10
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC constraints extra nonexistent key", model.NTSCType,
 			`
 constraints:
-  resources:
-    max_slots: 1
-  extra_key: 2
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		     resources:
+		       max_slots: 1
+		     extra_key: 2
+		   `, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML NTSC just constraints", model.NTSCType,
-			`
-constraints:
-`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`constraints:`, nil,
 		},
 
 		// Additional experiment combinatory tests (YAML).
@@ -842,7 +847,7 @@ constraints:
 constraints:
   resources:
     max_slots: "this should be a number"
-`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"YAML experiment invalid config valid constraints", model.ExperimentType,
@@ -850,13 +855,13 @@ constraints:
 invariant_config:
   resources:
     slots: "this should be a number"
-` + validConstraintsPolicyYAML, fmt.Errorf(invalidExperimentConfigPolicyErr),
+` + validConstraintsPolicyYAML, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 
 		// Additional NTSC combinatory tests (YAML).
 		{
 			"YAML NTSC valid config valid constraints", model.NTSCType,
-			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, nil,
+			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, fmt.Errorf("invalid ntsc config policy"),
 		},
 		{
 			"YAML NTSC valid constraints invalid constraints", model.NTSCType,
@@ -864,7 +869,7 @@ invariant_config:
 constraints:
   resources:
     max_slots: "this should be a number"
-`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"NTSC invalid config valid constraints", model.NTSCType,
@@ -872,23 +877,25 @@ constraints:
 invariant_config:
   resources:
     slots: "this should be a number"
-` + validConstraintsPolicyYAML, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+` + validConstraintsPolicyYAML, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 
 		// Experiment-NTSC mismatch test error (YAML).
 		{
 			"YAML valid experiment config with NTSC workload type", model.NTSCType,
-			validExperimentConfigPolicyYAML, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+			validExperimentConfigPolicyYAML, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"YAML valid NTSC config with experiment workload type", model.ExperimentType,
-			validNTSCConfigPolicyYAML, fmt.Errorf(invalidExperimentConfigPolicyErr),
+			validNTSCConfigPolicyYAML, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
+			api, _, _, _ := setupWorkspaceAuthZTest(t, nil)
+
+			err := api.validatePoliciesAndWorkloadType(nil, test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
@@ -949,7 +956,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"JSON experiment config with null key", model.ExperimentType,
 			`{ "invariant_config":
 			  : "test\nspecial\tchar"
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment config invalid type for key", model.ExperimentType,
@@ -957,13 +964,13 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		  "resources": {
 			slots: "this should be a number"
 		}
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment config nonexistent key", model.ExperimentType,
 			`{ "invariant_config":
 		"nonexistent_description": "test\nspecial\tchar" 
-}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment config extra nonexistent key", model.ExperimentType,
@@ -973,11 +980,11 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			},
 			"extra_key": 2
 		}
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment just config", model.ExperimentType,
-			`{"invariant_config": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{"invariant_config": }`, nil,
 		},
 		{
 			"JSON experiment bad config spec", model.ExperimentType,
@@ -985,7 +992,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"resources": {
 				"slots": 1
 			}				}
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 
 		// Invalid NTSC invariant config policies (JSON).
@@ -993,26 +1000,26 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"JSON NTSC config with null key", model.NTSCType,
 			`{ "invariant_config": {
 		   : "test\nspecial\tchar"
-	 }`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	 }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC config with empty key", model.NTSCType,
 			`{ "invariant_config": {
 		   "": "test\nspecial\tchar"
-	 }`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	 }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC invalid NTSC type for key", model.NTSCType,
 			`{ "invariant_config":
 		"resources": {
 			"slots": "this should be a number"
-		}`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+		}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC nonexistent key", model.NTSCType,
 			`{ "invariant_config": {
 		   "nonexistent_description": "test\nspecial\tchar"
-	 }`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	 }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC extra nonexistent key", model.NTSCType,
@@ -1021,11 +1028,11 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				 "slots": 1
 		  },
 		"extra_key": 2
-	}`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC just config", model.NTSCType,
-			`{ "invariant_config": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{ "invariant_config": }`, nil,
 		},
 		{
 			"JSON NTSC bad config spec", model.NTSCType,
@@ -1034,7 +1041,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				"slots": 1
 			}				
 		}
-	}`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		// Valid constraint policies (JSON).
 		{
@@ -1083,7 +1090,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		: 10 
 		}
 	}`,
-			fmt.Errorf(invalidExperimentConfigPolicyErr),
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment constraints invalid type for key", model.ExperimentType,
@@ -1091,13 +1098,13 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"resources": {
 				"max_slots": "this should be a number"
 			}
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment constraints nonexistent key", model.ExperimentType,
 			`{ "constraints": {
 		"nonexistent_priority_limit": 10
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment constraints extra nonexistent key", model.ExperimentType,
@@ -1106,11 +1113,11 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				"max_slots": 1
 			},
 			"extra_key": 2 
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment just constraints", model.ExperimentType,
-			`{ "constraints": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{ "constraints": }`, nil,
 		},
 
 		// Invalid NTSC constraint policies (JSON).
@@ -1120,7 +1127,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		: 10 
 		}
 	}`,
-			fmt.Errorf(invalidExperimentConfigPolicyErr),
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON NTSC constraint with empty key", model.ExperimentType,
@@ -1128,7 +1135,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		"": 10 
 		}
 	}`,
-			fmt.Errorf(invalidExperimentConfigPolicyErr),
+			fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON NTSC constraints invalid type for key", model.NTSCType,
@@ -1136,13 +1143,13 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		"resources": {
 			"max_slots": "this should be a number"
 		}
-	}`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC constraints nonexistent key", model.NTSCType,
 			`{ "constraints":
 			  "nonexistent_priority_limit": 10 
-	  }`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	  }`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC constraints extra nonexistent key", model.NTSCType,
@@ -1151,11 +1158,11 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"max_slots": 1
 		},
 	  "extra_key": 2
-	}`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC just constraints", model.NTSCType,
-			`{ "constraints": }`, fmt.Errorf(configpolicy.EmptyInvariantConfigErr),
+			`{ "constraints": }`, nil,
 		},
 
 		// Additional experiment combinatory tests (JSON).
@@ -1172,7 +1179,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				"max_slots": "this should be a number" 
 			}
 		}
-	}`, fmt.Errorf(invalidExperimentConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			"JSON experiment invalid config valid constraints", model.ExperimentType,
@@ -1180,13 +1187,13 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			"resources": {
 				"slots": "this should be a number"
 			}
-	},` + validConstraintsPolicyJSON + "}", fmt.Errorf(invalidExperimentConfigPolicyErr),
+	},` + validConstraintsPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 
 		// Additional NTSC combinatory tests (JSON).
 		{
-			"JSON NTSC valid config valid constraints", model.NTSCType,
-			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", nil,
+			"JSON NTSC valid config invalid constraints", model.NTSCType,
+			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", fmt.Errorf("invalid ntsc config policy"),
 		},
 		{
 			"JSON NTSC valid constraints invalid constraints", model.NTSCType,
@@ -1197,7 +1204,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				"max_slots": "this should be a number"
 			}
 		}
-	}`, fmt.Errorf(invalidNTSCtConfigPolicyErr),
+	}`, fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON NTSC invalid config valid constraints", model.NTSCType,
@@ -1206,23 +1213,25 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				"slots": "this should be a number"
 			}
 	},
-` + validConstraintsPolicyJSON + "}", fmt.Errorf(invalidNTSCtConfigPolicyErr),
+` + validConstraintsPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 
 		// Experiment-NTSC mismatch test error (JSON).
 		{
 			"JSON valid experiment config with NTSC workload type", model.NTSCType,
-			"{" + validExperimentConfigPolicyJSON + "}", fmt.Errorf(invalidNTSCtConfigPolicyErr),
+			"{" + validExperimentConfigPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 		{
 			"JSON valid NTSC config with experiment workload type", model.ExperimentType,
-			"{" + validNTSCConfigPolicyJSON + "}", fmt.Errorf(invalidExperimentConfigPolicyErr),
+			"{" + validNTSCConfigPolicyJSON + "}", fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := validatePoliciesAndWorkloadType(test.workloadType, test.configPolicies)
+			api, _, _, _ := setupWorkspaceAuthZTest(t, nil)
+
+			err := api.validatePoliciesAndWorkloadType(nil, test.workloadType, test.configPolicies)
 			if test.err != nil {
 				require.Error(t, err)
 				require.ErrorContains(t, err, test.err.Error())
@@ -1581,7 +1590,7 @@ func TestPutWorkspaceConfigPolicies(t *testing.T) {
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf("invalid workload type"),
+			err:                   fmt.Errorf("error retrieving bad type task config policies"),
 		},
 		{
 			name: "empty workload type",
@@ -1591,7 +1600,7 @@ func TestPutWorkspaceConfigPolicies(t *testing.T) {
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf("no workload type"),
+			err:                   fmt.Errorf("error retrieving  task config policies"),
 		},
 		{
 			name: "valid experiment invariant config add update YAML",
@@ -1982,7 +1991,7 @@ constraints:
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf(invalidExperimentConfigPolicyErr),
+			err:                   fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			name: "invalid NTSC config YAML",
@@ -1996,7 +2005,7 @@ invariant_config:
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf(invalidNTSCtConfigPolicyErr),
+			err:                   fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 	}
 
@@ -2474,7 +2483,7 @@ constraints:
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf(invalidExperimentConfigPolicyErr),
+			err:                   fmt.Errorf(configpolicy.InvalidExperimentConfigPolicyErr),
 		},
 		{
 			name: "invalid NTSC config YAML",
@@ -2488,7 +2497,7 @@ invariant_config:
 			configPolicies:        nil,
 			updatedPoliciesReq:    nil,
 			updatedConfigPolicies: nil,
-			err:                   fmt.Errorf(invalidNTSCtConfigPolicyErr),
+			err:                   fmt.Errorf(configpolicy.InvalidNTSCConfigPolicyErr),
 		},
 	}
 
@@ -2516,6 +2525,11 @@ invariant_config:
 
 			configPolicies := getResp.ConfigPolicies.AsMap()
 			require.Equal(t, test.configPolicies, configPolicies)
+
+			// Delete before PUT-ing again
+			_, err = api.DeleteGlobalConfigPolicies(ctx,
+				&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: test.req.WorkloadType})
+			require.NoError(t, err)
 
 			resp, err = api.PutGlobalConfigPolicies(ctx, test.updatedPoliciesReq)
 			require.NoError(t, err)
@@ -2545,6 +2559,6 @@ invariant_config:
 	resp, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
 		ConfigPolicies: validExperimentConfigPolicyYAML,
 	})
-	require.ErrorContains(t, err, "no workload type")
+	require.ErrorContains(t, err, "no workload type specified")
 	require.Nil(t, resp)
 }

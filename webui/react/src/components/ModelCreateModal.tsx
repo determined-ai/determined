@@ -207,6 +207,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       <Button
                         block
                         icon={<Icon decorative name="add" size="tiny" />}
+                        test-id="add-metadata"
                         type="dashed"
                         onClick={() => add()}>
                         Add metadata
@@ -269,6 +270,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       <Button
                         block
                         icon={<Icon decorative name="add" size="tiny" />}
+                        test-id="add-tag"
                         type="dashed"
                         onClick={() => add()}>
                         Add tag

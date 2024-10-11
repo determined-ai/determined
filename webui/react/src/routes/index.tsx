@@ -27,6 +27,7 @@ const Wait = React.lazy(() => import('pages/Wait'));
 const Webhooks = React.lazy(() => import('pages/WebhookList'));
 const WorkspaceDetails = React.lazy(() => import('pages/WorkspaceDetails'));
 const WorkspaceList = React.lazy(() => import('pages/WorkspaceList'));
+const ConfigPoliciesPage = React.lazy(() => import('pages/ConfigPoliciesPage'));
 import { RouteConfig } from 'types';
 
 import Routes from './routes';
@@ -37,6 +38,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,
   clusters: <Cluster />,
+  configPolicies: <ConfigPoliciesPage />,
   dashboard: <Dashboard />,
   default: <DefaultRoute />,
   experimentDetails: <ExperimentDetails />,

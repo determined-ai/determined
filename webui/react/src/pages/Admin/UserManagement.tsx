@@ -483,36 +483,34 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <Row>
-            <Column>
-              <Row>
-                {/* input is uncontrolled */}
-                <Input
-                  allowClear
-                  data-testid="search"
-                  defaultValue={nameFilter}
-                  placeholder="Find user"
-                  prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
-                  onChange={handleNameSearchApply}
-                />
-                <Select
-                  data-testid="roleSelect"
-                  options={roleOptions}
-                  searchable={false}
-                  value={roleFilter}
-                  width={120}
-                  onChange={handleRoleFilterApply}
-                />
-                <Select
-                  data-testid="statusSelect"
-                  options={statusOptions}
-                  searchable={false}
-                  value={statusFilter}
-                  width={170}
-                  onChange={handleStatusFilterApply}
-                />
-              </Row>
-            </Column>
+          <Input
+            allowClear
+            data-testid="search"
+            defaultValue={nameFilter}
+            placeholder="Find user"
+            prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
+            width={'100%'}
+            onChange={handleNameSearchApply}
+          />
+          <Select
+            data-testid="roleSelect"
+            options={roleOptions}
+            placeholder="Role"
+            searchable={false}
+            value={roleFilter}
+            width={'100%'}
+            onChange={handleRoleFilterApply}
+          />
+          <Select
+            data-testid="statusSelect"
+            options={statusOptions}
+            placeholder="Status"
+            searchable={false}
+            value={statusFilter}
+            width={'100%'}
+            onChange={handleStatusFilterApply}
+          />
+          <div className={css.gridButtons}>
             <Column align="right">
               <Row>
                 {selectedUserIds.length > 0 && (
@@ -529,7 +527,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                 </Button>
               </Row>
             </Column>
-          </Row>
+          </div>
         </div>
         {settings ? (
           <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns>

@@ -47,7 +47,6 @@ def wait_for_gc_to_finish(sess: api.Session, experiment_ids: List[int]) -> None:
 
 
 @pytest.mark.e2e_gpu
-@pytest.mark.e2e_slurm_gpu
 def test_set_gc_policy() -> None:
     sess = api_utils.user_session()
     save_exp_best = 3
@@ -121,6 +120,7 @@ def test_gc_checkpoints_lfs() -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
 def test_delete_checkpoints() -> None:
     sess = api_utils.user_session()
     config = {
