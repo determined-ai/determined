@@ -79,7 +79,6 @@ repos:
         description: "Fails if the existing protobuf definitions would generate a new buf.image.bin."
         files: '^proto/'
         pass_filenames: false
-        verbose: true
       - id: lock-published-urls
         name: "Generate all_published_urls_ever.json (lock-published-urls.sh)"
         entry: ./pre-commit/lock-published-urls.sh
@@ -87,7 +86,6 @@ repos:
         description: "Ensure all redirect URLs are generated at commit time."
         files: '^docs/'
         pass_filenames: false
-        verbose: true
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
