@@ -171,7 +171,6 @@ export const SELECTED_EXPERIMENTS: ExperimentWithTrial[] = [
         },
         resources: {},
         searcher: {
-          max_length: undefined,
           metric: 'validation_loss',
           name: 'single',
           smallerIsBetter: true,
