@@ -21,11 +21,11 @@ Search mode:
 Resource budget:
 
 -  ``max_length``: The maximum training length (see :ref:`Training Units
-   <experiment-configuration_training_units>`) of any trial that survives to the end of the
-   experiment. This quantity is domain-specific and should roughly reflect the number of minibatches
-   the model must be trained on for it to converge on the data set. For users who would like to
-   determine this number experimentally, train a model with reasonable hyperparameters using the
-   ``single`` search method.
+   <experiment-configuration_training_units>`) of any trial. This quantity is domain-specific and
+   should roughly reflect the number of minibatches the model must be trained on for it to converge
+   on the data set. For users who would like to determine this number experimentally, train a model
+   with reasonable hyperparameters using the ``single`` search method. The ``max_length`` parameter
+   is required for the SearcherContext to fabricate the appropriate SearcherOperation.
 
 -  ``max_trials``: This indicates the total number of hyperparameter settings that will be evaluated
    in the experiment. Set ``max_trials`` to at least 500 to take advantage of speedups from
