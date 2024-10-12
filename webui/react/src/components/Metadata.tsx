@@ -1,13 +1,12 @@
 import { Loaded } from 'hew/utils/loadable';
 import React from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import { TrialDetails } from 'types';
 import handleError from 'utils/error';
 
 import css from './Metadata.module.scss';
 import Section from './Section';
-
-const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 interface Props {
   trial: TrialDetails;
