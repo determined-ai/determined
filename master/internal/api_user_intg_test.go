@@ -74,6 +74,7 @@ func MockRM() *mocks.ResourceManager {
 	}, nil)
 
 	mockRM.On("SmallerValueIsHigherPriority").Return(true, nil)
+	mockRM.On("SetGroupPriority", mock.Anything).Return(nil)
 
 	return &mockRM
 }
