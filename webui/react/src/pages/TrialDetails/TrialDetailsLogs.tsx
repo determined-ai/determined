@@ -29,6 +29,7 @@ import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { ExperimentBase, Log, TrialDetails, TrialLog } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+import { ansiToHtml } from 'utils/dom';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 import { dateTimeStringSorter } from 'utils/sort';
@@ -297,7 +298,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       const j = i + keyLen;
       formatted.push({
         ...logEntry,
-        message: `${content.slice(0, i)}<span class=${css.key}>${content.slice(i, j)}</span>${content.slice(j)}`,
+        message: `${ansiToHtml(content.slice(0, i))}<span class=${css.key}>${ansiToHtml(content.slice(i, j))}</span>${ansiToHtml(content.slice(j))}`,
       });
     });
     return formatted.sort((a, b) => dateTimeStringSorter(a.time as string, b.time as string));
