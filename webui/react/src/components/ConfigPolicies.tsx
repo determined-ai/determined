@@ -13,8 +13,10 @@ import yaml from 'js-yaml';
 import { isEmpty } from 'lodash';
 import { useState } from 'react';
 
+import Link from 'components/Link';
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
+import { paths } from 'routes/utils';
 import {
   deleteGlobalConfigPolicies,
   deleteWorkspaceConfigPolicies,
@@ -161,6 +163,12 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
     setDisabled(hasErrors(form) || form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML);
   };
 
+  const docsLink = (
+    <Link external path={paths.docs('/manage/config-policies.html')} popout>
+      Learn more
+    </Link>
+  );
+
   if (rbacLoading) return <Spinner spinning />;
 
   return (
@@ -174,11 +182,16 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
                   Apply
                 </Button>
               }
+              description={docsLink}
               message={applyMessage}
               showIcon
             />
           ) : (
-            <Alert message={viewMessage} showIcon />
+            <Alert
+              description={docsLink}
+              message={viewMessage}
+              showIcon
+            />
           )}
         </div>
       </Row>
