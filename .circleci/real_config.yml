@@ -2037,7 +2037,7 @@ jobs:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
       - checkout
-      - add-and-fetch-upstreamg
+      - add-and-fetch-upstream
       - run:
           name: Check for Latest Main Docker Image
           command: |
