@@ -2027,17 +2027,17 @@ jobs:
       - run: make -C bindings force-gen
       - run: make -C bindings check/python
 
-  pull-main-docker-images:
+  find-main-docker-images:
     docker:
       - image: <<pipeline.parameters.docker-image>>
-    steps: # TODO CAROLINA
+    steps:
       - setup_remote_docker:
           version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
       - checkout
-      - add-and-fetch-upstream
+      - add-and-fetch-upstreamg
       - run:
           name: Check for Latest Main Docker Image
           command: |
@@ -2267,6 +2267,9 @@ jobs:
       ee:
         type: boolean
         default: true
+      commit_SHA:
+        type: string
+        default: $CIRCLE_SHA1
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -2283,7 +2286,7 @@ jobs:
             - license-gen
       - restore_cache:
           keys:
-            - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+            - det-go-build-<<parameters.commit_SHA>>-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -2293,7 +2296,7 @@ jobs:
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
       - save_cache:
-          key: det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+          key: det-go-build-<<parameters.commt_SHA>>-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
@@ -3267,21 +3270,15 @@ jobs:
                 target-stage: <<parameters.target-stage>>
 
       - when:
-          condition: <<parameters.upgrade>>g
+          condition: <<parameters.upgrade>>
           steps:
             # Stop devcluster running on the past release.
             - stop-devcluster
-            - run:
-                name: Install Latest Main Build # TODO CAROLINA -- do I need to checkout branch too?
-                command: |
-                  docker save -o build/master.image determinedai/hpe-mlde-master:${LATEST_MAIN_SHA}
-                  docker save -o build/master-ee.image determinedai/hpe-mlde-master:${LATEST_MAIN_SHA}
-                  docker save -o build/agent.image determinedai/hpe-mlde-agent:${LATEST_MAIN_SHA}
-                  docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${LATEST_MAIN_SHA}
-            - persist_to_workspace: 
-                root: .
-                paths:
-                  - "build/*.image" # TODO CAROLINA -- what images do I need to save and why?
+            - build-go:
+                name: build latest-main Go
+                ee: true
+                commit_SHA: ${LATEST_MAIN_SHA}
+
             # TODO CAROLINA
             - setup-python-venv:
                 determined: True
@@ -4823,7 +4820,7 @@ workflows:
       - build-go:
           name: build-go-ee
           context: github-read
-      - pull-main-docker-images
+      - find-main-docker-images
       # TODO CAROLINA -- make this weekly 
 
       - test-e2e:
@@ -4832,7 +4829,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
@@ -4844,7 +4841,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 6
           resource-class: xlarge
           tf2: true
@@ -4857,7 +4854,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 5
           resource-class: large
           tf2: true
@@ -4872,7 +4869,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
@@ -4885,7 +4882,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
@@ -4898,7 +4895,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 4
           resource-class: large
           tf2: true
@@ -4916,7 +4913,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 4
           resource-class: large
           tf2: true
@@ -4932,7 +4929,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
@@ -4948,7 +4945,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           mark: e2e_single_k8s
           target-stage: master
@@ -4962,7 +4959,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
@@ -4975,7 +4972,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           resource-class: large
           mark: e2e_cpu_elastic
@@ -4989,7 +4986,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -5003,7 +5000,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -5017,7 +5014,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
@@ -5031,7 +5028,7 @@ workflows:
           name: test-e2e-agent-connection-loss
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           mark: e2e_cpu_agent_connection_loss
           devcluster-config: agent-no-connection.devcluster.yaml
@@ -5048,7 +5045,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-            - pull-main-docker-images
+            - find-main-docker-images
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
