@@ -3262,6 +3262,7 @@ jobs:
                 target-stage: <<parameters.target-stage>>
 
       - when:
+          condition: <<parameters.upgrade>>
           steps:
             # Stop devcluster running on the past release.
             - stop-devcluster
