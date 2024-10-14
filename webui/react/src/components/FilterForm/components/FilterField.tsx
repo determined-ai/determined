@@ -244,7 +244,7 @@ const FilterField = ({
       );
     }
 
-      return col.displayName || col.column;
+    return col.displayName || col.column;
   };
 
   return (
