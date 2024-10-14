@@ -116,7 +116,6 @@ check: attributions.rst
 
 .PHONY: lock-published-urls
 lock-published-urls: attributions.rst
-	# Generate redirects.
 	python3 redirects.py publish
 
 .PHONY: get-deps
