@@ -3265,8 +3265,6 @@ jobs:
       - when:
           condition: <<parameters.upgrade>>
           steps:
-            # Stop devcluster running on the past release.
-            - stop-devcluster
             - reinstall-go
             - run: git checkout ${LATEST_MAIN_SHA}
             - run: make -C master build
@@ -3276,6 +3274,8 @@ jobs:
                 paths:
                   - "master/build"
                   - "agent/build"
+            # Stop devcluster running on the past release.
+            - stop-devcluster
             - install-devcluster
             - unless:
                 condition: <<parameters.managed-devcluster>>
