@@ -114,6 +114,11 @@ check: attributions.rst
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
 	python3 redirects.py check
 
+.PHONY: lock-published-urls
+lock-published-urls: attributions.rst
+	# Generate redirects.
+	python3 redirects.py publish
+
 .PHONY: get-deps
 get-deps:
 	pip install -r requirements.txt
