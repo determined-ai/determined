@@ -150,6 +150,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		prio := masterConfig.DefaultPriorityForPool(poolName.String())
 		config.Resources.Priority = &prio
 	}
+	// TODO (CM-493) NTSC invariant config overrides
 
 	var contextDirectory []byte
 	config.WorkDir, contextDirectory, err = fillContextDir(config.WorkDir, workDirInDefaults, req.Files)
