@@ -33774,11 +33774,13 @@ export const TokensApiFetchParamCreator = function (configuration?: Configuratio
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [filter] Filter by username or expression.
+         * @param {Array<number>} [tokenIds] Filter on token_ids.
+         * @param {string} [username] Filter by username.
+         * @param {boolean} [showInactive] Filter by active status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options: any = {}): FetchArgs {
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tokens`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -33809,8 +33811,16 @@ export const TokensApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
+            if (tokenIds) {
+                localVarQueryParameter['tokenIds'] = tokenIds
+            }
+            
+            if (username !== undefined) {
+                localVarQueryParameter['username'] = username
+            }
+            
+            if (showInactive !== undefined) {
+                localVarQueryParameter['showInactive'] = showInactive
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -33920,12 +33930,14 @@ export const TokensApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [filter] Filter by username or expression.
+         * @param {Array<number>} [tokenIds] Filter on token_ids.
+         * @param {string} [username] Filter by username.
+         * @param {boolean} [showInactive] Filter by active status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokensResponse> {
-            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options);
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokensResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).getAccessTokens(sortBy, orderBy, offset, limit, tokenIds, username, showInactive, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -33991,12 +34003,14 @@ export const TokensApiFactory = function (configuration?: Configuration, fetch?:
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [filter] Filter by username or expression.
+         * @param {Array<number>} [tokenIds] Filter on token_ids.
+         * @param {string} [username] Filter by username.
+         * @param {boolean} [showInactive] Filter by active status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
-            return TokensApiFp(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(fetch, basePath);
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options?: any) {
+            return TokensApiFp(configuration).getAccessTokens(sortBy, orderBy, offset, limit, tokenIds, username, showInactive, options)(fetch, basePath);
         },
         /**
          * 
@@ -34036,13 +34050,15 @@ export class TokensApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-     * @param {string} [filter] Filter by username or expression.
+     * @param {Array<number>} [tokenIds] Filter on token_ids.
+     * @param {string} [username] Filter by username.
+     * @param {boolean} [showInactive] Filter by active status.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TokensApi
      */
-    public getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
-        return TokensApiFp(this.configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(this.fetch, this.basePath)
+    public getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options?: any) {
+        return TokensApiFp(this.configuration).getAccessTokens(sortBy, orderBy, offset, limit, tokenIds, username, showInactive, options)(this.fetch, this.basePath)
     }
     
     /**

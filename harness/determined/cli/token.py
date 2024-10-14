@@ -28,9 +28,8 @@ def render_token_info(token_info: Sequence[bindings.v1TokenInfo]) -> None:
 
 def describe_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    filter_data = json.dumps({"Token_Ids": args.token_id})
     try:
-        resp = bindings.get_GetAccessTokens(session=sess, filter=filter_data)
+        resp = bindings.get_GetAccessTokens(session=sess, tokenIds=args.token_id)
         if args.json or args.yaml:
             json_data = [t.to_json() for t in resp.tokenInfo]
             if args.json:
@@ -47,13 +46,10 @@ def describe_token(args: argparse.Namespace) -> None:
 
 def list_tokens(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    filter_data = {
-        **({"Username": args.username} if args.username else {}),
-        **({"only_Active": args.only_active} if args.only_active else {}),
-    }
     try:
-        filter_json = json.dumps(filter_data)
-        resp = bindings.get_GetAccessTokens(sess, filter=filter_json)
+        username = args.username if args.username else None
+        show_inactive = True if args.show_inactive else False
+        resp = bindings.get_GetAccessTokens(sess, username=username, showInactive=show_inactive)
         if args.json or args.yaml:
             json_data = [t.to_json() for t in resp.tokenInfo]
             if args.json:
@@ -143,11 +139,11 @@ args_description = [
                 cli.output_format_args["yaml"],
             ),
         ]),
-        cli.Cmd("list ls", list_tokens, "list access tokens for all users", [
+        cli.Cmd("list ls", list_tokens, "list access tokens accessible to users", [
             cli.Arg("username", type=str, nargs=argparse.OPTIONAL,
-                    help="list token for the given username", default=None),
-            cli.Arg("--only-active", action="store_true", default=None,
-                    help="list only the active tokens"),
+                    help="list access tokens for the given username", default=None),
+            cli.Arg("--show-inactive", action="store_true", default=None,
+                    help="list all access tokens accessible to the current user"),
             cli.Group(
                 cli.output_format_args["json"],
                 cli.output_format_args["yaml"],

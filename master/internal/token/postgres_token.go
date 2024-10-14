@@ -107,42 +107,39 @@ func UpdateAccessToken(
 	ctx context.Context, tokenID model.TokenID, options AccessTokenUpdateOptions,
 ) (*model.UserSession, error) {
 	var tokenInfo model.UserSession
-	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		err := tx.NewSelect().Table("user_sessions").
-			Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeAccessToken).
-			Scan(ctx, &tokenInfo)
-		if err != nil {
-			return err
-		}
-
-		if tokenInfo.Revoked || tokenInfo.Expiry.Before(time.Now().UTC()) {
-			return fmt.Errorf("unable to update inactive token with ID %v", tokenID)
-		}
-
-		if options.Description != nil {
-			tokenInfo.Description = null.StringFrom(*options.Description)
-		}
-
-		if options.SetRevoked {
-			tokenInfo.Revoked = true
-		}
-
-		_, err = tx.NewUpdate().
-			Model(&tokenInfo).
-			Column("description", "revoked").
-			Where("id = ?", tokenID).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	// Lock the token row for update.
+	err := db.Bun().NewSelect().For("UPDATE").Table("user_sessions").
+		Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeAccessToken).
+		Scan(ctx, &tokenInfo)
 	if err != nil {
 		return nil, err
 	}
+
+	if tokenInfo.Revoked || tokenInfo.Expiry.Before(time.Now().UTC()) {
+		return nil, fmt.Errorf("unable to update inactive token with ID %v", tokenID)
+	}
+
+	if options.Description != nil {
+		tokenInfo.Description = null.StringFrom(*options.Description)
+	}
+
+	if options.SetRevoked {
+		tokenInfo.Revoked = true
+	}
+
+	_, err = db.Bun().NewUpdate().
+		Model(&tokenInfo).
+		Column("description", "revoked").
+		Where("id = ?", tokenID).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &tokenInfo, nil
 }
 
+// GetUserIDFromTokenID retrieves the userID associated with the provided tokenID.
 func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, error) {
 	var userID model.UserID
 	err := db.Bun().NewSelect().

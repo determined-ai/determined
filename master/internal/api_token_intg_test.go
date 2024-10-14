@@ -32,8 +32,7 @@ const (
 	desc     = "test desc"
 )
 
-// TestPostAccessToken tests given user's WITHOUT lifespan input
-// POST /api/v1/users/{user_Id}/token - Create and get a user's access token.
+// TestPostAccessToken tests given user's WITHOUT lifespan input.
 func TestPostAccessToken(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
@@ -58,7 +57,6 @@ func TestPostAccessToken(t *testing.T) {
 }
 
 // TestPostAccessTokenWithLifespan tests given user's  WITH lifespan, description input
-// POST /api/v1/users/{user_Id}/token - Create and get a user's access token
 // Input body contains lifespan = "5s or "2h".
 func TestPostAccessTokenWithLifespan(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
@@ -86,7 +84,6 @@ func TestPostAccessTokenWithLifespan(t *testing.T) {
 }
 
 // TestGetAccessTokens tests all access token info
-// GET /api/v1/users/tokens - Get all access token info
 // from user_sessions db for admin.
 func TestGetAccessTokens(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
@@ -99,10 +96,9 @@ func TestGetAccessTokens(t *testing.T) {
 
 	usernameForGivenUserID, err := getUsernameForGivenUserID(ctx, userID1)
 	require.NoError(t, err)
-	filter := fmt.Sprintf(`{"username":"%s"}`, usernameForGivenUserID)
 
 	tokenInfo1, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
-		Filter: filter,
+		Username: usernameForGivenUserID,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo1)
@@ -126,11 +122,10 @@ func TestGetAccessTokens(t *testing.T) {
 
 	usernameForGivenUserID, err = getUsernameForGivenUserID(ctx, userID2)
 	require.NoError(t, err)
-	filter = fmt.Sprintf(`{"username":"%s"}`, usernameForGivenUserID)
 
 	// Tests TestGetAccessToken info for giver userID
 	tokenInfo2, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
-		Filter: filter,
+		Username: usernameForGivenUserID,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo2)
@@ -196,9 +191,8 @@ func TestAuthzOtherAccessToken(t *testing.T) {
 	authzToken.On("CanGetAccessTokens", mock.Anything, curUser, mock.Anything, curUser.ID).
 		Return(&query, fmt.Errorf("canGetAccessTokens")).Once()
 
-	filter := fmt.Sprintf(`{"username":"%s"}`, curUser.Username)
 	_, err = api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
-		Filter: filter,
+		Username: curUser.Username,
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
@@ -209,9 +203,8 @@ func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model
 	usernameForGivenUserID, err := getUsernameForGivenUserID(ctx, userID)
 	require.NoError(t, err)
 
-	filter := fmt.Sprintf(`{"username":"%s"}`, usernameForGivenUserID)
 	tokenInfos, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
-		Filter: filter,
+		Username: usernameForGivenUserID,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfos)

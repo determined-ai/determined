@@ -834,7 +834,7 @@ type SetClusterMessageRequest struct {
 	// Time to stop showing message.
 	EndTime *timestamp.Timestamp `protobuf:"bytes,3,opt,name=end_time,json=endTime,proto3,oneof" json:"end_time,omitempty"`
 	// Duration expressing how long the message should last. Should be a Go-format
-	// duration (e.g. "2s", "4m", "72h").
+	// duration (e.g. 24h, 2w, 5d)
 	Duration *string `protobuf:"bytes,4,opt,name=duration,proto3,oneof" json:"duration,omitempty"`
 }
 

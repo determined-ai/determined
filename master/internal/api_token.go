@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -56,16 +55,21 @@ func (a *apiServer) PostAccessToken(
 	return &apiv1.PostAccessTokenResponse{Token: token, TokenId: int32(tokenID)}, nil
 }
 
-type accessTokenFilter struct {
-	OnlyActive bool            `json:"only_active"`
-	Username   string          `json:"username"`
-	TokenIDs   []model.TokenID `json:"token_ids"`
-}
+// type accessTokenFilter struct {
+// 	OnlyActive bool            `json:"only_active"`
+// 	Username   string          `json:"username"`
+// 	TokenIDs   []model.TokenID `json:"token_ids"`
+// }
 
 // GetAccessTokens returns all access token info.
 func (a *apiServer) GetAccessTokens(
 	ctx context.Context, req *apiv1.GetAccessTokensRequest,
 ) (*apiv1.GetAccessTokensResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	sortColMap := map[apiv1.GetAccessTokensRequest_SortBy]string{
 		apiv1.GetAccessTokensRequest_SORT_BY_UNSPECIFIED: "id",
 		apiv1.GetAccessTokensRequest_SORT_BY_USER_ID:     "user_id",
@@ -94,37 +98,39 @@ func (a *apiServer) GetAccessTokens(
 		Column("us.description")
 
 	var userIDForGivenUsername model.UserID
-	if req.Filter != "" {
-		var atf accessTokenFilter
-		err := json.Unmarshal([]byte(req.Filter), &atf)
+
+	if req.Username != "" {
+		err := db.Bun().NewSelect().
+			Table("users").
+			Column("id").
+			Where("username = ?", req.Username).
+			Scan(ctx, &userIDForGivenUsername)
 		if err != nil {
 			return nil, err
 		}
-
-		if atf.Username != "" {
-			err := db.Bun().NewSelect().
-				Table("users").
-				Column("id").
-				Where("username = ?", atf.Username).
-				Scan(ctx, &userIDForGivenUsername)
-			if err != nil {
-				return nil, err
-			}
+		if userIDForGivenUsername > 0 {
+			query.Where("us.user_id = ?", userIDForGivenUsername)
 		}
+	}
 
+	// CanGetAccessTokens ensures that the logged-in user has the required permissions
+	// to perform actions on the target user's account.
+	query, err = token.AuthZProvider.Get().CanGetAccessTokens(ctx, *curUser, query, userIDForGivenUsername)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	if !req.ShowInactive {
+		query.Where("us.expiry > ?", time.Now().UTC()).
+			Where("us.revoked = false")
+	}
+
+	// Get only Access token type
+	query.Where("us.token_type = ?", model.TokenTypeAccessToken)
+
+	if len(req.TokenIds) > 0 {
 		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if atf.OnlyActive {
-				return q.Where("us.expiry > ?", time.Now().UTC()).
-					Where("us.revoked = false")
-			}
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if userIDForGivenUsername > 0 {
-				return q.Where("us.user_id = ?", userIDForGivenUsername)
-			}
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			for _, tokenID := range atf.TokenIDs {
+			for _, tokenID := range req.TokenIds {
 				if tokenID > 0 {
 					q = q.WhereOr("us.id = ?", tokenID)
 				}
@@ -132,9 +138,6 @@ func (a *apiServer) GetAccessTokens(
 			return q
 		})
 	}
-
-	// Get only Access token type
-	query.Where("us.token_type = ?", model.TokenTypeAccessToken)
 
 	orderBy, ok := orderByMap[req.OrderBy]
 	if !ok {
@@ -147,16 +150,6 @@ func (a *apiServer) GetAccessTokens(
 	query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
 	if sortColumn != "id" {
 		query.OrderExpr("id asc")
-	}
-
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	query, err = token.AuthZProvider.Get().CanGetAccessTokens(ctx, *curUser, query, userIDForGivenUsername)
-	if err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	err = query.Scan(ctx)

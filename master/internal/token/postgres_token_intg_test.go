@@ -132,7 +132,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestGetLongLivenTokenInfoByUserID tests getting access token info for given userId.
+// TestGetAccessTokenInfoByUserID tests getting access token info for given userId.
 func TestGetAccessToken(t *testing.T) {
 	testUser, err := addTestUser(nil)
 	require.NoError(t, err)

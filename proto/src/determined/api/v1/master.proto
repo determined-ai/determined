@@ -157,7 +157,7 @@ message SetClusterMessageRequest {
   // Time to stop showing message.
   optional google.protobuf.Timestamp end_time = 3;
   // Duration expressing how long the message should last. Should be a Go-format
-  // duration (e.g. "2s", "4m", "72h").
+  // duration (e.g. 24h, 2w, 5d)
   optional string duration = 4;
 }
 // Response to SetClusterMessageRequest.

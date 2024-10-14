@@ -31,6 +31,9 @@ message PostAccessTokenResponse {
 
 // Get access tokens info for admin.
 message GetAccessTokensRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
   // Sort token info by the given field.
   enum SortBy {
     // Returns token info in an unsorted list.
@@ -59,8 +62,12 @@ message GetAccessTokensRequest {
   // Limit the number of projects. A value of 0 denotes no limit.
   int32 limit = 4;
 
-  // Filter by username or expression
-  string filter = 5;
+  // Filter on token_ids
+  repeated int32 token_ids = 5;
+  // Filter by username.
+  string username = 6;
+  // Filter by active status.
+  bool show_inactive = 7;
 }
 
 // Response to GetAccessTokensRequest.

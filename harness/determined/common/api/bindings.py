@@ -19306,15 +19306,16 @@ def get_ExpMetricNames(
 def get_GetAccessTokens(
     session: "api.BaseSession",
     *,
-    filter: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    showInactive: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetAccessTokensRequestSortBy]" = None,
+    tokenIds: "typing.Optional[typing.Sequence[int]]" = None,
+    username: "typing.Optional[str]" = None,
 ) -> "v1GetAccessTokensResponse":
     """Get a list of all access token records.
 
-    - filter: Filter by username or expression.
     - limit: Limit the number of projects. A value of 0 denotes no limit.
     - offset: Skip the number of projects before returning results. Negative values
 denote number of projects to skip from the end before returning results.
@@ -19323,6 +19324,7 @@ denote number of projects to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
+    - showInactive: Filter by active status.
     - sortBy: Sort token info by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
@@ -19332,13 +19334,17 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+    - tokenIds: Filter on token_ids.
+    - username: Filter by username.
     """
     _params = {
-        "filter": filter,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "showInactive": str(showInactive).lower() if showInactive is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "tokenIds": tokenIds,
+        "username": username,
     }
     _resp = session._do_request(
         method="GET",
