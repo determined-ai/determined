@@ -2296,7 +2296,7 @@ jobs:
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
       - save_cache:
-          key: det-go-build-<<parameters.commt_SHA>>-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+          key: det-go-build-<<parameters.commit_SHA>>-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
