@@ -25136,6 +25136,7 @@ def get_TaskLogs(
     agentIds: "typing.Optional[typing.Sequence[str]]" = None,
     allocationIds: "typing.Optional[typing.Sequence[str]]" = None,
     containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+    enableRegex: "typing.Optional[bool]" = None,
     follow: "typing.Optional[bool]" = None,
     levels: "typing.Optional[typing.Sequence[v1LogLevel]]" = None,
     limit: "typing.Optional[int]" = None,
@@ -25153,6 +25154,7 @@ def get_TaskLogs(
     - agentIds: Limit the trial logs to a subset of agents.
     - allocationIds: Limit the task logs to particular allocations.
     - containerIds: Limit the trial logs to a subset of containers.
+    - enableRegex: Search text is regex. Default to false.
     - follow: Continue following logs until the trial stops.
     - levels: Limit the trial logs to a subset of agents.
 
@@ -25180,6 +25182,7 @@ def get_TaskLogs(
         "agentIds": agentIds,
         "allocationIds": allocationIds,
         "containerIds": containerIds,
+        "enableRegex": str(enableRegex).lower() if enableRegex is not None else None,
         "follow": str(follow).lower() if follow is not None else None,
         "levels": [x.value for x in levels] if levels is not None else None,
         "limit": limit,
@@ -25289,6 +25292,7 @@ def get_TrialLogs(
     trialId: int,
     agentIds: "typing.Optional[typing.Sequence[str]]" = None,
     containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+    enableRegex: "typing.Optional[bool]" = None,
     follow: "typing.Optional[bool]" = None,
     levels: "typing.Optional[typing.Sequence[v1LogLevel]]" = None,
     limit: "typing.Optional[int]" = None,
@@ -25305,6 +25309,7 @@ def get_TrialLogs(
     - trialId: The id of the trial.
     - agentIds: Limit the trial logs to a subset of agents.
     - containerIds: Limit the trial logs to a subset of containers.
+    - enableRegex: Search text is regex. Default to false.
     - follow: Continue following logs until the trial stops.
     - levels: Limit the trial logs to a subset of agents.
 
@@ -25331,6 +25336,7 @@ def get_TrialLogs(
     _params = {
         "agentIds": agentIds,
         "containerIds": containerIds,
+        "enableRegex": str(enableRegex).lower() if enableRegex is not None else None,
         "follow": str(follow).lower() if follow is not None else None,
         "levels": [x.value for x in levels] if levels is not None else None,
         "limit": limit,
