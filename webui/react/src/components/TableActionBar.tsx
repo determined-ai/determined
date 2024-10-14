@@ -318,6 +318,8 @@ const TableActionBar: React.FC<Props> = ({
             title: `Partial ${action} Failure`,
           });
         }
+
+        // TODO: add tag/badge of the column type on the filter only
       } catch (e) {
         const publicSubject =
           action === ExperimentAction.OpenTensorBoard

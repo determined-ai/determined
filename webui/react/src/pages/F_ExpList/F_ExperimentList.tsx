@@ -407,7 +407,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     let mounted = true;
     (async () => {
       try {
-        const metadataColumns = new Map<string, number>(); // a map of metadata columns and found indexes
         const columns = await getProjectColumns({
           id: project.id,
           tableType: V1TableType.EXPERIMENT,
@@ -419,23 +418,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             : 0,
         );
 
-        for (const { column } of columns) {
-          if (experimentColumns.indexOf(column as ExperimentColumn) === -1) {
-            metadataColumns.set(column, (metadataColumns.get(column) ?? 0) + 1);
-          }
-        }
-
         if (mounted) {
           setProjectColumns(
             Loaded(
-              columns.map(({ column, type, ...rest }) => {
-                const found = metadataColumns.get(column);
-
-                if (found !== undefined && found > 1)
-                  column = `${column} - ${type.replace('COLUMN_TYPE_', '').toLowerCase()}`;
-
-                return { ...rest, column, type };
-              }),
+              columns,
             ),
           );
         }
