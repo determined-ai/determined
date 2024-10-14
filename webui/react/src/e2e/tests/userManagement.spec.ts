@@ -3,8 +3,7 @@ import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
-import { saveTestUserId } from 'e2e/utils/users';
-import { V1PostUserRequest } from 'services/api-ts-sdk/api';
+import { TestUser } from 'e2e/utils/users';
 
 test.describe('User Management', () => {
   // One list of users per test session. This is to encourage a final teardown
@@ -39,14 +38,14 @@ test.describe('User Management', () => {
   });
 
   test.describe('User Management UI CRUD', () => {
-    let testUser: V1PostUserRequest;
+    let testUser: TestUser;
 
     test.beforeEach(async ({ user }) => {
       // share one user created via UI across tests:
       if (!testUser) {
         await test.step('Create User', async () => {
           testUser = await user.createUser();
-          saveTestUserId(testUser, testUserIds);
+          testUserIds.push(testUser.id);
           await user.validateUser(testUser);
         });
       }
@@ -55,7 +54,7 @@ test.describe('User Management', () => {
     test('New User Access', async ({ page, auth }) => {
       const userManagementPage = new UserManagement(page);
       await auth.logout();
-      await auth.login({ password: testUser.password, username: testUser.user?.username });
+      await auth.login({ password: testUser.password, username: testUser.username });
       await userManagementPage.nav.sidebar.headerDropdown.open();
       await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor();
       await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.waitFor({
@@ -65,11 +64,8 @@ test.describe('User Management', () => {
 
     test('Edit User', async ({ user }) => {
       await test.step('Edit display name', async () => {
-        if (testUser.user === undefined) {
-          throw new Error('Trying to edit an undefined user.');
-        }
         testUser = await user.editUser(testUser, {
-          displayName: testUser.user.username + '_edited',
+          displayName: testUser.username + '_edited',
         });
         await user.validateUser(testUser);
       });
@@ -91,7 +87,7 @@ test.describe('User Management', () => {
         await auth.login({
           expectedURL: /login/,
           password: testUser.password,
-          username: testUser.user?.username,
+          username: testUser.username,
         });
         await expect(page).toHaveDeterminedTitle(signInPage.title);
         await expect(page).toHaveURL(/login/);
@@ -122,7 +118,7 @@ test.describe('User Management', () => {
       await test.step('Successful sign in with reactivated user', async () => {
         test.slow();
         await auth.logout();
-        await auth.login({ password: testUser.password, username: testUser.user?.username });
+        await auth.login({ password: testUser.password, username: testUser.username });
       });
     });
   });
@@ -133,10 +129,14 @@ test.describe('User Management', () => {
       await test.step('Create User', async () => {
         // pagination will be 10 per page, so create 11 users
         for (let i = 0; i < 11; i++) {
-          const user = await backgroundApiUser.createUser(
+          const userResponse = await backgroundApiUser.createUser(
             backgroundApiUser.new({ usernamePrefix }),
           );
-          saveTestUserId(user, testUserIds);
+          if (userResponse.user?.id) {
+            testUserIds.push(userResponse.user.id);
+          } else {
+            throw new Error('createUser: invalid API response');
+          }
         }
       });
     });
