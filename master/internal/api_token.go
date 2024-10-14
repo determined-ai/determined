@@ -55,12 +55,6 @@ func (a *apiServer) PostAccessToken(
 	return &apiv1.PostAccessTokenResponse{Token: token, TokenId: int32(tokenID)}, nil
 }
 
-// type accessTokenFilter struct {
-// 	OnlyActive bool            `json:"only_active"`
-// 	Username   string          `json:"username"`
-// 	TokenIDs   []model.TokenID `json:"token_ids"`
-// }
-
 // GetAccessTokens returns all access token info.
 func (a *apiServer) GetAccessTokens(
 	ctx context.Context, req *apiv1.GetAccessTokensRequest,
