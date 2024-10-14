@@ -3274,10 +3274,16 @@ jobs:
           steps:
             # Stop devcluster running on the past release.
             - stop-devcluster
-            - build-go:
-                name: build latest-main Go
-                ee: true
-                commit_SHA: ${LATEST_MAIN_SHA}
+            - reinstall-go
+            - license-gen
+            - run: git checkout ${LATEST_MAIN_SHA}
+            - run: make -C master build
+            - run: make -C agent build
+            - persist_to_workspace:
+                root: .
+                paths:
+                  - "master/build"
+                  - "agent/build"
 
             # TODO CAROLINA
             - setup-python-venv:
