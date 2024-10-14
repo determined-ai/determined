@@ -404,17 +404,14 @@ commands:
         type: string
       package-location:
         type: string
-      det-version:
-        type: string
-        default: <<pipeline.parameters.det-version>>
     steps:
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
           command: |
             make build
-            pip install --find-links dist <<parameters.package-name>>==<<parameters.det-version>>
-            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<<parameters.det-version>>
+            pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
+            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
 
   setup-python-venv:
     description: Set up and create Python venv.
@@ -436,9 +433,6 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
-      det-version:
-        type: string
-        default: <<pipeline.parameters.det-version>>
     steps:
       - run:
           name: Write cache key
@@ -522,7 +516,6 @@ commands:
                 name: Install pypa builder
                 command: python3 -m pip install build
             - install-wheel:
-                det-version: <<parameters.det-version>>
                 package-name: determined
                 package-location: ./harness
       - run:
@@ -1534,27 +1527,6 @@ commands:
             fi
 
 jobs:
-  read-supported-versions:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - run:
-          name: Read Versions from supported_versions.txt file
-          command: |
-            VERSION_FILE="supported_versions.txt"
-            YAML_FILE="real_config.yaml"
-            pwd
-            ls -la
-
-            VERSIONS=$(awk '{ print "  - \"" $0 "\"" }' $INPUT_FILE)
-
-            # Replace the existing values under det-versions with the new ones from the text file
-            sed -i.bak "/det-versions: &det-versions/{n;N;N;d}" $YAML_FILE
-            sed -i "/det-versions: &det-versions/r /dev/stdin" $YAML_FILE \<<< "$VERSIONS"
-
-            echo "Updated real_config.yaml:"
-            cat $YAML_FILE
-
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -3215,9 +3187,6 @@ jobs:
       upgrade: 
         type: boolean
         default: false
-      det-version:
-        type: string
-        default: <<pipeline.parameters.det-version>>
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
