@@ -280,7 +280,7 @@ func (c *Command) garbageCollect() {
 
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	if smallerHigher, err := c.rm.SmallerValueIsHigherPriority(); err == nil {
-		ok, err := configpolicy.PriorityAllowed(int(c.Metadata.WorkspaceID), model.NTSCType, priority, smallerHigher)
+		ok, err := configpolicy.PriorityUpdateAllowed(int(c.Metadata.WorkspaceID), model.NTSCType, priority, smallerHigher)
 		if err != nil {
 			return err
 		}
