@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import Badge from 'hew/Badge';
 import Button from 'hew/Button';
 import DatePicker, { DatePickerProps } from 'hew/DatePicker';
 import Icon from 'hew/Icon';
@@ -8,7 +9,7 @@ import InputSelect from 'hew/InputSelect';
 import Select, { SelectProps, SelectValue } from 'hew/Select';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Observable, useObservable } from 'micro-observables';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
@@ -70,6 +71,21 @@ const FilterField = ({
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
   const currentColumn = columns.find((c) => c.column === field.columnName);
+  const [metadataColumns, setMetadataColumns] = useState(() => new Map<string, number[]>()); // a map of metadata columns and found indexes
+
+  useEffect(() => {
+    for (const [index, { column }] of columns.entries()) {
+      if (column.includes('metadata')) {
+        const columnEntry = metadataColumns.get(column) ?? [];
+        if (!columnEntry.includes(index)) {
+          setMetadataColumns((prev) => {
+            prev.set(column, [...columnEntry, index]);
+            return prev;
+          });
+        }
+      }
+    }
+  }, [columns, metadataColumns]);
 
   const columnType = useMemo(() => {
     if (field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT) {
@@ -218,6 +234,19 @@ const FilterField = ({
     [columnType, field.type, formStore, index, inputOpen, parentId],
   );
 
+  const getColDisplayName = (col: V1ProjectColumn) => {
+    const metCol = metadataColumns.get(col.column);
+    if (metCol !== undefined && metCol.length > 1) {
+      return (
+        <>
+          {col.column} <Badge text={col.type.replace('COLUMN_TYPE_', '').toLowerCase()} />
+        </>
+      );
+    }
+
+      return col.displayName || col.column;
+  };
+
   return (
     <div className={css.base} data-test-component="FilterField" ref={(node) => drop(node)}>
       <ConjunctionContainer
@@ -234,7 +263,7 @@ const FilterField = ({
           dropdownMatchSelectWidth={300}
           options={columns.map((col, idx) => ({
             key: `${col.column} ${idx}`,
-            label: col.displayName || col.column,
+            label: getColDisplayName(col),
             value: col.column,
           }))}
           value={field.columnName}
