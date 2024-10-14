@@ -3196,7 +3196,6 @@ jobs:
       DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
-        
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
@@ -3206,7 +3205,6 @@ jobs:
 
       - setup-python-venv:
           determined: True
-          det-version: <<parameters.det-version>>
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
