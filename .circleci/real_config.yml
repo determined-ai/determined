@@ -2036,14 +2036,11 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - run: 
-          name: Fetch & Checkout Latest Main
-          command:  |
+      - run:
+          name: Check for Latest Main Docker Image
+          command: |
             git fetch origin main && git checkout main
             export LATEST_MAIN_SHA=$(git rev-parse HEAD)
-      - run:
-          name: Check for Main Docker Image
-          command: |
             for i in {1..20}; do
               if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-master/${LATEST_MAIN_SHA}/" > /dev/null; then
                 echo "Master tag '${LATEST_MAIN_SHA}' found."
@@ -3268,7 +3265,7 @@ jobs:
                 target-stage: <<parameters.target-stage>>
 
       - when:
-          condition: <<parameters.upgrade>>
+          condition: <<parameters.upgrade>>g
           steps:
             # Stop devcluster running on the past release.
             - stop-devcluster
