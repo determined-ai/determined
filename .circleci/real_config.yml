@@ -62,12 +62,6 @@ parameters:
     type: string
     default: ""
 
-det-versions: &det-versions
-  - "0.34.0"
-  - "0.35.0"
-  - "0.36.0"
-  - <branch-of-unreleased-change>
-
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -4868,9 +4862,6 @@ workflows:
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4883,9 +4874,6 @@ workflows:
           tf2: true
           mark: e2e_cpu
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4900,9 +4888,6 @@ workflows:
           target-stage: agent2
           devcluster-config: double-priority.devcluster.yaml
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4915,9 +4900,6 @@ workflows:
           mark: test_oauth
           target-stage: agent1
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4930,9 +4912,6 @@ workflows:
           mark: test_model_registry_rbac
           target-stage: agent1
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4950,9 +4929,6 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4968,9 +4944,6 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4986,9 +4959,6 @@ workflows:
           run-minikubes: true
           multi-k8s: true
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -5002,9 +4972,6 @@ workflows:
           devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -5017,9 +4984,6 @@ workflows:
           mark: port_registry
           target-stage: agent
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -5033,9 +4997,6 @@ workflows:
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -5049,9 +5010,6 @@ workflows:
           target-stage: agent
           postgres-version: "10"
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -5065,9 +5023,6 @@ workflows:
           target-stage: agent
           postgres-version: "14"
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -5082,7 +5037,6 @@ workflows:
           matrix:
             parameters:
               agent-version: ["0.17.10"]
-              det-version: *det-versions
           upgrade: true
 
       - test-e2e:
@@ -5097,9 +5051,6 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
       - test-e2e:
           name: test-e2e-saml
@@ -5112,9 +5063,6 @@ workflows:
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
           upgrade: true
-          matrix:
-            parameters:
-              det-version: *det-versions
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
