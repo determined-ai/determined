@@ -1,10 +1,23 @@
+import Button from 'hew/Button';
+import Checkbox from 'hew/Checkbox';
+import ClipboardButton from 'hew/ClipboardButton';
 import CodeSample from 'hew/CodeSample';
-import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
+import Icon from 'hew/Icon';
+import Input from 'hew/Input';
+import { RecordKey } from 'hew/internal/types';
+import LogViewerEntry, { MAX_DATETIME_LENGTH } from 'hew/LogViewer/LogViewerEntry';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
+import Message from 'hew/Message';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
+import SplitPane, { Pane } from 'hew/SplitPane';
 import useConfirm from 'hew/useConfirm';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import screenfull from 'screenfull';
+import { sprintf } from 'sprintf-js';
+import { debounce } from 'throttle-debounce';
 
 import useUI from 'components/ThemeProvider';
 import useFeature from 'hooks/useFeature';
@@ -14,11 +27,22 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, Log, TrialDetails, TrialLog } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+import { ansiToHtml } from 'utils/dom';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
+import { dateTimeStringSorter } from 'utils/sort';
+import { pluralizer } from 'utils/string';
 
+import LogViewer, {
+  FetchConfig,
+  FetchDirection,
+  FetchType,
+  formatLogEntry,
+  PAGE_LIMIT,
+  ViewerLog,
+} from './LogViewer';
 import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
@@ -28,12 +52,28 @@ export interface Props {
 
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
+const INITIAL_SEARCH_WIDTH = 420;
+
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
+  const [logs, setLogs] = useState<ViewerLog[]>([]);
+  const [searchOn, setSearchOn] = useState<boolean>(false);
+  const [logViewerOn, setLogViewerOn] = useState<boolean>(true);
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
+  const [selectedLog, setSelectedLog] = useState<ViewerLog>();
+  const [searchWidth, setSearchWidth] = useState(INITIAL_SEARCH_WIDTH);
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
+  const container = useRef<HTMLDivElement>(null);
+  const logsRef = useRef<HTMLDivElement>(null);
   const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const local = useRef({
+    idSet: new Set<RecordKey>([]),
+    isScrollReady: false as boolean,
+  });
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
   const { resetSettings, settings, updateSettings } = useSettings<Settings>(trialSettingsConfig);
@@ -42,6 +82,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     () => ({
       agentIds: settings.agentId,
       containerIds: settings.containerId,
+      enableRegex: settings.enableRegex,
       levels: settings.level,
       rankIds: settings.rankId,
       searchText: settings.searchText,
@@ -49,19 +90,22 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     [settings],
   );
 
+  useEffect(() => {
+    settings.searchText?.length && setSearchOn(true);
+  }, [settings.searchText]);
+
   const handleFilterChange = useCallback(
     (filters: Filters) => {
       // request should have already been canceled when resetSettings updated
       // the settings hash
       if (Object.keys(filters).length === 0) return;
-
       canceler.current.abort();
       const newCanceler = new AbortController();
       canceler.current = newCanceler;
-
       updateSettings({
         agentId: filters.agentIds,
         containerId: filters.containerIds,
+        enableRegex: filters.enableRegex,
         level: filters.levels,
         rankId: filters.rankIds,
         searchText: filters.searchText,
@@ -70,7 +114,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     [updateSettings],
   );
 
-  const handleFilterReset = useCallback(() => resetSettings(), [resetSettings]);
+  const handleFilterReset = useCallback(() => {
+    resetSettings();
+    setSearchResults([]);
+    setSearchInput('');
+    setSelectedLog(undefined);
+  }, [resetSettings]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (!trial?.id) return;
@@ -111,7 +160,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [confirm, experiment.id, f_flat_runs, handleDownloadConfirm, trial?.id]);
 
   const handleFetch = useCallback(
-    (config: FetchConfig, type: FetchType) => {
+    (config: FetchConfig, type: FetchType, searchText?: string, enableRegex?: boolean) => {
       const { signal } = mergeAbortControllers(config.canceler, canceler.current);
 
       const options = {
@@ -151,12 +200,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         decode(optional(DateString), options.timestampBefore),
         decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
-        settings.searchText,
-        false,
+        searchText,
+        enableRegex,
         { signal },
       );
     },
-    [settings, trial?.id],
+    [settings.agentId, settings.containerId, settings.rankId, settings.level, trial?.id],
   );
 
   useEffect(() => {
@@ -182,24 +231,293 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const logFilters = (
     <LogViewerSelect
       options={filterOptions}
-      showSearch={true}
+      showSearch={false}
       values={filterValues}
       onChange={handleFilterChange}
       onReset={handleFilterReset}
     />
   );
 
+  const debouncedChangeSearch = useMemo(
+    () =>
+      debounce(
+        500,
+        (s: string) => {
+          updateSettings({ searchText: s });
+        },
+        { atBegin: false },
+      ),
+    [updateSettings],
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedChangeSearch.cancel();
+      // kinda gross but we want this to run only on unmount
+      setSearchInput((s) => {
+        updateSettings({ searchText: s });
+        return s;
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedChangeSearch]);
+
+  const onSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchInput(e.target.value);
+      debouncedChangeSearch(e.target.value);
+      if (!e.target.value) {
+        setSearchResults([]);
+        setSelectedLog(undefined);
+      }
+    },
+    [debouncedChangeSearch],
+  );
+
+  const formattedSearchResults = useMemo(() => {
+    const key = settings.searchText;
+
+    if (!key) return [];
+    const formatted: ViewerLog[] = [];
+    _.uniqBy(searchResults, (l) => l.id).forEach((l) => {
+      const content = l.log;
+      if (!content) return;
+      if (settings.enableRegex) {
+        try {
+          new RegExp(key);
+        } catch {
+          return;
+        }
+      }
+
+      const logEntry = formatLogEntry(l);
+
+      const i = settings.enableRegex ? content.match(`${key}`)?.index : content.indexOf(key);
+      if (_.isUndefined(i) || i < 0) return;
+      const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;
+      const j = i + keyLen;
+      formatted.push({
+        ...logEntry,
+        message: `${ansiToHtml(content.slice(0, i))}<span class=${css.key}>${ansiToHtml(content.slice(i, j))}</span>${ansiToHtml(content.slice(j))}`,
+      });
+    });
+    return formatted.sort((a, b) => dateTimeStringSorter(a.time as string, b.time as string));
+  }, [searchResults, settings.searchText, settings.enableRegex]);
+
+  useEffect(() => {
+    if (settings.searchText) {
+      setSearchResults([]);
+      setSelectedLog(undefined);
+      readStream(
+        handleFetch(
+          {
+            canceler: canceler.current,
+            fetchDirection: FetchDirection.Newer,
+            limit: 0,
+          },
+          FetchType.Initial,
+          settings.searchText,
+          settings.enableRegex,
+        ),
+        (log) => setSearchResults((prev) => [...prev, mapV1LogsResponse(log)]),
+      );
+    }
+  }, [settings.searchText, handleFetch, settings.enableRegex, canceler]);
+
+  const processLogs = useCallback((newLogs: Log[]) => {
+    return newLogs
+      .filter((log) => {
+        const isDuplicate = local.current.idSet.has(log.id);
+        const isTqdm = log.message.includes('\r');
+        local.current.idSet.add(log.id);
+        return !isDuplicate && !isTqdm;
+      })
+      .map((log) => formatLogEntry(log))
+      .sort((a, b) => dateTimeStringSorter(a['time'] as string, b['time'] as string));
+  }, []);
+
+  const onSelectLog = useCallback(
+    async (logEntry: ViewerLog) => {
+      setSelectedLog(logEntry);
+      setLogViewerOn(true);
+      const index = logs.findIndex((l) => l.id === logEntry.id);
+      if (index > -1) {
+        // Selected log is already fetched. Just need to scroll to the place.
+        return;
+      }
+      local.current = {
+        idSet: new Set<RecordKey>([]),
+        isScrollReady: true,
+      };
+      const bufferBefore: TrialLog[] = [];
+      const bufferAfter: TrialLog[] = [];
+
+      await readStream(
+        handleFetch(
+          {
+            canceler: canceler.current,
+            fetchDirection: FetchDirection.Older,
+            limit: PAGE_LIMIT,
+            offsetLog: logEntry,
+          },
+          FetchType.Older,
+        ),
+        (log) => bufferBefore.push(mapV1LogsResponse(log)),
+      );
+      await readStream(
+        handleFetch(
+          {
+            canceler: canceler.current,
+            fetchDirection: FetchDirection.Newer,
+            limit: PAGE_LIMIT,
+            offsetLog: logEntry,
+          },
+          FetchType.Newer,
+        ),
+        (log) => bufferAfter.push(mapV1LogsResponse(log)),
+      );
+      setLogs(processLogs([...bufferBefore, ...bufferAfter]));
+    },
+    [handleFetch, logs, processLogs],
+  );
+
+  const renderSearch = useCallback(() => {
+    const height = container.current?.getBoundingClientRect().height || 0;
+    return (
+      <div className={css.search} style={{ height: `${height - 64}px` }}>
+        <Checkbox
+          checked={settings.enableRegex}
+          onChange={(e) => updateSettings({ enableRegex: e.target.checked })}>
+          Regex
+        </Checkbox>
+        <div className={css.logContainer}>
+          {formattedSearchResults.length > 0 ? (
+            formattedSearchResults.map((logEntry) => (
+              <div
+                className={css.log}
+                key={logEntry.id}
+                onClick={() => {
+                  onSelectLog(logEntry);
+                }}>
+                <LogViewerEntry
+                  formattedTime={logEntry.formattedTime}
+                  htmlMessage={true}
+                  key={logEntry.id}
+                  level={logEntry.level}
+                  message={logEntry.message}
+                  style={{
+                    backgroundColor:
+                      logEntry.id === selectedLog?.id ? 'var(--theme-ix-active)' : 'transparent',
+                  }}
+                />
+              </div>
+            ))
+          ) : (
+            <Message icon="warning" title="No logs to show. " />
+          )}
+        </div>
+      </div>
+    );
+  }, [
+    settings.enableRegex,
+    formattedSearchResults,
+    container,
+    selectedLog,
+    updateSettings,
+    onSelectLog,
+  ]);
+
+  const formatClipboardHeader = (log: Log): string => {
+    const logEntry = formatLogEntry(log);
+    const format = `%${MAX_DATETIME_LENGTH - 1}s `;
+    const level = `<${logEntry.level || ''}>`;
+    return sprintf(`%-9s ${format}`, level, logEntry.formattedTime);
+  };
+
+  const clipboardCopiedMessage = useMemo(() => {
+    const linesLabel = pluralizer(logs.length, 'entry', 'entries');
+    return `Copied ${logs.length} ${linesLabel}!`;
+  }, [logs]);
+
+  const getClipboardContent = useCallback(() => {
+    return logs.map((log) => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
+  }, [logs]);
+
+  const handleFullScreen = useCallback(() => {
+    if (logsRef.current && screenfull.isEnabled) screenfull.toggle();
+  }, []);
+
+  const rightButtons = (
+    <Row>
+      <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
+      <Button
+        aria-label="Toggle Fullscreen Mode"
+        icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
+        onClick={handleFullScreen}
+      />
+      <Button
+        aria-label="Download Logs"
+        icon={<Icon name="download" showTooltip title="Download Logs" />}
+        onClick={handleDownloadLogs}
+      />
+    </Row>
+  );
+
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={container}>
       <Spinner conditionalRender spinning={!trial}>
-        <LogViewer
-          decoder={mapV1LogsResponse}
-          serverAddress={serverAddress}
-          title={logFilters}
-          onDownload={handleDownloadLogs}
-          onError={handleError}
-          onFetch={handleFetch}
-        />
+        <div className={css.header}>
+          <div className={css.filters}>
+            <Input
+              allowClear
+              placeholder="Search Logs..."
+              value={searchInput || settings.searchText}
+              width={240}
+              onChange={onSearchChange}
+            />
+            <Button
+              type={searchOn ? 'primary' : 'default'}
+              onClick={() => {
+                setSearchOn((prev) => !prev);
+                searchOn && setLogViewerOn(true);
+              }}>
+              <Icon name="search" showTooltip title={`${searchOn ? 'Close' : 'Open'} Search`} />
+            </Button>
+            <Button
+              type={logViewerOn ? 'primary' : 'default'}
+              onClick={() => searchOn && setLogViewerOn((prev) => !prev)}>
+              <Icon
+                name="list"
+                showTooltip
+                title={searchOn ? `${logViewerOn ? 'Close' : 'Open'} Logs` : ''}
+              />
+            </Button>
+            {logFilters}
+          </div>
+          {rightButtons}
+        </div>
+        <div className={css.panes}>
+          <SplitPane
+            hidePane={searchOn && logViewerOn ? undefined : searchOn ? Pane.Right : Pane.Left}
+            initialWidth={searchWidth || INITIAL_SEARCH_WIDTH}
+            leftPane={renderSearch()}
+            minimumWidths={{ left: 300, right: 300 }}
+            rightPane={
+              <LogViewer
+                decoder={mapV1LogsResponse}
+                local={local}
+                logs={logs}
+                logsRef={logsRef}
+                selectedLog={selectedLog}
+                serverAddress={serverAddress}
+                setLogs={setLogs}
+                onError={handleError}
+                onFetch={handleFetch}
+              />
+            }
+            onChange={(w) => setSearchWidth(w)}
+          />
+        </div>
       </Spinner>
     </div>
   );
