@@ -419,11 +419,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
 
         if (mounted) {
-          setProjectColumns(
-            Loaded(
-              columns,
-            ),
-          );
+          setProjectColumns(Loaded(columns));
         }
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch project columns' });
