@@ -1548,7 +1548,7 @@ jobs:
           name: Read Versions from supported_versions.txt file
           command: |
             VERSION_FILE="supported_versions.txt"
-            YAML_FILE=".circleci/real_config.yaml"
+            YAML_FILE="real_config.yaml"
             pwd
             ls -la
 
@@ -1766,7 +1766,7 @@ jobs:
       - run: docker tag determinedai/hpe-mlde-agent:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
-      - persist_to_workspace:
+      - persist_to_workspace: # toDO CAROLINA
           root: .
           paths:
             - "master/dist/*linux_amd64.deb"
@@ -3233,13 +3233,6 @@ jobs:
       DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
-      - when:
-          condition: <<parameters.upgrade>>
-          steps:
-            - run: 
-                name: Fetch & Checkout Branch/Commit SHA <<parameters.det-version>>
-                command: git fetch origin <<parameters.det-version>> && git checkout <<parameters.det-version>>
-            # - package-and-push-system-dev TODO CAROLINA
         
       - add-and-fetch-upstream
       - skip-if-only-docs
@@ -3273,23 +3266,6 @@ jobs:
                   - run:
                       name: Start additionalrm minikube
                       command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
-      
-      - when:
-          condition: <<parameters.upgrade>>
-          steps:
-            - install-devcluster
-            - unless:
-                condition: <<parameters.managed-devcluster>>
-                steps:
-                  - start-devcluster:
-                      devcluster-config: <<parameters.devcluster-config>>
-                      target-stage: <<parameters.target-stage>>
-            - stop-devcluster
-            - checkout
-            - setup-python-venv:
-                determined: True
-                extra-requirements-file: "e2e_tests/tests/requirements.txt"
-                executor: <<pipeline.parameters.machine-image>>
 
       - install-devcluster
       - unless:
@@ -3298,6 +3274,61 @@ jobs:
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
+
+      - when:
+          steps:
+            # Stop devcluster running on the past release.
+            - stop-devcluster
+            - setup_remote_docker:
+                version: previous
+            - login-docker:
+                username: ${DOCKER_USER}
+                password: ${DOCKER_PASS}
+            - run: 
+                name: Fetch & Checkout Latest Main
+                command: git fetch origin main && git checkout main
+            - run:
+                name: Check for Main Docker Image
+                command: |
+                  REPO="determinedai/hpe-mlde-master"
+                  TAG="$1"
+                  for i in {1..20}; do
+                    if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-master/${TAG}/" > /dev/null; then
+                      echo "Master tag '${TAG}' found."
+                      if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-agent/${TAG}/" > /dev/null; then
+                        echo "Agent tag '${TAG}' found."
+                        exit 0
+                      fi
+                    fi
+                    echo "Tag '${TAG}' not found (Attempt $i/20), retrying in 60s..."
+                    sleep 60
+                  done
+
+                  echo "Tag '${TAG}' not found after 20 attempts."
+                  exit 1
+            - run:
+                name: Install New Build
+                command: |
+                  docker save -o build/master.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
+                  docker save -o build/master-ee.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
+                  docker save -o build/agent.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
+                  docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
+            - persist_to_workspace: 
+                root: .
+                paths:
+                  - "build/*.image" # TODO CAROLINA -- what images do I need to save and why?
+            - setup-python-venv:
+                determined: True
+                extra-requirements-file: "e2e_tests/tests/requirements.txt"
+                executor: <<pipeline.parameters.machine-image>>
+            - install-devcluster
+            - unless:
+                condition: <<parameters.managed-devcluster>>
+                steps:
+                  - start-devcluster:
+                      devcluster-config: <<parameters.devcluster-config>>
+                      target-stage: <<parameters.target-stage>>
+
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
@@ -4826,8 +4857,6 @@ workflows:
       - build-go:
           name: build-go-ee
           context: github-read
-
-      - read-supported-versions
 
       - test-e2e:
           name: test-e2e-rbac
