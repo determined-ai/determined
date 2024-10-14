@@ -33,5 +33,5 @@ jobs:
       # why this one specifies a full version; presumably there will be a
       # version bump when things change. :shrug:
       - uses: pre-commit/action@v3.0.0
-      #  with:
-      #    extra_args: ""
+      # with:
+      #   extra_args: ""
