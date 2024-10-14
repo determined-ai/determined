@@ -141,7 +141,7 @@ const NavigationSideBar: React.FC = () => {
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
 
-  const { canCreateWorkspace, canViewWorkspace } = usePermissions();
+  const { canCreateWorkspace, canViewWorkspace, canViewGlobalConfigPolicies } = usePermissions();
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
@@ -173,6 +173,13 @@ const NavigationSideBar: React.FC = () => {
         icon: 'columns',
         label: 'Templates',
         path: paths.templates(),
+      });
+    }
+    if (info.branding === BrandingType.HPE && canViewGlobalConfigPolicies) {
+      topItems.splice(topItems.length - 1, 0, {
+        icon: 'options',
+        label: 'Config Policies',
+        path: paths.configPolicies(),
       });
     }
     if (currentUser?.isAdmin || f_webhook) {
@@ -216,6 +223,7 @@ const NavigationSideBar: React.FC = () => {
     };
   }, [
     canAccessUncategorized,
+    canViewGlobalConfigPolicies,
     info.branding,
     gasLinkOn,
     templatesOn,

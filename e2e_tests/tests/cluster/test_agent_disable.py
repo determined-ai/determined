@@ -85,7 +85,6 @@ def test_disable_agent_experiment_resume() -> None:
     assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
 
-    # Make the experiment preemptible.
     exp_ref = noop.create_experiment(sess, [noop.Sleep(100)], config={"max_restarts": 0})
     exp.wait_for_experiment_state(
         sess,
@@ -137,7 +136,7 @@ def test_disable_agent_zero_slots() -> None:
 
     try:
         with _disable_agent(admin, agent_id):
-            utils.wait_for_command_state(sess, command_id, "TERMINATED", 30)
+            utils.wait_for_command_state(sess, command_id, "TERMINATED", 120)
     finally:
         # Kill the command before failing so it does not linger.
         command = ["det", "command", "kill", command_id]

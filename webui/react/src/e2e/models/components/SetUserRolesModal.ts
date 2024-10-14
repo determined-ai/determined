@@ -7,7 +7,7 @@ import { Modal } from 'e2e/models/common/hew/Modal';
  */
 export class SetUserRolesModal extends Modal {
   readonly roles = new BaseComponent({
-    parent: this.body,
+    parent: this,
     selector: '[data-testid="roles"]',
   });
 }

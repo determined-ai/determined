@@ -36,7 +36,7 @@ const setup = () => {
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
         <ConfirmationProvider>
-          <ConfigPolicies />
+          <ConfigPolicies workspaceId={1} />
         </ConfirmationProvider>
       </ThemeProvider>
     </UIProvider>,

@@ -65,7 +65,7 @@ func (e *internalExperiment) SetJobPriority(priority int) error {
 
 	// Returns an error if RM does not implement priority.
 	if smallerHigher, err := e.rm.SmallerValueIsHigherPriority(); err == nil {
-		ok, err := configpolicy.PriorityAllowed(
+		ok, err := configpolicy.PriorityUpdateAllowed(
 			wkspID,
 			model.ExperimentType,
 			priority,

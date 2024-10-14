@@ -3,7 +3,6 @@ package configpolicy
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -18,7 +17,15 @@ const (
 	wkspIDQuery       = "workspace_id = ?"
 	wkspIDGlobalQuery = "workspace_id IS ?"
 	// DefaultInvariantConfigStr is the default invariant config val used for tests.
-	DefaultInvariantConfigStr = `{"description": "random description", "resources": {"slots": 4, "max_slots": 8}}`
+	DefaultInvariantConfigStr = `{
+	"description": "random description", 
+	"resources": {"slots": 4, "max_slots": 8},
+	"log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		}
+	]
+	}`
 	// DefaultConstraintsStr is the default constraints val used for tests.
 	DefaultConstraintsStr = `{"priority_limit": 10, "resources": {"max_slots": 8}}`
 )
@@ -38,8 +45,7 @@ func SetTaskConfigPolicies(ctx context.Context,
 func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 	tcp *model.TaskConfigPolicies,
 ) error {
-	q := db.Bun().NewInsert().
-		Model(tcp)
+	q := db.Bun().NewInsert().Model(tcp)
 
 	if tcp.InvariantConfig == nil {
 		q = q.ExcludeColumn("invariant_config")
@@ -71,8 +77,8 @@ func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 
 // GetTaskConfigPolicies retrieves the invariant config and constraints for the
 // given scope (global or workspace-level) and workload Type.
-func GetTaskConfigPolicies(ctx context.Context,
-	scope *int, workloadType string,
+func GetTaskConfigPolicies(
+	ctx context.Context, scope *int, workloadType string,
 ) (*model.TaskConfigPolicies, error) {
 	var tcp model.TaskConfigPolicies
 	wkspQuery := wkspIDQuery
@@ -92,43 +98,6 @@ func GetTaskConfigPolicies(ctx context.Context,
 			"workspace with ID %d: %w", workloadType, scope, err)
 	}
 	return &tcp, nil
-}
-
-// GetPriorityLimit reads the priority limit for the given scope and workload type.
-// It returns found=false if no limit exists.
-func GetPriorityLimit(ctx context.Context, scope *int, workloadType string) (limit int, found bool, err error) {
-	if !ValidWorkloadType(workloadType) {
-		return 0, false, fmt.Errorf("invalid workload type: %s", workloadType)
-	}
-
-	wkspQuery := wkspIDQuery
-	if scope == nil {
-		wkspQuery = wkspIDGlobalQuery
-	}
-
-	var constraints model.Constraints
-	var constraintsStr string
-	err = db.Bun().NewSelect().
-		Table("task_config_policies").
-		Column("constraints").
-		Where(wkspQuery, scope).
-		Where("workload_type = ?", workloadType).
-		Scan(ctx, &constraintsStr)
-
-	if err == sql.ErrNoRows {
-		return 0, false, nil
-	} else if err != nil {
-		return 0, false, fmt.Errorf("error retrieving priority limit: %w", err)
-	}
-
-	if err = json.Unmarshal([]byte(constraintsStr), &constraints); err != nil {
-		return 0, false, err
-	}
-	if constraints.PriorityLimit != nil {
-		return *constraints.PriorityLimit, true, nil
-	}
-
-	return 0, false, nil
 }
 
 // DeleteConfigPolicies deletes the invariant experiment config and constraints for the

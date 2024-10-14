@@ -1468,8 +1468,7 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
 def run_identity(tmp_path: pathlib.Path):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
-    config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
-    hparams = config["hyperparameters"]
+    hparams = {"global_batch_size": 4}
 
     exp_config = utils.make_default_exp_config(
         hparams,
@@ -1477,7 +1476,6 @@ def run_identity(tmp_path: pathlib.Path):
         searcher_metric="validation_loss",
         checkpoint_dir=checkpoint_dir,
     )
-    exp_config.update(config)
     exp_config["searcher"]["smaller_is_better"] = True
 
     # each subprocess must import separately as trial_class cannot be pickled.

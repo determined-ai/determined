@@ -1,4 +1,5 @@
 import { expect, test } from 'e2e/fixtures/global-fixtures';
+import { ExperimentRow } from 'e2e/models/components/F_ExperimentList';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
@@ -393,6 +394,7 @@ test.describe('Experiment List', () => {
       }).toPass();
     });
   });
+
   test.describe('Experiment List Pagination', () => {
     test.beforeAll(({ newProject }) => {
       Array(51)
@@ -437,6 +439,124 @@ test.describe('Experiment List', () => {
       await projectDetailsPage.f_experimentList.pagination.perPage.selectMenuOption('80 / page');
       await perPageUpdate;
       expectPageNumber(null);
+    });
+  });
+  test.describe('Experiment List Multi-sort', () => {
+    const runScenarioAndValidation = (projectDetailsPage: ProjectDetails) => {
+      const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
+      const validateByColumn = async (
+        rows: ExperimentRow[],
+        colKey: string,
+        descending: boolean,
+      ) => {
+        const valuesToCompare = await Promise.all(
+          rows.map(async (r) => (await r.getCellByColumnName(colKey)).pwLocator.innerText()),
+        );
+        // eslint-disable-next-line no-console
+        console.log(valuesToCompare[0]);
+
+        const expectedValues = [...valuesToCompare].sort();
+        if (descending) {
+          expectedValues.reverse();
+        }
+        expect(valuesToCompare).toEqual(expectedValues);
+      };
+      const checkTableOrder = async (firstKey: string, secondKey: string, descending = false) => {
+        const rows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(
+          async () => await true,
+        );
+        await validateByColumn(rows, firstKey, descending);
+        await validateByColumn(rows, secondKey, descending);
+      };
+      const sortingScenario = async (
+        firstSortBy: string,
+        firstSortOrder: string,
+        secondSortBy: string,
+        secondSortOrder: string,
+        scenario: () => Promise<void>,
+      ): Promise<void> => {
+        await test.step(`Sort by ${firstSortBy} and ${secondSortBy}`, async () => {
+          await multiSortMenu.open();
+          await multiSortMenu.multiSort.reset.pwLocator.click();
+          await multiSortMenu.close();
+          await multiSortMenu.open();
+
+          const firstRow = multiSortMenu.multiSort.rows.nth(0);
+          await firstRow.column.selectMenuOption(firstSortBy);
+          await firstRow.order.selectMenuOption(firstSortOrder);
+
+          await multiSortMenu.multiSort.add.pwLocator.click();
+
+          const secondRow = multiSortMenu.multiSort.rows.nth(1);
+          await secondRow.column.selectMenuOption(secondSortBy);
+          await secondRow.order.selectMenuOption(secondSortOrder);
+
+          await multiSortMenu.close();
+          await waitTableStable();
+          await scenario();
+        });
+      };
+
+      return { checkTableOrder, sortingScenario };
+    };
+
+    test.beforeAll(async ({ newProject }) => {
+      // create a new experiment for comparing Searcher Metric and Trial Count
+      await detExecSync(
+        `experiment create ${fullPath('examples/tutorials/core_api_pytorch_mnist/checkpoints.yaml')} --paused --project_id ${newProject.response.project.id}`,
+      );
+    });
+
+    // set table columns to have just the columns that we are using in the test cases.
+    test.beforeEach(async ({ authedPage, newProject }) => {
+      projectDetailsPage = new ProjectDetails(authedPage);
+      await projectDetailsPage.gotoProject(newProject.response.project.id);
+      const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
+      await columnPicker.open();
+      const showAllButton = columnPicker.columnPickerTab.showAll.pwLocator;
+      await showAllButton.click();
+      if ((await showAllButton.textContent()) === 'Hide all') {
+        await showAllButton.click();
+      }
+
+      const columnTitles = ['id', 'searcherType', 'numTrials', 'searcherMetric'];
+
+      for (const title of columnTitles) {
+        const checkbox = columnPicker.columnPickerTab.columns.listItem(title).checkbox;
+        await checkbox.pwLocator.check();
+      }
+
+      await columnPicker.close();
+
+      await projectDetailsPage.f_experimentList.dataGrid.headRow.setColumnDefs();
+    });
+
+    test('sort with ID as 0 → 9 and Searcher as A → Z', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('ID', '0 → 9', 'Searcher', 'A → Z', async () => {
+        await checkTableOrder('ID', 'Searcher');
+      });
+    });
+
+    test('sort with ID as 9 → 0 and Searcher as Z → A', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('ID', '9 → 0', 'Searcher', 'Z → A', async () => {
+        await checkTableOrder('ID', 'Searcher', true);
+      });
+    });
+
+    test('sort with Trial count as 0 → 0 and Searcher Metric as A → Z', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
+        await checkTableOrder('Trial count', 'Searcher Metric');
+      });
+    });
+
+    test('sort with Trial count as 9 → 0 and Searcher Metric as Z → A', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'Z → A', async () => {
+        await checkTableOrder('Trial count', 'Searcher Metric', true);
+      });
     });
   });
 });

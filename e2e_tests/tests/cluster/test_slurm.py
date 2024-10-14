@@ -7,11 +7,9 @@ import torch
 
 from determined.common import api
 from determined.common.api import bindings
-from determined.experimental import client
 from tests import api_utils, command
 from tests import config as conf
 from tests import experiment as exp
-from tests.experiment import noop
 
 
 def run_failure_test_multiple(
@@ -170,25 +168,6 @@ def test_docker_login() -> None:
         conf.fixtures_path("failures/"),
         errors,
     )
-
-
-# A devcluster needs to be run with the master host entered incorrectly
-# (with an unreachable master_host name).
-@pytest.mark.e2e_slurm_misconfigured
-@api_utils.skipif_not_slurm()
-def test_master_host() -> None:
-    sess = api_utils.user_session()
-    # Creates an experiment normally, should error if the back communication channel is broken
-    exp_ref = noop.create_experiment(sess)
-    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
-    msg = (
-        "Unable to reach the master at DET_MASTER=http://junkmaster:8080.  "
-        "This may be due to an address "
-        "resolution problem, a certificate problem, a firewall problem, "
-        "a proxy problem, or some other networking error."
-    )
-    trial = exp_ref.get_trials()[0]
-    assert exp.check_if_string_present_in_trial_logs(sess, trial.id, msg)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")

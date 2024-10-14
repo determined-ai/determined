@@ -7,7 +7,7 @@ import { Modal } from 'e2e/models/common/hew/Modal';
  */
 export class AddUsersToGroupsModal extends Modal {
   readonly groups = new BaseComponent({
-    parent: this.body,
+    parent: this,
     selector: '[data-testid="groups"]',
   });
 }

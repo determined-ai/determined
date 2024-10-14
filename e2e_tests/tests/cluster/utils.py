@@ -1,7 +1,7 @@
 import copy
 import datetime
 import http.server
-import subprocess
+import sys
 import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple, Type
@@ -179,7 +179,9 @@ def wait_for_task_state(
             return
         time.sleep(1)
 
-    print(subprocess.check_output(["det", "-m", conf.make_master_url(), "task", "logs", task_id]))
+    print("== begin task logs ==", file=sys.stderr)
+    print(detproc.check_output(sess, ["det", "task", "logs", task_id]), file=sys.stderr)
+    print("== end task logs ==", file=sys.stderr)
     pytest.fail(f"{task_type} expected {state} state got {gotten_state} instead after {ticks} secs")
 
 

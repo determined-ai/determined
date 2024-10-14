@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import Breadcrumb from 'hew/Breadcrumb';
 import Button from 'hew/Button';
 import Glossary, { InfoRow } from 'hew/Glossary';
@@ -15,7 +16,7 @@ import {
   CoreApiGenericCheckpoint,
   ExperimentConfig,
 } from 'types';
-import { formatDatetime } from 'utils/datetime';
+import { DEFAULT_DATETIME_FORMAT } from 'utils/datetime';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { createPachydermLineageLink } from 'utils/integrations';
 import { isAbsolutePath } from 'utils/routes';
@@ -178,7 +179,10 @@ ${checkpoint?.totalBatches}? This action may complete or fail without further no
         ),
       });
     if ('endTime' in checkpoint && checkpoint?.endTime)
-      glossaryContent.push({ label: 'Ended', value: formatDatetime(checkpoint.endTime) });
+      glossaryContent.push({
+        label: 'Ended',
+        value: dayjs.utc(checkpoint.endTime).format(DEFAULT_DATETIME_FORMAT),
+      });
     glossaryContent.push({
       label: 'Total Size',
       value: (
