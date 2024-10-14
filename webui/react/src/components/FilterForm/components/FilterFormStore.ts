@@ -242,8 +242,8 @@ export class FilterFormStore {
     col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
   ): void {
     return this.#updateField(id, (form) => {
-      if (form.columnName === col.column && form.location === col.location) {
-        return form;
+      if (form.columnName === col.column) {
+        if (form.type === col.type && form.location === col.location) return form;
       }
       return {
         ...form,
