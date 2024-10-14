@@ -2271,9 +2271,5 @@ export const postRunMetadata: DetApi<
   name: 'postRunMetadata',
   postProcess: identity,
   request: (params: Service.PostRunMetadata, options) =>
-    detApi.Internal.postRunMetadata(
-      params.runId,
-      params.body,
-      options,
-    ),
+    detApi.Internal.postRunMetadata(params.runId, params.body, options),
 };
