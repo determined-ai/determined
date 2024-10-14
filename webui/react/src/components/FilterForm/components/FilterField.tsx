@@ -70,7 +70,10 @@ const FilterField = ({
 }: Props): JSX.Element => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
-  const currentColumn = columns.find((c) => c.column === field.columnName);
+  const currentColumn = useMemo(
+    () => columns.find((c) => c.column === field.columnName),
+    [columns, field.columnName],
+  );
   const [metadataColumns, setMetadataColumns] = useState(() => new Map<string, number[]>()); // a map of metadata columns and found indexes
 
   useEffect(() => {
@@ -112,19 +115,18 @@ const FilterField = ({
   };
 
   const onChangeColumnName = (value: SelectValue) => {
-    const prevType = currentColumn?.type;
-    const newColName = value?.toString() ?? '';
-    const newCol = columns.find((c) => c.column === newColName);
+    const prevType = field.type;
+    const [newColName, type] = (value?.toString() ?? '').split(' ');
+    const newCol = columns.find((c) => c.column === newColName && type === c.type);
     if (newCol) {
       Observable.batch(() => {
         formStore.setFieldColumnName(field.id, newCol);
-
         if ((SpecialColumnNames as ReadonlyArray<string>).includes(newColName)) {
           formStore.setFieldOperator(field.id, Operator.Eq);
           updateFieldValue(field.id, null);
-        } else if (prevType !== newCol?.type) {
+        } else if (prevType !== newCol.type) {
           const defaultOperator: Operator =
-            AvailableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+            AvailableOperators[newCol.type ?? V1ColumnType.UNSPECIFIED][0];
           formStore.setFieldOperator(field.id, defaultOperator);
           updateFieldValue(field.id, null);
         }
@@ -264,9 +266,9 @@ const FilterField = ({
           options={columns.map((col, idx) => ({
             key: `${col.column} ${idx}`,
             label: getColDisplayName(col),
-            value: col.column,
+            value: `${col.column} ${col.type}`,
           }))}
-          value={field.columnName}
+          value={`${field.columnName} ${field.type}`}
           width={'100%'}
           onChange={onChangeColumnName}
         />
