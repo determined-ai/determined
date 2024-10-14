@@ -3269,7 +3269,6 @@ jobs:
             # Stop devcluster running on the past release.
             - stop-devcluster
             - reinstall-go
-            - license-gen
             - run: git checkout ${LATEST_MAIN_SHA}
             - run: make -C master build
             - run: make -C agent build
