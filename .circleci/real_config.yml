@@ -1732,7 +1732,7 @@ jobs:
       - run: docker tag determinedai/hpe-mlde-agent:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
-      - persist_to_workspace: # toDO CAROLINA
+      - persist_to_workspace:
           root: .
           paths:
             - "master/dist/*linux_amd64.deb"
@@ -2026,6 +2026,37 @@ jobs:
           at: .
       - run: make -C bindings force-gen
       - run: make -C bindings check/python
+
+  pull-main-docker-images:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps: # TODO CAROLINA
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - run: 
+          name: Fetch & Checkout Latest Main
+          command:  |
+            git fetch origin main && git checkout main
+            export LATEST_MAIN_SHA=$(git rev-parse HEAD)
+      - run:
+          name: Check for Main Docker Image
+          command: |
+            for i in {1..20}; do
+              if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-master/${LATEST_MAIN_SHA}/" > /dev/null; then
+                echo "Master tag '${LATEST_MAIN_SHA}' found."
+                if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-agent/${LATEST_MAIN_SHA}/" > /dev/null; then
+                  echo "Agent tag '${LATEST_MAIN_SHA}' found."
+                  exit 0
+                fi
+              fi
+              echo "Tag '${LATEST_MAIN_SHA}' not found (Attempt $i/20), retrying in 60s..."
+              sleep 60
+            done
+            echo "Tag '${LATEST_MAIN_SHA}' not found after 20 attempts."
+            exit 1
 
   upload-try-now-template:
     docker:
@@ -3240,44 +3271,18 @@ jobs:
           steps:
             # Stop devcluster running on the past release.
             - stop-devcluster
-            - setup_remote_docker:
-                version: previous
-            - login-docker:
-                username: ${DOCKER_USER}
-                password: ${DOCKER_PASS}
-            - run: 
-                name: Fetch & Checkout Latest Main
-                command: git fetch origin main && git checkout main
             - run:
-                name: Check for Main Docker Image
+                name: Install Latest Main Build # TODO CAROLINA -- do I need to checkout branch too?
                 command: |
-                  REPO="determinedai/hpe-mlde-master"
-                  TAG="$1"
-                  for i in {1..20}; do
-                    if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-master/${TAG}/" > /dev/null; then
-                      echo "Master tag '${TAG}' found."
-                      if curl -fsSL "https://registry.hub.docker.com/repository/determinedai/hpe-mlde-agent/${TAG}/" > /dev/null; then
-                        echo "Agent tag '${TAG}' found."
-                        exit 0
-                      fi
-                    fi
-                    echo "Tag '${TAG}' not found (Attempt $i/20), retrying in 60s..."
-                    sleep 60
-                  done
-
-                  echo "Tag '${TAG}' not found after 20 attempts."
-                  exit 1
-            - run:
-                name: Install New Build
-                command: |
-                  docker save -o build/master.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
-                  docker save -o build/master-ee.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
-                  docker save -o build/agent.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
-                  docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
+                  docker save -o build/master.image determinedai/hpe-mlde-master:${LATEST_MAIN_SHA}
+                  docker save -o build/master-ee.image determinedai/hpe-mlde-master:${LATEST_MAIN_SHA}
+                  docker save -o build/agent.image determinedai/hpe-mlde-agent:${LATEST_MAIN_SHA}
+                  docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${LATEST_MAIN_SHA}
             - persist_to_workspace: 
                 root: .
                 paths:
                   - "build/*.image" # TODO CAROLINA -- what images do I need to save and why?
+            # TODO CAROLINA
             - setup-python-venv:
                 determined: True
                 extra-requirements-file: "e2e_tests/tests/requirements.txt"
@@ -4818,6 +4823,8 @@ workflows:
       - build-go:
           name: build-go-ee
           context: github-read
+      - pull-main-docker-images
+      # TODO CAROLINA -- make this weekly 
 
       - test-e2e:
           name: test-e2e-rbac
