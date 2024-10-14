@@ -1581,6 +1581,44 @@ export interface V1ArchiveRunsResponse {
     results: Array<V1RunActionResult>;
 }
 /**
+ * 
+ * @export
+ * @interface V1ArchiveSearchesRequest
+ */
+export interface V1ArchiveSearchesRequest {
+    /**
+     * The ids of the searches being archived.
+     * @type {Array<number>}
+     * @memberof V1ArchiveSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1ArchiveSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ArchiveSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ArchiveSearchesRequest.
+ * @export
+ * @interface V1ArchiveSearchesResponse
+ */
+export interface V1ArchiveSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1ArchiveSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * Response to ArchiveWorkspaceRequest.
  * @export
  * @interface V1ArchiveWorkspaceResponse
@@ -2759,6 +2797,44 @@ export interface V1DeleteRunsResponse {
      * @memberof V1DeleteRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * Delete searches.
+ * @export
+ * @interface V1DeleteSearchesRequest
+ */
+export interface V1DeleteSearchesRequest {
+    /**
+     * The ids of the searches being deleted.
+     * @type {Array<number>}
+     * @memberof V1DeleteSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * Project id of the searches being deleted.
+     * @type {number}
+     * @memberof V1DeleteSearchesRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1DeleteSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to DeleteSearchesResponse.
+ * @export
+ * @interface V1DeleteSearchesResponse
+ */
+export interface V1DeleteSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1DeleteSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Response to DeleteTemplateRequest.
@@ -5859,6 +5935,44 @@ export interface V1KillRunsResponse {
     results: Array<V1RunActionResult>;
 }
 /**
+ * Kill searches.
+ * @export
+ * @interface V1KillSearchesRequest
+ */
+export interface V1KillSearchesRequest {
+    /**
+     * The ids of the searches being killed.
+     * @type {Array<number>}
+     * @memberof V1KillSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * Project id of the searches being killed.
+     * @type {number}
+     * @memberof V1KillSearchesRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1KillSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to KillSearchesResponse.
+ * @export
+ * @interface V1KillSearchesResponse
+ */
+export interface V1KillSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1KillSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * Response to KillShellRequest.
  * @export
  * @interface V1KillShellResponse
@@ -7012,6 +7126,50 @@ export interface V1MoveRunsResponse {
     results: Array<V1RunActionResult>;
 }
 /**
+ * Request to move the search to a different project.
+ * @export
+ * @interface V1MoveSearchesRequest
+ */
+export interface V1MoveSearchesRequest {
+    /**
+     * The ids of the searches being moved.
+     * @type {Array<number>}
+     * @memberof V1MoveSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1MoveSearchesRequest
+     */
+    sourceProjectId: number;
+    /**
+     * The id of the new parent project.
+     * @type {number}
+     * @memberof V1MoveSearchesRequest
+     */
+    destinationProjectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1MoveSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to MoveSearchesRequest.
+ * @export
+ * @interface V1MoveSearchesResponse
+ */
+export interface V1MoveSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1MoveSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * Note is a user comment connected to a project.
  * @export
  * @interface V1Note
@@ -7900,6 +8058,44 @@ export interface V1PauseRunsResponse {
      * @memberof V1PauseRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * Request to pause the experiment associated witha search.
+ * @export
+ * @interface V1PauseSearchesRequest
+ */
+export interface V1PauseSearchesRequest {
+    /**
+     * The ids of the searches being moved.
+     * @type {Array<number>}
+     * @memberof V1PauseSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * The id of the project of the searches being paused.
+     * @type {number}
+     * @memberof V1PauseSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1PauseSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to PauseSearchesRequest.
+ * @export
+ * @interface V1PauseSearchesResponse
+ */
+export interface V1PauseSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1PauseSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * 
@@ -10131,6 +10327,44 @@ export interface V1ResumeRunsResponse {
     results: Array<V1RunActionResult>;
 }
 /**
+ * Request to unpause the experiment associated witha search.
+ * @export
+ * @interface V1ResumeSearchesRequest
+ */
+export interface V1ResumeSearchesRequest {
+    /**
+     * The ids of the searches being moved.
+     * @type {Array<number>}
+     * @memberof V1ResumeSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * The id of the project of the searches being unpaused.
+     * @type {number}
+     * @memberof V1ResumeSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ResumeSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ResumeSearchesRequest.
+ * @export
+ * @interface V1ResumeSearchesResponse
+ */
+export interface V1ResumeSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1ResumeSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * 
  * @export
  * @interface V1Role
@@ -10375,6 +10609,25 @@ export interface V1ScopeTypeMask {
      * @memberof V1ScopeTypeMask
      */
     workspace?: boolean;
+}
+/**
+ * Message for results of individual searches in a multi-search action.
+ * @export
+ * @interface V1SearchActionResult
+ */
+export interface V1SearchActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1SearchActionResult
+     */
+    error: string;
+    /**
+     * search ID.
+     * @type {number}
+     * @memberof V1SearchActionResult
+     */
+    id: number;
 }
 /**
  * SearcherEvent is a message from master to a client-driven custom searcher informing it of relevant changes in the state of an experiment.
@@ -12243,6 +12496,44 @@ export interface V1UnarchiveRunsResponse {
      * @memberof V1UnarchiveRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1UnarchiveSearchesRequest
+ */
+export interface V1UnarchiveSearchesRequest {
+    /**
+     * The ids of the searches being unarchived.
+     * @type {Array<number>}
+     * @memberof V1UnarchiveSearchesRequest
+     */
+    searchIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1UnarchiveSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1UnarchiveSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to UnarchiveSearchesRequest.
+ * @export
+ * @interface V1UnarchiveSearchesResponse
+ */
+export interface V1UnarchiveSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1UnarchiveSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Response to UnarchiveWorkspaceRequest.
@@ -17762,11 +18053,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -17832,10 +18122,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText
-            }
-            
-            if (enableRegex !== undefined) {
-                localVarQueryParameter['enableRegex'] = enableRegex
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -18768,12 +19054,11 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19310,12 +19595,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-            return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(fetch, basePath);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+            return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -19891,13 +20175,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {boolean} [enableRegex] Search text is regex. Default to false.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-        return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(this.fetch, this.basePath)
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20262,6 +20545,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling archiveRuns.');
             }
             const localVarPath = `/api/v1/runs/archive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Archive searches.
+         * @param {V1ArchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveSearches(body: V1ArchiveSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling archiveSearches.');
+            }
+            const localVarPath = `/api/v1/searches/archive`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -20671,7 +20992,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Delete a list of runs.
+         * @summary Delete runs.
          * @param {V1DeleteRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20682,6 +21003,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling deleteRuns.');
             }
             const localVarPath = `/api/v1/runs/delete`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete searches.
+         * @param {V1DeleteSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSearches(body: V1DeleteSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteSearches.');
+            }
+            const localVarPath = `/api/v1/searches/delete`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -21749,7 +22108,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -21760,6 +22119,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling killRuns.');
             }
             const localVarPath = `/api/v1/runs/kill`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Kill searches.
+         * @param {V1KillSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killSearches(body: V1KillSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killSearches.');
+            }
+            const localVarPath = `/api/v1/searches/kill`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22000,6 +22397,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling moveRuns.');
             }
             const localVarPath = `/api/v1/runs/move`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Move searches.
+         * @param {V1MoveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveSearches(body: V1MoveSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveSearches.');
+            }
+            const localVarPath = `/api/v1/searches/move`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22282,6 +22717,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling pauseRuns.');
             }
             const localVarPath = `/api/v1/runs/pause`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Pause experiment associated with provided searches.
+         * @param {V1PauseSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseSearches(body: V1PauseSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling pauseSearches.');
+            }
+            const localVarPath = `/api/v1/searches/pause`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22977,6 +23450,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided searches.
+         * @param {V1ResumeSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeSearches(body: V1ResumeSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling resumeSearches.');
+            }
+            const localVarPath = `/api/v1/searches/resume`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -23300,6 +23811,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveRuns.');
             }
             const localVarPath = `/api/v1/runs/unarchive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Unarchive searches.
+         * @param {V1UnarchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveSearches(body: V1UnarchiveSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveSearches.');
+            }
+            const localVarPath = `/api/v1/searches/unarchive`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -23657,6 +24206,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Archive searches.
+         * @param {V1ArchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveSearches(body: V1ArchiveSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).archiveSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -23848,13 +24416,32 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Delete a list of runs.
+         * @summary Delete runs.
          * @param {V1DeleteRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         deleteRuns(body: V1DeleteRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete searches.
+         * @param {V1DeleteSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSearches(body: V1DeleteSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24370,13 +24957,32 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         killRuns(body: V1KillRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Kill searches.
+         * @param {V1KillSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killSearches(body: V1KillSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24482,6 +25088,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         moveRuns(body: V1MoveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Move searches.
+         * @param {V1MoveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveSearches(body: V1MoveSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24618,6 +25243,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         pauseRuns(body: V1PauseRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Pause experiment associated with provided searches.
+         * @param {V1PauseSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseSearches(body: V1PauseSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24944,6 +25588,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided searches.
+         * @param {V1ResumeSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeSearches(body: V1ResumeSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResumeSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).resumeSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -25080,6 +25743,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unarchiveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Unarchive searches.
+         * @param {V1UnarchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveSearches(body: V1UnarchiveSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unarchiveSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25266,6 +25948,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Archive searches.
+         * @param {V1ArchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveSearches(body: V1ArchiveSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).archiveSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -25367,13 +26059,23 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Delete a list of runs.
+         * @summary Delete runs.
          * @param {V1DeleteRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         deleteRuns(body: V1DeleteRunsRequest, options?: any) {
             return InternalApiFp(configuration).deleteRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete searches.
+         * @param {V1DeleteSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSearches(body: V1DeleteSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).deleteSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25655,13 +26357,23 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         killRuns(body: V1KillRunsRequest, options?: any) {
             return InternalApiFp(configuration).killRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Kill searches.
+         * @param {V1KillSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killSearches(body: V1KillSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).killSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25722,6 +26434,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         moveRuns(body: V1MoveRunsRequest, options?: any) {
             return InternalApiFp(configuration).moveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Move searches.
+         * @param {V1MoveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveSearches(body: V1MoveSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).moveSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25795,6 +26517,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         pauseRuns(body: V1PauseRunsRequest, options?: any) {
             return InternalApiFp(configuration).pauseRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Pause experiment associated with provided searches.
+         * @param {V1PauseSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseSearches(body: V1PauseSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).pauseSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25968,6 +26700,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided searches.
+         * @param {V1ResumeSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeSearches(body: V1ResumeSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).resumeSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -26050,6 +26792,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
             return InternalApiFp(configuration).unarchiveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unarchive searches.
+         * @param {V1UnarchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveSearches(body: V1UnarchiveSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).unarchiveSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26208,6 +26960,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Archive searches.
+     * @param {V1ArchiveSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public archiveSearches(body: V1ArchiveSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).archiveSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Assign multiple users to multiple groups.
      * @param {V1AssignMultipleGroupsRequest} body
      * @param {*} [options] Override http request option.
@@ -26329,7 +27093,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Delete a list of runs.
+     * @summary Delete runs.
      * @param {V1DeleteRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -26337,6 +27101,18 @@ export class InternalApi extends BaseAPI {
      */
     public deleteRuns(body: V1DeleteRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).deleteRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete searches.
+     * @param {V1DeleteSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteSearches(body: V1DeleteSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).deleteSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26669,7 +27445,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get a list of runs.
+     * @summary Kill runs.
      * @param {V1KillRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -26677,6 +27453,18 @@ export class InternalApi extends BaseAPI {
      */
     public killRuns(body: V1KillRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).killRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Kill searches.
+     * @param {V1KillSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killSearches(body: V1KillSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).killSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26747,6 +27535,18 @@ export class InternalApi extends BaseAPI {
      */
     public moveRuns(body: V1MoveRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).moveRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Move searches.
+     * @param {V1MoveSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public moveSearches(body: V1MoveSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).moveSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26834,6 +27634,18 @@ export class InternalApi extends BaseAPI {
      */
     public pauseRuns(body: V1PauseRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).pauseRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Pause experiment associated with provided searches.
+     * @param {V1PauseSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public pauseSearches(body: V1PauseSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).pauseSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27040,6 +27852,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Unpause experiment associated with provided searches.
+     * @param {V1ResumeSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public resumeSearches(body: V1ResumeSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).resumeSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
      * @param {V1RunPrepareForReportingRequest} body
      * @param {*} [options] Override http request option.
@@ -27139,6 +27963,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Unarchive searches.
+     * @param {V1UnarchiveSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unarchiveSearches(body: V1UnarchiveSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).unarchiveSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Unbind resource pool to workspace
      * @param {string} resourcePoolName The resource pool name.
      * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -27212,11 +28048,10 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -27286,10 +28121,6 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
             
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText
-            }
-            
-            if (enableRegex !== undefined) {
-                localVarQueryParameter['enableRegex'] = enableRegex
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -27368,12 +28199,11 @@ export const JobsApiFp = function (configuration?: Configuration) {
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27430,12 +28260,11 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-            return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(fetch, basePath);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+            return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -27475,13 +28304,12 @@ export class JobsApi extends BaseAPI {
      * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {boolean} [enableRegex] Search text is regex. Default to false.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-        return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(this.fetch, this.basePath)
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -32004,11 +32832,10 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -32078,10 +32905,6 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText
-            }
-            
-            if (enableRegex !== undefined) {
-                localVarQueryParameter['enableRegex'] = enableRegex
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -32234,12 +33057,11 @@ export const TasksApiFp = function (configuration?: Configuration) {
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -32334,12 +33156,11 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-            return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(fetch, basePath);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+            return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -32425,13 +33246,12 @@ export class TasksApi extends BaseAPI {
      * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {boolean} [enableRegex] Search text is regex. Default to false.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-        return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(this.fetch, this.basePath)
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -33977,11 +34797,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -34047,10 +34866,6 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText
-            }
-            
-            if (enableRegex !== undefined) {
-                localVarQueryParameter['enableRegex'] = enableRegex
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -34296,12 +35111,11 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -34453,12 +35267,11 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {boolean} [enableRegex] Search text is regex. Default to false.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-            return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(fetch, basePath);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+            return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -34609,13 +35422,12 @@ export class TrialsApi extends BaseAPI {
      * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {boolean} [enableRegex] Search text is regex. Default to false.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, enableRegex?: boolean, options?: any) {
-        return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, enableRegex, options)(this.fetch, this.basePath)
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
     /**
