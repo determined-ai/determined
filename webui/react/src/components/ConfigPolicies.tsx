@@ -92,8 +92,8 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
     ? "You're about to apply these configuration policies to the cluster."
     : "You're about to apply these configuration policies to the workspace.";
   const viewMessage = global
-    ? 'Global configuration policies are being applied to the cluster.'
-    : 'Global configuration policies are being applied to the workspace.';
+    ? 'Configuration policies are being applied to the cluster.'
+    : 'Configuration policies are being applied to the workspace.';
   const confirmMessageEnding = global
     ? 'underlying workspaces, projects, and submitted experiments in the cluster.'
     : 'underlying projects and their experiments in this workspace.';
