@@ -70,9 +70,9 @@ def revoke_token(args: argparse.Namespace) -> None:
         )
         resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
         print(json.dumps(resp.to_json(), indent=2))
+        print(f"Successfully revoked token {args.token_id}.")
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
-    print(f"Successfully revoked token {args.token_id}.")
 
 
 def create_token(args: argparse.Namespace) -> None:
@@ -84,8 +84,12 @@ def create_token(args: argparse.Namespace) -> None:
         if user is None or user.id is None:
             raise errors.CliError(f"User '{username}' not found or does not have an ID")
 
+        # convert days into hours Go duration format
+        if args.expiration_days:
+            expiration_in_hours = str(24 * args.expiration_days) + "h"
+
         request = bindings.v1PostAccessTokenRequest(
-            userId=user.id, lifespan=args.expiration_duration, description=args.description
+            userId=user.id, lifespan=expiration_in_hours, description=args.description
         )
         resp = bindings.post_PostAccessToken(sess, body=request).to_json()
 
@@ -107,17 +111,19 @@ def create_token(args: argparse.Namespace) -> None:
 def edit_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     try:
-        if args.description and args.token_id:
+        if args.token_id:
             request = bindings.v1PatchAccessTokenRequest(
-                tokenId=args.token_id, description=args.description, setRevoked=False
+                tokenId=args.token_id,
+                description=args.description if args.description else None,
+                setRevoked=False,
             )
             resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
-        print(json.dumps(resp.to_json(), indent=2))
+            print(json.dumps(resp.to_json(), indent=2))
+            print(f"Successfully updated token with ID: {args.token_id}.")
     except api.errors.APIException as e:
         raise errors.CliError(f"Caught APIException: {str(e)}")
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
-    print(f"Successfully updated token with ID: {args.token_id}.")
 
 
 def login_with_token(args: argparse.Namespace) -> None:
@@ -167,8 +173,8 @@ args_description = [
         cli.Cmd("create", create_token, "create token", [
             cli.Arg("username", type=str, nargs=argparse.OPTIONAL,
                     help="name of user to create token", default=None),
-            cli.Arg("--expiration-duration", "-e", type=str,
-                    help="give expiry duration like 2h or 5m or 10s"),
+            cli.Arg("--expiration-days", "-e", type=int,
+                    help="specify the token expiration in days. '-e 2' sets it to 2 days."),
             cli.Arg("--description", "-d", type=str, default=None,
                     help="description of new token"),
             cli.Group(
