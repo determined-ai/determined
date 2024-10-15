@@ -159,9 +159,9 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 	if maxSlots != nil && *constraints.ResourceConstraints.MaxSlots != *maxSlots {
 		return fmt.Errorf("invariant config & constraints are trying to set the max slots")
 	}
-	if slots != nil && *constraints.ResourceConstraints.MaxSlots > *slots {
-		return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot123: %v vs %v",
-			*constraints.ResourceConstraints.MaxSlots, *slots)
+	if slots != nil && *constraints.ResourceConstraints.MaxSlots < *slots {
+		return fmt.Errorf("invariant config has %v slots per trial. violates constraints max slots of %v",
+			*slots, *constraints.ResourceConstraints.MaxSlots)
 	}
 
 	return nil

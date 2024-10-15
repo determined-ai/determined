@@ -7,6 +7,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -308,4 +309,46 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckConstraintsConflicts(t *testing.T) {
+	constraints := &model.Constraints{
+		ResourceConstraints: &model.ResourceConstraints{
+			MaxSlots: ptrs.Ptr(10),
+		},
+		PriorityLimit: ptrs.Ptr(50),
+	}
+	t.Run("max_slots differs to high", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(11), ptrs.Ptr(5), nil)
+		require.Error(t, err)
+	})
+	t.Run("max_slots differs to low", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(9), ptrs.Ptr(5), nil)
+		require.Error(t, err)
+	})
+
+	t.Run("slots_per_trial too high", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(5), ptrs.Ptr(11), nil)
+		require.Error(t, err)
+	})
+
+	t.Run("slots_per_trial within range", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(10), ptrs.Ptr(8), nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("priority differs too high", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, nil, nil, ptrs.Ptr(100))
+		require.Error(t, err)
+	})
+
+	t.Run("priority differs too low", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, nil, nil, ptrs.Ptr(10))
+		require.Error(t, err)
+	})
+
+	t.Run("all comply", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(10), ptrs.Ptr(10), ptrs.Ptr(50))
+		require.NoError(t, err)
+	})
 }

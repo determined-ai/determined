@@ -861,7 +861,7 @@ invariant_config:
 		// Additional NTSC combinatory tests (YAML).
 		{
 			"YAML NTSC valid config valid constraints", model.NTSCType,
-			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, fmt.Errorf("invalid ntsc config policy"),
+			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, nil,
 		},
 		{
 			"YAML NTSC valid constraints invalid constraints", model.NTSCType,
@@ -1192,8 +1192,8 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 
 		// Additional NTSC combinatory tests (JSON).
 		{
-			"JSON NTSC valid config invalid constraints", model.NTSCType,
-			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", fmt.Errorf("invalid ntsc config policy"),
+			"JSON NTSC valid config valid constraints", model.NTSCType,
+			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", nil,
 		},
 		{
 			"JSON NTSC valid constraints invalid constraints", model.NTSCType,
