@@ -122,30 +122,31 @@ field is empty.
 Arbitrary Script
 ----------------
 
-Required. An arbitrary entrypoint script name.
+Required. An arbitrary entrypoint script with args.
 
 Example:
 
 .. code:: yaml
 
-   entrypoint: ./hello.sh
+   entrypoint: ./hello.sh args...
 
 Preconfigured Launch Module with Script
 ---------------------------------------
 
-Required. The name of a preconfigured launch module and script name.
+Required. The name of a preconfigured launch module and script with args.
 
 Example:
 
 .. code:: yaml
 
-   entrypoint: python3 -m (LAUNCH_MODULE) train.py
+   entrypoint: python3 -m (LAUNCH_MODULE) train.py args...
 
 ``LAUNCH_MODULE`` options:
 
 -  Horovod (determined.launch.horovod)
 -  PyTorch (determined.launch.torch_distributed)
 -  Deepspeed (determined.launch.deepspeed)
+-  TensorFlow (determined.launch.tensorflow)
 
 Preconfigured Launch Module with Legacy Trial Definition
 --------------------------------------------------------
@@ -304,7 +305,7 @@ Optional. Specifies the minimum frequency at which validation should be run for 
 
 -  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
    :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
+   ``records_per_epoch`` must be specified.
 
 .. _experiment-config-perform-initial-validation:
 
@@ -345,7 +346,7 @@ Optional. Specifies the minimum frequency for running checkpointing for each tri
 
 -  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
    :class:`~determined.keras.TFKerasTrial`: If the unit is in epochs, you must also specify
-   :ref:`records_per_epoch <config-records-per-epoch>`.
+   ``records_per_epoch``.
 
 ``checkpoint_policy``
 =====================
