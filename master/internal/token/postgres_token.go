@@ -128,7 +128,7 @@ func UpdateAccessToken(
 			tokenInfo.Revoked = true
 		}
 
-		_, err = db.Bun().NewUpdate().
+		_, err = tx.NewUpdate().
 			Model(&tokenInfo).
 			Column("description", "revoked").
 			Where("id = ?", tokenID).

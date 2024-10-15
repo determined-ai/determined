@@ -37,7 +37,6 @@ func (a *TokenAuthZRBAC) CanCreateAccessToken(
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 
-	// TODO: improve logging around the case were a user is creating their own token
 	if curUser.ID == targetUser.ID {
 		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_TOKEN)
@@ -123,7 +122,6 @@ func (a *TokenAuthZRBAC) CanUpdateAccessToken(
 	targetTokenUserID model.UserID,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
-	// TODO: improve logging around the case were a user is updating their own token's description
 	if curUser.ID == targetTokenUserID {
 		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_TOKEN)
