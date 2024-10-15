@@ -225,6 +225,8 @@
   case: []
   defaulted:
     - pattern: .*uncorrectable ECC error encountered.*
-      signal: ECC Error
+      actions:
+        - signal: ECC Error
     - pattern: .*CUDA out of memory.*
-      signal: CUDA OOM
+      actions:
+        - signal: CUDA OOM

@@ -1,5 +1,5 @@
 // disallowProperties is for restricting which properties are allowed in an object with
-// per-property, such as when we allow a k8s pod spec with some fields disallowed.
+// per-property error messages, such as when we allow a k8s pod spec with some fields disallowed.
 //
 // Example: The "pod_spec" property of the environment config:
 //

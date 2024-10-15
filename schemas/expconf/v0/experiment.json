@@ -122,9 +122,7 @@
                 "null"
             ],
             "default": [],
-            "items": {
-                "optionalref": "http://determined.ai/schemas/expconf/v0/log-policies.json"
-            }
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-policies.json"
         },
         "retention_policy": {
             "type": [

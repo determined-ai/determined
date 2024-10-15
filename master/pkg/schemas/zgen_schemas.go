@@ -849,9 +849,7 @@ var (
                 "null"
             ],
             "default": [],
-            "items": {
-                "optionalref": "http://determined.ai/schemas/expconf/v0/log-policies.json"
-            }
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-policies.json"
         },
         "retention_policy": {
             "type": [
@@ -1496,10 +1494,39 @@ var (
     }
 }
 `)
-	textLogActionCancelRetriesV0 = []byte(`{
+	textLogActionV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json",
-    "title": "LogActionCancelRetries",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-action.json",
+    "title": "LogAction",
+    "union": {
+        "defaultMessage": "expect one of the followings: cancel_retries, exclude_node, or an object with a single \"signal\" field",
+        "items": [
+            {
+                "unionKey": "singleproperty:signal",
+                "properties": {
+                    "signal": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            {
+                "unionKey": "never",
+                "const": "cancel_retries"
+            },
+            {
+                "unionKey": "never",
+                "const": "exclude_node"
+            }
+        ]
+    }
+}
+`)
+	textLogLegacyActionCancelRetriesV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json",
+    "title": "LogLegacyActionCancelRetries",
     "additionalProperties": false,
     "type": "object",
     "required": [
@@ -1513,10 +1540,10 @@ var (
     }
 }
 `)
-	textLogActionExcludeNodeV0 = []byte(`{
+	textLogLegacyActionExcludeNodeV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json",
-    "title": "LogActionExcludeNode",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json",
+    "title": "LogLegacyActionExcludeNode",
     "additionalProperties": false,
     "type": "object",
     "required": [
@@ -1530,11 +1557,10 @@ var (
     }
 }
 `)
-	textLogActionV0 = []byte(`{
+	textLogLegacyActionV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/log-action.json",
-    "title": "LogAction",
-    "$comment": "this is a union of all possible properties, with validation for the common properties",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
+    "title": "LogLegacyAction",
     "if": {
         "required": [
             "type"
@@ -1546,11 +1572,11 @@ var (
             "items": [
                 {
                     "unionKey": "const:type=cancel_retries",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json"
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json"
                 },
                 {
                     "unionKey": "const:type=exclude_node",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json"
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json"
                 }
             ]
         }
@@ -1579,17 +1605,18 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/log-policy.json",
     "title": "LogPolicy",
     "additionalProperties": false,
-    "required": [
-        "pattern"
-    ],
     "type": "object",
     "properties": {
         "pattern": {
+            "$comment": "default doesn't apply here because pattern is a required field",
             "type": [
-                "string"
-            ]
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "actions": {
+            "$comment": "\"default\": [] is for passing lint. The actual default can be found in const.go",
             "type": [
                 "array",
                 "null"
@@ -1597,26 +1624,30 @@ var (
             "items": {
                 "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
             },
-            "default": []
+            "default": null
         },
-        "signal": {
+        "action": {
             "type": [
-                "string",
+                "object",
                 "null"
-            ]
+            ],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
+            "default": null
         }
     },
     "checks": {
-        "one of or both of actions and signal must be set": {
-            "anyOf": [
+        "both the depreated \"action\" field and the newer \"actions\" field are detected": {
+            "oneOf": [
                 {
                     "required": [
+                        "pattern",
                         "actions"
                     ]
                 },
                 {
                     "required": [
-                        "signal"
+                        "pattern",
+                        "action"
                     ]
                 }
             ]
@@ -3489,11 +3520,13 @@ var (
 
 	schemaLengthV0 interface{}
 
-	schemaLogActionCancelRetriesV0 interface{}
-
-	schemaLogActionExcludeNodeV0 interface{}
-
 	schemaLogActionV0 interface{}
+
+	schemaLogLegacyActionCancelRetriesV0 interface{}
+
+	schemaLogLegacyActionExcludeNodeV0 interface{}
+
+	schemaLogLegacyActionV0 interface{}
 
 	schemaLogPoliciesConfigV0 interface{}
 
@@ -4132,46 +4165,6 @@ func ParsedLengthV0() interface{} {
 	return schemaLengthV0
 }
 
-func ParsedLogActionCancelRetriesV0() interface{} {
-	cacheLock.RLock()
-	if schemaLogActionCancelRetriesV0 != nil {
-		cacheLock.RUnlock()
-		return schemaLogActionCancelRetriesV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaLogActionCancelRetriesV0 != nil {
-		return schemaLogActionCancelRetriesV0
-	}
-	err := json.Unmarshal(textLogActionCancelRetriesV0, &schemaLogActionCancelRetriesV0)
-	if err != nil {
-		panic("invalid embedded json for LogActionCancelRetriesV0")
-	}
-	return schemaLogActionCancelRetriesV0
-}
-
-func ParsedLogActionExcludeNodeV0() interface{} {
-	cacheLock.RLock()
-	if schemaLogActionExcludeNodeV0 != nil {
-		cacheLock.RUnlock()
-		return schemaLogActionExcludeNodeV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaLogActionExcludeNodeV0 != nil {
-		return schemaLogActionExcludeNodeV0
-	}
-	err := json.Unmarshal(textLogActionExcludeNodeV0, &schemaLogActionExcludeNodeV0)
-	if err != nil {
-		panic("invalid embedded json for LogActionExcludeNodeV0")
-	}
-	return schemaLogActionExcludeNodeV0
-}
-
 func ParsedLogActionV0() interface{} {
 	cacheLock.RLock()
 	if schemaLogActionV0 != nil {
@@ -4190,6 +4183,66 @@ func ParsedLogActionV0() interface{} {
 		panic("invalid embedded json for LogActionV0")
 	}
 	return schemaLogActionV0
+}
+
+func ParsedLogLegacyActionCancelRetriesV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogLegacyActionCancelRetriesV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogLegacyActionCancelRetriesV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogLegacyActionCancelRetriesV0 != nil {
+		return schemaLogLegacyActionCancelRetriesV0
+	}
+	err := json.Unmarshal(textLogLegacyActionCancelRetriesV0, &schemaLogLegacyActionCancelRetriesV0)
+	if err != nil {
+		panic("invalid embedded json for LogLegacyActionCancelRetriesV0")
+	}
+	return schemaLogLegacyActionCancelRetriesV0
+}
+
+func ParsedLogLegacyActionExcludeNodeV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogLegacyActionExcludeNodeV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogLegacyActionExcludeNodeV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogLegacyActionExcludeNodeV0 != nil {
+		return schemaLogLegacyActionExcludeNodeV0
+	}
+	err := json.Unmarshal(textLogLegacyActionExcludeNodeV0, &schemaLogLegacyActionExcludeNodeV0)
+	if err != nil {
+		panic("invalid embedded json for LogLegacyActionExcludeNodeV0")
+	}
+	return schemaLogLegacyActionExcludeNodeV0
+}
+
+func ParsedLogLegacyActionV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogLegacyActionV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogLegacyActionV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogLegacyActionV0 != nil {
+		return schemaLogLegacyActionV0
+	}
+	err := json.Unmarshal(textLogLegacyActionV0, &schemaLogLegacyActionV0)
+	if err != nil {
+		panic("invalid embedded json for LogLegacyActionV0")
+	}
+	return schemaLogLegacyActionV0
 }
 
 func ParsedLogPoliciesConfigV0() interface{} {
@@ -4963,12 +5016,14 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"
 	cachedSchemaBytesMap[url] = textLengthV0
-	url = "http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json"
-	cachedSchemaBytesMap[url] = textLogActionCancelRetriesV0
-	url = "http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json"
-	cachedSchemaBytesMap[url] = textLogActionExcludeNodeV0
 	url = "http://determined.ai/schemas/expconf/v0/log-action.json"
 	cachedSchemaBytesMap[url] = textLogActionV0
+	url = "http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json"
+	cachedSchemaBytesMap[url] = textLogLegacyActionCancelRetriesV0
+	url = "http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json"
+	cachedSchemaBytesMap[url] = textLogLegacyActionExcludeNodeV0
+	url = "http://determined.ai/schemas/expconf/v0/log-legacy-action.json"
+	cachedSchemaBytesMap[url] = textLogLegacyActionV0
 	url = "http://determined.ai/schemas/expconf/v0/log-policies.json"
 	cachedSchemaBytesMap[url] = textLogPoliciesConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/log-policy.json"
