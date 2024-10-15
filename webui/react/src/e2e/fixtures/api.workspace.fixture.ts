@@ -10,14 +10,9 @@ import {
   WorkspacesApi,
 } from 'services/api-ts-sdk/api';
 
-import { ApiAuthFixture } from './api.auth.fixture';
+import { apiFixture } from './api';
 
-export class ApiWorkspaceFixture {
-  readonly apiAuth: ApiAuthFixture;
-  constructor(apiAuth: ApiAuthFixture) {
-    this.apiAuth = apiAuth;
-  }
-
+export class ApiWorkspaceFixture extends apiFixture(WorkspacesApi) {
   new({ workspaceProps = {}, workspacePrefix = 'test-workspace' } = {}): V1PostWorkspaceRequest {
     const defaults = {
       name: safeName(workspacePrefix),
@@ -26,21 +21,6 @@ export class ApiWorkspaceFixture {
       ...defaults,
       ...workspaceProps,
     };
-  }
-
-  private static normalizeUrl(url: string): string {
-    if (url.endsWith('/')) {
-      return url.substring(0, url.length - 1);
-    }
-    return url;
-  }
-
-  private async startWorkspaceRequest(): Promise<WorkspacesApi> {
-    return new WorkspacesApi(
-      { apiKey: await this.apiAuth.getBearerToken() },
-      ApiWorkspaceFixture.normalizeUrl(this.apiAuth.baseURL),
-      fetch,
-    );
   }
 
   /**
@@ -52,25 +32,21 @@ export class ApiWorkspaceFixture {
    * strict superset of the Response, so no info is lost.
    */
   async createWorkspace(req: V1PostWorkspaceRequest): Promise<V1PostWorkspaceResponse> {
-    const apiAuth = this.apiAuth;
-    const workspaceResp = await (await this.startWorkspaceRequest())
-      .postWorkspace(req, {})
-      .catch(async function (error) {
-        const respBody = await streamConsumers.text(error.body);
-        if (error.status === 401) {
-          const token = apiAuth.getBearerToken();
-          throw new Error(
-            `Create Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
-              req,
-            )} Token: ${token} Response: ${respBody}`,
-          );
-        }
+    const workspaceResp = await this.api.postWorkspace(req, {}).catch(async (error) => {
+      const respBody = await streamConsumers.text(error.body);
+      if (error.status === 401) {
         throw new Error(
           `Create Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
             req,
-          )} Response: ${respBody}`,
+          )} Token: ${this.apiArgs[0]?.apiKey} Response: ${respBody}`,
         );
-      });
+      }
+      throw new Error(
+        `Create Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
+          req,
+        )} Response: ${respBody}`,
+      );
+    });
     return _.merge(req, workspaceResp);
   }
 
@@ -83,19 +59,17 @@ export class ApiWorkspaceFixture {
     await expect
       .poll(
         async () => {
-          const workspaceResp = await (await this.startWorkspaceRequest())
-            .deleteWorkspace(id)
-            .catch(async function (error) {
-              const respBody = await streamConsumers.text(error.body);
-              if (error.status === 404) {
-                return { completed: true };
-              }
-              throw new Error(
-                `Delete Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
-                  id,
-                )} Response: ${respBody}`,
-              );
-            });
+          const workspaceResp = await this.api.deleteWorkspace(id).catch(async function (error) {
+            const respBody = await streamConsumers.text(error.body);
+            if (error.status === 404) {
+              return { completed: true };
+            }
+            throw new Error(
+              `Delete Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
+                id,
+              )} Response: ${respBody}`,
+            );
+          });
           return workspaceResp.completed;
         },
         {
