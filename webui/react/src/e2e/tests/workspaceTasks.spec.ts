@@ -22,13 +22,19 @@ test.describe('Workspace Tasks', () => {
       await firstRow.pwLocator.waitFor({ timeout: 10_000 });
     });
 
-    await test.step('Kill task', async () => {
+    await test.step('Kill task and copy task ID', async () => {
       await (await firstRow.actions.open()).kill.pwLocator.click();
 
       await workspaceDetails.taskList.taskKillModal.pwLocator.waitFor();
       await workspaceDetails.taskList.taskKillModal.killButton.pwLocator.click();
-
       await expect(firstRow.state.pwLocator).toHaveText('Terminated');
+
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+      await (await firstRow.actions.open()).copy.pwLocator.click();
+      const handle = await authedPage.evaluateHandle(() => navigator.clipboard.readText());
+      const clipboard = await handle.jsonValue();
+      expect(clipboard.split('-').length).toBeGreaterThan(2);
+      await expect(firstRow.taskID.pwLocator).toContainText(clipboard.split('-')[0]);
     });
 
     await test.step('View logs', async () => {

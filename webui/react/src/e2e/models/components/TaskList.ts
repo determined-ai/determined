@@ -20,6 +20,10 @@ class TaskRow extends Row {
     parent: this,
     selector: '[data-testid="state"]',
   });
+  readonly taskID = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="taskID"]',
+  });
 }
 
 /**
@@ -27,6 +31,7 @@ class TaskRow extends Row {
  */
 class TaskActionDropdown extends DropdownMenu {
   readonly kill = this.menuItem(TaskAction.Kill);
+  readonly copy = this.menuItem(TaskAction.CopyTaskID);
   readonly viewLogs = this.menuItem(TaskAction.ViewLogs);
   readonly connect = this.menuItem(TaskAction.Connect);
 }

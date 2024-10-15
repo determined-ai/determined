@@ -944,6 +944,7 @@ export interface CommandTask extends Task {
 
 export const TaskAction = {
   Connect: 'Connect',
+  CopyTaskID: 'Copy Task ID',
   Kill: 'Kill',
   ViewLogs: 'View Logs',
 } as const;
