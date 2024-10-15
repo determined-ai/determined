@@ -950,7 +950,8 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 		}
 	}`, fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
-		{"JSON partial NTSC config", model.NTSCType, "{" + validNTSCConfigPolicyJSON + "}", fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr)},
+		{"JSON partial NTSC config", model.NTSCType, "{" + validNTSCConfigPolicyJSON + "}",
+			fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr)},
 
 		// Invalid experiment invariant config policies (JSON).
 		{
