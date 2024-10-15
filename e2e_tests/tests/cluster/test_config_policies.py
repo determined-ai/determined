@@ -52,7 +52,7 @@ def test_set_config_policies() -> None:
         ],
     )
 
-    with open(conf.fixtures_path("config_policies/valid.yaml"), "r") as f:
+    with open(conf.fixtures_path("config_policies/ntscvalid.yaml"), "r") as f:
         data = f.read()
     assert data.rstrip() == stdout.rstrip()
 
@@ -136,7 +136,7 @@ def test_describe_config_policies() -> None:
             workspace_name,
         ],
     )
-    with open(conf.fixtures_path("config_policies/valid.yaml"), "r") as f:
+    with open(conf.fixtures_path("config_policies/ntscvalid.yaml"), "r") as f:
         data = f.read()
     assert data.rstrip() == stdout.rstrip()
 
