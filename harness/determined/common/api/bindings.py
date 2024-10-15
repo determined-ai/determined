@@ -9716,7 +9716,7 @@ class v1MoveSearchesRequest(Printable):
         self,
         *,
         destinationProjectId: int,
-        searchIds: "typing.Sequence[int]",
+        searchIds: "v1SearchIDs",
         sourceProjectId: int,
         filter: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -9730,7 +9730,7 @@ class v1MoveSearchesRequest(Printable):
     def from_json(cls, obj: Json) -> "v1MoveSearchesRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "destinationProjectId": obj["destinationProjectId"],
-            "searchIds": obj["searchIds"],
+            "searchIds": v1SearchIDs.from_json(obj["searchIds"]),
             "sourceProjectId": obj["sourceProjectId"],
         }
         if "filter" in obj:
@@ -9740,7 +9740,7 @@ class v1MoveSearchesRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "destinationProjectId": self.destinationProjectId,
-            "searchIds": self.searchIds,
+            "searchIds": self.searchIds.to_json(omit_unset),
             "sourceProjectId": self.sourceProjectId,
         }
         if not omit_unset or "filter" in vars(self):
@@ -14678,6 +14678,32 @@ class v1SearchExperimentsResponse(Printable):
             "experiments": [x.to_json(omit_unset) for x in self.experiments],
             "pagination": self.pagination.to_json(omit_unset),
         }
+        return out
+
+class v1SearchIDs(Printable):
+    searchIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        if not isinstance(searchIds, Unset):
+            self.searchIds = searchIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchIDs":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "searchIds" in obj:
+            kwargs["searchIds"] = obj["searchIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "searchIds" in vars(self):
+            out["searchIds"] = self.searchIds
         return out
 
 class v1SearchRolesAssignableToScopeRequest(Printable):

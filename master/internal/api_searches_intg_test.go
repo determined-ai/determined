@@ -51,7 +51,11 @@ func TestMoveSearchesIds(t *testing.T) {
 	moveIds := []int32{int32(search1.ID)}
 
 	moveReq := &apiv1.MoveSearchesRequest{
-		SearchIds:            moveIds,
+		Selection: &apiv1.MoveSearchesRequest_SearchIds{
+			SearchIds: &apiv1.SearchIDs{
+				SearchIds: moveIds,
+			},
+		},
 		SourceProjectId:      sourceprojectID,
 		DestinationProjectId: destprojectID,
 	}
@@ -94,7 +98,11 @@ func TestMoveSearchesSameIds(t *testing.T) {
 	moveIds := []int32{int32(search1.ID)}
 
 	moveReq := &apiv1.MoveSearchesRequest{
-		SearchIds:            moveIds,
+		Selection: &apiv1.MoveSearchesRequest_SearchIds{
+			SearchIds: &apiv1.SearchIDs{
+				SearchIds: moveIds,
+			},
+		},
 		SourceProjectId:      sourceprojectID,
 		DestinationProjectId: sourceprojectID,
 	}
@@ -146,16 +154,14 @@ func TestMoveSearchesFilter(t *testing.T) {
 	_, err := api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 
-	// If provided with filter MoveSearches should ignore these move ids
-	moveIds := []int32{int32(exp1.ID), int32(exp2.ID)}
-
 	moveReq := &apiv1.MoveSearchesRequest{
-		SearchIds:            moveIds,
 		SourceProjectId:      sourceprojectID,
 		DestinationProjectId: destprojectID,
-		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
-			`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
-			`"conjunction":"and","kind":"group"},"showArchived":false}`),
+		Selection: &apiv1.MoveSearchesRequest_Filter{
+			Filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+				`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
 	}
 
 	moveResp, err := api.MoveSearches(ctx, moveReq)

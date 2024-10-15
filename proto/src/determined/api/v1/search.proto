@@ -5,6 +5,11 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Message for a collection of search_ids in place of filters
+message SearchIDs {
+  repeated int32 search_ids = 1;
+}
+
 // Message for results of individual searches in a multi-search action.
 message SearchActionResult {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -24,14 +29,16 @@ message MoveSearchesRequest {
     }
   };
 
-  // The ids of the searches being moved.
-  repeated int32 search_ids = 1;
+  oneof selection {
+    // The ids of the searches being moved.
+    SearchIDs search_ids = 1;
+    // Filter expression
+    string filter = 4;
+  }
   // The id of the current parent project.
   int32 source_project_id = 2;
   // The id of the new parent project.
   int32 destination_project_id = 3;
-  // Filter expression
-  optional string filter = 4;
 }
 
 // Response to MoveSearchesRequest.

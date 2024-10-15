@@ -99,10 +99,11 @@ func (a *apiServer) MoveSearches(
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("e.project_id = ?", req.SourceProjectId)
 
-	if req.Filter == nil {
-		getQ = getQ.Where("e.id IN (?)", bun.In(req.SearchIds))
-	} else {
-		getQ, err = filterSearchQuery(getQ, req.Filter)
+	switch selection := req.Selection.(type) {
+	case *apiv1.MoveSearchesRequest_SearchIds:
+		getQ = getQ.Where("e.id IN (?)", bun.In(selection.SearchIds.SearchIds))
+	case *apiv1.MoveSearchesRequest_Filter:
+		getQ, err = filterSearchQuery(getQ, &selection.Filter)
 		if err != nil {
 			return nil, err
 		}
@@ -135,8 +136,10 @@ func (a *apiServer) MoveSearches(
 		}
 		validIDs = append(validIDs, check.ID)
 	}
-	if req.Filter == nil {
-		for _, originalID := range req.SearchIds {
+
+	switch selection := req.Selection.(type) {
+	case *apiv1.MoveSearchesRequest_SearchIds:
+		for _, originalID := range selection.SearchIds.SearchIds {
 			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.SearchActionResult{
 					Error: fmt.Sprintf("Search with id '%d' not found in project with id '%d'", originalID, req.SourceProjectId),
@@ -144,6 +147,8 @@ func (a *apiServer) MoveSearches(
 				})
 			}
 		}
+	case *apiv1.MoveSearchesRequest_Filter:
+		// no further validation needed
 	}
 	if len(validIDs) > 0 {
 		expMoveResults, err := experiment.MoveExperiments(ctx, srcProject.Id, validIDs, nil, req.DestinationProjectId)

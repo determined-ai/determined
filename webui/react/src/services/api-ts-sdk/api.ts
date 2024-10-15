@@ -7133,10 +7133,16 @@ export interface V1MoveRunsResponse {
 export interface V1MoveSearchesRequest {
     /**
      * The ids of the searches being moved.
-     * @type {Array<number>}
+     * @type {V1SearchIDs}
      * @memberof V1MoveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds: V1SearchIDs;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1MoveSearchesRequest
+     */
+    filter?: string;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -7149,12 +7155,6 @@ export interface V1MoveSearchesRequest {
      * @memberof V1MoveSearchesRequest
      */
     destinationProjectId: number;
-    /**
-     * Filter expression
-     * @type {string}
-     * @memberof V1MoveSearchesRequest
-     */
-    filter?: string;
 }
 /**
  * Response to MoveSearchesRequest.
@@ -10795,6 +10795,19 @@ export interface V1SearchExperimentsResponse {
      * @memberof V1SearchExperimentsResponse
      */
     pagination: V1Pagination;
+}
+/**
+ * 
+ * @export
+ * @interface V1SearchIDs
+ */
+export interface V1SearchIDs {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1SearchIDs
+     */
+    searchIds?: Array<number>;
 }
 /**
  * 
