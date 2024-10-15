@@ -5,32 +5,32 @@
 #######################
 
 Config Policies allow administrators to set limits on how users can define workloads (e.g.,
-experiments and notebooks, tensorboards, shells, and commands). This feature enables administrators
-to govern user behavior more closely at the workspace and cluster level. Administrators can include
-any parameter referenced in the :ref:`experiment configuration reference
-<experiment-config-reference>`.
+experiments, notebooks, tensorboards, shells, and commands). Administrators can include any
+parameter referenced in the :ref:`experiment configuration reference <experiment-config-reference>`.
 
 .. include:: ../_shared/attn-enterprise-edition.txt
 
-When implementing Config Policies, administrators should be aware of the following:
+Config Policies allow admins to define two types of configurations:
 
-#. Separate Priority Limits: Administrators can now set different priority limits for experiments
-   and NTSC (notebooks, tensorboards, shells, and commands) tasks. This allows for more granular
-   control over task prioritization and resource allocation.
+-  **Invariant Configs**: Settings applied to all workloads within a scope (global or workspace).
+-  **Constraints**: Restrictions that prevent users from exceeding resource limits.
 
-#. Priority Overrides: If a given scope has an invariant config policy set for a given task, and
+These policies are essential for managing task priorities, resource allocation, and setting specific
+configurations across the organization. Global policies override workspace policies, and both
+override user-submitted configurations.
+
+**Constraints and Limitations**
+
+-  Priority Overrides: If a given scope has an invariant config policy set for a given task, and
    that invariant configuration policy specifies ``priority``, this priority can still be overridden
    using the ``SetJobPriority`` API endpoint. However, the new priority must not violate any
    constraints defined in the applicable policies for that scope.
-
-These features provide administrators with greater flexibility in managing task priorities while
-still maintaining policy-based control over resource usage.
 
 **************
  Key Features
 **************
 
--  Set policies via WebUI or CLI
+-  Apply policies via WebUI or CLI
 -  Define limits for resource usage, environment settings, and more
 -  Apply policies at different levels (cluster-wide or workspace)
 -  Override capabilities for specific user roles or groups
@@ -42,12 +42,13 @@ still maintaining policy-based control over resource usage.
  Setting Policies
 ******************
 
-Administrators can set Config Policies using either the WebUI or the CLI.
+Administrators can set Config Policies at either the cluster or workspace levels through the WebUI
+or CLI.
 
 WebUI
 =====
 
-Administrators can set Config Policies at either the cluster or workspace levels.
+Administrators can set Config Policies at both the cluster and workspace levels.
 
 .. tabs::
 
@@ -55,7 +56,7 @@ Administrators can set Config Policies at either the cluster or workspace levels
 
       Cluster Config Policy
 
-      To set configuration policies at the cluster level, follow these steps:
+      To set configuration policies at the cluster level:
 
       #. Sign in to the Determined WebUI as a cluster administrator.
       #. Navigate to **Config Policies**.
@@ -67,7 +68,7 @@ Administrators can set Config Policies at either the cluster or workspace levels
 
       Workspace Config Policy
 
-      To set configuration policies at the workspace level, follow these steps:
+      To set configuration policies at the workspace level:
 
       #. Sign in to the Determined WebUI as a cluster or workspace administrator.
       #. From your workspace, navigate to the **Config Policies** tab.
@@ -98,13 +99,13 @@ Use the following commands to manage Task Config Policies via CLI:
  Policy Examples
 *****************
 
-Here are some example policies:
+Below are some examples of Config Policies to help guide administrators:
 
 **Limit resources**
 
-In the following example for an Agent resource manager (RM), the ``priority_limit`` is set to ``15``
-and ``max_slots`` is set to ``1``. This means a user cannot set a priority value lower than 15 and
-cannot set ``max_slots`` to greater than ``1``.
+This example demonstrates limiting resources for an Agent resource manager (RM). It sets the
+``priority_limit`` to ``15`` and ``max_slots`` to ``1``. This means a user cannot set a priority
+value lower than 15 and cannot set ``max_slots`` to greater than ``1``.
 
 .. note::
 
@@ -122,10 +123,12 @@ cannot set ``max_slots`` to greater than ``1``.
       resources:
          max_slots: 1
 
-If your priority limits are above the defaults, for example if your notebook priority is set to 10
-and the limit is 15, then the request fails and the system displays a descriptive message.
+If a user attempts to set a notebook priority to 10 when the limit is 15, the request will fail, and
+the system will display a descriptive error message.
 
-**Limit maximum GPU usage per experiment**
+**Limit Maximum GPU Usage per Experiment**
+
+You can limit GPU usage per experiment by configuring the following policy:
 
 -  Experiments
 
@@ -145,7 +148,7 @@ and the limit is 15, then the request fails and the system displays a descriptiv
      resources:
        max_gpus: 4
 
-**Set different priority limits for experiments and NTSC tasks**
+**Set Different Priority Limits for Experiments and NTSC Tasks**
 
 -  Experiments
 
@@ -163,10 +166,10 @@ and the limit is 15, then the request fails and the system displays a descriptiv
      resources:
        priority_limit: <task limit>
 
-**Set default priority for all tasks**
+**Set Default Priority for All Tasks**
 
-To set a default priority for all tasks, provide the following code in both the Experiments and Task
-tabs:
+To set a default priority for all tasks, include the following code in both the Experiments and
+Tasks tabs:
 
 .. code:: yaml
 
@@ -178,57 +181,43 @@ tabs:
  Priority Override
 *******************
 
-If a given scope has the priority field of a default invariant config set, this priority can still
-be overridden using the SetJobPriority API endpoint. However, the new priority must not violate any
-constraints placed on the scope.
+If a global or workspace-level policy sets a default priority, it can be overridden using the
+`SetJobPriority` API endpoint. However, the new priority must respect the constraints defined in the
+applicable policies.
+
+.. note::
+
+   Higher values indicate higher priority in Kubernetes resource managers, while lower values
+   indicate higher priority in Agent resource managers.
 
 ****************
  Best Practices
 ****************
 
--  Start with cluster-wide policies for general governance.
+-  Start with cluster-wide policies for broad governance.
 -  Use workspace and project-level policies for more granular control.
 -  Set different priority limits for experiments and NTSC tasks to better manage resource
    allocation.
--  Regularly review and update policies as organizational needs change.
--  Communicate policy changes to users to ensure smooth adoption.
--  Use the SetJobPriority API endpoint cautiously, ensuring that priority changes do not violate
-   existing policies.
+-  Regularly review and update policies as organizational needs evolve.
+-  Communicate policy changes clearly to users to ensure smooth adoption.
+-  Use the SetJobPriority API cautiously, ensuring that priority changes do not violate existing
+   policies.
 -  Use invariant configs to set default behaviors across workloads.
--  Be aware of the precedence order when setting policies at different levels.
--  Test your policies thoroughly to ensure they behave as expected, especially when combining global
-   and workspace policies.
--  When updating policies, consider the impact on running workloads and communicate changes clearly
-   to users.
-
-Config policies follow a precedence order:
-
-#. Global config policies
-#. Workspace config policies
-#. User-submitted configs
-
-Global policies override workspace policies, and workspace policies override user configs. For
-iterative fields (such as arrays and maps), data is merged rather than completely overridden.
-
-.. note::
-
-   Only users with the ClusterAdmin role can modify global config policies. ClusterAdmin and
-   WorkspaceAdmin roles can modify workspace config policies.
+-  Be mindful of the precedence order: global policies override workspace policies, which override
+   user configs.
 
 Limit resources
 ===============
 
-Administrators can set constraints on resource usage. The two main configurable constraints are:
+Administrators can set constraints on resource usage. The main configurable constraints are:
 
 -  ``resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can be used.
 -  ``resources.priority_limit``: Sets the priority limit for tasks.
 
-.. note::
+For Kubernetes resource managers, higher priority values indicate higher priority. For Agent
+resource managers, lower priority values indicate higher priority.
 
-   For Kubernetes resource managers, higher priority values indicate higher priority. For Agent
-   resource managers, lower priority values indicate higher priority.
-
-Here's an example of setting resource constraints:
+Here’s an example of setting resource constraints:
 
 .. code:: yaml
 
@@ -243,11 +232,10 @@ priority lower than 15 (for Agent RMs) or higher than 15 (for Kubernetes RMs).
 Invariant Configs
 =================
 
-Invariant configs are settings that are applied to all workloads in a given scope (global or
-workspace). These configs are merged with user-submitted configs according to the precedence rules
-mentioned earlier.
+Invariant configs are applied to all workloads in a given scope (global or workspace) and merged
+with user-submitted configurations.
 
-**Invariant config example**
+**Example Invariant Config**
 
 .. code:: yaml
 
@@ -267,7 +255,9 @@ mentioned earlier.
 When a user submits a workload, these settings will be applied in addition to (or overriding) the
 user's settings.
 
-**Complete example with invariant_configs and constraints**
+**Complete Example**
+
+Here is a complete example that combines invariant configs and constraints for a research workspace:
 
 .. code:: yaml
 
@@ -288,24 +278,12 @@ user's settings.
 This example sets a default Docker image and number of slots for all workloads in the "research"
 workspace, while also limiting the maximum number of slots and setting a priority limit.
 
-.. note::
-
-   When setting config policies, existing workloads will not be impacted. Additionally, when
-   updating config policies, the entire set of invariant_configs and constraints will replace any
-   existing policies.
-
 .. warning::
 
-   It is not recommended to set constraints and configs for the same field for the same workload
-   type and scope (e.g., setting both invariant_config.resources.priority and
-   constraints.resources.priority_limit).
+   Do not set both constraints and configs for the same field within the same workload type and
+   scope. It may lead to unpredictable behavior.
 
 .. important::
 
-   When setting or updating config policies, keep in mind:
-
-   -  Existing workloads will not be impacted by new or updated policies.
-   -  When updating config policies, the entire set of invariant_configs and constraints will
-      replace any existing policies.
-   -  It's not recommended to set both constraints and configs for the same field, workload type,
-      and scope.
+   -  Existing workloads are not impacted by new or updated policies.
+   -  Updating config policies replaces the entire set of invariant configs and constraints.
