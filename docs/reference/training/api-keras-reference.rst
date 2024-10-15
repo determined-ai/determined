@@ -10,6 +10,25 @@
 | :ref:`api-keras-ug`                             |
 +-------------------------------------------------+
 
+*****************************************
+ ``determined.keras.DeterminedCallback``
+*****************************************
+
+.. autoclass:: determined.keras.DeterminedCallback
+   :members: save_model, load_model
+   :member-order: bysource
+   :special-members: __init__
+
+**********************************
+ ``determined.keras.TensorBoard``
+**********************************
+
+.. autoclass:: determined.keras.TensorBoard
+
+#################
+ Deprecated APIs
+#################
+
 ***********************************
  ``determined.keras.TFKerasTrial``
 ***********************************
