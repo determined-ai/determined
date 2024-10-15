@@ -20,3 +20,4 @@ from determined.keras._tf_keras_multi_gpu import (
 from determined.keras._tf_keras_trial import TFKerasTrial, TFKerasTrialController
 from determined.keras._load import load_model_from_checkpoint_path
 from determined.keras._tf_rng import get_rng_state, set_rng_state
+from determined.keras._callback import DeterminedCallback, TensorBoard
