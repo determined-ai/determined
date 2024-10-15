@@ -24,7 +24,8 @@ const (
 	// InvalidExperimentConfigPolicyErr is the error reported by an invalid experiment config policy.
 	InvalidExperimentConfigPolicyErr = "invalid experiment config policy"
 	// InvalidNTSCConfigPolicyErr is the error reported by an invalid NTSC config policy.
-	InvalidNTSCConfigPolicyErr = "invalid ntsc config policy"
+	InvalidNTSCConfigPolicyErr  = "invalid ntsc config policy"
+	NotSupportedConfigPolicyErr = "not supported"
 )
 
 // ConfigPolicyWarning logs a warning for the configuration policy component.
@@ -114,8 +115,9 @@ func ValidateNTSCConfig(
 		return err // Handle error for nil cp or unmarshalling error.
 	}
 	if cp.InvariantConfig != nil {
-		return fmt.Errorf(`not supported: invariant config policies for tasks is not yet supported, 
-		please remove "invariant_config" section and try again`)
+		msg := `invariant config policies for tasks is not yet supported, 
+		  please remove "invariant_config" section and try again`
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(NotSupportedConfigPolicyErr+": %s.", msg))
 	}
 	if globalConfigPolicies != nil {
 		checkAgainstGlobalConfig[model.Constraints](globalConfigPolicies.Constraints, cp.Constraints, "invalid constraints")
