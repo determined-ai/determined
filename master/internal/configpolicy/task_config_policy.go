@@ -88,10 +88,15 @@ func CheckExperimentConstraints(
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
 		// users cannot specify number of slots for an experiment
-		slotsRequest := *constraints.ResourceConstraints.MaxSlots
-		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, slotsRequest,
-			workloadConfig.Resources().MaxSlots()); err != nil {
-			return err
+		if workloadConfig.RawResources != nil {
+			slotsRequest := workloadConfig.RawResources.RawSlotsPerTrial
+			if slotsRequest != nil {
+				if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots,
+					*slotsRequest,
+					workloadConfig.Resources().MaxSlots()); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
