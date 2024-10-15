@@ -13,9 +13,9 @@ from unittest import mock
 import pytest
 import requests
 import requests_mock
+from common.check import false
 from responses import matchers
 
-from common.check import false
 from determined.cli import cli, ntsc, render
 from determined.common import constants, context
 from determined.common.api import bindings
@@ -657,7 +657,7 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
                 bindings.v1RunSummary(
                     count=3,
                     unit=bindings.v1SearchUnit(name="batches", value=1000),
-                )
+                ),
             ],
         )
     )

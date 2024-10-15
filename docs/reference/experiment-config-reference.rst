@@ -927,10 +927,11 @@ weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should
 .. _experiment-configuration-searcher-asha:
 
 Asynchronous Halving (ASHA)
-=============
+===========================
 
-The ``async_halving`` search performs a version of the asynchronous successive halving
-algorithm (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_) that stops trials early if there is enough evidence to terminate training. Once trials are stopped, they will not be resumed.
+The ``async_halving`` search performs a version of the asynchronous successive halving algorithm
+(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_) that stops trials early if there is enough evidence
+to terminate training. Once trials are stopped, they will not be resumed.
 
 ``metric``
 ----------
@@ -941,12 +942,12 @@ configuration.
 ``time_metric``
 ---------------
 
-Required.  The name of the validation metric used to evaluate the progress of a given trial.
+Required. The name of the validation metric used to evaluate the progress of a given trial.
 
 ``max_time``
 ------------
 
-Required.  The maximum value that ``time_metric`` should take when a trial finishes training.  Early
+Required. The maximum value that ``time_metric`` should take when a trial finishes training. Early
 stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
 value.
 
@@ -1011,12 +1012,12 @@ configuration.
 ``time_metric``
 ---------------
 
-Required.  The name of the validation metric used to evaluate the progress of a given trial.
+Required. The name of the validation metric used to evaluate the progress of a given trial.
 
 ``max_time``
 ------------
 
-Required.  The maximum value that ``time_metric`` should take when a trial finishes training.  Early
+Required. The maximum value that ``time_metric`` should take when a trial finishes training. Early
 stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
 value.
 
