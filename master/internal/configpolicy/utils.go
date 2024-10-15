@@ -114,7 +114,8 @@ func ValidateNTSCConfig(
 		return err // Handle error for nil cp or unmarshalling error.
 	}
 	if cp.InvariantConfig != nil {
-		return fmt.Errorf("not supported: invariant config policies for tasks is not yet supported; please remove `invariant_config` section and try again")
+		return fmt.Errorf(`not supported: invariant config policies for tasks is not yet supported, 
+		please remove "invariant_config" section and try again`)
 	}
 	if globalConfigPolicies != nil {
 		checkAgainstGlobalConfig[model.Constraints](globalConfigPolicies.Constraints, cp.Constraints, "invalid constraints")
