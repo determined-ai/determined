@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/checkpoints"
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -1033,6 +1034,29 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 	if priority == nil {
 		return nil
 	}
+
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return err
+	}
+	wkspID := resolveWorkspaceID(workspaceModel)
+
+	// Returns an error if RM does not implement priority.
+	if smallerHigher, err := e.rm.SmallerValueIsHigherPriority(); err == nil {
+		ok, err := configpolicy.PriorityUpdateAllowed(
+			wkspID,
+			model.ExperimentType,
+			*priority,
+			smallerHigher,
+		)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("priority exceeds task config policy's priority_limit")
+		}
+	}
+
 	oldPriority := config.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.activeConfig.Resources()
