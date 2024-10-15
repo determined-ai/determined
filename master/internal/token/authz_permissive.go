@@ -21,7 +21,7 @@ func (p *TokenAuthZPermissive) CanCreateAccessToken(
 
 // CanGetAccessTokens calls RBAC authz but enforces basic authz.
 func (p *TokenAuthZPermissive) CanGetAccessTokens(
-	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID model.UserID,
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID *model.UserID,
 ) (*bun.SelectQuery, error) {
 	_, _ = (&TokenAuthZRBAC{}).CanGetAccessTokens(ctx, curUser, query, targetUserID)
 	return (&TokenAuthZBasic{}).CanGetAccessTokens(ctx, curUser, query, targetUserID)

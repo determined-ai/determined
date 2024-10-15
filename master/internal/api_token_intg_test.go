@@ -188,7 +188,7 @@ func TestAuthzOtherAccessToken(t *testing.T) {
 	// GET API Auth check
 	var query bun.SelectQuery
 	expectedErr = status.Error(codes.PermissionDenied, "canGetAccessTokens")
-	authzToken.On("CanGetAccessTokens", mock.Anything, curUser, mock.Anything, curUser.ID).
+	authzToken.On("CanGetAccessTokens", mock.Anything, curUser, mock.Anything, &curUser.ID).
 		Return(&query, fmt.Errorf("canGetAccessTokens")).Once()
 
 	_, err = api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{

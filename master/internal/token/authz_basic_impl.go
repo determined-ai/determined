@@ -25,11 +25,11 @@ func (a *TokenAuthZBasic) CanCreateAccessToken(
 // CanGetAccessTokens returns an error if the user does not have permission to view own or
 // another user's token based on own role.
 func (a *TokenAuthZBasic) CanGetAccessTokens(
-	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID model.UserID,
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID *model.UserID,
 ) (selectQuery *bun.SelectQuery, err error) {
 	err = canGetOthersAccessToken(ctx, curUser)
 	if err != nil {
-		if targetUserID > 0 && targetUserID != curUser.ID {
+		if targetUserID != nil && *targetUserID != curUser.ID {
 			return nil, err
 		}
 		err = canGetOwnAccessToken(ctx, curUser)
@@ -49,7 +49,7 @@ func canGetOthersAccessToken(ctx context.Context, curUser model.User) error {
 	return nil
 }
 
-// canGetOwnAccessTokens returns an error if the user is not an admin.
+// canGetOwnAccessTokens returns nil always.
 func canGetOwnAccessToken(
 	ctx context.Context, curUser model.User,
 ) error {

@@ -107,31 +107,37 @@ func UpdateAccessToken(
 	ctx context.Context, tokenID model.TokenID, options AccessTokenUpdateOptions,
 ) (*model.UserSession, error) {
 	var tokenInfo model.UserSession
-	// Lock the token row for update.
-	err := db.Bun().NewSelect().For("UPDATE").Table("user_sessions").
-		Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeAccessToken).
-		Scan(ctx, &tokenInfo)
-	if err != nil {
-		return nil, err
-	}
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Lock the token row for update.
+		err := tx.NewSelect().For("UPDATE").Table("user_sessions").
+			Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeAccessToken).
+			Scan(ctx, &tokenInfo)
+		if err != nil {
+			return err
+		}
 
-	if tokenInfo.Revoked || tokenInfo.Expiry.Before(time.Now().UTC()) {
-		return nil, fmt.Errorf("unable to update inactive token with ID %v", tokenID)
-	}
+		if tokenInfo.Revoked || tokenInfo.Expiry.Before(time.Now().UTC()) {
+			return fmt.Errorf("unable to update inactive token with ID %v", tokenID)
+		}
 
-	if options.Description != nil {
-		tokenInfo.Description = null.StringFrom(*options.Description)
-	}
+		if options.Description != nil {
+			tokenInfo.Description = null.StringFrom(*options.Description)
+		}
 
-	if options.SetRevoked {
-		tokenInfo.Revoked = true
-	}
+		if options.SetRevoked {
+			tokenInfo.Revoked = true
+		}
 
-	_, err = db.Bun().NewUpdate().
-		Model(&tokenInfo).
-		Column("description", "revoked").
-		Where("id = ?", tokenID).
-		Exec(ctx)
+		_, err = db.Bun().NewUpdate().
+			Model(&tokenInfo).
+			Column("description", "revoked").
+			Where("id = ?", tokenID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +146,7 @@ func UpdateAccessToken(
 }
 
 // GetUserIDFromTokenID retrieves the userID associated with the provided tokenID.
-func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, error) {
+func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (*model.UserID, error) {
 	var userID model.UserID
 	err := db.Bun().NewSelect().
 		Table("user_sessions").
@@ -148,7 +154,7 @@ func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, err
 		Where("id = ?", tokenID).
 		Scan(ctx, &userID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return userID, nil
+	return &userID, nil
 }

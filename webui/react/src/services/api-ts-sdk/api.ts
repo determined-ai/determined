@@ -10790,7 +10790,7 @@ export interface V1SetClusterMessageRequest {
      */
     endTime?: Date | DateString;
     /**
-     * Duration expressing how long the message should last. Should be a Go-format duration (e.g. "2s", "4m", "72h").
+     * Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h, 2w, 5d)
      * @type {string}
      * @memberof V1SetClusterMessageRequest
      */

@@ -64,11 +64,11 @@ func (a *TokenAuthZRBAC) CanCreateAccessToken(
 // CanGetAccessTokens returns an error if the user does not have permission to view own or
 // another user's token based on own role permissions.
 func (a *TokenAuthZRBAC) CanGetAccessTokens(
-	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID model.UserID,
+	ctx context.Context, curUser model.User, query *bun.SelectQuery, targetUserID *model.UserID,
 ) (selectQuery *bun.SelectQuery, err error) {
 	err = canGetOthersAccessTokens(ctx, curUser)
 	if err != nil {
-		if targetUserID > 0 && targetUserID != curUser.ID {
+		if targetUserID != nil && *targetUserID != curUser.ID {
 			return nil, err
 		}
 		err = canGetOwnAccessTokens(ctx, curUser)

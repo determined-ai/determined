@@ -77,26 +77,31 @@ def revoke_token(args: argparse.Namespace) -> None:
 
 def create_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    username = args.username or sess.username
-    user = bindings.get_GetUserByUsername(session=sess, username=username).user
+    try:
+        username = args.username or sess.username
+        user = bindings.get_GetUserByUsername(session=sess, username=username).user
 
-    if user is None or user.id is None:
-        raise errors.CliError(f"User '{username}' not found or does not have an ID")
+        if user is None or user.id is None:
+            raise errors.CliError(f"User '{username}' not found or does not have an ID")
 
-    request = bindings.v1PostAccessTokenRequest(
-        userId=user.id, lifespan=args.expiration_duration, description=args.description
-    )
-    resp = bindings.post_PostAccessToken(sess, body=request).to_json()
+        request = bindings.v1PostAccessTokenRequest(
+            userId=user.id, lifespan=args.expiration_duration, description=args.description
+        )
+        resp = bindings.post_PostAccessToken(sess, body=request).to_json()
 
-    output_string = None
-    if args.yaml:
-        output_string = util.yaml_safe_dump(resp, default_flow_style=False)
-    elif args.json:
-        output_string = json.dumps(resp, indent=2)
-    else:
-        output_string = f'TokenID: {resp["tokenId"]}\nAccess-Token: {resp["token"]}'
+        output_string = None
+        if args.yaml:
+            output_string = util.yaml_safe_dump(resp, default_flow_style=False)
+        elif args.json:
+            output_string = json.dumps(resp, indent=2)
+        else:
+            output_string = f'TokenID: {resp["tokenId"]}\nAccess-Token: {resp["token"]}'
 
-    print(output_string)
+        print(output_string)
+    except api.errors.APIException as e:
+        raise errors.CliError(f"Caught APIException: {str(e)}")
+    except api.errors.NotFoundException as e:
+        raise errors.CliError(f"Caught NotFoundException: {str(e)}")
 
 
 def edit_token(args: argparse.Namespace) -> None:
@@ -116,15 +121,22 @@ def edit_token(args: argparse.Namespace) -> None:
 
 
 def login_with_token(args: argparse.Namespace) -> None:
-    unauth_session = api.UnauthSession(master=args.master, cert=cli.cert)
-    auth_headers = {"Authorization": f"Bearer {args.token}"}
-    user_data = unauth_session.get("/api/v1/me", headers=auth_headers).json()
-    username = user_data.get("user").get("username")
+    try:
+        unauth_session = api.UnauthSession(master=args.master, cert=cli.cert)
+        auth_headers = {"Authorization": f"Bearer {args.token}"}
+        user_data = unauth_session.get("/api/v1/me", headers=auth_headers).json()
+        username = user_data.get("user").get("username")
 
-    token_store = authentication.TokenStore(args.master)
-    token_store.set_token(username, args.token)
-    token_store.set_active(username)
-    print(f"Authenticated as {username}.")
+        token_store = authentication.TokenStore(args.master)
+        token_store.set_token(username, args.token)
+        token_store.set_active(username)
+        print(f"Authenticated as {username}.")
+    except api.errors.APIException as e:
+        raise errors.CliError(f"Caught APIException: {str(e)}")
+    except api.errors.UnauthenticatedException as e:
+        raise errors.CliError(f"Caught UnauthenticatedException: {str(e)}")
+    except api.errors.NotFoundException as e:
+        raise errors.CliError(f"Caught NotFoundException: {str(e)}")
 
 
 # fmt: off

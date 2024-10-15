@@ -2,7 +2,7 @@
 
 **New Features**
 
--  API / CLI: Adds support for creating and administrating access tokens with user
-      defined lifespan intended for running automated workflows. This update provides users the
-      ability to securely generate and manage access tokens specifically designed for automation
-      while reducing operational friction and maintaining robust security protocols.
+-  API/CLI: Add the ability to create and administer access tokens for users in automated
+      workflows. Users can define the lifespan of these tokens, making it easier to securely
+      authenticate and run processes. This feature enhances automation while maintaining strong
+      security protocols by allowing tighter control over token usage and expiration.

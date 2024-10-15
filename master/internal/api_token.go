@@ -109,7 +109,7 @@ func (a *apiServer) GetAccessTokens(
 
 	// CanGetAccessTokens ensures that the logged-in user has the required permissions
 	// to perform actions on the target user's account.
-	query, err = token.AuthZProvider.Get().CanGetAccessTokens(ctx, *curUser, query, userIDForGivenUsername)
+	query, err = token.AuthZProvider.Get().CanGetAccessTokens(ctx, *curUser, query, &userIDForGivenUsername)
 	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
@@ -171,7 +171,7 @@ func (a *apiServer) PatchAccessToken(
 	if err != nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Token with id: {%d} not found", req.TokenId))
 	}
-	err = token.AuthZProvider.Get().CanUpdateAccessToken(ctx, *curUser, targetUserID)
+	err = token.AuthZProvider.Get().CanUpdateAccessToken(ctx, *curUser, *targetUserID)
 	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
