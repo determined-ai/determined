@@ -1465,7 +1465,7 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	}
 	mergedConfig := schemas.Merge(providedConfig, activeConfig)
 	if overrideName := mergedConfig.Searcher().AsLegacy().Name; isSingle && overrideName != "single" {
-		return nil, false, status.Errorf(codes.Internal,
+		return nil, false, status.Errorf(codes.InvalidArgument,
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
 
