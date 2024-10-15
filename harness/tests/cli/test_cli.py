@@ -13,7 +13,6 @@ from unittest import mock
 import pytest
 import requests
 import requests_mock
-from common.check import false
 from responses import matchers
 
 from determined.cli import cli, ntsc, render
