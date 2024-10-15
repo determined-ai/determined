@@ -187,11 +187,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
               showIcon
             />
           ) : (
-            <Alert
-              description={docsLink}
-              message={viewMessage}
-              showIcon
-            />
+            <Alert description={docsLink} message={viewMessage} showIcon />
           )}
         </div>
       </Row>

@@ -12,10 +12,7 @@ import { useObservable } from 'utils/observable';
 const TemplatesPage: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const info = useObservable(determinedStore.info);
-  const {
-    canViewGlobalConfigPolicies,
-    loading: rbacLoading,
-  } = usePermissions();
+  const { canViewGlobalConfigPolicies, loading: rbacLoading } = usePermissions();
 
   const canView = info.branding === BrandingType.HPE && canViewGlobalConfigPolicies;
 
