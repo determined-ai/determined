@@ -37,22 +37,22 @@ def test_set_config_policies() -> None:
     print(data)
     assert data.rstrip() == stdout.rstrip()
 
-    # valid path with ntsc type
+    # valid path with experiment type
     stdout = detproc.check_output(
         sess,
         [
             "det",
             "config-policies",
             "set",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
             "--config-file",
-            conf.fixtures_path("config_policies/ntscvalid.yaml"),
+            conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
 
-    with open(conf.fixtures_path("config_policies/ntscvalid.yaml"), "r") as f:
+    with open(conf.fixtures_path("config_policies/valid.yaml"), "r") as f:
         data = f.read()
     assert data.rstrip() == stdout.rstrip()
 
@@ -79,7 +79,7 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "ntsc",
+            "experiment",
             "--config-file",
             conf.fixtures_path("config_policies/valid.yaml"),
         ],
@@ -93,7 +93,7 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
         ],
@@ -116,11 +116,11 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
             "--config-file",
-            conf.fixtures_path("config_policies/ntscvalid.yaml"),
+            conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
 
@@ -131,12 +131,12 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
         ],
     )
-    with open(conf.fixtures_path("config_policies/ntscvalid.yaml"), "r") as f:
+    with open(conf.fixtures_path("config_policies/valid.yaml"), "r") as f:
         data = f.read()
     assert data.rstrip() == stdout.rstrip()
 
@@ -147,7 +147,7 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
             "--yaml",
@@ -164,7 +164,7 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
             "--json",
@@ -183,7 +183,7 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "ntsc",
+            "experiment",
         ],
         "the following arguments are required: --workspace",
     )
@@ -204,11 +204,11 @@ def test_delete_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
             "--config-file",
-            conf.fixtures_path("config_policies/ntscvalid.yaml"),
+            conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
 
@@ -218,7 +218,7 @@ def test_delete_config_policies() -> None:
             "det",
             "config-policies",
             "delete",
-            "ntsc",
+            "experiment",
             "--workspace",
             workspace_name,
         ],
@@ -232,7 +232,7 @@ def test_delete_config_policies() -> None:
             "det",
             "config-policies",
             "delete",
-            "ntsc",
+            "experiment",
         ],
         "the following arguments are required: --workspace",
     )
