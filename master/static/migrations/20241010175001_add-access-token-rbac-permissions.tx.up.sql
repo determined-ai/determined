@@ -1,3 +1,6 @@
+INSERT INTO roles(id, role_name) VALUES
+    (10, 'TokenCreator');
+
 INSERT INTO permissions (id, name, global_only) VALUES
     (12001, 'administrate access token', true),
     (12002, 'update own access token', true),
@@ -15,5 +18,13 @@ SELECT p.id AS permission_id, 1 FROM permissions p WHERE p.name IN (
     'create access token',
     'create other access token',
     'view other access token',
+    'view own access token'
+);
+
+-- TokenCreator
+INSERT INTO permission_assignments (permission_id, role_id) 
+SELECT p.id AS permission_id, 1 FROM permissions p WHERE p.name IN (
+    'update own access token',
+    'create access token',
     'view own access token'
 );
