@@ -14,7 +14,7 @@ func TestSimulateASHA(t *testing.T) {
 	maxTrials := 10
 	divisor := 3.0
 	maxTime := 900
-	timeMetric := "batches"
+	timeMetric := ptrs.Ptr("batches")
 	config := expconf.SearcherConfig{
 		RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
 			RawMaxRungs:            ptrs.Ptr(10),
@@ -22,7 +22,7 @@ func TestSimulateASHA(t *testing.T) {
 			RawDivisor:             &divisor,
 			RawMaxConcurrentTrials: &maxConcurrentTrials,
 			RawMaxTrials:           &maxTrials,
-			RawTimeMetric:          &timeMetric,
+			RawTimeMetric:          timeMetric,
 			RawMode:                ptrs.Ptr(expconf.StandardMode),
 		},
 		RawMetric:          ptrs.Ptr("loss"),
@@ -46,9 +46,9 @@ func TestSimulateASHA(t *testing.T) {
 	// => 2 for 300, 1 for 900
 	require.Equal(t, config, res.Config)
 	expectedRunSummary := []RunSummary{
-		{Count: 5, Unit: SearchUnit{Name: timeMetric, Value: 100}},
-		{Count: 3, Unit: SearchUnit{Name: timeMetric, Value: 300}},
-		{Count: 2, Unit: SearchUnit{Name: timeMetric, Value: 900}},
+		{Count: 5, Unit: SearchUnit{Name: timeMetric, Value: ptrs.Ptr(int32(100))}},
+		{Count: 3, Unit: SearchUnit{Name: timeMetric, Value: ptrs.Ptr(int32(300))}},
+		{Count: 2, Unit: SearchUnit{Name: timeMetric, Value: ptrs.Ptr(int32(900))}},
 	}
 	require.Equal(t, expectedRunSummary, res.Runs)
 }

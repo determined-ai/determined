@@ -3,6 +3,8 @@ package searcher
 import (
 	"sort"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/mathx"
@@ -19,8 +21,8 @@ type SearchSummary struct {
 
 // SearchUnit is a length unit. If MaxLength is true, Name and Value will be ignored.
 type SearchUnit struct {
-	Name      string
-	Value     int
+	Name      *string
+	Value     *int32
 	MaxLength bool
 }
 
@@ -28,7 +30,7 @@ type SearchUnit struct {
 func (su SearchUnit) Proto() *experimentv1.SearchUnit {
 	return &experimentv1.SearchUnit{
 		Name:      su.Name,
-		Value:     int32(su.Value),
+		Value:     su.Value,
 		MaxLength: su.MaxLength,
 	}
 }
@@ -80,7 +82,7 @@ func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (Sea
 	case conf.RawAdaptiveASHAConfig != nil:
 		ashaConfig := conf.RawAdaptiveASHAConfig
 		brackets := makeBrackets(*ashaConfig)
-		unitsPerRun := make(map[int]int)
+		unitsPerRun := make(map[int32]int)
 		for _, bracket := range brackets {
 			rungs := makeRungs(bracket.numRungs, ashaConfig.Divisor(), ashaConfig.Length().Units)
 			rungRuns := bracket.maxRuns
@@ -93,7 +95,7 @@ func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (Sea
 				if i == len(rungs)-1 {
 					runsStopped = rungRuns
 				}
-				unitsPerRun[rungUnits] += runsStopped
+				unitsPerRun[int32(rungUnits)] += runsStopped
 				rungRuns = runsContinued
 			}
 		}
@@ -101,14 +103,14 @@ func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (Sea
 			searchSummary.Runs = append(searchSummary.Runs, RunSummary{
 				Count: numRuns,
 				Unit: SearchUnit{
-					Name:  string(ashaConfig.Length().Unit),
-					Value: units,
+					Name:  ptrs.Ptr(string(ashaConfig.Length().Unit)),
+					Value: &units,
 				},
 			})
 		}
 		// Sort by target units for consistency in output.
 		sort.Slice(searchSummary.Runs, func(i, j int) bool {
-			return searchSummary.Runs[i].Unit.Value < searchSummary.Runs[j].Unit.Value
+			return *searchSummary.Runs[i].Unit.Value < *searchSummary.Runs[j].Unit.Value
 		})
 		return searchSummary, nil
 	default:

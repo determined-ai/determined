@@ -10150,13 +10150,13 @@ export interface V1RunSummary {
      * @type {number}
      * @memberof V1RunSummary
      */
-    count?: number;
+    count: number;
     /**
      * Training length for the runs.
      * @type {V1SearchUnit}
      * @memberof V1RunSummary
      */
-    unit?: V1SearchUnit;
+    unit: V1SearchUnit;
 }
 /**
  * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.  - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is delegated.
@@ -10378,13 +10378,13 @@ export interface V1SearchSummary {
      * @type {any}
      * @memberof V1SearchSummary
      */
-    config?: any;
+    config: any;
     /**
      * A list of planned number of runs to their training lengths.
      * @type {Array<V1RunSummary>}
      * @memberof V1SearchSummary
      */
-    runs?: Array<V1RunSummary>;
+    runs: Array<V1RunSummary>;
 }
 /**
  * SearchUnit describes a length unit used by some searchers to manage training.
@@ -10409,7 +10409,7 @@ export interface V1SearchUnit {
      * @type {boolean}
      * @memberof V1SearchUnit
      */
-    maxLength?: boolean;
+    maxLength: boolean;
 }
 /**
  * Set the cluster-wide message.

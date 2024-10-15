@@ -154,10 +154,13 @@ message TrialOperation {
 
 // SearchUnit describes a length unit used by some searchers to manage training.
 message SearchUnit {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "max_length" ] }
+  };
   // Name of the length unit (if max_length is false).
-  string name = 1;
+  optional string name = 1;
   // Value of the length unit (if max_length is false).
-  int32 value = 2;
+  optional int32 value = 2;
   // Bool indicating whether the training length is defined in code.
   bool max_length = 3;
 }
@@ -165,6 +168,9 @@ message SearchUnit {
 // RunSummary describes the runs that are estimated to train for a certain
 // length.
 message RunSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "count", "unit" ] }
+  };
   // Number of runs.
   int32 count = 1;
   // Training length for the runs.
@@ -174,6 +180,9 @@ message RunSummary {
 // SearchSummary contains the estimated runs and training lengths that a search
 // plans to execute.
 message SearchSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config", "runs" ] }
+  };
   // The searcher config from which the summary is generated.
   google.protobuf.Struct config = 1;
   // A list of planned number of runs to their training lengths.

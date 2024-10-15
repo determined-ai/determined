@@ -651,11 +651,11 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             runs=[
                 bindings.v1RunSummary(
                     count=7,
-                    unit=bindings.v1SearchUnit(name="batches", value=200),
+                    unit=bindings.v1SearchUnit(name="batches", value=200, maxLength=False),
                 ),
                 bindings.v1RunSummary(
                     count=3,
-                    unit=bindings.v1SearchUnit(name="batches", value=1000),
+                    unit=bindings.v1SearchUnit(name="batches", value=1000, maxLength=False),
                 ),
             ],
         )

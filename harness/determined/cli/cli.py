@@ -68,10 +68,10 @@ def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
         num_runs = run_summary.count
         run_unit = run_summary.unit
         if run_unit.maxLength:
-            run_summary = "maximum length of training code"
+            summary = "maximum length of training code"
         else:
-            run_summary = f"train for {run_unit.value} {run_unit.name}"
-        run_summaries.append([num_runs, run_summary])
+            summary = f"train for {run_unit.value} {run_unit.name}"
+        run_summaries.append([num_runs, summary])
 
     output.append(tabulate.tabulate(run_summaries, headers, tablefmt="presto"))
     return "\n".join(output)
