@@ -266,7 +266,7 @@ func (a *apiServer) LaunchShell(
 		}
 	}
 
-	keys, err := ssh.GenerateKey(launchReq.Spec.Base.SSHRsaSize, passphrase)
+	keys, err := ssh.GenerateKey(launchReq.Spec.Base.SSHConfig, passphrase)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/jinzhu/copier"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -70,7 +71,7 @@ type TaskSpec struct {
 	ClusterID   string
 	HarnessPath string
 	MasterCert  []byte
-	SSHRsaSize  int
+	SSHConfig   config.SSHConfig
 
 	SegmentEnabled bool
 	SegmentAPIKey  string
