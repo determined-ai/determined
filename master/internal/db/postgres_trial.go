@@ -276,8 +276,8 @@ func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.RunTaskID
 	return ids, nil
 }
 
-// TrialIDByRequestID looks up a trial ID by experiment ID and request ID, returning an error if none exists.
-// This is only used to shim legacy experiment snapshots.
+// TrialIDByExperimentIDAndRequestID looks up a trial ID by experiment ID and request ID, returning an error if
+// none exists. This is only used to shim legacy experiment snapshots.
 func TrialIDByExperimentIDAndRequestID(
 	ctx context.Context, experimentID int, requestID model.RequestID,
 ) (*int, error) {

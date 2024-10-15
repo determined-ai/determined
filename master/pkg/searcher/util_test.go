@@ -26,7 +26,10 @@ type testRun struct {
 }
 
 func (tr testRun) String() string {
-	return fmt.Sprintf("testRun{id: %v, hparams: %v, stopped: %v, stoppedAt: %v, completed: %v}", tr.id, tr.hparams, tr.stopped, tr.stoppedAt, tr.completed)
+	return fmt.Sprintf(
+		"testRun{id: %v, hparams: %v, stopped: %v, stoppedAt: %v, completed: %v}",
+		tr.id, tr.hparams, tr.stopped, tr.stoppedAt, tr.completed,
+	)
 }
 
 func (sr *TestSearchRunner) run(maxUnits int, valPeriod int, increasing bool) {
@@ -36,12 +39,11 @@ func (sr *TestSearchRunner) run(maxUnits int, valPeriod int, increasing bool) {
 		run := sr.runs[int32(i)]
 		for j := 0; j <= maxUnits; j += valPeriod {
 			if increasing {
-				metric = metric + 1
+				metric++
 			} else {
-				metric = metric - 1
+				metric--
 			}
 			sr.reportValidationMetric(run.id, j, metric)
-			// fmt.Printf("run=%v, step=%v, metric=%v, created=%v, stopping=%v\n", run.id, j, startingMetric, creates, stops)
 			if run.stopped {
 				run.stoppedAt = j
 				break
@@ -51,7 +53,9 @@ func (sr *TestSearchRunner) run(maxUnits int, valPeriod int, increasing bool) {
 	}
 }
 
-func NewTestSearchRunner(t *testing.T, config expconf.SearcherConfig, hparams expconf.Hyperparameters) *TestSearchRunner {
+func NewTestSearchRunner(
+	t *testing.T, config expconf.SearcherConfig, hparams expconf.Hyperparameters,
+) *TestSearchRunner {
 	expSeed := uint32(102932948)
 	method := NewSearchMethod(config)
 	searcher := NewSearcher(expSeed, method, hparams)
@@ -71,7 +75,9 @@ func (sr *TestSearchRunner) initialRuns() ([]testRun, []testRun) {
 	return created, stopped
 }
 
-func (sr *TestSearchRunner) reportValidationMetric(runID int32, stepNum int, metricVal float64) ([]testRun, []testRun) {
+func (sr *TestSearchRunner) reportValidationMetric(
+	runID int32, stepNum int, metricVal float64,
+) ([]testRun, []testRun) {
 	metrics := map[string]interface{}{
 		sr.config.Metric(): metricVal,
 	}

@@ -231,7 +231,12 @@ func (t *trial) PatchSearcherState(req experiment.RunSearcherState) error {
 	t.searcher = req
 	switch {
 	case t.searcher.Stopped:
-		return t.patchState(model.StateWithReason{State: model.StoppingCanceledState, InformationalReason: "searcher decided to early stop trial"})
+		return t.patchState(
+			model.StateWithReason{
+				State:               model.StoppingCanceledState,
+				InformationalReason: "searcher decided to early stop trial",
+			},
+		)
 	case t.searcher.Closed:
 		return t.patchState(model.StateWithReason{
 			State:               model.StoppingCompletedState,

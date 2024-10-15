@@ -62,7 +62,7 @@ func (s *Searcher) context() context {
 	return context{rand: s.state.Rand, hparams: s.hparams}
 }
 
-// xxx: comment
+// InitialRuns returns the initial runs the searcher intends to create at the start of a search.
 // This should be called only once after the searcher has been created.
 func (s *Searcher) InitialRuns() ([]Action, error) {
 	s.mu.Lock()
@@ -76,7 +76,7 @@ func (s *Searcher) InitialRuns() ([]Action, error) {
 	return creates, nil
 }
 
-// xxx: comment
+// RunCreated informs the searcher that a new run has been created.
 func (s *Searcher) RunCreated(runID int32, action Create) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -100,7 +100,7 @@ func (s *Searcher) RunIsCreated(runID int32) bool {
 	return s.state.RunsCreated[runID]
 }
 
-// xxx: comment
+// RunExitedEarly informs the searcher that a run has exited early.
 func (s *Searcher) RunExitedEarly(
 	runID int32, exitedReason model.ExitedReason,
 ) ([]Action, error) {
@@ -162,6 +162,7 @@ func (s *Searcher) ValidationCompleted(
 	return operations, nil
 }
 
+// RunExited informs the searcher that a run has exited.
 func (s *Searcher) RunExited(runID int32) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -215,8 +216,7 @@ func (s *Searcher) Record(ops []Action) {
 
 func (s *Searcher) record(ops []Action) {
 	for _, op := range ops {
-		switch op.(type) {
-		case Create:
+		if _, ok := op.(Create); ok {
 			s.state.RunsRequested++
 		}
 	}

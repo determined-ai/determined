@@ -11,17 +11,20 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+// SearchSummary describes a summary of planned runs and the associated expconf.SearcherConfig.
 type SearchSummary struct {
 	Runs   []RunSummary
 	Config expconf.SearcherConfig
 }
 
+// SearchUnit is a length unit. If MaxLength is true, Name and Value will be ignored.
 type SearchUnit struct {
 	Name      string
 	Value     int
 	MaxLength bool
 }
 
+// Proto converts the SearchUnit to its protobuf representation.
 func (su SearchUnit) Proto() *experimentv1.SearchUnit {
 	return &experimentv1.SearchUnit{
 		Name:      su.Name,
@@ -30,11 +33,13 @@ func (su SearchUnit) Proto() *experimentv1.SearchUnit {
 	}
 }
 
+// RunSummary is a summary of the number of runs that will train for Unit length.
 type RunSummary struct {
 	Count int
 	Unit  SearchUnit
 }
 
+// Proto converts the RunSummary to its protobuf representation.
 func (rs RunSummary) Proto() *experimentv1.RunSummary {
 	return &experimentv1.RunSummary{
 		Count: int32(rs.Count),
@@ -42,6 +47,7 @@ func (rs RunSummary) Proto() *experimentv1.RunSummary {
 	}
 }
 
+// Proto converts the SearchSummary to its protobuf representation.
 func (s SearchSummary) Proto() *experimentv1.SearchSummary {
 	var runSummaries []*experimentv1.RunSummary
 	for _, v := range s.Runs {

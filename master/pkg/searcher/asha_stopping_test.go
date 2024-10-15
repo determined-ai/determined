@@ -196,7 +196,7 @@ func TestGetMetric(t *testing.T) {
 		} else {
 			require.NoError(t, err, "got unexpected error %v: %v", err, c)
 			require.Equal(t, uint64(c.expectedTimeStep), *stepNum, "time step does not match")
-			require.Equal(t, c.expectedMetric, *searcherMetric, "searcher metric value doesn't match")
+			require.InEpsilon(t, c.expectedMetric, *searcherMetric, 0.001, "searcher metric value doesn't match")
 		}
 	}
 }
@@ -395,7 +395,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 	maxTrials := 10
 	divisor := 3.0
 	maxTime := 900
-	metric := "loss"
+	metric := "val_loss"
 	config := expconf.AsyncHalvingConfig{
 		RawMaxTime:             &maxTime,
 		RawDivisor:             &divisor,
@@ -432,7 +432,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 	// Simulate the search.
 	testSearchRunner.run(900, 100, true)
 	progress := search.progress(map[int32]float64{}, map[int32]bool{})
-	require.Equal(t, 1.0, progress)
+	require.InEpsilon(t, 1.0, progress, 0.01)
 
 	// Expect 10 total runs.
 	// Since we reported progressively worse metrics, only the first run should continue.

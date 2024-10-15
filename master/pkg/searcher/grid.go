@@ -28,7 +28,6 @@ type (
 		defaultSearchMethod
 		expconf.GridConfig
 		gridSearchState
-		trials int
 	}
 )
 

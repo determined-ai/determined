@@ -224,32 +224,40 @@ func (s SearcherConfig) AssertCurrent() error {
 	switch {
 	case s.RawAdaptiveASHAConfig != nil:
 		if s.RawAdaptiveASHAConfig.RawMaxLength != nil {
-			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn(
+				"the `max_length` field of the searcher config has been deprecated and will be removed in a " +
+					"future release.")
 		}
 		if s.RawAdaptiveASHAConfig.RawStopOnce != nil {
-			log.Warn("the `stop_once` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn("the `stop_once` field of the searcher config has been deprecated and will be removed in " +
+				"a future release.")
 		}
 		if s.RawAdaptiveASHAConfig.RawMaxTime == nil || s.RawAdaptiveASHAConfig.RawTimeMetric == nil {
 			return errors.New("the `adaptive_asha` searcher requires `max_time` and `time_metric` to be set")
 		}
 	case s.RawAsyncHalvingConfig != nil:
 		if s.RawAsyncHalvingConfig.RawMaxLength != nil {
-			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in " +
+				"a future release.")
 		}
 		if s.RawAsyncHalvingConfig.RawStopOnce != nil {
-			log.Warn("the `stop_once` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn("the `stop_once` field of the searcher config has been deprecated and will be removed in " +
+				"a future release.")
 		}
 	case s.RawGridConfig != nil:
 		if s.RawGridConfig.RawMaxLength != nil {
-			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in " +
+				"a future release.")
 		}
 	case s.RawSingleConfig != nil:
 		if s.RawSingleConfig.RawMaxLength != nil {
-			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in " +
+				"a future release.")
 		}
 	case s.RawRandomConfig != nil:
 		if s.RawRandomConfig.RawMaxLength != nil {
-			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in a future release.")
+			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in " +
+				"a future release.")
 		}
 	case s.RawSyncHalvingConfig != nil:
 		return errors.New(

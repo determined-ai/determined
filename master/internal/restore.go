@@ -169,11 +169,12 @@ func (e *internalExperiment) restoreRun(
 			return
 		}
 		trialTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), trial.ID)
-		if err != nil {
+		switch {
+		case err != nil:
 			syslog.WithError(err).Error("failed to retrieve tasks for run")
-		} else if len(trialTaskIDs) == 0 {
+		case len(trialTaskIDs) == 0:
 			syslog.Errorf("no tasks for run with id %d", trial.ID)
-		} else {
+		default:
 			taskID = trialTaskIDs[len(trialTaskIDs)-1].TaskID
 		}
 	}
@@ -341,6 +342,7 @@ const (
 	ValidateAfterOperation OperationType = 5
 )
 
+// OperationType is a legacy searcher operation type.
 type OperationType int
 
 // shimExperimentSnapshotV2 shims a v2 snapshot to a v3 snapshot. From v2 to v3,
@@ -460,7 +462,7 @@ func shimExperimentSnapshotV4(experimentID int, snapshot []byte) ([]byte, error)
 // - `trial_searcher_state.Complete` -> dropped
 // - `trial_searcher_state.Op (searcher.ValidateAfter)` -> dropped
 // - `trial_searcher_state.Stop` -> dropped
-// - `trial_searcher_state.Closed` -> `run_searcher_state.Closed`
+// - `trial_searcher_state.Closed` -> `run_searcher_state.Closed`.
 func shimExperimentSnapshotV5(experimentID int, snapshot []byte) ([]byte, error) {
 	type v4SearcherState struct {
 		TrialsRequested   int                         `json:"trials_requested"`
@@ -497,24 +499,46 @@ func shimExperimentSnapshotV5(experimentID int, snapshot []byte) ([]byte, error)
 	}
 
 	runsCreated, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialsCreated)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	runsClosed, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialsClosed)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	exits, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Exits)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	cancels, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Cancels)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	failures, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.Failures)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	runProgress, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.SearcherState.TrialProgress)
-
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	searchMethodStateV4 := map[string]interface{}{}
 	err = json.Unmarshal(v4ExperimentSnapshot.SearcherState.SearchMethodState, &searchMethodStateV4)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	searchMethodState, err := shimSearchMethodStateV5(searchMethodStateV4)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
+	}
 	runSearcherStateV4, err := mapRequestIDToRunID(experimentID, v4ExperimentSnapshot.TrialSearcherState)
 	if err != nil {
-		return nil, ExperimentSnapshotShimError{Message: "unable to parse searcher state"}
+		return nil, ExperimentSnapshotShimError{Message: err.Error()}
 	}
-
-	var runSearcherState map[int]interface{}
+	runSearcherState := make(map[int]interface{})
 
 	for rID, trialSearcherState := range runSearcherStateV4 {
-		subsearchID, _ := searchMethodState.(map[string]interface{})["run_table"].(map[int]int)[rID]
+		subsearchID := searchMethodState.(map[string]interface{})["run_table"].(map[int]int)[rID]
 		runSearcherState[rID] = map[string]interface{}{
 			"Create": map[string]interface{}{
 				"hparams":       trialSearcherState.Create.HParams,
@@ -555,6 +579,9 @@ func shimSearchMethodStateV5(v4SearchMethodState map[string]interface{}) (interf
 		fallthrough
 	case searcher.RandomSearch:
 		createdTrials, ok := v4SearchMethodState["created_trials"].(int)
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
+		}
 		pendingTrials, ok := v4SearchMethodState["pending_trials"].(int)
 		if !ok {
 			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
@@ -566,6 +593,9 @@ func shimSearchMethodStateV5(v4SearchMethodState map[string]interface{}) (interf
 		}, nil
 	case searcher.GridSearch:
 		createdTrials, ok := v4SearchMethodState["created_trials"].(int)
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
+		}
 		remainingTrials, ok := v4SearchMethodState["remaining_trials"].(int)
 		if !ok {
 			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}

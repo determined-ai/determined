@@ -17,7 +17,10 @@ type bracket struct {
 }
 
 func (b *bracket) String() string {
-	return fmt.Sprintf("Bracket{numRungs: %d, maxRuns: %d, maxConcurrentRuns: %d}", b.numRungs, b.maxRuns, b.maxConcurrentRuns)
+	return fmt.Sprintf(
+		"Bracket{numRungs: %d, maxRuns: %d, maxConcurrentRuns: %d}",
+		b.numRungs, b.maxRuns, b.maxConcurrentRuns,
+	)
 }
 
 func getBracketMaxTrials(

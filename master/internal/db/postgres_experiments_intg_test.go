@@ -760,9 +760,9 @@ func TestDeleteExperiments(t *testing.T) {
 			RawSingleConfig: &expconf.SingleConfigV0{},
 		}
 		searcher1 := searcher.NewSearcher(3, searcher.NewSearchMethod(config), nil)
-		_, err := searcher1.InitialOperations()
+		_, err := searcher1.InitialRuns()
 		require.NoError(t, err)
-		_, err = searcher1.TrialExitedEarly(model.RequestID(uuid.New()), model.Errored)
+		_, err = searcher1.RunExitedEarly(1, model.Errored)
 		require.NoError(t, err)
 
 		snapshot, err := searcher1.Snapshot()
