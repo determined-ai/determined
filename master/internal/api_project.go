@@ -56,7 +56,7 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		DisplayName: "Forked",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		Groupable:   false,
+		Groupable:   true,
 	},
 	{
 		Column:      "startTime",
