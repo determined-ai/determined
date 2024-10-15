@@ -1,11 +1,8 @@
 name: iris_tf_keras_const
-data:
-  train_url: http://download.tensorflow.org/data/iris_training.csv
-  test_url: http://download.tensorflow.org/data/iris_test.csv
 environment:
-  image:
-    cpu: determinedai/tensorflow-ngc-dev:0736b6d
-    gpu: determinedai/tensorflow-ngc-dev:0736b6d
+  image: junk
+#     cpu: determinedai/tensorflow-ngc-dev:0736b6d
+#     gpu: determinedai/tensorflow-ngc-dev:0736b6d
 hyperparameters:
   learning_rate: 1.0e-4
   learning_rate_decay: 1.0e-6
@@ -15,6 +12,11 @@ searcher:
   name: single
   metric: val_categorical_accuracy
   smaller_is_better: false
+  # XXX
   max_length:
     batches: 5000
-entrypoint: python3 -m determined.launch.horovod --autohorovod --trial model_def:IrisTrial
+entrypoint: >-
+  python3 -m determined.launch.tensorflow --
+  python3 train.py
+# XXX
+max_restarts: 0

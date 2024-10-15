@@ -7,7 +7,8 @@
 .. meta::
    :description: Learn how to use the Keras API to train a Keras model. This user guide walks you through loading your data, defining the model, customizing how the model.fit function is called, checkpointing, and callbacks.
 
-In this guide, you'll learn how to use the Keras API.
+In this guide, you'll learn how to use Determined's ``keras.DeterminedCallback`` while training your
+keras model.
 
 +---------------------------------------------------------------------+
 | Visit the API reference                                             |
@@ -15,121 +16,154 @@ In this guide, you'll learn how to use the Keras API.
 | :ref:`keras-reference`                                              |
 +---------------------------------------------------------------------+
 
-This document guides you through training a Keras model in Determined. You need to implement a trial
-class that inherits :class:`~determined.keras.TFKerasTrial` and specify it as the entrypoint in the
-:ref:`experiment-configuration`.
+This document guides you through training a Keras model in Determined.  You will need to update your
+``model.fit()`` call to include a :class:`~determined.keras.DeterminedCallback` and submit it to
+a Determined cluster.
 
-To learn about this API, you can start by reading the trial definitions in the `Iris categorization
-example
+To learn about this API, you can start by reading the ``train.py`` script in the `Iris
+categorization example
 <https://github.com/determined-ai/determined-examples/tree/main/computer_vision/iris_tf_keras>`__.
+
+**********************
+ Configure Entrypoint
+**********************
+
+Determined requires you to launch training jobs by submitting them with an
+:ref:`experiment-configuration`, which tells the Determined master how to start your container.  For
+Keras training, you should always wrap your training script in Determined's :ref:`TensorFlow
+launcher <launch-tensorflow>`:
+
+.. code:: yaml
+
+   entrypoint: >-
+     python3 -m determined.launch.tensorflow --
+     python3 my_train.py --my-arg...
+
+Determined's TensorFlow launcher will automatically configure your training script with the right
+``TF_CONFIG`` environment variable for distributed training when distributed resources are
+available, and will safely do nothing when they are not.
+
+****************************************************************
+ Obtain a ``det.core.Context`` and a ``tf.distribute.Strategy``
+****************************************************************
+
+When using distributed training, TensorFlow requires you to create your ``Strategy`` early in the
+process lifetime, before creating your model.
+
+Since you wrapped your training script in Determined's TensorFlow launcher, you can use Determined's
+``core.DistributedContext.from_tf_config()`` helper, which will create both a suitable
+``DistributedContext`` and ``Strategy`` for the training environment in your training job.  Then you
+can feed that ``DistributedContext`` to ``det.core.init()`` to get a ``core.Context``, and feed all
+of that to your ``main()`` function (or equivalent) in your training script:
+
+.. code:: python
+
+   if __name__ == "__main__":
+       distributed, strategy = det.core.DistributedContext.from_tf_config()
+       with det.core.init(distributed=distributed) as core_context:
+           main(core_context, strategy)
+
+*****************
+ Build the Model
+*****************
+
+Building a distributed-capable model is easy in keras; you just need to wrap your model building and
+compiling in the ``strategy.scope()``.  See the `TensorFlow documentation
+<https://www.tensorflow.org/tutorials/distribute/keras
+#create_the_model_and_instantiate_the_optimizer>`__ for more detail.
+
+.. code:: python
+
+   def main(core_context, strategy):
+       with strategy.scope():
+           model = my_build_model()
+           model.compile(...)
+
+***********************************
+ Create the ``DeterminedCallback``
+***********************************
+
+The :class:`~determined.keras.DeterminedCallback` automatically integrates your training with the
+Determined cluster. It reports both train and test metrics, reports progress, saves checkpoints, and
+uploads them to checkpoint storage. Additionally, it manages preemption signals from the Determined
+master (for example, when you pause your experiment), gracefully halting training and later resuming
+from where it left off.
+
+The :class:`~determined.keras.DeterminedCallback` will automatically integrate your training with
+the Determined cluster.  It reports train and test metrics, it reports progress, it saves
+checkpoints, and it uploads them to checkpoint storage.  It also handles preemption signals from the
+Determined master (such as if you pause your experiment), shutting down training, then it restores
+training from where it left off when the experiment continues.
+
+The ``DeterminedCallback`` has only three required inputs:
+   -  the ``core_context`` you already created
+   -  a ``checkpoint`` UUID to start training from, or ``None``
+   -  a ``continue_id`` used to decide how to treat the checkpoint
+
+In training jobs, an easy value for ``checkpoint`` is ``det.get_cluster_info().latest_checkpoint``,
+which will automatically be populated with the latest checkpoint saved by this trial, or ``None``.
+If, for example, you wanted to start training from a checkpoint and support pausing and resuming,
+you could use ``info.latest_checkpoint or my_starting_checkpoint``.
+
+The ``continue_id`` helps the ``DeterminedCallback`` decide if the provided checkpoint represents
+just the starting weights and training should begin at epoch=0, or if the checkpoint represents a
+partially complete training that should pick up where it left off (at epoch > 0).  The provided
+``continue_id`` is saved along with every checkpoint, and when loading the starting checkpoint, if
+the ``continue_id`` matches what was in the checkpoint, training state is also loaded from the
+checkpoint.  In training jobs, an easy value for ``continue_id`` is
+``det.get_cluster_info.trial.trial_id``.
+
+See the reference for :class:`~determined.keras.DeterminedCallback` for details on its optional
+parameters.
+
+.. code:: python
+
+   info = det.get_cluster_info()
+   assert info and info.task_type == "TRIAL", "this example only runs as a trial on the cluster"
+
+   det_cb = det.keras.DeterminedCallback(
+       core_context,
+       checkpoint=info.latest_checkpoint,
+       continue_id=info.trial.trial_id,
+    )
 
 ***********
  Load Data
 ***********
 
-.. note::
+Loading data is done as usual, though additional considerations may arise if your existing
+data-loading code is not container-ready. For more details, see :ref:`load-model-data`.
 
-   Before loading data, visit :ref:`load-model-data` to understand how to work with different
-   sources of data.
-
-Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`
-and :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader` methods. Each should return
-one of the following data types:
-
-#. A tuple ``(x, y)`` of NumPy arrays. x must be a NumPy array (or array-like), a list of arrays (in
-   case the model has multiple inputs), or a dict mapping input names to the corresponding array, if
-   the model has named inputs. y should be a numpy array.
-
-#. A tuple ``(x, y, sample_weights)`` of NumPy arrays.
-
-#. A ``tf.data.dataset`` returning a tuple of either (inputs, targets) or (inputs, targets,
-   sample_weights).
-
-#. A ``keras.utils.Sequence`` returning a tuple of either (inputs, targets) or (inputs, targets,
-   sample weights).
-
-If using ``tf.data.Dataset``, users are required to wrap both their training and validation dataset
-using :meth:`self.context.wrap_dataset <determined.keras.TFKerasTrialContext.wrap_dataset>`. This
-wrapper is used to shard the dataset for distributed training. For optimal performance, users should
-wrap a dataset immediately after creating it.
+If you want to take advantage Determined's distributed training, you may need to ensure that
+your input data is properly sharded.  See `TensorFlow documentation
+<https://www.tensorflow.org/tutorials/distribute/input#sharding>`__ for details.
 
 .. include:: ../../../_shared/note-dtrain-learn-more.txt
 
-******************
- Define the Model
-******************
+*************************
+ TensorBoard Integration
+*************************
 
-Users are required wrap their model prior to compiling it using :meth:`self.context.wrap_model
-<determined.keras.TFKerasTrialContext.wrap_model>`. This is typically done inside
-:meth:`~determined.keras.TFKerasTrial.build_model`.
-
-******************************************
- Customize Calling Model Fitting Function
-******************************************
-
-The :class:`~determined.keras.TFKerasTrial` interface allows the user to configure how ``model.fit``
-is called by calling :meth:`self.context.configure_fit()
-<determined.keras.TFKerasTrialContext.configure_fit>`.
-
-***************
- Checkpointing
-***************
-
-A checkpoint includes the model definition (Python source code), experiment configuration file,
-network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
-When using a stateful optimizer during training, checkpoints will also include the state of the
-optimizer (i.e., learning rate). You can also embed arbitrary metadata in checkpoints via a
-:ref:`Python SDK <store-checkpoint-metadata>`.
-
-TensorFlow Keras trials are checkpointed to a file named ``determined-keras-model.h5`` using
-``tf.keras.models.save_model``. You can learn more from the `TF Keras docs
-<https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
-
-***********
- Callbacks
-***********
-
-To execute arbitrary Python code during the lifecycle of a :class:`~determined.keras.TFKerasTrial`,
-implement the :class:`determined.keras.callbacks.Callback` interface (an extension of the
-``tf.keras.callbacks.Callbacks`` interface) and supply them to the
-:class:`~determined.keras.TFKerasTrial` by implementing
-:meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
-
-.. _keras-profiler:
-
-***********
- Profiling
-***********
-
-Determined supports integration with the native TF Keras profiler. Results will automatically be
-uploaded to the trial's TensorBoard path and can be viewed in the Determined Web UI.
-
-The Keras profiler is configured as a callback in the :class:`~determined.keras.TFKerasTrial` class.
-The :class:`determined.keras.callbacks.TensorBoard` callback is a thin wrapper around the native
-Keras TensorBoard callback, ``tf.keras.callbacks.TensorBoard``. It overrides the ``log_dir``
-argument to set the Determined TensorBoard path, while other arguments are passed directly into
-``tf.keras.callbacks.TensorBoard``. For a list of accepted arguments, consult the `official Keras
-API documentation <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`_.
-
-The following code snippet will configure profiling for batches 5 and 10, and will compute weight
-histograms every 1 epochs.
+Optionally, you can use Determined's :class:`~determined.keras.TensorBoard` callback, which extends
+keras' ``TensorBoard`` callback with the ability to automatically upload metrics to Determined's
+checkpoint storage.  Determined's ``TensorBoard`` callback is configured identically to keras'
+except it takes an additional ``core_context`` initial argument:
 
 .. code:: python
 
-   from determined import keras
+   tb_cb = det.keras.TensorBoard(core_context, ...)
 
-   def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-      return [
-          keras.callbacks.TensorBoard(
-              update_freq="batch",
-              profile_batch='5, 10',
-              histogram_freq=1,
-          )
-      ]
+Then simply include it in your ``model.fit()`` as normal.
 
-.. note::
+*************************
+ Calling ``model.fit()``
+*************************
 
-   Though specifying batches to profile with ``profile_batch`` is optional, profiling every batch
-   may cause a large amount of data to be uploaded to Tensorboard. This may result in long rendering
-   times for Tensorboard and memory issues. For long-running experiments, it is recommended to
-   configure profiling only on desired batches.
+The only remaining step is to pass your callbacks to your ``model.fit()``:
+
+.. code:: python
+
+   model.fit(
+       ...,
+       callbacks=[det_cb, tb_cb],
+   )
