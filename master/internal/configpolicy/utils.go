@@ -24,7 +24,8 @@ const (
 	// InvalidExperimentConfigPolicyErr is the error reported by an invalid experiment config policy.
 	InvalidExperimentConfigPolicyErr = "invalid experiment config policy"
 	// InvalidNTSCConfigPolicyErr is the error reported by an invalid NTSC config policy.
-	InvalidNTSCConfigPolicyErr  = "invalid ntsc config policy"
+	InvalidNTSCConfigPolicyErr = "invalid ntsc config policy"
+	// NotSupportedConfigPolicyErr is the error reported when admins attempt to set NTSC invariant config.
 	NotSupportedConfigPolicyErr = "not supported"
 )
 
