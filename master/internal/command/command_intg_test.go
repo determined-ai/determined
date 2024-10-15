@@ -186,6 +186,7 @@ func setupTest(t *testing.T) *db.PgDB {
 	mockRM.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
 	mockRM.On("Release", mock.Anything, mock.Anything).Return(nil)
 	mockRM.On("SetGroupPriority", mock.Anything, mock.Anything).Return(nil)
+	mockRM.On("SmallerValueIsHigherPriority").Return(true, nil)
 
 	cs, _ := NewService(db.SingleDB(), &mockRM)
 	SetDefaultService(cs)
