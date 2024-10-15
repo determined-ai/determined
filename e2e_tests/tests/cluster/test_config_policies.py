@@ -48,7 +48,7 @@ def test_set_config_policies() -> None:
             "--workspace",
             workspace_name,
             "--config-file",
-            conf.fixtures_path("config_policies/valid.yaml"),
+            conf.fixtures_path("config_policies/ntscvalid.yaml"),
         ],
     )
 
@@ -120,7 +120,7 @@ def test_describe_config_policies() -> None:
             "--workspace",
             workspace_name,
             "--config-file",
-            conf.fixtures_path("config_policies/valid.yaml"),
+            conf.fixtures_path("config_policies/ntscvalid.yaml"),
         ],
     )
 
@@ -208,7 +208,7 @@ def test_delete_config_policies() -> None:
             "--workspace",
             workspace_name,
             "--config-file",
-            conf.fixtures_path("config_policies/valid.yaml"),
+            conf.fixtures_path("config_policies/ntscvalid.yaml"),
         ],
     )
 
