@@ -38,7 +38,7 @@ export class ApiWorkspaceFixture extends apiFixture(WorkspacesApi) {
         throw new Error(
           `Create Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
             req,
-          )} Token: ${this.apiArgs[0]?.apiKey} Response: ${respBody}`,
+          )} Token: ${this.token} Response: ${respBody}`,
         );
       }
       throw new Error(

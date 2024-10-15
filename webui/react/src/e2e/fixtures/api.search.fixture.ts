@@ -222,20 +222,15 @@ export class ApiSearchFixture extends apiFixture(InternalApi) {
       projectId: this.defaultProjectId,
       ...body,
     };
-    try {
-      const response = await reportApiErrorJson(
-        this.api.createExperiment({
-          ...bodyWithDefaults,
-          config: JSON.stringify(configWithDefaults),
-        }),
-      );
-      const search = new ApiSearch(this.experimentApi, this.api, response);
-      this.searches.push(search);
-      return search;
-    } catch (e) {
-      if (e instanceof Response) console.error(await e.json());
-      throw e;
-    }
+    const response = await reportApiErrorJson(
+      this.api.createExperiment({
+        ...bodyWithDefaults,
+        config: JSON.stringify(configWithDefaults),
+      }),
+    );
+    const search = new ApiSearch(this.experimentApi, this.api, response);
+    this.searches.push(search);
+    return search;
   }
 
   dispose(): Promise<V1DeleteExperimentResponse> {
