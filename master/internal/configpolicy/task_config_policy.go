@@ -54,7 +54,7 @@ func CheckNTSCConstraints(
 	}
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
-		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, workloadConfig.Resources.Slots,
+		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, &workloadConfig.Resources.Slots,
 			workloadConfig.Resources.MaxSlots); err != nil {
 			return err
 		}
@@ -90,12 +90,16 @@ func CheckExperimentConstraints(
 		// users cannot specify number of slots for an experiment
 		if workloadConfig.RawResources != nil {
 			slotsRequest := workloadConfig.RawResources.RawSlotsPerTrial
-			if slotsRequest != nil {
-				if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots,
-					*slotsRequest,
-					workloadConfig.Resources().MaxSlots()); err != nil {
-					return err
-				}
+			if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots,
+				slotsRequest,
+				workloadConfig.Resources().MaxSlots()); err != nil {
+				return err
+			}
+			slotsRequest = workloadConfig.RawResources.RawMaxSlots
+			if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots,
+				slotsRequest,
+				workloadConfig.Resources().MaxSlots()); err != nil {
+				return err
 			}
 		}
 	}
@@ -126,10 +130,12 @@ func checkPriorityConstraint(smallerHigher bool, priorityLimit *int, priorityReq
 	return nil
 }
 
-func checkSlotsConstraint(slotsLimit int, slotsRequest int, maxSlotsRequest *int) error {
-	if slotsLimit < slotsRequest {
-		return fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
-			slotsRequest, slotsLimit, errResourceConstraintFailure)
+func checkSlotsConstraint(slotsLimit int, slotsRequest *int, maxSlotsRequest *int) error {
+	if slotsRequest != nil {
+		if slotsLimit < *slotsRequest {
+			return fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
+				slotsRequest, slotsLimit, errResourceConstraintFailure)
+		}
 	}
 
 	if maxSlotsRequest != nil {
