@@ -20,7 +20,7 @@ import (
 const (
 	// GlobalConfigConflictErr is the error reported when an invariant config has a conflict
 	// with a value already set in the global config.
-	GlobalConfigConflictErr = "conflict between global and task config policy"
+	GlobalConfigConflictErr = "conflict between global and workspace config policy"
 	// InvalidExperimentConfigPolicyErr is the error reported by an invalid experiment config policy.
 	InvalidExperimentConfigPolicyErr = "invalid experiment config policy"
 	// InvalidNTSCConfigPolicyErr is the error reported by an invalid NTSC config policy.
@@ -113,6 +113,9 @@ func ValidateNTSCConfig(
 	if err != nil || cp == nil {
 		return err // Handle error for nil cp or unmarshalling error.
 	}
+	if cp.InvariantConfig != nil {
+		return fmt.Errorf("not supported: invariant config policies for tasks is not yet supported; please remove `invariant_config` section and try again")
+	}
 	if globalConfigPolicies != nil {
 		checkAgainstGlobalConfig[model.Constraints](globalConfigPolicies.Constraints, cp.Constraints, "invalid constraints")
 		checkAgainstGlobalConfig[model.CommandConfig](
@@ -153,15 +156,21 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 	if constraints == nil {
 		return nil
 	}
-	if priority != nil && *constraints.PriorityLimit != *priority {
-		return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
+	if priority != nil && constraints.PriorityLimit != nil {
+		if *constraints.PriorityLimit != *priority {
+			return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
+		}
 	}
-	if maxSlots != nil && *constraints.ResourceConstraints.MaxSlots != *maxSlots {
-		return fmt.Errorf("invariant config & constraints are trying to set the max slots")
+	if maxSlots != nil && constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
+		if *constraints.ResourceConstraints.MaxSlots != *maxSlots {
+			return fmt.Errorf("invariant config & constraints are trying to set the max slots")
+		}
 	}
-	if slots != nil && *constraints.ResourceConstraints.MaxSlots > *slots {
-		return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot123: %v vs %v",
-			*constraints.ResourceConstraints.MaxSlots, *slots)
+	if slots != nil && constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
+		if *constraints.ResourceConstraints.MaxSlots < *slots {
+			return fmt.Errorf("invariant config & constraints are attempting to set an invalid max slot: %v vs %v",
+				*constraints.ResourceConstraints.MaxSlots, *slots)
+		}
 	}
 
 	return nil
@@ -211,7 +220,7 @@ func configPolicyConflict(config1, config2 interface{}) {
 		if field1.IsValid() && field2.IsValid() && !field1.IsZero() && !field2.IsZero() {
 			// For non-pointer fields, compare directly if both are non-zero
 			if !reflect.DeepEqual(field1.Interface(), field2.Interface()) {
-				ConfigPolicyWarning(fmt.Sprintf("%s: %v, %v", GlobalConfigConflictErr, field1.Interface(), field2.Interface()))
+				ConfigPolicyWarning(fmt.Sprintf("%s: field=%s", GlobalConfigConflictErr, v1.Type().Field(i).Name))
 				return
 			}
 		}
