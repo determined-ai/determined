@@ -420,9 +420,10 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 		require.Equal(t, column, getColumnsResp.Columns[i])
 	}
 	expectedHparam := &projectv1.ProjectColumn{
-		Column:   "hp.global_batch_size",
-		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
-		Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Column:    "hp.global_batch_size",
+		Location:  projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+		Type:      projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable: true,
 	}
 	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
 
