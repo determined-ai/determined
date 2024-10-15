@@ -162,7 +162,8 @@ message SearchUnit {
   bool max_length = 3;
 }
 
-// RunSummary describes the runs that are estimated to train for a certain length.
+// RunSummary describes the runs that are estimated to train for a certain
+// length.
 message RunSummary {
   // Number of runs.
   int32 count = 1;
@@ -170,7 +171,8 @@ message RunSummary {
   SearchUnit unit = 2;
 }
 
-// SearchSummary contains the estimated runs and training lengths that a search plans to execute.
+// SearchSummary contains the estimated runs and training lengths that a search
+// plans to execute.
 message SearchSummary {
   // The searcher config from which the summary is generated.
   google.protobuf.Struct config = 1;

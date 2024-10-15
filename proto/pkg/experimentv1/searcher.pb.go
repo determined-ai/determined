@@ -943,7 +943,8 @@ func (x *SearchUnit) GetMaxLength() bool {
 	return false
 }
 
-// RunSummary describes the runs that are estimated to train for a certain length.
+// RunSummary describes the runs that are estimated to train for a certain
+// length.
 type RunSummary struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1001,7 +1002,8 @@ func (x *RunSummary) GetUnit() *SearchUnit {
 	return nil
 }
 
-// SearchSummary contains the estimated runs and training lengths that a search plans to execute.
+// SearchSummary contains the estimated runs and training lengths that a search
+// plans to execute.
 type SearchSummary struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
