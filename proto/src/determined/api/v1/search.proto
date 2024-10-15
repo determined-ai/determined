@@ -19,9 +19,7 @@ message SearchActionResult {
 // Request to move the search to a different project.
 message MoveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "source_project_id", "destination_project_id" ]
-    }
+    json_schema: { required: [ "source_project_id", "destination_project_id" ] }
   };
 
   // The ids of the searches being moved.
