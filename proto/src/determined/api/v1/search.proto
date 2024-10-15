@@ -20,7 +20,7 @@ message SearchActionResult {
 message MoveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "source_project_id", "destination_project_id", "search_ids" ]
+      required: [ "source_project_id", "destination_project_id" ]
     }
   };
 
@@ -47,7 +47,7 @@ message MoveSearchesResponse {
 // Kill searches.
 message KillSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "search_ids", "source_project_id" ] }
+    json_schema: { required: [ "project_id" ] }
   };
   // The ids of the searches being killed.
   repeated int32 search_ids = 1;
@@ -68,7 +68,7 @@ message KillSearchesResponse {
 // Delete searches.
 message DeleteSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "search_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
   // The ids of the searches being deleted.
   repeated int32 search_ids = 1;
@@ -89,7 +89,7 @@ message DeleteSearchesResponse {
 // Request to archive the search
 message ArchiveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "search_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
   // The ids of the searches being archived.
@@ -113,7 +113,7 @@ message ArchiveSearchesResponse {
 // Request to unarchive the search
 message UnarchiveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "search_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
   // The ids of the searches being unarchived.
@@ -137,7 +137,7 @@ message UnarchiveSearchesResponse {
 // Request to pause the experiment associated witha search.
 message PauseSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "search_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
   // The ids of the searches being moved.
@@ -161,7 +161,7 @@ message PauseSearchesResponse {
 // Request to unpause the experiment associated witha search.
 message ResumeSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "search_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
   // The ids of the searches being moved.

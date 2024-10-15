@@ -1591,7 +1591,7 @@ export interface V1ArchiveSearchesRequest {
      * @type {Array<number>}
      * @memberof V1ArchiveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -2809,13 +2809,13 @@ export interface V1DeleteSearchesRequest {
      * @type {Array<number>}
      * @memberof V1DeleteSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * Project id of the searches being deleted.
      * @type {number}
      * @memberof V1DeleteSearchesRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * Filter expression
      * @type {string}
@@ -5945,13 +5945,13 @@ export interface V1KillSearchesRequest {
      * @type {Array<number>}
      * @memberof V1KillSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * Project id of the searches being killed.
      * @type {number}
      * @memberof V1KillSearchesRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * Filter expression
      * @type {string}
@@ -7136,7 +7136,7 @@ export interface V1MoveSearchesRequest {
      * @type {Array<number>}
      * @memberof V1MoveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -8070,7 +8070,7 @@ export interface V1PauseSearchesRequest {
      * @type {Array<number>}
      * @memberof V1PauseSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the project of the searches being paused.
      * @type {number}
@@ -10337,7 +10337,7 @@ export interface V1ResumeSearchesRequest {
      * @type {Array<number>}
      * @memberof V1ResumeSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the project of the searches being unpaused.
      * @type {number}
@@ -12508,7 +12508,7 @@ export interface V1UnarchiveSearchesRequest {
      * @type {Array<number>}
      * @memberof V1UnarchiveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
