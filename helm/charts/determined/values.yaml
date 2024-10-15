@@ -374,6 +374,35 @@ telemetry:
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default
+## To set up multiple resource pools for Determined on your Kubernetes cluster
+## with custom pod spec or node selectors:
+# resourcePools:
+#   - pool_name: prod_pool
+#     kubernetes_namespace: default
+#     task_container_defaults:
+#       gpu_pod_spec:
+#         apiVersion: v1
+#         kind: Pod
+#         spec:
+#           tolerations:
+#             - key: "pool_taint"
+#               operator: "Equal"
+#               value: "prod"
+#               effect: "NoSchedule"
+#             affinity:
+#             # Define an example node selector label.
+#                nodeSelectorTerms:
+#                   kubernetes.io/hostname: "foo"
+#             # Define an example node affinity.
+#                nodeAffinity:
+#                requiredDuringSchedulingIgnoredDuringExecution:
+#                   nodeSelectorTerms:
+#                      - matchExpressions:
+#                      - key: topology.kubernetes.io/zone
+#                         operator: In
+#                         values:
+#                         - antarctica-west1
+#                         - antarctica-east1
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
