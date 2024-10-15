@@ -92,36 +92,34 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 							); err != nil {
 								return fmt.Errorf("adding retry on different node: %w", err)
 							}
+						case string:
+							signal := a.Signal
+							if signal != nil {
+								err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+									if _, err := tx.NewUpdate().Model(&model.Task{}).
+										Set("log_signal = ?", signal).
+										Where("task_id = ?", log.TaskID).
+										Exec(ctx); err != nil {
+										return fmt.Errorf("updating log signal of task %s: %w", log.TaskID, err)
+									}
+									if _, err := tx.NewUpdate().Model(&model.Run{}).
+										Table("run_id_task_id").
+										Set("log_signal = ?", signal).
+										Where("run.id = run_id_task_id.run_id").
+										Where("run_id_task_id.task_id = ?", log.TaskID).
+										Exec(ctx); err != nil {
+										return fmt.Errorf("updating log signal of task %s: %w", log.TaskID, err)
+									}
 
+									return nil
+								})
+								if err != nil {
+									return fmt.Errorf("updating log signal: %w", err)
+								}
+							}
 						default:
 							return fmt.Errorf("unrecognized log pattern policy type")
 						}
-					}
-				}
-
-				if policy.Signal() != nil {
-					signal := policy.Signal()
-
-					err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-						if _, err := tx.NewUpdate().Model(&model.Task{}).
-							Set("log_signal = ?", signal).
-							Where("task_id = ?", log.TaskID).
-							Exec(ctx); err != nil {
-							return fmt.Errorf("updating log signal of task %s: %w", log.TaskID, err)
-						}
-						if _, err := tx.NewUpdate().Model(&model.Run{}).
-							Table("run_id_task_id").
-							Set("log_signal = ?", signal).
-							Where("run.id = run_id_task_id.run_id").
-							Where("run_id_task_id.task_id = ?", log.TaskID).
-							Exec(ctx); err != nil {
-							return fmt.Errorf("updating log signal of task %s: %w", log.TaskID, err)
-						}
-
-						return nil
-					})
-					if err != nil {
-						return fmt.Errorf("updating log signal: %w", err)
 					}
 				}
 			}

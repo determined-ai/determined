@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/santhosh-tekuri/jsonschema/v2"
+	tassert "github.com/stretchr/testify/assert"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -21,17 +22,20 @@ import (
 type JSON = interface{}
 
 type SchemaTestCase struct {
-	Name               string               `json:"name"`
-	SaneAs             *[]string            `json:"sane_as"`
-	CompleteAs         *[]string            `json:"complete_as"`
-	SanityErrors       *map[string][]string `json:"sanity_errors"`
-	CompletenessErrors *map[string][]string `json:"completeness_errors"`
-	DefaultAs          *string              `json:"default_as"`
-	Defaulted          *JSON                `json:"defaulted"`
-	Case               JSON                 `json:"case"`
-	MergeAs            *string              `json:"merge_as"`
-	MergeSrc           *JSON                `json:"merge_src"`
-	Merged             *JSON                `json:"merged"`
+	Name                  string               `json:"name"`
+	SaneAs                *[]string            `json:"sane_as"`
+	CompleteAs            *[]string            `json:"complete_as"`
+	SanityErrors          *map[string][]string `json:"sanity_errors"`
+	CompletenessErrors    *map[string][]string `json:"completeness_errors"`
+	DefaultAs             *string              `json:"default_as"`
+	Defaulted             *JSON                `json:"defaulted"`
+	Case                  JSON                 `json:"case"`
+	MergeAs               *string              `json:"merge_as"`
+	MergeSrc              *JSON                `json:"merge_src"`
+	Merged                *JSON                `json:"merged"`
+	BackwardCompatibility *string              `json:"backward_compatiblity"`
+	Legacy                *JSON                `json:"legacy"`
+	New                   *JSON                `json:"new"`
 }
 
 func errorIn(expect string, errors []error) bool {
@@ -288,7 +292,6 @@ func (tc SchemaTestCase) CheckMerged(t *testing.T) {
 		assert.NilError(t, err)
 
 		merged := schemas.Merge(obj, src)
-
 		// Compare json-to-json.
 		mergedBytes, err := json.Marshal(merged)
 		assert.NilError(t, err)
@@ -337,6 +340,60 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	assert.DeepEqual(t, obj, cpy)
 }
 
+func (tc SchemaTestCase) CheckBackwardCompatiblity(t *testing.T) {
+	if tc.BackwardCompatibility == nil && tc.Legacy == nil && tc.New == nil {
+		return
+	}
+
+	if tc.BackwardCompatibility == nil || tc.Legacy == nil || tc.New == nil {
+		assert.NilError(t, errors.New(
+			"if any of backward_compatibility, legacy, or new are set in a test case, "+
+				"they must all be set",
+		))
+	}
+
+	if *tc.BackwardCompatibility != "http://determined.ai/schemas/expconf/v0/log-policies.json" {
+		assert.NilError(t, errors.New("only log-policies.json is supported for now"))
+	}
+
+	legacyBytes, err := json.Marshal(tc.Legacy)
+	assert.NilError(t, err)
+	newBytes, err := json.Marshal(tc.New)
+	assert.NilError(t, err)
+
+	// Get an empty objects to unmarshal into.
+	legacy := LogPoliciesConfig{}
+	new := LogPoliciesConfig{}
+
+	err = json.Unmarshal(legacyBytes, &legacy)
+	assert.NilError(t, err)
+	err = json.Unmarshal(newBytes, &new)
+	assert.NilError(t, err)
+
+	legacyPatterns := make([]string, 0)
+	newPatternToActions := make(map[string][]LogAction)
+	newPatterns := make([]string, 0)
+	for _, lp := range new {
+		newPatternToActions[lp.Pattern()] = lp.Actions()
+		newPatterns = append(newPatterns, lp.Pattern())
+	}
+	for _, lp := range legacy {
+		legacyPatterns = append(legacyPatterns, lp.Pattern())
+	}
+
+	assert := tassert.New(t)
+	assert.ElementsMatch(legacyPatterns, newPatterns, "", "legacy input was't translated to the expected output")
+
+	for _, lp := range legacy {
+		pattern := lp.Pattern()
+
+		legacyActions := lp.Actions()
+		newActions := newPatternToActions[pattern]
+
+		assert.ElementsMatch(legacyActions, newActions, "legacy input was't translated to the expected output")
+	}
+}
+
 func RunCasesFile(t *testing.T, path string, displayPath string) {
 	// Ignore the security error about including files as variables; this is just a test.
 	byts, err := os.ReadFile(path) //nolint: gosec
@@ -359,6 +416,7 @@ func RunCasesFile(t *testing.T, path string, displayPath string) {
 			tc.CheckDefaulted(t)
 			tc.CheckRoundTrip(t)
 			tc.CheckMerged(t)
+			tc.CheckBackwardCompatiblity(t)
 		})
 	}
 }
