@@ -257,8 +257,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, exists boo
 			if err != nil {
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
-			if configs.Resources().Priority() != nil {
-				adminPriority := *configs.Resources().Priority()
+			if configs.RawResources != nil && configs.RawResources.RawPriority != nil {
+				adminPriority := *configs.RawResources.RawPriority
 				return adminPriority, false,
 					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
