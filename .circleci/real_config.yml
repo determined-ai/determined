@@ -1519,6 +1519,7 @@ commands:
             # not persisting to workspace because we still want first run of test to run w/ old branch build
             # Stop devcluster running on the past release.
             - stop-devcluster
+            - license-gen
             - install-devcluster
             - unless:
                 condition: <<parameters.managed-devcluster>>
@@ -1743,7 +1744,7 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - reinstall-go
-      - license-gen
+      
       - attach_workspace:
           at: .
       - setup_remote_docker:
