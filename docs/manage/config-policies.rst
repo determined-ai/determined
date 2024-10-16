@@ -101,7 +101,7 @@ Use the following commands to manage Task Config Policies via CLI:
 
 Below are some examples of Config Policies to help guide administrators:
 
-**Limit resources**
+**Limit Resources**
 
 This example demonstrates limiting resources for an Agent resource manager (RM). It sets the
 ``priority_limit`` to ``15`` and ``max_slots`` to ``1``. This means a user cannot set a priority
@@ -128,9 +128,7 @@ the system will display a descriptive error message.
 
 **Limit Maximum GPU Usage per Experiment**
 
-You can limit GPU usage per experiment by configuring the following policy:
-
--  Experiments
+The following configuration policy example limits GPU usage per experiment. This is configured in the Config Policies > Experiments tab.
 
 .. code:: yaml
 
@@ -141,6 +139,8 @@ You can limit GPU usage per experiment by configuring the following policy:
 
 **Set Different Priority Limits for Experiments and NTSC Tasks**
 
+The following configuration policy example constrains the priority limit per experiment. This is configured in the Config Policies > Experiments tab.
+
 -  Experiments
 
 .. code:: yaml
@@ -148,6 +148,8 @@ You can limit GPU usage per experiment by configuring the following policy:
    constraints:
      resources:
        priority_limit: <experiment limit>
+
+The following configuration policy example constrains the priority limit per task. This is configured in the Config Policies > Tasks tab.
 
 -  Tasks
 
@@ -157,10 +159,9 @@ You can limit GPU usage per experiment by configuring the following policy:
      resources:
        priority_limit: <task limit>
 
-**Set Default Priority for All Tasks**
+**Set Default Priority for All Experiments**
 
-To set a default priority for all tasks, include the following code in both the Experiments and
-Tasks tabs:
+The following configuration policy example sets a default priority for all experiments:
 
 .. code:: yaml
 
@@ -228,6 +229,8 @@ with user-submitted configurations.
 
 **Example Invariant Config**
 
+- Experiments
+
 .. code:: yaml
 
    invariant_config:
@@ -249,6 +252,8 @@ user's settings.
 **Complete Example**
 
 Here is a complete example that combines invariant configs and constraints for a research workspace:
+
+- Experiments
 
 .. code:: yaml
 
