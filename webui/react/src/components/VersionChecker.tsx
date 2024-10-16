@@ -17,7 +17,8 @@ const VersionChecker: React.FC = () => {
     themeSettings: { className: themeClass },
   } = useTheme();
 
-  useEffect(() => { // need useEffect to avoid showing notification on each route change
+  // need useEffect to avoid showing notification on each route change:
+  useEffect(() => {
     /*
      * Check to make sure the WebUI version matches the platform version.
      * Skip this check for development version.
@@ -51,7 +52,7 @@ const VersionChecker: React.FC = () => {
             placement: 'bottomRight',
           });
         }, 0); // need 0ms setTimeout to avoid UIProvider error
-      };
+      }
     });
   }, [loadableInfo, themeClass]);
 
