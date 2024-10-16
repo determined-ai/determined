@@ -1004,12 +1004,12 @@ Optional. The maximum number of trials that can be worked on simultaneously. The
 
 Optional. If specified, the weights of *every* trial in the search will be initialized to the most
 recent checkpoint of the given trial ID. This will fail if the source trial's model architecture is
-incompatible with the model architecture of any of the trials in this experiment.
+inconsistent with the model architecture of any of the trials in this experiment.
 
 ``source_checkpoint_uuid``
 --------------------------
 
-Optional. Like ``source_trial_id`` but specifies an arbitrary checkpoint from which to initialize
+Optional. Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize
 weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
 
 Grid
@@ -1654,3 +1654,13 @@ If :ref:`gres_supported <cluster-configuration-slurm>` is set to ``false``, spec
 to ensure that ``slots_per_node`` GPUs will be available on the nodes selected for the job using
 other configurations such as targeting a specific resource pool with only ``slots_per_node`` GPU
 nodes or specifying a PBS constraint in the experiment configuration.
+
+******************
+ Metadata Logging
+******************
+
+Determined supports logging arbitrary metadata for experiments. This feature allows users to store
+additional context and information about their runs. To log metadata, use the following function in
+your code:
+
+TO DO: ADD EXAMPLE USAGE

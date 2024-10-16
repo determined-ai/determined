@@ -241,3 +241,26 @@ Clear the message with the following command:
    .. code:: bash
 
       det master cluster-message clear
+
+********************************
+ Viewing and Filtering Metadata
+********************************
+
+You can use the WebUI to view and filter experiments based on logged metadata. For a tutorial on how
+to log metadata, visit :ref:`metadata-logging-tutorial`.
+
+-  In the Overview tab of the experiment, you can filter and sort runs based on metadata values
+   using the filter menu.
+-  In the Runs (Table) view, metadata columns are displayed alongside other experiment information.
+-  On the Run details page, you'll find the "Metadata" section under the "Overview" tab, displaying
+   all logged metadata for that run.
+-  To download the metadata in JSON format, click the "Download" button.
+
+To filter runs based on metadata:
+
+#. In the Runs view, click on the filter icon.
+#. Select a metadata field from the dropdown menu.
+#. Choose a condition (is, is not, or contains) and enter a value.
+#. Click "Apply" to filter the runs based on the metadata.
+
+Note: Array-type metadata can be viewed but cannot be used for sorting or filtering.
