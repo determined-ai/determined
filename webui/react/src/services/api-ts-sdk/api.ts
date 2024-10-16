@@ -1549,11 +1549,11 @@ export interface V1ArchiveProjectResponse {
  */
 export interface V1ArchiveRunsRequest {
     /**
-     * The ids of the runs being archived.
+     * The ids of the runs being archived. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1ArchiveRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -1587,11 +1587,11 @@ export interface V1ArchiveRunsResponse {
  */
 export interface V1ArchiveSearchesRequest {
     /**
-     * The ids of the searches being archived.
+     * The ids of the searches being archived. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1ArchiveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -2767,17 +2767,17 @@ export interface V1DeleteProjectResponse {
  */
 export interface V1DeleteRunsRequest {
     /**
-     * The ids of the runs being deleted.
+     * The ids of the runs being deleted. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1DeleteRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * Project id of the runs being deleted.
      * @type {number}
      * @memberof V1DeleteRunsRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * Filter expression
      * @type {string}
@@ -2805,17 +2805,17 @@ export interface V1DeleteRunsResponse {
  */
 export interface V1DeleteSearchesRequest {
     /**
-     * The ids of the searches being deleted.
+     * The ids of the searches being deleted. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1DeleteSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * Project id of the searches being deleted.
      * @type {number}
      * @memberof V1DeleteSearchesRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * Filter expression
      * @type {string}
@@ -5903,11 +5903,11 @@ export interface V1KillNotebookResponse {
  */
 export interface V1KillRunsRequest {
     /**
-     * The ids of the runs being killed.
+     * The ids of the runs being killed. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1KillRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * Project id of the runs being killed.
      * @type {number}
@@ -5941,17 +5941,17 @@ export interface V1KillRunsResponse {
  */
 export interface V1KillSearchesRequest {
     /**
-     * The ids of the searches being killed.
+     * The ids of the searches being killed. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1KillSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * Project id of the searches being killed.
      * @type {number}
      * @memberof V1KillSearchesRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * Filter expression
      * @type {string}
@@ -7082,11 +7082,11 @@ export interface V1MoveProjectResponse {
  */
 export interface V1MoveRunsRequest {
     /**
-     * The ids of the runs being moved.
+     * The ids of the runs being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1MoveRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -7132,11 +7132,11 @@ export interface V1MoveRunsResponse {
  */
 export interface V1MoveSearchesRequest {
     /**
-     * The ids of the searches being moved.
+     * The ids of the searches being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1MoveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -8028,11 +8028,11 @@ export interface V1PauseGenericTaskResponse {
  */
 export interface V1PauseRunsRequest {
     /**
-     * The ids of the runs being moved.
+     * The ids of the runs being paused. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1PauseRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the project of the runs being paused.
      * @type {number}
@@ -8066,11 +8066,11 @@ export interface V1PauseRunsResponse {
  */
 export interface V1PauseSearchesRequest {
     /**
-     * The ids of the searches being moved.
+     * The ids of the searches being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1PauseSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the project of the searches being paused.
      * @type {number}
@@ -10295,11 +10295,11 @@ export interface V1ResourcesSummary {
  */
 export interface V1ResumeRunsRequest {
     /**
-     * The ids of the runs being moved.
+     * The ids of the runs being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1ResumeRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the project of the runs being unpaused.
      * @type {number}
@@ -10333,11 +10333,11 @@ export interface V1ResumeRunsResponse {
  */
 export interface V1ResumeSearchesRequest {
     /**
-     * The ids of the searches being moved.
+     * The ids of the searches being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1ResumeSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the project of the searches being unpaused.
      * @type {number}
@@ -12466,11 +12466,11 @@ export interface V1UnarchiveProjectResponse {
  */
 export interface V1UnarchiveRunsRequest {
     /**
-     * The ids of the runs being unarchived.
+     * The ids of the runs being unarchived. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1UnarchiveRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -12504,11 +12504,11 @@ export interface V1UnarchiveRunsResponse {
  */
 export interface V1UnarchiveSearchesRequest {
     /**
-     * The ids of the searches being unarchived.
+     * The ids of the searches being unarchived. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1UnarchiveSearchesRequest
      */
-    searchIds: Array<number>;
+    searchIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
