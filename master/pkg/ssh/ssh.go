@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	rsaPEMBlockType     = "RSA PRIVATE KEY"
-	ecdsaPEMBlockType   = "ECDSA PRIVATE KEY"
-	ed25519PEMBlockType = "ED25519 PRIVATE KEY"
+	rsaPEMBlockType   = "RSA PRIVATE KEY"
+	ecdsaPEMBlockType = "EC PRIVATE KEY"
 )
 
 // PrivateAndPublicKeys contains a private and public key.
@@ -80,12 +79,12 @@ func generateECDSAKey(passphrase *string) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ECDS private key")
+		return generatedKeys, errors.Wrap(err, "unable to generate ECDSA private key")
 	}
 
 	privateKeyBytes, err := x509.MarshalECPrivateKey(privateKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to marshal ECDS private key")
+		return generatedKeys, errors.Wrap(err, "unable to marshal ECDSA private key")
 	}
 
 	block := &pem.Block{
@@ -95,12 +94,12 @@ func generateECDSAKey(passphrase *string) (PrivateAndPublicKeys, error) {
 
 	block, err = encodePassphrase(block, passphrase)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to encrypt ECDS private key")
+		return generatedKeys, errors.Wrap(err, "unable to encrypt ECDSA private key")
 	}
 
 	publicKey, err := sshlib.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ECDS public key")
+		return generatedKeys, errors.Wrap(err, "unable to generate ECDSA public key")
 	}
 
 	generatedKeys = PrivateAndPublicKeys{
@@ -114,28 +113,28 @@ func generateECDSAKey(passphrase *string) (PrivateAndPublicKeys, error) {
 func generateED25519Key(passphrase *string) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
 
-	ed25519PublicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	ed25519PublicKey, privateKey, err := ed25519.GenerateKey(nil)
 	if err != nil {
 		return generatedKeys, errors.Wrap(err, "unable to generate ED25519 private key")
 	}
-	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to marshal ED25519 private key")
-	}
 
-	block := &pem.Block{
-		Type:  ed25519PEMBlockType,
-		Bytes: privateKeyBytes,
-	}
-
-	block, err = encodePassphrase(block, passphrase)
-	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to encrypt ED25519 private key")
+	// Before OpenSSH 9.6, for ED25519 keys, only the OpenSSH private key format was supported.
+	var block *pem.Block
+	if passphrase != nil {
+		block, err = sshlib.MarshalPrivateKeyWithPassphrase(privateKey, "", []byte(*passphrase))
+		if err != nil {
+			return generatedKeys, errors.Wrap(err, "unable to marshal ED25519 private key")
+		}
+	} else {
+		block, err = sshlib.MarshalPrivateKey(privateKey, "")
+		if err != nil {
+			return generatedKeys, errors.Wrap(err, "unable to marshal ED25519 private key")
+		}
 	}
 
 	publicKey, err := sshlib.NewPublicKey(ed25519PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ECDS public key")
+		return generatedKeys, errors.Wrap(err, "unable to generate ED25519 public key")
 	}
 
 	generatedKeys = PrivateAndPublicKeys{
