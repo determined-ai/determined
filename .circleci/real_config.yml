@@ -1494,46 +1494,7 @@ commands:
     steps:
       - run: 
           command: pkill -SIGHUP -f "devcluster" && rm -rf /tmp/devcluster/lock
-  
-  upgrade-and-restart-devcluster:
-    parameters:
-      upgrade:
-        type: boolean
-        default: false
-      devcluster-config:
-        type: string
-        default: double.devcluster.yaml
-      target-stage:
-        type: string
-        default: agent1
-      managed-devcluster:
-        type: boolean
-        default: false
-    steps:
-      - when:
-          condition: <<parameters.upgrade>>
-          steps:
-            - checkout
-            - add-and-fetch-upstream
-            - attach_workspace:
-                at: .
-            - reinstall-go
-            - license-gen
-
-            - run: git fetch origin main && git checkout main # TODO CAROLINA -- make this idempotent on runs
-            - run: make -C master build
-            - run: make -C agent build
-            # not persisting to workspace because we still want first run of test to run w/ old branch build
-            # Stop devcluster running on the past release.
-            - stop-devcluster
-            - install-devcluster
-            - unless:
-                condition: <<parameters.managed-devcluster>>
-                steps:
-                  - start-devcluster:
-                      devcluster-config: <<parameters.devcluster-config>>
-                      target-stage: <<parameters.target-stage>>
-          
+         
   make-component:
     description: "Basic parameterized version of make for building Determined components."
     parameters:
@@ -1560,6 +1521,37 @@ commands:
             fi
 
 jobs:
+  start-devcluster-upgrade-and-stop:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - attach_workspace:
+          at: .
+
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.machine-image>>
+
+      - install-devcluster
+
+      - run: git fetch origin main && git checkout main # TODO CAROLINA -- make this idempotent on runs
+      - run: make -C master build
+      - run: make -C agent build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "master/build"
+            - "agent/build" # TODO CAROLINA -- do I need to clear this??
+      # not persisting to workspace because we still want first run of test to run w/ old branch build
+      # Stop devcluster running on the past release.
+      - stop-devcluster
+   
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -3220,9 +3212,6 @@ jobs:
       k8s-version:
         type: string
         default: "1.29.5"
-      upgrade: 
-        type: boolean
-        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3270,12 +3259,6 @@ jobs:
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
-
-      - upgrade-and-restart-devcluster:
-          upgrade: <<parameters.upgrade>>
-          devcluster-config: <<parameters.devcluster-config>>
-          target-stage: <<parameters.target-stage>>
-          managed-devcluster: <<parameters.managed-devcluster>>
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
@@ -4867,6 +4850,8 @@ workflows:
           name: build-go-ee
           context: github-read
       # TODO CAROLINA MAKE THIS RUN WEEKLY
+      - start-devcluster-upgrade-and-stop:
+          name: start-upgrade-system
 
       - test-e2e:
           name: test-e2e-rbac
@@ -4877,7 +4862,6 @@ workflows:
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4889,7 +4873,6 @@ workflows:
           resource-class: xlarge
           tf2: true
           mark: e2e_cpu
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4903,7 +4886,6 @@ workflows:
           mark: e2e_cpu_2a
           target-stage: agent2
           devcluster-config: double-priority.devcluster.yaml
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4915,7 +4897,6 @@ workflows:
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
           target-stage: agent1
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4927,7 +4908,6 @@ workflows:
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
           target-stage: agent1
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4944,7 +4924,6 @@ workflows:
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4959,7 +4938,6 @@ workflows:
           managed-devcluster: true
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4974,7 +4952,6 @@ workflows:
           devcluster-config: multi-k8s.devcluster.yaml
           run-minikubes: true
           multi-k8s: true
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4987,7 +4964,6 @@ workflows:
           target-stage: master
           devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4999,7 +4975,6 @@ workflows:
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -5012,7 +4987,6 @@ workflows:
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -5025,7 +4999,6 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "10"
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -5038,7 +5011,6 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "14"
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -5050,7 +5022,6 @@ workflows:
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
           target-stage: agent
-          upgrade: true
           matrix:
             parameters:
               agent-version: ["0.17.10"]
@@ -5066,7 +5037,6 @@ workflows:
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-          upgrade: true
 
       - test-e2e:
           name: test-e2e-saml
@@ -5078,7 +5048,6 @@ workflows:
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
-          upgrade: true
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
