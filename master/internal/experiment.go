@@ -488,7 +488,7 @@ func (e *internalExperiment) stop() error {
 			"failure to delete snapshots for experiment: %d", e.Experiment.ID)
 	}
 
-	// May be no checkpoints to gc, if so skip
+	// May be no checkpoints to GC, if so skip. We can do this since we don't want to GC tensorboards.
 	if len(checkpoints) > 0 {
 		go func() {
 			if err := runCheckpointGCForCheckpoints(
