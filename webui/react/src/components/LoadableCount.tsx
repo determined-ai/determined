@@ -12,6 +12,7 @@ interface Props {
   labelSingular: string;
   labelPlural: string;
   onActualSelectAll?: () => void;
+  onClearSelect?: () => void;
   pageSize?: number;
   selectedCount: number;
 }
@@ -21,6 +22,7 @@ const LoadableCount: React.FC<Props> = ({
   labelPlural,
   labelSingular,
   onActualSelectAll,
+  onClearSelect,
   pageSize = 20,
   selectedCount,
 }: Props) => {
@@ -48,7 +50,7 @@ const LoadableCount: React.FC<Props> = ({
 
   const actualSelectAll = useMemo(() => {
     return Loadable.match(total, {
-      Failed: () => null,
+      _: () => null,
       Loaded: (loadedTotal) => {
         if (onActualSelectAll && selectedCount >= pageSize && selectedCount < loadedTotal) {
           return (
@@ -56,13 +58,18 @@ const LoadableCount: React.FC<Props> = ({
               Select all {labelPlural} in table
             </Button>
           );
+        } else if (onClearSelect && selectedCount >= pageSize) {
+          return (
+            <Button type="text" onClick={onClearSelect}>
+              Clear Selection
+            </Button>
+          );
         }
 
         return null;
       },
-      NotLoaded: () => null,
     });
-  }, [labelPlural, onActualSelectAll, pageSize, selectedCount, total]);
+  }, [labelPlural, onActualSelectAll, onClearSelect, pageSize, selectedCount, total]);
 
   if (!isMobile) {
     return (

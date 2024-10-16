@@ -249,8 +249,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   }, [arrayTypeColumns]);
 
   const selectedRunIdSet = useMemo(() => {
-    return new Set(settings.selection.type === 'ONLY_IN' ? settings.selection.selections : []);
-  }, [settings.selection]);
+    if (settings.selection.type === 'ONLY_IN') {
+      return new Set(settings.selection.selections);
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      const excludedSet = new Set(settings.selection.exclusions);
+      return new Set(
+        Loadable.filterNotLoaded(runs, (run) => !excludedSet.has(run.id)).map((run) => run.id),
+      );
+    }
+    return new Set<number>(); // should never be reached
+  }, [runs, settings.selection]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -265,7 +273,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const loadedSelectedRunIds = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
-    const selectedArray: FlatRun[] = [];
+
     if (isLoadingSettings) {
       return selectedMap;
     }
@@ -274,7 +282,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       Loadable.forEach(r, (run) => {
         if (selectedRunIdSet.has(run.id)) {
           selectedMap.set(run.id, { index, run });
-          selectedArray.push(run);
         }
       });
     });
@@ -293,10 +300,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   }, [loadedSelectedRunIds]);
 
   const selectedRuns: FlatRun[] = useMemo(() => {
-    const selected = runs.flatMap((run) => {
-      return run.isLoaded && selectedRunIdSet.has(run.data.id) ? [run.data] : [];
-    });
-    return selected;
+    return Loadable.filterNotLoaded(runs, (run) => selectedRunIdSet.has(run.id));
   }, [runs, selectedRunIdSet]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
@@ -732,7 +736,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         case 'add-all':
           newSettings = {
             exclusions: [],
-            type: 'ALL_EXCEPT' as const,
+            type: 'ALL_EXCEPT',
           };
 
           break;
@@ -870,6 +874,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     [updateSettings],
   );
 
+  const handleActualSelectAll = useCallback(() => {
+    handleSelectionChange?.('add-all');
+  }, [handleSelectionChange]);
+
+  const handleClearSelect = useCallback(() => {
+    handleSelectionChange?.('remove-all');
+  }, [handleSelectionChange]);
+
   const getHeaderMenuItems = useCallback(
     (columnId: string, colIdx: number): MenuItem[] => {
       if (columnId === MULTISELECT) {
@@ -883,19 +895,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 },
               }
             : null,
-          ...[5, 10, 25].map((n) => ({
-            key: `select-${n}`,
-            label: `Select first ${n}`,
-            onClick: () => {
-              handleSelectionChange?.('set', [0, n]);
-              dataGridRef.current?.scrollToTop();
-            },
-          })),
           {
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              handleSelectionChange?.('add', [0, settings.pageLimit]);
+              handleSelectionChange?.('add-all');
             },
           },
         ];
@@ -1052,7 +1056,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       projectColumns,
       settings.pinnedColumnsCount,
       settings.selection,
-      settings.pageLimit,
       settings.heatmapOn,
       settings.heatmapSkipped,
       isMobile,
@@ -1130,6 +1133,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               pageSize={settings.pageLimit}
               selectedCount={selectedRunIdSet.size}
               total={total}
+              onActualSelectAll={handleActualSelectAll}
+              onClearSelect={handleClearSelect}
             />
           </Row>
         </Column>

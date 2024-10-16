@@ -94,6 +94,7 @@ interface Props {
   onActionComplete?: () => Promise<void>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActualSelectAll?: () => void;
+  onClearSelect?: () => void;
   onComparisonViewToggle?: () => void;
   onHeatmapToggle?: (heatmapOn: boolean) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
@@ -127,6 +128,7 @@ const TableActionBar: React.FC<Props> = ({
   onActionComplete,
   onActionSuccess,
   onActualSelectAll,
+  onClearSelect,
   onComparisonViewToggle,
   onHeatmapToggle,
   onIsOpenFilterChange,
@@ -431,6 +433,7 @@ const TableActionBar: React.FC<Props> = ({
               selectedCount={selectedExperimentIds.length}
               total={total}
               onActualSelectAll={onActualSelectAll}
+              onClearSelect={onClearSelect}
             />
           </Row>
         </Column>
