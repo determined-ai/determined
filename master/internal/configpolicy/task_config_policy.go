@@ -65,7 +65,7 @@ func CheckNTSCConstraints(
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err == nil {
-		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
+		if err = checkPriorityConstraint(smallerHigher, constraints.ResourceConstraints.PriorityLimit,
 			workloadConfig.Resources.Priority); err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func CheckExperimentConstraints(
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err == nil {
-		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
+		if err = checkPriorityConstraint(smallerHigher, constraints.ResourceConstraints.PriorityLimit,
 			workloadConfig.Resources().Priority()); err != nil {
 			return err
 		}
@@ -273,8 +273,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, exists boo
 		if err = json.Unmarshal([]byte(*configPolicies.Constraints), &constraints); err != nil {
 			return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 		}
-		if constraints.PriorityLimit != nil {
-			return *constraints.PriorityLimit, true, nil
+		if constraints.ResourceConstraints.PriorityLimit != nil {
+			return *constraints.ResourceConstraints.PriorityLimit, true, nil
 		}
 	}
 

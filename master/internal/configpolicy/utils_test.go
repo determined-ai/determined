@@ -35,7 +35,7 @@ const yamlConstraints = `
 constraints:
   resources:
     max_slots: 4
-  priority_limit: 10
+  	priority_limit: 10
 `
 
 const yamlExperiment = `
@@ -71,9 +71,9 @@ var structExperiment = ExperimentConfigPolicies{
 	},
 	Constraints: &model.Constraints{
 		ResourceConstraints: &model.ResourceConstraints{
-			MaxSlots: &maxSlots,
+			MaxSlots:      &maxSlots,
+			PriorityLimit: &priorityLimit,
 		},
-		PriorityLimit: &priorityLimit,
 	},
 }
 
@@ -135,9 +135,9 @@ var structNTSC = NTSCConfigPolicies{
 	},
 	Constraints: &model.Constraints{
 		ResourceConstraints: &model.ResourceConstraints{
-			MaxSlots: &maxSlots,
+			MaxSlots:      &maxSlots,
+			PriorityLimit: &priorityLimit,
 		},
-		PriorityLimit: &priorityLimit,
 	},
 }
 
@@ -178,8 +178,8 @@ const jsonConstraints = `
     "constraints": {
         "resources": {
             "max_slots": 4
-        },
-        "priority_limit": 10
+			"priority_limit": 10
+		},
     }
 `
 
@@ -314,9 +314,9 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 func TestCheckConstraintsConflicts(t *testing.T) {
 	constraints := &model.Constraints{
 		ResourceConstraints: &model.ResourceConstraints{
-			MaxSlots: ptrs.Ptr(10),
+			MaxSlots:      ptrs.Ptr(10),
+			PriorityLimit: ptrs.Ptr(50),
 		},
-		PriorityLimit: ptrs.Ptr(50),
 	}
 	t.Run("max_slots differs to high", func(t *testing.T) {
 		err := checkConstraintConflicts(constraints, ptrs.Ptr(11), ptrs.Ptr(5), nil)

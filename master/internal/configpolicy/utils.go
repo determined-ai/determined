@@ -88,8 +88,8 @@ func ValidateExperimentConfig(
 		)
 	}
 
-	if cp.Constraints != nil {
-		checkAgainstGlobalPriority(priorityEnabledErr, cp.Constraints.PriorityLimit)
+	if cp.Constraints != nil && cp.Constraints.ResourceConstraints != nil {
+		checkAgainstGlobalPriority(priorityEnabledErr, cp.Constraints.ResourceConstraints.PriorityLimit)
 	}
 
 	if cp.InvariantConfig != nil {
@@ -127,8 +127,8 @@ func ValidateNTSCConfig(
 		)
 	}
 
-	if cp.Constraints != nil {
-		checkAgainstGlobalPriority(priorityEnabledErr, cp.Constraints.PriorityLimit)
+	if cp.Constraints != nil && cp.Constraints.ResourceConstraints != nil {
+		checkAgainstGlobalPriority(priorityEnabledErr, cp.Constraints.ResourceConstraints.PriorityLimit)
 	}
 
 	if cp.InvariantConfig != nil {
@@ -160,9 +160,11 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 	if constraints == nil {
 		return nil
 	}
-	if priority != nil && constraints.PriorityLimit != nil {
-		if *constraints.PriorityLimit != *priority {
-			return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
+	if priority != nil {
+		if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.PriorityLimit != nil {
+			if *constraints.ResourceConstraints.PriorityLimit != *priority {
+				return fmt.Errorf("invariant config & constraints are trying to set the priority limit")
+			}
 		}
 	}
 	if maxSlots != nil && constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {

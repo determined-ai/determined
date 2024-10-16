@@ -32,7 +32,8 @@ type TaskConfigPolicies struct {
 // Submitted workloads that request resource quanities exceeding defined resource constraints in a
 // given scope are rejected.
 type ResourceConstraints struct {
-	MaxSlots *int `json:"max_slots"`
+	MaxSlots      *int `json:"max_slots"`
+	PriorityLimit *int `json:"priority_limit"`
 }
 
 // Constraints are non-overridable workload constraints.
@@ -40,5 +41,4 @@ type ResourceConstraints struct {
 // scope are rejected.
 type Constraints struct {
 	ResourceConstraints *ResourceConstraints `json:"resources"`
-	PriorityLimit       *int                 `json:"priority_limit"`
 }

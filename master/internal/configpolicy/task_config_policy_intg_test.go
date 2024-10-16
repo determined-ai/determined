@@ -336,7 +336,7 @@ func TestGetMergedConstraints(t *testing.T) {
 	// When no constraints present, all values are nil.
 	constraints, err := GetMergedConstraints(context.Background(), 0, model.NTSCType)
 	require.NoError(t, err)
-	require.Nil(t, constraints.PriorityLimit)
+	require.Nil(t, constraints.ResourceConstraints.PriorityLimit)
 	require.Nil(t, constraints.ResourceConstraints)
 
 	// Workspace priority limit set.
@@ -346,7 +346,7 @@ func TestGetMergedConstraints(t *testing.T) {
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Nil(t, constraints.ResourceConstraints)
-	require.Equal(t, wkspLimit, *constraints.PriorityLimit)
+	require.Equal(t, wkspLimit, *constraints.ResourceConstraints.PriorityLimit)
 
 	// Global limit overrides workspace limit.
 	globalLimit := 25
@@ -354,14 +354,14 @@ func TestGetMergedConstraints(t *testing.T) {
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.Nil(t, constraints.ResourceConstraints)
-	require.Equal(t, globalLimit, *constraints.PriorityLimit)
+	require.Equal(t, globalLimit, *constraints.ResourceConstraints.PriorityLimit)
 
 	// Workspace max slots set.
 	addConstraints(t, user, &w.ID, *DefaultConstraints(), model.NTSCType)
 	constraints, err = GetMergedConstraints(context.Background(), w.ID, model.NTSCType)
 	require.NoError(t, err)
-	require.Equal(t, 8, *constraints.ResourceConstraints.MaxSlots) // defined in DefaultConstraintsStr
-	require.Equal(t, globalLimit, *constraints.PriorityLimit)      // global constraint overrides workspace value
+	require.Equal(t, 8, *constraints.ResourceConstraints.MaxSlots)                // defined in DefaultConstraintsStr
+	require.Equal(t, globalLimit, *constraints.ResourceConstraints.PriorityLimit) // global constraint overrides workspace value
 }
 
 func createWorkspaceWithUser(ctx context.Context, t *testing.T, userID model.UserID) model.Workspace {
