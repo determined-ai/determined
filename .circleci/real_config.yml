@@ -1539,6 +1539,7 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
 
       - install-devcluster
+      - start-devcluster
       - run: sleep 10
       - run: |
           git fetch origin main
