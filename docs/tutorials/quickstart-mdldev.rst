@@ -352,6 +352,16 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
    one trial performing at about 98 percent validation accuracy. The hyperparameter search halts
    poorly performing trials.
 
+*************************
+ Logging Custom Metadata
+*************************
+
+Determined also supports logging custom metadata during a trial run. This feature allows you to
+capture additional context and information about your experiments beyond standard metrics.
+
+To learn more about how to use metadata logging in your experiments, please refer to the
+:ref:`metadata-logging-tutorial`.
+
 ************
  Learn More
 ************
