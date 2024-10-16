@@ -5043,10 +5043,10 @@ workflows:
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
           target-stage: agent
+          upgrade: true
           matrix:
             parameters:
               agent-version: ["0.17.10"]
-              upgrade: true
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
