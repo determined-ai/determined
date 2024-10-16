@@ -13,8 +13,8 @@ import {
 
 import { ApiArgsFixture } from './api';
 import { ApiAuthFixture } from './api.auth.fixture';
-import { ApiSearchFixture } from './api.experiment.fixture';
 import { ApiProjectFixture } from './api.project.fixture';
+import { ApiSearchFixture } from './api.search.fixture';
 import { ApiUserFixture } from './api.user.fixture';
 import { ApiWorkspaceFixture } from './api.workspace.fixture';
 import { AuthFixture } from './auth.fixture';
