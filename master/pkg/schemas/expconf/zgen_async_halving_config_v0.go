@@ -19,17 +19,6 @@ func (a *AsyncHalvingConfigV0) SetNumRungs(val int) {
 	a.RawNumRungs = &val
 }
 
-func (a AsyncHalvingConfigV0) MaxLength() LengthV0 {
-	if a.RawMaxLength == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .MaxLength")
-	}
-	return *a.RawMaxLength
-}
-
-func (a *AsyncHalvingConfigV0) SetMaxLength(val LengthV0) {
-	a.RawMaxLength = &val
-}
-
 func (a AsyncHalvingConfigV0) MaxTrials() int {
 	if a.RawMaxTrials == nil {
 		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .MaxTrials")
@@ -63,15 +52,36 @@ func (a *AsyncHalvingConfigV0) SetMaxConcurrentTrials(val int) {
 	a.RawMaxConcurrentTrials = &val
 }
 
-func (a AsyncHalvingConfigV0) StopOnce() bool {
-	if a.RawStopOnce == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .StopOnce")
-	}
-	return *a.RawStopOnce
+func (a AsyncHalvingConfigV0) MaxTime() *int {
+	return a.RawMaxTime
 }
 
-func (a *AsyncHalvingConfigV0) SetStopOnce(val bool) {
-	a.RawStopOnce = &val
+func (a *AsyncHalvingConfigV0) SetMaxTime(val *int) {
+	a.RawMaxTime = val
+}
+
+func (a AsyncHalvingConfigV0) TimeMetric() *string {
+	return a.RawTimeMetric
+}
+
+func (a *AsyncHalvingConfigV0) SetTimeMetric(val *string) {
+	a.RawTimeMetric = val
+}
+
+func (a AsyncHalvingConfigV0) MaxLength() *LengthV0 {
+	return a.RawMaxLength
+}
+
+func (a *AsyncHalvingConfigV0) SetMaxLength(val *LengthV0) {
+	a.RawMaxLength = val
+}
+
+func (a AsyncHalvingConfigV0) StopOnce() *bool {
+	return a.RawStopOnce
+}
+
+func (a *AsyncHalvingConfigV0) SetStopOnce(val *bool) {
+	a.RawStopOnce = val
 }
 
 func (a AsyncHalvingConfigV0) ParsedSchema() interface{} {

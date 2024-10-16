@@ -1469,10 +1469,9 @@ def run_identity(tmp_path: pathlib.Path):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
-    hparams = config["hyperparameters"]
 
     exp_config = utils.make_default_exp_config(
-        hparams,
+        hparams={},
         scheduling_unit=1,
         searcher_metric="validation_loss",
         checkpoint_dir=checkpoint_dir,
@@ -1489,7 +1488,7 @@ def run_identity(tmp_path: pathlib.Path):
 
     trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
         trial_class=trial_class,
-        hparams=hparams,
+        hparams={},
         slots_per_trial=2,
         max_batches=16,
         min_validation_batches=1,

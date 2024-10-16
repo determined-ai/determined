@@ -1,4 +1,6 @@
 import contextlib
+import difflib
+import io
 import os
 from typing import Any, Iterator, List, Optional, cast
 
@@ -6,6 +8,7 @@ import responses
 from responses import registries
 
 import determined as det
+from determined.cli import cli
 from determined.common.api import authentication
 
 
@@ -151,3 +154,18 @@ def expect_get_info(
         rsps.get(f"{master_url}/info", status=200, json={"version": det.__version__})
     else:
         responses.get(f"{master_url}/info", status=200, json={"version": det.__version__})
+
+
+def check_cli_output(args: List[str], expected: str) -> None:
+    """
+    Helper method to test CLI methods that checks redirected STDOUT from the executed command
+    matches expected output.
+    """
+    with contextlib.redirect_stdout(io.StringIO()) as f:
+        cli.main(args=args)
+    actual = f.getvalue()
+    exp_lines = expected.splitlines(keepends=True)
+    act_lines = actual.splitlines(keepends=True)
+    diff_lines = difflib.ndiff(act_lines, exp_lines)
+    diff = "".join(diff_lines)
+    assert actual == expected, f"CLI output for {args} actual(-) != expected(+):\n {diff}"

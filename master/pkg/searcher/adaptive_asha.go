@@ -10,6 +10,19 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+type bracket struct {
+	numRungs          int
+	maxRuns           int
+	maxConcurrentRuns int
+}
+
+func (b *bracket) String() string {
+	return fmt.Sprintf(
+		"Bracket{numRungs: %d, maxRuns: %d, maxConcurrentRuns: %d}",
+		b.numRungs, b.maxRuns, b.maxConcurrentRuns,
+	)
+}
+
 func getBracketMaxTrials(
 	maxTrials int, divisor float64, brackets []int,
 ) []int {
@@ -41,9 +54,9 @@ func getBracketMaxTrials(
 func getBracketMaxConcurrentTrials(
 	maxConcurrentTrials int, divisor float64, maxTrials []int,
 ) []int {
-	// If maxConcurrentTrials is provided, we will split that evenly across brackets
+	// If maxConcurrentRuns is provided, we will split that evenly across brackets
 	// and fill remainder from most aggressive early stopping bracket to least.
-	// Otherwise, we will default to minimum of the maxTrials across brackets
+	// Otherwise, we will default to minimum of the maxRuns across brackets
 	// to guarantee roughly equal work between brackets.
 	var minTrials int
 	remainder := 0
@@ -52,7 +65,7 @@ func getBracketMaxConcurrentTrials(
 	if maxConcurrentTrials == 0 {
 		minTrials = mathx.Max(maxTrials[numBrackets-1], int(divisor))
 	} else {
-		// Without this, the remainder will be less than numBrackets and later brackets willgit pu
+		// Without this, the remainder will be less than numBrackets and later brackets will
 		// not receive a constraint on bracketMaxConcurrentTrials.
 		maxConcurrentTrials = mathx.Max(maxConcurrentTrials, numBrackets)
 		minTrials = maxConcurrentTrials / numBrackets
@@ -68,40 +81,51 @@ func getBracketMaxConcurrentTrials(
 	return bracketMaxConcurrentTrials
 }
 
-func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bool) SearchMethod {
+func makeBrackets(config expconf.AdaptiveASHAConfig) []bracket {
 	modeFunc := parseAdaptiveMode(config.Mode())
 
-	brackets := config.BracketRungs()
-	if len(brackets) == 0 {
+	bracketRungs := config.BracketRungs()
+	if len(bracketRungs) == 0 {
 		maxRungs := config.MaxRungs()
+		// Ensure that the top rung will contain at least one run.
 		maxRungs = mathx.Min(
 			maxRungs,
-			int(math.Log(float64(config.MaxLength().Units))/math.Log(config.Divisor()))+1,
+			int(math.Log(float64(config.Length().Units))/math.Log(config.Divisor()))+1,
 			int(math.Log(float64(config.MaxTrials()))/math.Log(config.Divisor()))+1)
-		brackets = modeFunc(maxRungs)
+		bracketRungs = modeFunc(maxRungs)
 	}
 	// We prioritize brackets that perform more early stopping to try to max speedups early on.
-	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
+	sort.Sort(sort.Reverse(sort.IntSlice(bracketRungs)))
 	bracketMaxTrials := getBracketMaxTrials(
-		config.MaxTrials(), config.Divisor(), brackets)
+		config.MaxTrials(), config.Divisor(), bracketRungs)
 	bracketMaxConcurrentTrials := getBracketMaxConcurrentTrials(
 		config.MaxConcurrentTrials(), config.Divisor(), bracketMaxTrials)
 
+	brackets := make([]bracket, len(bracketRungs))
+	for i, bracketRung := range bracketRungs {
+		brackets[i] = bracket{
+			numRungs:          bracketRung,
+			maxRuns:           bracketMaxTrials[i],
+			maxConcurrentRuns: bracketMaxConcurrentTrials[i],
+		}
+	}
+	return brackets
+}
+
+func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bool, metric string) SearchMethod {
+	brackets := makeBrackets(config)
 	methods := make([]SearchMethod, 0, len(brackets))
-	for i, numRungs := range brackets {
+	for _, bracket := range brackets {
 		c := expconf.AsyncHalvingConfig{
-			RawNumRungs:            ptrs.Ptr(numRungs),
-			RawMaxLength:           ptrs.Ptr(config.MaxLength()),
-			RawMaxTrials:           &bracketMaxTrials[i],
+			RawNumRungs:            ptrs.Ptr(bracket.numRungs),
+			RawMaxLength:           config.RawMaxLength,
+			RawMaxTrials:           &bracket.maxRuns,
 			RawDivisor:             ptrs.Ptr(config.Divisor()),
-			RawMaxConcurrentTrials: ptrs.Ptr(bracketMaxConcurrentTrials[i]),
-			RawStopOnce:            ptrs.Ptr(config.StopOnce()),
+			RawMaxConcurrentTrials: ptrs.Ptr(bracket.maxConcurrentRuns),
+			RawTimeMetric:          config.RawTimeMetric,
+			RawMaxTime:             config.RawMaxTime,
 		}
-		if config.StopOnce() {
-			methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter))
-		} else {
-			methods = append(methods, newAsyncHalvingSearch(c, smallerIsBetter))
-		}
+		methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter, metric))
 	}
 
 	return newTournamentSearch(AdaptiveASHASearch, methods...)
