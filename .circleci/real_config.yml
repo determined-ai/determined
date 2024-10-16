@@ -1521,7 +1521,7 @@ commands:
             fi
 
 jobs:
-  start-devcluster-upgrade-and-stop:
+  start-stop-devcluster:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1539,17 +1539,11 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
 
       - install-devcluster
-
-      - run: git fetch origin main && git checkout main # TODO CAROLINA -- make this idempotent on runs
-      - run: make -C master build
-      - run: make -C agent build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - "master/build"
-            - "agent/build" # TODO CAROLINA -- do I need to clear this??
-      # not persisting to workspace because we still want first run of test to run w/ old branch build
-      # Stop devcluster running on the past release.
+      - run: sleep 10
+      - run: |
+          git fetch origin main
+          latest_commit=$(git rev-parse origin/main)
+          echo "export LATEST_MAIN_SHA=$latest_commit" >> $BASH_ENV
       - stop-devcluster
    
   build-helm:
@@ -4850,15 +4844,27 @@ workflows:
           name: build-go-ee
           context: github-read
       # TODO CAROLINA MAKE THIS RUN WEEKLY
-      - start-devcluster-upgrade-and-stop:
-          name: start-upgrade-system
+      - start-stop-devcluster:
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          name: start-stop-system
+      # rebuild updated go
+      - build-go: 
+          name: build-upgraded-go
+          context: github-read
+          commit_SHA: ${LATEST_MAIN_SHA}
+          requires:
+            - start-stop-devcluster
+          
 
       - test-e2e:
           name: test-e2e-rbac
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
@@ -4868,7 +4874,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 6
           resource-class: xlarge
           tf2: true
@@ -4879,7 +4885,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 5
           resource-class: large
           tf2: true
@@ -4892,7 +4898,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
@@ -4903,7 +4909,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
@@ -4914,7 +4920,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 4
           resource-class: large
           tf2: true
@@ -4930,7 +4936,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 4
           resource-class: large
           tf2: true
@@ -4944,7 +4950,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
@@ -4958,7 +4964,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           mark: e2e_single_k8s
           target-stage: master
@@ -4970,7 +4976,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
@@ -4981,7 +4987,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           resource-class: large
           mark: e2e_cpu_elastic
@@ -4993,7 +4999,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -5005,7 +5011,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -5017,7 +5023,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
@@ -5029,7 +5035,7 @@ workflows:
       - test-e2e:
           name: test-e2e-agent-connection-loss
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           mark: e2e_cpu_agent_connection_loss
           devcluster-config: agent-no-connection.devcluster.yaml
@@ -5044,7 +5050,7 @@ workflows:
             - okta
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go-ee
+            - build-upgraded-go
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
