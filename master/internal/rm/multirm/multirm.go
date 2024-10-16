@@ -131,13 +131,6 @@ func (m *MultiRMRouter) SetGroupPriority(req sproto.SetGroupPriority) error {
 	return m.rms[resolvedRMName].SetGroupPriority(req)
 }
 
-// ExternalPreemptionPending routes an ExternalPreemptionPending request to the specified resource manager.
-func (m *MultiRMRouter) ExternalPreemptionPending(sproto.PendingPreemption) error {
-	// MultiRM is currently only implemented for Kubernetes, which doesn't support this.
-	m.syslog.WithError(fmt.Errorf("ExternalPreemptionPending is not implemented for agent, kubernetes, or multi-rm"))
-	return rmerrors.ErrNotSupported
-}
-
 // IsReattachableOnlyAfterStarted routes a IsReattachableOnlyAfterStarted call to a specified resource manager/pool.
 func (m *MultiRMRouter) IsReattachableOnlyAfterStarted() bool {
 	resolvedRMName, err := m.getRMName("")

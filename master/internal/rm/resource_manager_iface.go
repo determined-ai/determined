@@ -24,7 +24,6 @@ type ResourceManager interface {
 	SetGroupMaxSlots(sproto.SetGroupMaxSlots)
 	SetGroupWeight(sproto.SetGroupWeight) error
 	SetGroupPriority(sproto.SetGroupPriority) error
-	ExternalPreemptionPending(sproto.PendingPreemption) error
 	IsReattachableOnlyAfterStarted() bool
 	SmallerValueIsHigherPriority() (bool, error)
 

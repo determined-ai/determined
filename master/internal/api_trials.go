@@ -684,7 +684,7 @@ func (a *apiServer) GetTrialRemainingLogRetentionDays(
 	}
 
 	q := `
-SELECT   
+SELECT
 CASE
 	WHEN MIN(t.end_time) <= ( NOW() - make_interval(days => ?) ) THEN 0
 	ELSE extract(day from MIN(end_time) + make_interval(days => ?) - NOW())::int
@@ -1327,12 +1327,14 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 		return nil, err
 	}
 
-	if err := a.m.rm.ExternalPreemptionPending(
-		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
-	); err != nil {
+	err := task.DefaultService.Signal(
+		model.AllocationID(req.AllocationId),
+		task.TerminateAllocation,
+		"preempted by the scheduler",
+	)
+	if err != nil {
 		return nil, err
 	}
-
 	return &apiv1.AllocationPendingPreemptionSignalResponse{}, nil
 }
 

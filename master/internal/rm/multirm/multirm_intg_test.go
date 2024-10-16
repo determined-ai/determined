@@ -209,22 +209,6 @@ func TestSetGroupPriority(t *testing.T) {
 	}
 }
 
-func TestExternalPreemptionPending(t *testing.T) {
-	cases := []struct {
-		name string
-		req  sproto.PendingPreemption
-		err  error
-	}{
-		{"MultiRM doesn't implement ExternalPreemptionPending", sproto.PendingPreemption{}, rmerrors.ErrNotSupported},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			err := testMultiRM.ExternalPreemptionPending(tt.req)
-			require.Equal(t, tt.err, err)
-		})
-	}
-}
-
 func TestIsReattachable(t *testing.T) {
 	val := testMultiRM.IsReattachableOnlyAfterStarted()
 	require.True(t, val)
