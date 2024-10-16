@@ -83,7 +83,7 @@ type MoveSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being moved.
+	// The ids of the searches being moved. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// The id of the current parent project.
 	SourceProjectId int32 `protobuf:"varint,2,opt,name=source_project_id,json=sourceProjectId,proto3" json:"source_project_id,omitempty"`
@@ -208,7 +208,7 @@ type KillSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being killed.
+	// The ids of the searches being killed. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// Project id of the searches being killed.
 	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -324,7 +324,7 @@ type DeleteSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being deleted.
+	// The ids of the searches being deleted. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// Project id of the searches being deleted.
 	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -440,7 +440,7 @@ type ArchiveSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being archived.
+	// The ids of the searches being archived. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// The id of the current parent project.
 	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -556,7 +556,7 @@ type UnarchiveSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being unarchived.
+	// The ids of the searches being unarchived. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// The id of the current parent project.
 	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -672,7 +672,7 @@ type PauseSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being moved.
+	// The ids of the searches being moved. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// The id of the project of the searches being paused.
 	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -788,7 +788,7 @@ type ResumeSearchesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ids of the searches being moved.
+	// The ids of the searches being moved. Leave empty if using filter.
 	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
 	// The id of the project of the searches being unpaused.
 	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`

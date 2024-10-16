@@ -66,12 +66,10 @@ message RunActionResult {
 // Request to move the run to a different project.
 message MoveRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "source_project_id", "destination_project_id", "run_ids" ]
-    }
+    json_schema: { required: [ "source_project_id", "destination_project_id" ] }
   };
 
-  // The ids of the runs being moved.
+  // The ids of the runs being moved. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // The id of the current parent project.
   int32 source_project_id = 2;
@@ -96,9 +94,9 @@ message MoveRunsResponse {
 // Kill runs.
 message KillRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "run_ids", "source_project_id" ] }
+    json_schema: { required: [ "source_project_id" ] }
   };
-  // The ids of the runs being killed.
+  // The ids of the runs being killed. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // Project id of the runs being killed.
   int32 project_id = 2;
@@ -117,9 +115,9 @@ message KillRunsResponse {
 // Delete runs.
 message DeleteRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "run_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
-  // The ids of the runs being deleted.
+  // The ids of the runs being deleted. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // Project id of the runs being deleted.
   int32 project_id = 2;
@@ -138,10 +136,10 @@ message DeleteRunsResponse {
 // Request to archive the run
 message ArchiveRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "run_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
-  // The ids of the runs being archived.
+  // The ids of the runs being archived. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // The id of the current parent project.
   int32 project_id = 2;
@@ -162,10 +160,10 @@ message ArchiveRunsResponse {
 // Request to unarchive the run
 message UnarchiveRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "run_ids" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
-  // The ids of the runs being unarchived.
+  // The ids of the runs being unarchived. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // The id of the current parent project.
   int32 project_id = 2;
@@ -186,10 +184,10 @@ message UnarchiveRunsResponse {
 // Request to pause the experiment associated witha run.
 message PauseRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "run_ids", "skip_multitrial" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
-  // The ids of the runs being moved.
+  // The ids of the runs being paused. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // The id of the project of the runs being paused.
   int32 project_id = 2;
@@ -210,10 +208,10 @@ message PauseRunsResponse {
 // Request to unpause the experiment associated witha run.
 message ResumeRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "run_ids", "skip_multitrial" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
-  // The ids of the runs being moved.
+  // The ids of the runs being moved. Leave empty if using filter.
   repeated int32 run_ids = 1;
   // The id of the project of the runs being unpaused.
   int32 project_id = 2;
