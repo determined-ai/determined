@@ -11,7 +11,7 @@ import useConfirm from 'hew/useConfirm';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import { isEmpty } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'components/Link';
 import { useAsync } from 'hooks/useAsync';
@@ -87,6 +87,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
   const [form] = Form.useForm<FormInputs>();
 
   const [disabled, setDisabled] = useState(true);
+  const [updatedYAML, setUpdatedYAML] = useState<string>();
 
   const applyMessage = global
     ? "You're about to apply these configuration policies to the cluster."
@@ -112,6 +113,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
           ? await updateWorkspaceConfigPolicies({ configPolicies, workloadType, workspaceId })
           : await deleteWorkspaceConfigPolicies({ workloadType, workspaceId });
       }
+      setUpdatedYAML(configPolicies);
       openToast({ title: SUCCESS_MESSAGE });
     } catch (error) {
       handleError(error);
@@ -159,8 +161,17 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
 
   const canModify = global ? canModifyGlobalConfigPolicies : canModifyWorkspaceConfigPolicies;
 
+  useEffect(() => {
+    if (updatedYAML) setDisabled(form.getFieldValue(YAML_FORM_ITEM_NAME) === updatedYAML);
+  }, [updatedYAML, form]);
+
   const handleChange = () => {
-    setDisabled(hasErrors(form) || form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML);
+    setDisabled(
+      hasErrors(form) ||
+        (updatedYAML
+          ? form.getFieldValue(YAML_FORM_ITEM_NAME) === updatedYAML
+          : form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML),
+    );
   };
 
   const docsLink = (
