@@ -4,12 +4,13 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { V1Project, V1Workspace } from 'services/api-ts-sdk';
 import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
-  const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
+  const waitTableStable = async (timeout?:number) => await projectDetailsPage._page.waitForTimeout(timeout ?? 2_000);
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
@@ -557,6 +558,74 @@ test.describe('Experiment List', () => {
       await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'Z → A', async () => {
         await checkTableOrder('Trial count', 'Searcher Metric', true);
       });
+    });
+  });
+
+  test.describe('Row Actions', () => {
+    let destinationProject: V1Project;
+    let destinationWorkspace: V1Workspace;
+    let experimentId: number;
+
+    // create a new project, workspace and experiment
+    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+      destinationWorkspace = (await backgroundApiWorkspace.createWorkspace(
+        backgroundApiWorkspace.new(),
+      )).workspace;
+      destinationProject = (await backgroundApiProject.createProject(
+        destinationWorkspace.id,
+        backgroundApiProject.new(),
+      )).project;
+
+      const expId = Number(detExecSync(
+        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${destinationProject.id}`,
+      ).split(' ')[2]); // returns in the format "Created experiment <exp_id>"
+
+      if (!Number.isNaN(expId)) experimentId = expId;
+    });
+
+    test.beforeEach(async ({ authedPage, newProject }) => {
+      test.slow();
+      projectDetailsPage = new ProjectDetails(authedPage);
+
+      await projectDetailsPage.gotoProject(newProject.response.project.id);
+
+      const grid = projectDetailsPage.f_experimentList.dataGrid;
+
+      await grid.setColumnHeight();
+      await grid.headRow.setColumnDefs();
+    });
+
+    // cleanup
+    test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+      if (experimentId !== undefined) {
+        detExecSync(`experiment kill ${experimentId}`);
+        detExecSync(`experiment delete ${experimentId} --y`);
+      }
+
+      await backgroundApiProject.deleteProject(destinationProject.id);
+      await backgroundApiWorkspace.deleteWorkspace(destinationProject.id);
+
+    });
+
+    test('move experiment', async () => {
+      if (experimentId === undefined) return;
+
+      const newExperimentRow = await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue('ID', experimentId.toString());
+
+      const menuMove = await newExperimentRow.experimentActionDropdown.open();
+
+      await menuMove.menuItem('Move').pwLocator.click();
+      await menuMove.moveModal.destinationWorkspace.pwLocator.fill(destinationProject.workspaceName ?? '');
+      await menuMove.moveModal.destinationProject.pwLocator.waitFor({ state: 'visible' });
+      await menuMove.moveModal.destinationProject.pwLocator.fill(destinationProject.name);
+      await menuMove.moveModal.footer.submit.pwLocator.click();
+      await menuMove.moveModal.pwLocator.waitFor({ state: 'hidden' });
+
+      await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
+
+      await projectDetailsPage.gotoProject(destinationProject.id);
+      await waitTableStable();
+      await expect((await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue('ID', experimentId.toString())).pwLocator).toBeVisible();
     });
   });
 });
