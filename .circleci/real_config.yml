@@ -107,6 +107,12 @@ release-dryrun: &release-dryrun
       # Tags like: v3.1.3+dryrun
       - /v\d+\.\d+\.\d+\+dryrun/
 
+release-upgrade: &release-upgrade
+  branches:
+    only:
+      - /v\d+\.\d+\.\d+(rc\d+)?/
+      - carolinac/upgrade-tests
+
 upstream-feature-branch: &upstream-feature-branch
   branches:
     ignore:
@@ -404,7 +410,11 @@ commands:
         type: string
       package-location:
         type: string
+      package-commit: 
+        type: string
+        default: $CIRCLE_SHA1
     steps:
+      - run: git checkout <<parameters.package-commit>>
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
@@ -433,6 +443,9 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
+      determined-SHA:
+        type: string
+        default: $CIRCLE_SHA1
     steps:
       - run:
           name: Write cache key
@@ -518,6 +531,7 @@ commands:
             - install-wheel:
                 package-name: determined
                 package-location: ./harness
+                package-commit: <<parameters.determined-SHA>>
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -635,12 +649,12 @@ commands:
                     ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
                     ci.job_num:${CIRCLE_BUILD_NUM},\
                     ci.username:${CIRCLE_USERNAME},\
-                    git.tag:${CIRCLE_TAG},\
+                    git.tag:${CIRCLE_TAG:-""},\
                     git.commit:${CIRCLE_SHA1},\
                     git.repo:${CIRCLE_PROJECT_REPONAME},\
                     ci.totalNodes:${CIRCLE_NODE_TOTAL},\
                     ci.nodeIdx:${CIRCLE_NODE_INDEX},\
-                    git.pr_num:${CIRCLE_PR_NUMBER}"
+                    git.pr_num:${CIRCLE_PR_NUMBER:-""}"
 
                     sudo mkdir -p /tmp/artifacts/logs
                     sudo chmod -R a+rw /tmp/artifacts/logs
@@ -704,11 +718,11 @@ commands:
             ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
             ci.job_num:${CIRCLE_BUILD_NUM},\
             ci.username:${CIRCLE_USERNAME},\
-            git.tag:${CIRCLE_TAG},\
+            git.tag:${CIRCLE_TAG:-""},\
             git.commit:${CIRCLE_SHA1},\
             ci.totalNodes:${CIRCLE_NODE_TOTAL},\
             ci.nodeIdx:${CIRCLE_NODE_INDEX},\
-            git.pr_num:${CIRCLE_PR_NUMBER}"
+            git.pr_num:${CIRCLE_PR_NUMBER:-""}"
 
             CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_TAGS='${tags}' \
@@ -1500,7 +1514,7 @@ commands:
     steps:
       - run: 
           command: pkill -SIGHUP -f "devcluster" && rm -rf /tmp/devcluster/lock
-          
+         
   make-component:
     description: "Basic parameterized version of make for building Determined components."
     parameters:
@@ -1527,6 +1541,48 @@ commands:
             fi
 
 jobs:
+  start-stop-devcluster:
+    parameters:
+      devcluster-config:
+        type: string
+        default: double.devcluster.yaml
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: xlarge
+    environment:
+      DET_POSTGRES_VERSION: 10
+      DET_AGENT_VERSION: ""
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - attach_workspace:
+          at: .
+
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.machine-image>>
+      - install-devcluster
+      - start-devcluster:
+          devcluster-config: <<parameters.devcluster-config>>
+          target-stage: agent1
+      - run: sleep 10
+      - run:
+          name: Fetch latest commit
+          command: |
+            git fetch origin main
+            LATEST_MAIN_SHA=$(git rev-parse origin/main)
+            echo "LATEST_MAIN_SHA=$LATEST_MAIN_SHA" >> latest_commit.env  # Save to a file
+      - persist_to_workspace:
+          root: .
+          paths:
+            - latest_commit.env
+      - stop-devcluster
+
+   
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2237,9 +2293,6 @@ jobs:
       ee:
         type: boolean
         default: true
-      commit_SHA:
-        type: string
-        default: $CIRCLE_SHA1
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -2254,9 +2307,23 @@ jobs:
           condition: << parameters.ee >>
           steps:
             - license-gen
+      - attach_workspace:
+          at: .
+      - run:
+          name: Check for latest commit file
+          command: |
+            if [ -f latest_commit.env ]; then
+              echo "Latest commit file found."
+              source latest_commit.env
+              echo "LATEST_MAIN_SHA=$LATEST_MAIN_SHA" >> $BASH_ENV
+              git fetch origin $LATEST_MAIN_SHA && git checkout $LATEST_MAIN_SHA
+            else
+              echo "No latest commit file found. Skipping checkout."
+            fi
+
       - restore_cache:
           keys:
-            - det-go-build-<<parameters.commit_SHA>>-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+            - det-go-build-${LATEST_MAIN_SHA}-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -2266,7 +2333,7 @@ jobs:
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
       - save_cache:
-          key: det-go-build-<<parameters.commit_SHA>>-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+          key: det-go-build-${LATEST_MAIN_SHA}-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
@@ -3187,9 +3254,6 @@ jobs:
       k8s-version:
         type: string
         default: "1.29.5"
-      upgrade: 
-        type: boolean
-        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3206,8 +3270,21 @@ jobs:
       - attach_workspace:
           at: .
 
+      - run: 
+          name: Export Latest Main SHA for upgrade tests
+          command: |
+            if [ -f latest_commit.env ]; then
+              echo "Latest commit file found."
+              source latest_commit.env
+              echo "LATEST_MAIN_SHA=$LATEST_MAIN_SHA" >> $BASH_ENV
+              git fetch origin $LATEST_MAIN_SHA && git checkout $LATEST_MAIN_SHA
+            else
+              echo "No latest commit file found. Skipping checkout."
+            fi
+
       - setup-python-venv:
           determined: True
+          determined-SHA: $LATEST_MAIN_SHA
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
@@ -3237,24 +3314,6 @@ jobs:
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
-
-      - when:
-          condition: <<parameters.upgrade>>
-          steps:
-            - reinstall-go
-            - run: git checkout ${LATEST_MAIN_SHA}
-            - run: make -C master build
-            - run: make -C agent build
-            # not persisting to workspace because we still want first run of test to run w/ old branch build
-            # Stop devcluster running on the past release.
-            - stop-devcluster
-            - install-devcluster
-            - unless:
-                condition: <<parameters.managed-devcluster>>
-                steps:
-                  - start-devcluster:
-                      devcluster-config: <<parameters.devcluster-config>>
-                      target-stage: <<parameters.target-stage>>
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
@@ -4436,9 +4495,6 @@ workflows:
           mark: e2e_cpu_2a
           target-stage: agent2
           devcluster-config: double-priority.devcluster.yaml
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4450,9 +4506,6 @@ workflows:
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
           target-stage: agent1
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4464,9 +4517,6 @@ workflows:
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
           target-stage: agent1
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4483,9 +4533,6 @@ workflows:
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4500,9 +4547,6 @@ workflows:
           managed-devcluster: true
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4517,9 +4561,6 @@ workflows:
           devcluster-config: multi-k8s.devcluster.yaml
           run-minikubes: true
           multi-k8s: true
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4532,9 +4573,6 @@ workflows:
           target-stage: master
           devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4546,9 +4584,6 @@ workflows:
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -4561,9 +4596,6 @@ workflows:
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -4576,9 +4608,6 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "10"
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -4591,9 +4620,6 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "14"
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -4608,7 +4634,6 @@ workflows:
           matrix:
             parameters:
               agent-version: ["0.17.10"]
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
@@ -4621,9 +4646,6 @@ workflows:
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-saml
@@ -4635,9 +4657,6 @@ workflows:
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-perf:
           name: test-perf
@@ -4798,6 +4817,277 @@ workflows:
                 - main
           requires:
             - package-and-push-system-dev-ee
+
+  test-e2e-upgrade:
+    #triggers:
+    #  - schedule:
+    #      cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
+    #      filters: *release-upgrade  # Only runs on the release branches  
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - test-e2e-react:
+          name: test-e2e-react-ee
+          ee: true
+          requires:
+            - build-go-ee
+          context:
+            - playwright
+            - github-read
+            - dev-ci-cluster-default-user-credentials
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          name: build-go-ee
+          context: github-read
+      - start-stop-devcluster:
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          name: start-stop-devcluster
+      - build-go: 
+          name: build-upgraded-go
+          context: github-read
+          requires:
+            - start-stop-devcluster          
+
+      - test-e2e:
+          name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 6
+          resource-class: xlarge
+          tf2: true
+          mark: e2e_cpu
+
+      - test-e2e:
+          name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 5
+          resource-class: large
+          tf2: true
+          mark: e2e_cpu_2a
+          target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
+
+      - test-e2e:
+          name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          devcluster-config: oauth.devcluster.yaml
+          mark: test_oauth
+          target-stage: agent1
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster
+          managed-devcluster: true
+          # Managed devcluster restarts the master over the course of the tests,
+          # so `compare_stats` cannot get the full logs from `det master logs`.
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster-resource-pools
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster_resource_pools
+          managed-devcluster: true
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
+          multi-k8s: true
+
+      - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          mark: e2e_single_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
+          run-minikubes: true
+
+      - test-e2e:
+          name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
+
+      - test-e2e:
+          name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          resource-class: large
+          mark: e2e_cpu_elastic
+          devcluster-config: elastic.devcluster.yaml
+          target-stage: agent
+
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "10"
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "14"
+
+      - test-e2e:
+          name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: custom-agent-version.devcluster.yaml
+          target-stage: agent
+          matrix:
+            parameters:
+              agent-version: ["0.17.10"]
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          devcluster-config: saml.devcluster.yaml
+          mark: e2e_saml
+
+  test-e2e-upgrade-rbac:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - test-e2e-react:
+          name: test-e2e-react-ee
+          ee: true
+          requires:
+            - build-go-ee
+          context:
+            - playwright
+            - github-read
+            - dev-ci-cluster-default-user-credentials
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          name: build-go-ee
+          context: github-read
+      - start-stop-devcluster:
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          name: start-stop-devcluster
+          devcluster-config: single-rbac.devcluster.yaml
+      - build-go: 
+          name: build-upgraded-go
+          context: github-read
+          requires:
+            - start-stop-devcluster          
+
+      - test-e2e:
+          name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          mark: e2e_cpu_rbac
+          devcluster-config: single-rbac.devcluster.yaml
+
+      - test-e2e:
+          name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-upgraded-go
+          parallelism: 1
+          devcluster-config: rbac-model-registry.yaml
+          mark: test_model_registry_rbac
+          target-stage: agent1
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
