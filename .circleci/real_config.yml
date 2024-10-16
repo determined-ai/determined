@@ -3269,11 +3269,7 @@ jobs:
             - run: git checkout ${LATEST_MAIN_SHA}
             - run: make -C master build
             - run: make -C agent build
-            - persist_to_workspace:             # TODO CAROLINA is this needed
-                root: .
-                paths:
-                  - "master/build"
-                  - "agent/build"
+            # not persisting to workspace because we still want first run of test to run w/ old branch build
             # Stop devcluster running on the past release.
             - stop-devcluster
             - install-devcluster
