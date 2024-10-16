@@ -1498,7 +1498,7 @@ commands:
   upgrade-and-restart-devcluster:
     parameters:
       upgrade:
-        type: bool
+        type: boolean
         default: false
       devcluster-config:
         type: string
