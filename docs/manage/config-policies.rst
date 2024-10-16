@@ -19,13 +19,6 @@ These policies are essential for managing task priorities, resource allocation, 
 configurations across the organization. Global policies override workspace policies, and both
 override user-submitted configurations.
 
-**Constraints and Limitations**
-
--  Priority Overrides: If a given scope has an invariant config policy set for a given task, and
-   that invariant configuration policy specifies ``priority``, this priority can still be overridden
-   using the ``SetJobPriority`` API endpoint. However, the new priority must not violate any
-   constraints defined in the applicable policies for that scope.
-
 **************
  Key Features
 **************
@@ -99,36 +92,68 @@ Use the following commands to manage Task Config Policies via CLI:
  Policy Examples
 *****************
 
-Below are some examples of Config Policies to help guide administrators:
+Below are some examples of Config Policies to help guide administrators.
 
-**Limit Resources**
+Limiting Resources
+==================
 
-This example demonstrates limiting resources for an Agent resource manager (RM). It sets the
-``priority_limit`` to ``15`` and ``max_slots`` to ``1``. This means a user cannot set a priority
-value lower than 15 and cannot set ``max_slots`` to greater than ``1``.
+Administrators can set constraints on resource usage, allowing them to manage how users allocate
+resources for workloads such as experiments, notebooks, tensorboards, shells, and commands. The two
+main configurable constraints are:
+
+-  ``resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can be used.
+-  ``resources.priority_limit``: Sets the priority limit for tasks.
+
+For Kubernetes resource managers, higher priority values indicate higher priority. For Agent
+resource managers, lower priority values indicate higher priority.
+
+**Example 1: Limiting GPU/CPU Slots and Priority for Experiments**
+
+The following example demonstrates how to set a maximum of 4 slots (GPUs or CPUs) and a priority
+limit of 15. This configuration applies to both Kubernetes and Agent resource managers, though the
+priority system behaves differently across the two:
+
+-  In Kubernetes, higher priority values indicate higher priority.
+-  In Agent resource managers, lower priority values indicate higher priority.
+
+.. code:: yaml
+
+   constraints:
+     resources:
+       max_slots: 4
+       priority_limit: 15
+
+In this example: - Users cannot set ``max_slots`` greater than 4. - Users cannot set a priority
+lower than 15 for Agent RMs or higher than 15 for Kubernetes RMs.
+
+**Example 2: Limiting Resources for Agent Resource Manager (RM)**
+
+This example limits the number of slots and sets a priority limit specifically for an Agent resource
+manager (RM). The ``priority_limit`` is set to ``15``, and ``max_slots`` is set to ``1``. This means
+a user cannot set a priority value lower than 15 and cannot set ``max_slots`` greater than 1.
 
 .. note::
 
-   Tasks (NTSC - notebooks, Tensorboards, shells, and commands) and some resource managers (RMs)
-   have a priority. Priority levels are between 1 and 99. The default cluster priority is usually
-   42. The priority limit determines the order in which queued tasks run. In this example we are
-   using limits because for the agent resource manager, a lower number means a higher priority. For
-   a Kubernetes resource manager, a higher number means a higher priority.
+   Tasks such as NTSC (notebooks, tensorboards, shells, and commands) and resource managers (RMs)
+   have priority levels ranging from 1 to 99. The default cluster priority is typically 42. In Agent
+   RMs, a lower priority number means a higher priority, while in Kubernetes RMs, a higher priority
+   number means a higher priority.
 
-.. code:: bash
+.. code:: yaml
 
-   # Set priority limit to 15
    constraints:
       priority_limit: 15
       resources:
          max_slots: 1
 
-If a user attempts to set a notebook priority to 10 when the limit is 15, the request will fail, and
-the system will display a descriptive error message.
+If a user tries to set a notebook priority to 10 when the limit is 15, the request will fail, and
+the system will display an error message.
 
-**Limit Maximum GPU Usage per Experiment**
+Limit Maximum GPU Usage per Experiment
+======================================
 
-The following configuration policy example limits GPU usage per experiment. This is configured in the Config Policies > Experiments tab.
+The following configuration policy example limits GPU usage per experiment. This is configured in
+the Config Policies > Experiments tab.
 
 .. code:: yaml
 
@@ -136,12 +161,12 @@ The following configuration policy example limits GPU usage per experiment. This
      resources:
        max_slots: 4
 
+Priority Limits
+===============
 
-**Set Different Priority Limits for Experiments and NTSC Tasks**
+You can set a different priority limit for experiments and tasks.
 
-The following configuration policy example constrains the priority limit per experiment. This is configured in the Config Policies > Experiments tab.
-
--  Experiments
+The following policy is configured in the Config Policies > Experiments tab.
 
 .. code:: yaml
 
@@ -149,7 +174,7 @@ The following configuration policy example constrains the priority limit per exp
      resources:
        priority_limit: <experiment limit>
 
-The following configuration policy example constrains the priority limit per task. This is configured in the Config Policies > Tasks tab.
+The following policy is configured in the Config Policies > Tasks tab.
 
 -  Tasks
 
@@ -158,6 +183,12 @@ The following configuration policy example constrains the priority limit per tas
    constraints:
      resources:
        priority_limit: <task limit>
+
+Invariant Configs
+=================
+
+Invariant configs are applied to all workloads in a given scope (global or workspace) and merged
+with user-submitted configurations.
 
 **Set Default Priority for All Experiments**
 
@@ -168,6 +199,39 @@ The following configuration policy example sets a default priority for all exper
    invariant_config:
      resources:
        priority: 5
+
+**Example Invariant Config for Bind Mounts and Environment Variables**
+
+This example shows how to apply default configurations across all workloads using bind mounts and
+environment variables and is set in the Experiments tab:
+
+.. code:: yaml
+
+   invariant_config:
+     bind_mounts:
+       - host_path: "/etc/bindmounts"
+         container_path: "/etc/bindmounts"
+         read_only: true
+     data:
+       datapoint1: value1
+     debug: true
+     environment:
+       environment_variables:
+         cpu:
+           - cpuval=originalcpu
+
+When a user submits a workload, these settings will be applied in addition to (or overriding) the
+user's settings.
+
+.. warning::
+
+   Do not set both constraints and configs for the same field within the same workload type and
+   scope. It may lead to unpredictable behavior.
+
+.. important::
+
+   -  Existing workloads are not impacted by new or updated policies.
+   -  Updating config policies replaces the entire set of invariant configs and constraints.
 
 *******************
  Priority Override
@@ -197,89 +261,3 @@ applicable policies.
 -  Use invariant configs to set default behaviors across workloads.
 -  Be mindful of the precedence order: global policies override workspace policies, which override
    user configs.
-
-Limit resources
-===============
-
-Administrators can set constraints on resource usage. The main configurable constraints are:
-
--  ``resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can be used.
--  ``resources.priority_limit``: Sets the priority limit for tasks.
-
-For Kubernetes resource managers, higher priority values indicate higher priority. For Agent
-resource managers, lower priority values indicate higher priority.
-
-Here’s an example of setting resource constraints:
-
-.. code:: yaml
-
-   constraints:
-     resources:
-       max_slots: 4
-       priority_limit: 15
-
-In this example, users cannot set ``max_slots`` to a value greater than 4, and they cannot set a
-priority lower than 15 (for Agent RMs) or higher than 15 (for Kubernetes RMs).
-
-Invariant Configs
-=================
-
-Invariant configs are applied to all workloads in a given scope (global or workspace) and merged
-with user-submitted configurations.
-
-**Example Invariant Config**
-
-- Experiments
-
-.. code:: yaml
-
-   invariant_config:
-     bind_mounts:
-       - host_path: "/etc/bindmounts"
-         container_path: "/etc/bindmounts"
-         read_only: true
-     data:
-       datapoint1: value1
-     debug: true
-     environment:
-       environment_variables:
-         cpu:
-           - cpuval=originalcpu
-
-When a user submits a workload, these settings will be applied in addition to (or overriding) the
-user's settings.
-
-**Complete Example**
-
-Here is a complete example that combines invariant configs and constraints for a research workspace:
-
-- Experiments
-
-.. code:: yaml
-
-   name: complete-policy-example
-   scope: workspace
-   workspace: research
-   config:
-     invariant_config:
-       environment:
-         image: "docker.io/determined/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4"
-       resources:
-         slots: 2
-     constraints:
-       resources:
-         max_slots: 4
-         priority_limit: 20
-
-This example sets a default Docker image and number of slots for all workloads in the "research"
-workspace, while also limiting the maximum number of slots and setting a priority limit.
-
-.. warning::
-
-   Do not set both constraints and configs for the same field within the same workload type and
-   scope. It may lead to unpredictable behavior.
-
-.. important::
-
-   -  Existing workloads are not impacted by new or updated policies.
-   -  Updating config policies replaces the entire set of invariant configs and constraints.
