@@ -23,7 +23,7 @@ SELECT p.id AS permission_id, 1 FROM permissions p WHERE p.name IN (
 
 -- TokenCreator
 INSERT INTO permission_assignments (permission_id, role_id) 
-SELECT p.id AS permission_id, 1 FROM permissions p WHERE p.name IN (
+SELECT p.id AS permission_id, 10 FROM permissions p WHERE p.name IN (
     'update own access token',
     'create access token',
     'view own access token'
