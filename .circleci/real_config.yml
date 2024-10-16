@@ -4274,9 +4274,6 @@ workflows:
             branches:
               only:
                 - main
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
@@ -4289,9 +4286,6 @@ workflows:
               only:
                 - main
           mark: e2e_slurm_misconfigured
-          matrix:
-            parameters:
-              upgrade: [true, false]
           master_config: |
             task_container_defaults:
               slurm:
@@ -4342,9 +4336,6 @@ workflows:
             branches:
               only:
                 - main
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4358,7 +4349,6 @@ workflows:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
-              upgrade: [true, false]
           requires:
             - build-go-ee
           filters:
@@ -4379,7 +4369,6 @@ workflows:
               name: [test-e2e-slurm-podman-gcp]
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
-              upgrade: [true, false]
           requires:
             - build-go-ee
           filters:
@@ -4400,7 +4389,6 @@ workflows:
               name: [test-e2e-slurm-enroot-gcp]
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
-              upgrade: [true, false]
           requires:
             - build-go-ee
           filters:
@@ -4421,7 +4409,6 @@ workflows:
               name: [test-e2e-pbs-singularity-gcp]
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
-              upgrade: [true, false]
           requires:
             - build-go-ee
           filters:
@@ -4444,7 +4431,6 @@ workflows:
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
-              upgrade: [true, false]
           requires:
             - build-go-ee
           filters:
@@ -4466,7 +4452,6 @@ workflows:
               container-run-type: ["enroot"]
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
-              upgrade: [true, false]
           requires:
             - build-go-ee
           filters:
@@ -4483,9 +4468,6 @@ workflows:
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4497,9 +4479,6 @@ workflows:
           resource-class: xlarge
           tf2: true
           mark: e2e_cpu
-          matrix:
-            parameters:
-              upgrade: [true, false]
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4731,7 +4710,6 @@ workflows:
                 - main
           matrix:
             parameters:
-              upgrade: [true, false]
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
@@ -4751,7 +4729,6 @@ workflows:
               aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
-              upgrade: [true, false]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -4770,7 +4747,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
-              upgrade: [true, false]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
@@ -4788,7 +4764,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               parallelism: [1]
-              upgrade: [true, false]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -4810,7 +4785,6 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               max-slots-per-pod: [4]
-              upgrade: [true, false]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -4834,7 +4808,6 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
               max-slots-per-pod: [1]
-              upgrade: [true, false]
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
@@ -4859,7 +4832,6 @@ workflows:
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
               max-slots-per-pod: [1]
-              upgrade: [true, false]
 
       - test-det-deploy:
           name: test-det-deploy-local
@@ -4873,7 +4845,6 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
-              upgrade: [true, false]
 
       - deploy-latest-gke:
           name: deploy-latest-gke-master
@@ -4887,7 +4858,6 @@ workflows:
             - package-and-push-system-dev-ee
           matrix:
             parameters:
-              upgrade: [true, false]
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
