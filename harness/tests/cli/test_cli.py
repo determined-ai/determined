@@ -617,8 +617,8 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
         expected_output = f"""Using search configuration:
 {render.format_object_as_yaml(searcher_config)}
    Runs | Training Time
---------+---------------------------------
-     10 | maximum length of training code
+--------+---------------------
+     10 | train to completion
 """
         util.check_cli_output(["preview-search", str(conf_path)], expected_output)
 
@@ -638,7 +638,7 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             "metric": "loss",
             "mode": "standard",
             "name": "adaptive_asha",
-            "time_metric": "batches",
+            "time_metric": "batch",
         },
     }
     conf_path = tmp_path / "config.yaml"
@@ -651,11 +651,11 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
             runs=[
                 bindings.v1RunSummary(
                     count=7,
-                    unit=bindings.v1SearchUnit(name="batches", value=200, maxLength=False),
+                    unit=bindings.v1SearchUnit(name="batch", value=200, maxLength=False),
                 ),
                 bindings.v1RunSummary(
                     count=3,
-                    unit=bindings.v1SearchUnit(name="batches", value=1000, maxLength=False),
+                    unit=bindings.v1SearchUnit(name="batch", value=1000, maxLength=False),
                 ),
             ],
         )
@@ -676,8 +676,8 @@ def test_preview_search(tmp_path: pathlib.Path) -> None:
         expected_output = f"""Using search configuration:
 {render.format_object_as_yaml(searcher_config)}
    Runs | Training Time
---------+------------------------
-      7 | train for 200 batches
-      3 | train for 1000 batches
+--------+----------------------
+      7 | train for 200 batch
+      3 | train for 1000 batch
 """
         util.check_cli_output(["preview-search", str(conf_path)], expected_output)

@@ -241,18 +241,14 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
 func shimExperimentSnapshot(experimentID int, snapshot []byte, version int) ([]byte, error) {
-	return shimSnapshot(experimentID, experimentSnapshotShims, snapshot, version)
-}
-
-func shimSnapshot(experimentID int, shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
 	if version > experimentSnapshotVersion {
 		return nil, fmt.Errorf("cannot shim from %d to %d", version, experimentSnapshotVersion)
 	}
 	var err error
 	for version < experimentSnapshotVersion {
-		shim, ok := shims[version]
+		shim, ok := experimentSnapshotShims[version]
 		if !ok {
-			return nil, fmt.Errorf("missing shim from %d to %d", version, experimentSnapshotVersion)
+			return nil, fmt.Errorf("missing shim from %d to %d", version, version+1)
 		}
 		if snapshot, err = shim(experimentID, snapshot); err != nil {
 			return nil, errors.Wrapf(err, "failed to shim snapshot")
@@ -333,7 +329,7 @@ func shimExperimentSnapshotV1(experimentID int, snapshot []byte) ([]byte, error)
 
 // Version 2 => 3 shims
 
-// All the operation types that support serialization.
+// Legacy types which no longer exist in the searcher package, but needed to serialize old snapshots.
 const (
 	CreateOperation        OperationType = 0
 	TrainOperation         OperationType = 1
@@ -446,7 +442,7 @@ func shimExperimentSnapshotV4(experimentID int, snapshot []byte) ([]byte, error)
 	return json.Marshal(experimentSnapshotV4)
 }
 
-// shimExperimentSnapshotV5 shims a v4 snapshot to a v5 snapshot. From v4 to v5:
+// shimExperimentSnapshotV5 shims a v5 snapshot to a v6 snapshot. From v5 to v6:
 // - `searcher_state.TrialsRequested` -> `RunsRequested`
 // - `searcher_state.TrialsCreated` -> `RunsCreated`
 // - `searcher_state.TrialsClosed` -> `RunsClosed`

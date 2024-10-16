@@ -68,7 +68,7 @@ def _render_search_summary(resp: bindings.v1PreviewHPSearchResponse) -> str:
         num_runs = run_summary.count
         run_unit = run_summary.unit
         if run_unit.maxLength:
-            summary = "maximum length of training code"
+            summary = "train to completion"
         else:
             summary = f"train for {run_unit.value} {run_unit.name}"
         run_summaries.append([num_runs, summary])

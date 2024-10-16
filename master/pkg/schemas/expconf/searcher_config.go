@@ -244,6 +244,9 @@ func (s SearcherConfig) AssertCurrent() error {
 			log.Warn("the `stop_once` field of the searcher config has been deprecated and will be removed in " +
 				"a future release.")
 		}
+		if s.RawAsyncHalvingConfig.RawMaxTime == nil || s.RawAsyncHalvingConfig.RawTimeMetric == nil {
+			return errors.New("the `async_halving` searcher requires `max_time` and `time_metric` to be set")
+		}
 	case s.RawGridConfig != nil:
 		if s.RawGridConfig.RawMaxLength != nil {
 			log.Warn("the `max_length` field of the searcher config has been deprecated and will be removed in " +
