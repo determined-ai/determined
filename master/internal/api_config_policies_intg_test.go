@@ -564,7 +564,7 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 			WorkloadType:   model.NTSCType,
 			ConfigPolicies: validNTSCConfigPolicyYAML,
 		})
-	require.NoError(t, err)
+	require.Error(t, err)
 }
 
 var cpAuthZ *mocks.ConfigPolicyAuthZ
@@ -623,7 +623,7 @@ invariant_config:
 			`
 invariant_config:
   description: "test\nspecial\tchar"
-`, nil,
+`, fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
 		{
 			"YAML simple NTSC config with resources", model.NTSCType,
@@ -631,10 +631,11 @@ invariant_config:
 invariant_config:
   resources:
     slots: 1
-`, nil,
+`, fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
 		{
-			"YAML partial NTSC config", model.NTSCType, validNTSCConfigPolicyYAML, nil,
+			"YAML partial NTSC config", model.NTSCType, validNTSCConfigPolicyYAML,
+			fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
 
 		// Invalid experiment invariant config policies (YAML).
@@ -861,7 +862,7 @@ invariant_config:
 		// Additional NTSC combinatory tests (YAML).
 		{
 			"YAML NTSC valid config valid constraints", model.NTSCType,
-			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, nil,
+			validNTSCConfigPolicyYAML + validConstraintsPolicyYAML, fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
 		{
 			"YAML NTSC valid constraints invalid constraints", model.NTSCType,
@@ -938,7 +939,7 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 			`{ "invariant_config": {
 		"description": "test\nspecial\tchar"
 		}
-	}`, nil,
+	}`, fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
 		{
 			"JSON simple NTSC config with resources", model.NTSCType,
@@ -947,9 +948,12 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 				"slots": 1
 			}
 		}
-	}`, nil,
+	}`, fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
 		},
-		{"JSON partial NTSC config", model.NTSCType, "{" + validNTSCConfigPolicyJSON + "}", nil},
+		{
+			"JSON partial NTSC config", model.NTSCType, "{" + validNTSCConfigPolicyJSON + "}",
+			fmt.Errorf(configpolicy.NotSupportedConfigPolicyErr),
+		},
 
 		// Invalid experiment invariant config policies (JSON).
 		{
@@ -1192,8 +1196,8 @@ func TestValidatePoliciesAndWorkloadTypeJSON(t *testing.T) {
 
 		// Additional NTSC combinatory tests (JSON).
 		{
-			"JSON NTSC valid config valid constraints", model.NTSCType,
-			"{" + validNTSCConfigPolicyJSON + "," + validConstraintsPolicyJSON + "}", nil,
+			"JSON NTSC valid config invalid constraints", model.NTSCType,
+			"{" + validConstraintsPolicyJSON + "}", nil,
 		},
 		{
 			"JSON NTSC valid constraints invalid constraints", model.NTSCType,
