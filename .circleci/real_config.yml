@@ -1513,13 +1513,19 @@ commands:
       - when:
           condition: <<parameters.upgrade>>
           steps:
+            - checkout
+            - add-and-fetch-upstream
+            - attach_workspace:
+                at: .
+            - reinstall-go
+            - license-gen
+
             - run: git fetch origin main && git checkout main # TODO CAROLINA -- make this idempotent on runs
             - run: make -C master build
             - run: make -C agent build
             # not persisting to workspace because we still want first run of test to run w/ old branch build
             # Stop devcluster running on the past release.
             - stop-devcluster
-            - license-gen
             - install-devcluster
             - unless:
                 condition: <<parameters.managed-devcluster>>
