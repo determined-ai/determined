@@ -138,15 +138,6 @@ You can limit GPU usage per experiment by configuring the following policy:
      resources:
        max_slots: 4
 
--  Tasks
-
-.. code:: yaml
-
-   name: max-gpu-limit
-   scope: cluster
-   config:
-     resources:
-       max_gpus: 4
 
 **Set Different Priority Limits for Experiments and NTSC Tasks**
 
