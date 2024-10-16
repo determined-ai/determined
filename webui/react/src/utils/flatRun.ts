@@ -6,6 +6,7 @@ import {
   terminalRunStates,
 } from 'constants/states';
 import { PermissionsHook } from 'hooks/usePermissions';
+import { V1ColumnType } from 'services/api-ts-sdk';
 import { FlatRun, FlatRunAction, RunState, SelectionType } from 'types';
 
 import { combine } from './filterFormSet';
@@ -116,3 +117,10 @@ export const getIdsFilter = (
     filterGroup,
   };
 };
+
+export const removeColumnTypePrefix = (columnName: V1ColumnType): string => {
+  return columnName.replace('COLUMN_TYPE_', '');
+};
+
+/// wanna know why this separator is used? see https://hpe-aiatscale.atlassian.net/browse/ET-785
+export const COLUMN_SEPARATOR = '␟';
