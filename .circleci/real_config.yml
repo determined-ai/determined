@@ -2266,7 +2266,7 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
-      - run: git fetch origin <<parameters.commit_SHA>> && git checkout origin/<<parameters.commit_SHA>>
+      - run: git fetch origin <<parameters.commit_SHA>> && git checkout <<parameters.commit_SHA>>
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
