@@ -7,7 +7,7 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
-import { V1Project } from 'services/api-ts-sdk';
+import { V1Project, V1Workspace } from 'services/api-ts-sdk';
 import { ExperimentBase } from 'types';
 
 dayjs.extend(utcPlugin);
@@ -681,10 +681,12 @@ test.describe('Experiment List', () => {
 
   test.describe('Row Actions', () => {
     let destinationProject: V1Project;
+    let destinationWorkspace: V1Workspace;
     let experimentId: number;
 
     // create a new project, workspace and experiment
-    test.beforeAll(async ({ backgroundApiProject, newProject: { response: { project } } }) => {
+    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace, newProject: { response: { project } } }) => {
+      destinationWorkspace = (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())).workspace;
       destinationProject = (await backgroundApiProject.createProject(
         project.workspaceId,
         backgroundApiProject.new({ projectProps: { workspaceId: project.workspaceId } }),
@@ -698,13 +700,14 @@ test.describe('Experiment List', () => {
     });
 
     // cleanup
-    test.afterAll(async ({ backgroundApiProject }) => {
+    test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
       if (experimentId !== undefined) {
         detExecSync(`experiment kill ${experimentId}`);
         detExecSync(`experiment delete ${experimentId} --y`);
       }
 
       await backgroundApiProject.deleteProject(destinationProject.id);
+      await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
     });
 
     test('move experiment', async () => {
@@ -715,9 +718,15 @@ test.describe('Experiment List', () => {
       const menuMove = await newExperimentRow.experimentActionDropdown.open();
 
       await menuMove.menuItem('Move').pwLocator.click();
+      await menuMove.moveModal.destinationWorkspace.pwLocator.fill(destinationProject.workspaceName ?? '');
       await menuMove.moveModal.destinationProject.pwLocator.waitFor({ state: 'visible' });
       await menuMove.moveModal.destinationProject.pwLocator.fill(destinationProject.name);
       await menuMove.moveModal.footer.submit.pwLocator.click();
+      // TODO: check why it's failing on submit (somehow  the check bellow isn' passing)
+      /**
+       * const handleSubmit = async () => {
+          if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
+       */
       await menuMove.moveModal.pwLocator.waitFor({ state: 'hidden' });
 
       await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
