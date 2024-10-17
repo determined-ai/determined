@@ -1535,26 +1535,27 @@ jobs:
   start-stop-devcluster:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
+    environment:
+      DET_POSTGRES_VERSION: 10
+      DET_AGENT_VERSION: ""
     steps:
       - checkout
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
+
       - setup-python-venv:
-          determined: true
-          install-python: true
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-      - install-protoc
-      - reinstall-go
-      - license-gen
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
-      - run: make -C master get-deps
-      - run: make -C agent get-deps
-      - run: devcluster --oneshot -c .circleci/devcluster/double.devcluster.yaml --target-stage agent1 --no-guess-host || circleci-agent step halt
+      - install-devcluster
+      - start-devcluster:
+          devcluster-config: double.devcluster.yaml
+          target-stage: agent1
       - run: sleep 10
       - run: |
           git fetch origin main
