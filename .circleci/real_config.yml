@@ -103,8 +103,6 @@ release-upgrade: &release-upgrade
     only:
       - /v\d+\.\d+\.\d+(rc\d+)?/
       - carolinac/upgrade-tests
-    ignore:
-      - /.*/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
