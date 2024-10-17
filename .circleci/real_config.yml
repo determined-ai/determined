@@ -4867,6 +4867,7 @@ workflows:
       - start-stop-devcluster:
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           name: start-stop-devcluster
