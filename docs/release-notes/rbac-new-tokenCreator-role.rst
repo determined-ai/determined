@@ -2,5 +2,5 @@
 
 **New Features**
 
--  New RBAC role: Added a new ``TokenCreator`` RBAC role. It grants the permissions to create, view,
-   and revoke the user's own access tokens. It can only be assigned globally.
+-  New RBAC role: Add a ``TokenCreator`` RBAC role, which allows users to create, view, and revoke
+   their own access tokens. This role can only be assigned globally.

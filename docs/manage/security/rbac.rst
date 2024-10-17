@@ -535,8 +535,8 @@ assigned globally.
 ``TokenCreator``
 ================
 
-The ``TokenCreator`` grants the permissions to create, view, and revoke the user's own access
-tokens. It can only be assigned globally.
+The ``TokenCreator`` grants users the ability to create, view, and revoke their own access tokens.
+It can only be assigned globally.
 
 ``ClusterAdmin``
 ================
