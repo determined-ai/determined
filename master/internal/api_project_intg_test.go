@@ -473,16 +473,18 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+4)
 
 	expectedMetadata := &projectv1.ProjectColumn{
-		Column:   "metadata.string_key",
-		Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
-		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Column:    "metadata.string_key",
+		Location:  projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+		Type:      projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable: true,
 	}
 	require.Equal(t, expectedMetadata, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
 
 	expectedMetadata = &projectv1.ProjectColumn{
-		Column:   "metadata.nested.string_key",
-		Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
-		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Column:    "metadata.nested.string_key",
+		Location:  projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+		Type:      projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable: true,
 	}
 	require.Equal(t, expectedMetadata, getColumnsResp.Columns[len(getColumnsResp.Columns)-2])
 }
