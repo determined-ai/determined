@@ -1,3 +1,5 @@
+export VERSION := $(shell ./version.sh)
+
 .PHONY: all
 all:
 	$(MAKE) get-deps
@@ -32,6 +34,11 @@ go-version-check:
 
 .PHONY: package
 package:
+	$(MAKE) -C agent $@
+	$(MAKE) -C master $@
+
+.PHONY: package-dryrun
+package-dryrun:
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 

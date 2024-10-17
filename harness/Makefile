@@ -2,6 +2,8 @@ TEST_RESULTS_DIR=/tmp/test-results
 py_bindings_dest=determined/common/api/bindings.py
 cuda_available=$(shell python -c "import torch; print(torch.cuda.is_available())") \
 
+export VERSION:=$(shell ../version.sh)
+
 .PHONY: build
 build:
 	PYTHONWARNINGS=ignore:Normalizing:UserWarning:setuptools.dist \
@@ -14,6 +16,12 @@ publish:
 .PHONY: publish-ee
 publish-ee:
 	twine upload --verbose --non-interactive dist/* --repository-url https://push.fury.io/determined-ai
+
+.PHONY: publish-dryrun
+publish-dryrun:
+	twine upload --verbose --non-interactive --repository testpypi dist/*
+
+publish-ee-dryrun: ;
 
 .PHONY: fmt
 fmt:

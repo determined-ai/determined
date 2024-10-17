@@ -10,6 +10,7 @@ import boto3
 import termcolor
 from botocore import exceptions
 
+import determined
 from determined import cli
 from determined.deploy import errors
 from determined.deploy.aws import aws, constants, preflight
@@ -512,6 +513,7 @@ args_description = cli.Cmd(
                 cli.Arg(
                     "--det-version",
                     type=str,
+                    default=determined.__version__,
                     help=argparse.SUPPRESS,
                 ),
                 cli.Arg(

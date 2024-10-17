@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -xeuo pipefail
 
-VERSION=$(cat VERSION)
+VERSION=$(./version.sh)
 GO_LDFLAGS="-X github.com/determined-ai/determined/master/version.Version=${VERSION}"
 
 nodemon --watch './**/*' -e go --signal SIGTERM --exec \
