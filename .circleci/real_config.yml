@@ -1533,8 +1533,12 @@ commands:
 
 jobs:
   start-stop-devcluster:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
     docker:
       - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -4843,7 +4847,7 @@ workflows:
     #triggers:
     #  - schedule:
     #      cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
-    #      filters: *release-upgrade  # Only runs on the release branches
+    #      filters: *release-upgrade  # Only runs on the release branches  
     jobs:
       - build-proto
       - build-helm
