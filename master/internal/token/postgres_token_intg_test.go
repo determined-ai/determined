@@ -116,7 +116,7 @@ func TestUpdateAccessToken(t *testing.T) {
 
 	// Test before updating Access token
 	description := "description"
-	require.False(t, accessToken.Revoked)
+	require.True(t, accessToken.RevokedAt.IsZero())
 	require.NotEqual(t, description, accessToken.Description)
 
 	opt := AccessTokenUpdateOptions{Description: &description, SetRevoked: true}
@@ -124,7 +124,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test after updating access token
-	require.True(t, tokenInfo.Revoked)
+	require.False(t, tokenInfo.RevokedAt.IsZero())
 	require.Contains(t, description, tokenInfo.Description.String)
 
 	// Delete from DB by UserID for cleanup
@@ -227,7 +227,7 @@ func getAccessToken(ctx context.Context, userID model.UserID) ([]model.UserSessi
 	err := db.Bun().NewSelect().
 		Table("user_sessions").
 		Where("user_id = ?", userID).
-		Where("revoked = ?", false).
+		Where("revoked_at IS NULL").
 		Where("token_type = ?", model.TokenTypeAccessToken).
 		Scan(ctx, &tokenInfos)
 	if err != nil {

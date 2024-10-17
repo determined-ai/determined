@@ -8,7 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// TokenAuthZPermissive is the permission implementation.
+// TokenAuthZPermissive is an authz provider that calls RBAC for side effects.
 type TokenAuthZPermissive struct{}
 
 // CanCreateAccessToken calls RBAC authz but enforces basic authz.

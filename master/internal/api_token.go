@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -64,16 +63,16 @@ func (a *apiServer) GetAccessTokens(
 		return nil, err
 	}
 
-	sortColMap := map[apiv1.GetAccessTokensRequest_SortBy]string{
+	sortCols := map[apiv1.GetAccessTokensRequest_SortBy]string{
 		apiv1.GetAccessTokensRequest_SORT_BY_UNSPECIFIED: "id",
 		apiv1.GetAccessTokensRequest_SORT_BY_USER_ID:     "user_id",
 		apiv1.GetAccessTokensRequest_SORT_BY_EXPIRY:      "expiry",
 		apiv1.GetAccessTokensRequest_SORT_BY_CREATED_AT:  "created_at",
 		apiv1.GetAccessTokensRequest_SORT_BY_TOKEN_TYPE:  "token_type",
-		apiv1.GetAccessTokensRequest_SORT_BY_REVOKED:     "revoked",
+		apiv1.GetAccessTokensRequest_SORT_BY_REVOKED:     "revoked_at",
 		apiv1.GetAccessTokensRequest_SORT_BY_DESCRIPTION: "description",
 	}
-	orderByMap := map[apiv1.OrderBy]string{
+	orderDirections := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
@@ -88,7 +87,7 @@ func (a *apiServer) GetAccessTokens(
 		Column("us.expiry").
 		Column("us.created_at").
 		Column("us.token_type").
-		Column("us.revoked").
+		Column("us.revoked_at").
 		Column("us.description")
 
 	var userIDForGivenUsername model.UserID
@@ -116,7 +115,7 @@ func (a *apiServer) GetAccessTokens(
 
 	if !req.ShowInactive {
 		query.Where("us.expiry > ?", time.Now().UTC()).
-			Where("us.revoked = false")
+			Where("us.revoked_at IS NULL")
 	}
 
 	// Get only Access token type
@@ -133,11 +132,11 @@ func (a *apiServer) GetAccessTokens(
 		})
 	}
 
-	orderBy, ok := orderByMap[req.OrderBy]
+	orderBy, ok := orderDirections[req.OrderBy]
 	if !ok {
 		return nil, fmt.Errorf("unsupported order by %s", req.OrderBy)
 	}
-	sortColumn, ok := sortColMap[req.SortBy]
+	sortColumn, ok := sortCols[req.SortBy]
 	if !ok {
 		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
 	}

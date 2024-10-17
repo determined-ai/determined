@@ -207,13 +207,12 @@ func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model
 		Username: usernameForGivenUserID,
 	})
 	require.NoError(t, err)
-	require.NotNil(t, tokenInfos)
+	require.NotNil(t, tokenInfos.TokenInfo)
 
 	tokenID := model.TokenID(0)
 	if desc != "" {
 		descFound := false
 		for _, tokenInfo := range tokenInfos.TokenInfo {
-			// Check if user ID matches
 			if tokenInfo.Description == desc {
 				descFound = true
 				tokenID = model.TokenID(tokenInfo.Id)

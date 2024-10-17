@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/saas"
@@ -25,9 +26,6 @@ const (
 	// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
 	PersonalGroupPostfix = "DeterminedPersonalGroup"
 )
-
-// CurrentTimeNowInUTC stores the current time in UTC for time insertions.
-var CurrentTimeNowInUTC time.Time
 
 // ErrRemoteUserTokenExpired notifies that the remote user's token has expired.
 var ErrRemoteUserTokenExpired = status.Error(codes.Unauthenticated, "remote user token expired")
@@ -47,14 +45,14 @@ func WithInheritedClaims(claims map[string]string) UserSessionOption {
 
 // StartSession creates a row in the user_sessions table.
 func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOption) (string, error) {
-	CurrentTimeNowInUTC = time.Now().UTC()
+	now := time.Now().UTC()
 
 	userSession := &model.UserSession{
 		UserID:    user.ID,
-		Expiry:    CurrentTimeNowInUTC.Add(SessionDuration),
-		CreatedAt: CurrentTimeNowInUTC,
+		Expiry:    now.Add(SessionDuration),
+		CreatedAt: now,
 		TokenType: model.TokenTypeUserSession,
-		Revoked:   false,
+		RevokedAt: null.Time{},
 	}
 
 	for _, opt := range opts {
@@ -64,7 +62,7 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(userSession).
-			Column("user_id", "expiry", "created_at", "token_type", "revoked").
+			Column("user_id", "expiry", "created_at", "token_type", "revoked_at").
 			Returning("id").
 			Exec(ctx, &userSession.ID)
 		if err != nil {
@@ -162,7 +160,7 @@ func Update(
 func revokeUserAccessTokens(ctx context.Context, tx bun.Tx, userID model.UserID) error {
 	_, err := tx.NewUpdate().
 		Table("user_sessions").
-		Set("revoked = ?", true).
+		Set("revoked_at = ?", time.Now().UTC()).
 		Where("user_id = ?", userID).
 		Where("token_type = ?", model.TokenTypeAccessToken).
 		Exec(ctx)
@@ -438,7 +436,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		return nil, nil, db.ErrNotFound
 	}
 
-	if session.TokenType == model.TokenTypeAccessToken && session.Revoked {
+	if session.TokenType == model.TokenTypeAccessToken && !session.RevokedAt.IsZero() {
 		return nil, nil, ErrAccessTokenRevoked
 	}
 
