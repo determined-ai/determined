@@ -6,6 +6,7 @@ package configpolicy
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"testing"
 	"time"
 
@@ -204,6 +205,169 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 		Constraints:     DefaultConstraints(),
 	})
 	require.ErrorContains(t, err, "violates foreign key constraint")
+}
+
+func TestUpdateTaskConfigPolicies(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+	user := db.RequireMockUser(t, pgDB)
+
+	workspaceIDs := []int32{}
+
+	defer func() {
+		if len(workspaceIDs) > 0 {
+			err := db.CleanupMockWorkspace(workspaceIDs)
+			if err != nil {
+				log.Errorf("error when cleaning up mock workspaces")
+			}
+		}
+	}()
+
+	config1 := `
+{ 
+	"resources": {
+  		"priority": 99
+	}
+	"max_restarts": 20,
+}
+`
+	config2 := `
+{ 
+	"resources": {
+  		"priority": 100
+	}
+	"max_restarts": 25,
+}
+`
+
+	constraints1 := `
+{
+	"resources": {
+		"max_slots": 50
+	}
+	"priority_limit": 99,
+}
+`
+	constraints2 := `
+{
+	"resources": {
+		"max_slots": 80
+	}
+	"priority_limit": 100,
+}
+`
+	tests := []struct {
+		name        string
+		tcps        *model.TaskConfigPolicies
+		tcpsUpdated *model.TaskConfigPolicies
+	}{
+		{
+			"config to config and constraints", &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config1,
+			}, &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config2,
+				Constraints:     &constraints2,
+			},
+		},
+		{
+			"constraints to config and constraints", &model.TaskConfigPolicies{
+				LastUpdatedBy: user.ID,
+				WorkloadType:  model.ExperimentType,
+				Constraints:   &constraints1,
+			}, &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config2,
+				Constraints:     &constraints2,
+			},
+		},
+		{
+			"config and constraints to config and constraints", &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config1,
+				Constraints:     &constraints1,
+			}, &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config2,
+				Constraints:     &constraints2,
+			},
+		},
+		{
+			"config and constraints to only config", &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config1,
+				Constraints:     &constraints1,
+			}, &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config2,
+			},
+		},
+		{
+			"config and constraints to only constraints", &model.TaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: &config1,
+				Constraints:     &constraints1,
+			}, &model.TaskConfigPolicies{
+				LastUpdatedBy: user.ID,
+				WorkloadType:  model.ExperimentType,
+				Constraints:   &constraints2,
+			},
+		},
+	}
+
+	whitespace := regexp.MustCompile(`[\s]`)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+			_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
+			require.NoError(t, err)
+			workspaceIDs = append(workspaceIDs, int32(w.ID))
+
+			test.tcps.WorkspaceID = &w.ID
+			test.tcpsUpdated.WorkspaceID = &w.ID
+
+			// Set config policies.
+			err = SetTaskConfigPolicies(ctx, test.tcps)
+			require.NoError(t, err)
+
+			// Update config policies.
+			err = SetTaskConfigPolicies(ctx, test.tcpsUpdated)
+			require.NoError(t, err)
+
+			// Verify config policies are updated properly.
+			tcps, err := GetTaskConfigPolicies(ctx, &w.ID, test.tcps.WorkloadType)
+			require.NoError(t, err)
+
+			if test.tcpsUpdated.InvariantConfig != nil {
+				expectedInvariantConfig := whitespace.ReplaceAllString(
+					*test.tcpsUpdated.InvariantConfig,
+					"")
+				require.NotNil(t, tcps.InvariantConfig)
+				require.Equal(t, expectedInvariantConfig,
+					*tcps.InvariantConfig)
+			}
+			if test.tcpsUpdated.Constraints != nil {
+				expectedConstraints := whitespace.ReplaceAllString(*test.tcpsUpdated.Constraints,
+					"")
+				require.NotNil(t, tcps.Constraints)
+				require.Equal(t, expectedConstraints, *tcps.Constraints)
+			}
+		})
+	}
 }
 
 // Test the enforcement of the primary key on the task_config_polciies table.
