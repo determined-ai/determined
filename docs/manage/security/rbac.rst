@@ -532,6 +532,12 @@ assigned globally.
    where ``ROLE_ID`` is the integer role identifier, as listed in ``det rbac list-roles``. To
    disable the assignment of any roles to the newly created workspace, set ``enabled: false``.
 
+``TokenCreator``
+================
+
+The ``TokenCreator`` grants users the ability to create, view, and revoke their own access tokens.
+It can only be assigned globally.
+
 ``ClusterAdmin``
 ================
 
