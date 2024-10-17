@@ -94,11 +94,16 @@ class Trainer:
                 of ``collections.abc.Container`` (list, tuple, etc.). For example, ``Batch(100)``
                 would validate every 100 batches, while ``Batch([5, 30, 45])`` would validate
                 after every 5th, 30th, and 45th batch.
-            max_length: The maximum number of steps to train for. This value is required and
-                only applicable in local training mode. For on-cluster training, this value will
-                be ignored; the searcher’s ``max_length`` must be configured from the experiment
-                configuration. This is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which takes an
-                ``int``. For example, ``Epoch(1)`` would train for a maximum length of one epoch.
+            max_length: The maximum number of steps to train for. This is a ``TrainUnit`` type
+                (``Batch`` or ``Epoch``) which takes an ``int``. For example, ``Epoch(1)`` would
+                train for a maximum length of one epoch.
+
+                .. note::
+
+                   If using an ASHA searcher, this value should match the searcher config values in
+                   the experiment config (i.e. ``Epoch(1)`` = `max_time: 1` and `time_metric:
+                   "epoch"`).
+
             reporting_period: The number of steps to train for before reporting metrics and
                 searcher progress. For local training mode, metrics are printed to stdout. This
                 is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which can take an ``int`` or
@@ -179,18 +184,14 @@ class Trainer:
             # Backwards compatibility: try to parse legacy `searcher.max_length` if `max_length`
             # isn't passed in.
             if max_length is None:
-                max_length_val = self._core.searcher._parse_searcher_max_length(
-                    self._info.trial._config
-                )
+                max_length_val = core._parse_searcher_max_length(self._info.trial._config)
                 if max_length_val:
                     logger.warning(
-                        "Configuring `max_length` from the `searcher.max_length` experiment config, "
-                        "which is deprecated and will be removed in a future release. Please "
-                        "set `fit(max_length=X)` with your desired training length directly."
+                        "Configuring `max_length` from the `searcher.max_length` experiment config,"
+                        " which was deprecated in XXYYZZ and will be removed in a future release. "
+                        "Please set `fit(max_length=X)` with your desired training length directly."
                     )
-                    max_length_unit = self._core.searcher._parse_searcher_units(
-                        self._info.trial._config
-                    )
+                    max_length_unit = core._parse_searcher_units(self._info.trial._config)
                     max_length = pytorch.TrainUnit._from_searcher_unit(
                         max_length_val, max_length_unit, global_batch_size
                     )
@@ -200,6 +201,8 @@ class Trainer:
                 raise ValueError(
                     "`fit(max_length=X)` must be set with your desired training length."
                 )
+            if not isinstance(max_length.value, int):
+                raise TypeError("max_length must be configured in TrainUnit(int) types.")
 
             _check_searcher_length(exp_conf=self._info.trial._config, max_length=max_length)
 

@@ -80,6 +80,9 @@ class MNistTrial(pytorch.PyTorchTrial):
         return {
             "validation_loss": validation_loss,
             "accuracy": accuracy,
+            # Optional: if using the ASHA searcher, report current batch/epoch steps.
+            "batch": self.context.current_train_batch(),
+            "epoch": self.context.current_train_epoch(),
         }
 
 

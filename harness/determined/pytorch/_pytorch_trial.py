@@ -119,8 +119,8 @@ class Epoch(TrainUnit):
     Epoch step type (e.g. Epoch(1) defines 1 epoch)
     """
 
-    def __str__(self):
-        return f"Epoch(value={self.value})"
+    def __str__(self) -> str:
+        return f"Epoch({self.value})"
 
 
 class Batch(TrainUnit):
@@ -132,8 +132,8 @@ class Batch(TrainUnit):
     def _from_records(records: int, global_batch_size: int) -> "Batch":
         return Batch(max(records // global_batch_size, 1))
 
-    def __str__(self):
-        return f"Batch(value={self.value})"
+    def __str__(self) -> str:
+        return f"Batch({self.value})"
 
 
 class _TrainBoundaryType(enum.Enum):
@@ -499,6 +499,8 @@ class _PyTorchTrialController:
 
     def _report_training_progress(self) -> None:
         assert self.state
+        assert isinstance(self.max_length.value, int)
+
         if isinstance(self.max_length, Batch):
             progress = self.state.batches_trained / self.max_length.value
         elif isinstance(self.max_length, Epoch):
@@ -507,29 +509,6 @@ class _PyTorchTrialController:
             raise ValueError(f"unexpected train unit type {type(self.max_length)}")
 
         self.core_context.train.report_progress(progress=progress)
-
-    def _report_validation_metrics(self, metrics: Dict[str, Any]) -> None:
-        assert self.state
-        if isinstance(self.max_length, Batch):
-            if "batch" in metrics:
-                logger.warning(
-                    f"not overriding existing `batch: {metrics['batch']}` in validation metrics"
-                )
-            else:
-                metrics.update({"batch": self.state.batches_trained})
-        elif isinstance(self.max_length, Epoch):
-            if "epoch" in metrics:
-                logger.warning(
-                    f"not overriding existing `epoch: {metrics['epoch']}` in validation metrics"
-                )
-            else:
-                metrics.update({"epoch": self.state.epochs_trained})
-        else:
-            raise ValueError(f"unexpected train unit type {type(self.max_length)}")
-
-        self.core_context.train.report_validation_metrics(
-            steps_completed=self.state.batches_trained, metrics=metrics
-        )
 
     def _checkpoint_is_current(self) -> bool:
         assert self.state
@@ -1010,7 +989,9 @@ class _PyTorchTrialController:
 
             # Get best validation before reporting metrics.
             best_validation_before = self.core_context.train.get_experiment_best_validation()
-            self._report_validation_metrics(metrics=metrics)
+            self.core_context.train.report_validation_metrics(
+                steps_completed=self.state.batches_trained, metrics=metrics
+            )
 
         should_checkpoint = False
 
