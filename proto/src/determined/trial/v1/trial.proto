@@ -150,7 +150,7 @@ message Trial {
   // run).
   optional google.protobuf.Struct metadata = 23;
   // The log signals.
-  string log_signal = 24;
+  optional string log_signal = 24;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

@@ -1,0 +1,20 @@
+- name: recognize action field for backward compatibility
+  backward_compatiblity: http://determined.ai/schemas/expconf/v0/log-policies.json
+  legacy:
+    - pattern: a
+      action:
+        type: cancel_retries
+    - pattern: a
+      action:
+        type: exclude_node
+    - pattern: b
+      action:
+        type: exclude_node
+  new:
+    - pattern: a
+      actions:
+        - exclude_node
+        - cancel_retries
+    - pattern: b
+      actions:
+        - exclude_node

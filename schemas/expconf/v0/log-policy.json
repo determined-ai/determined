@@ -3,22 +3,52 @@
     "$id": "http://determined.ai/schemas/expconf/v0/log-policy.json",
     "title": "LogPolicy",
     "additionalProperties": false,
-    "required": [
-        "pattern",
-        "action"
-    ],
     "type": "object",
     "properties": {
         "pattern": {
+            "$comment": "default doesn't apply here because pattern is a required field",
             "type": [
-                "string"
-            ]
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "actions": {
+            "$comment": "\"default\": [] is for passing lint. The actual default can be found in const.go",
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            },
+            "default": null
         },
         "action": {
             "type": [
-                "object"
+                "object",
+                "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
+            "default": null
+        }
+    },
+    "checks": {
+        "both the depreated \"action\" field and the newer \"actions\" field are detected": {
+            "oneOf": [
+                {
+                    "required": [
+                        "pattern",
+                        "actions"
+                    ]
+                },
+                {
+                    "required": [
+                        "pattern",
+                        "action"
+                    ]
+                }
+            ]
         }
     }
 }

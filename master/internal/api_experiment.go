@@ -1616,9 +1616,10 @@ func (a *apiServer) ContinueExperiment(
 			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.
 									Set("restarts = 0").
 									Set("end_time = null").
+									Set("log_signal = null").
 									Where("id IN (?)", bun.In(trialIDs)).
 									Exec(ctx); err != nil {
-				return fmt.Errorf("zeroing out trial restarts: %w", err)
+				return fmt.Errorf("zeroing out trial stats: %w", err)
 			}
 		}
 
