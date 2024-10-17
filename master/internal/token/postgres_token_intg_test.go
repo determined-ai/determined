@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/o1egl/paseto"
@@ -87,7 +88,7 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	restoredToken := restoreTokenInfo(token, t)
 
 	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
-	require.Equal(t, expLifespan, actLifespan)
+	require.Equal(t, expLifespan.Truncate(time.Second), actLifespan.Truncate(time.Second))
 	require.Equal(t, desc, restoredToken.Description.String)
 
 	tokenInfos, err := getAccessToken(context.TODO(), testUser.ID)

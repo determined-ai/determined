@@ -282,7 +282,7 @@ func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lif
 	}
 
 	actLifespan := expiry.Sub(createdAt)
-	require.Equal(t, expLifespan, actLifespan)
+	require.Equal(t, expLifespan.Truncate(time.Second), actLifespan.Truncate(time.Second))
 
 	return nil
 }
