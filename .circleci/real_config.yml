@@ -100,7 +100,7 @@ release-dryrun: &release-dryrun
 
 release-upgrade: &release-upgrade
   branches:
-    allow:
+    only:
       - /v\d+\.\d+\.\d+(rc\d+)?/
     ignore:
       - /.*/
