@@ -1536,25 +1536,26 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
-      - checkout-with-sm
+      - checkout
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
       - attach_workspace:
           at: .
-      - react-get-deps
       - setup-python-venv:
           determined: true
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
       - install-protoc
-      - license-gen
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
-      - install-devcluster
-      - start-devcluster
+      - run: devcluster --oneshot -c .circleci/devcluster/double.devcluster.yaml --target-stage agent1 --no-guess-host || circleci-agent step halt
       - run: sleep 10
       - run: |
           git fetch origin main
