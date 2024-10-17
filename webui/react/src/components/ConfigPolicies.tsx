@@ -11,10 +11,12 @@ import useConfirm from 'hew/useConfirm';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import { isEmpty } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import Link from 'components/Link';
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
+import { paths } from 'routes/utils';
 import {
   deleteGlobalConfigPolicies,
   deleteWorkspaceConfigPolicies,
@@ -85,13 +87,14 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
   const [form] = Form.useForm<FormInputs>();
 
   const [disabled, setDisabled] = useState(true);
+  const [updatedYAML, setUpdatedYAML] = useState<string>();
 
   const applyMessage = global
     ? "You're about to apply these configuration policies to the cluster."
     : "You're about to apply these configuration policies to the workspace.";
   const viewMessage = global
-    ? 'Global configuration policies are being applied to the cluster.'
-    : 'Global configuration policies are being applied to the workspace.';
+    ? 'Configuration policies are being applied to the cluster.'
+    : 'Configuration policies are being applied to the workspace.';
   const confirmMessageEnding = global
     ? 'underlying workspaces, projects, and submitted experiments in the cluster.'
     : 'underlying projects and their experiments in this workspace.';
@@ -110,6 +113,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
           ? await updateWorkspaceConfigPolicies({ configPolicies, workloadType, workspaceId })
           : await deleteWorkspaceConfigPolicies({ workloadType, workspaceId });
       }
+      setUpdatedYAML(configPolicies);
       openToast({ title: SUCCESS_MESSAGE });
     } catch (error) {
       handleError(error);
@@ -157,9 +161,24 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
 
   const canModify = global ? canModifyGlobalConfigPolicies : canModifyWorkspaceConfigPolicies;
 
+  useEffect(() => {
+    if (updatedYAML) setDisabled(form.getFieldValue(YAML_FORM_ITEM_NAME) === updatedYAML);
+  }, [updatedYAML, form]);
+
   const handleChange = () => {
-    setDisabled(hasErrors(form) || form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML);
+    setDisabled(
+      hasErrors(form) ||
+        (updatedYAML
+          ? form.getFieldValue(YAML_FORM_ITEM_NAME) === updatedYAML
+          : form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML),
+    );
   };
+
+  const docsLink = (
+    <Link external path={paths.docs('/manage/config-policies.html')} popout>
+      Learn more
+    </Link>
+  );
 
   if (rbacLoading) return <Spinner spinning />;
 
@@ -174,11 +193,12 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
                   Apply
                 </Button>
               }
+              description={docsLink}
               message={applyMessage}
               showIcon
             />
           ) : (
-            <Alert message={viewMessage} showIcon />
+            <Alert description={docsLink} message={viewMessage} showIcon />
           )}
         </div>
       </Row>
