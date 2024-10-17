@@ -1,3 +1,5 @@
+import { validate } from 'uuid';
+
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { TaskLogs } from 'e2e/models/pages/TaskLogs';
 import { WorkspaceDetails } from 'e2e/models/pages/WorkspaceDetails';
@@ -27,8 +29,20 @@ test.describe('Workspace Tasks', () => {
 
       await workspaceDetails.taskList.taskKillModal.pwLocator.waitFor();
       await workspaceDetails.taskList.taskKillModal.killButton.pwLocator.click();
-
       await expect(firstRow.state.pwLocator).toHaveText('Terminated');
+    });
+
+    await test.step('Copy task ID', async () => {
+      try {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+      } catch {
+        return;
+      }
+
+      await (await firstRow.actions.open()).copy.pwLocator.click();
+      const handle = await authedPage.evaluateHandle(() => navigator.clipboard.readText());
+      const clipboard = await handle.jsonValue();
+      expect(validate(clipboard)).toBeTruthy();
     });
 
     await test.step('View logs', async () => {
