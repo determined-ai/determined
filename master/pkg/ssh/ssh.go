@@ -72,6 +72,7 @@ func generateRSAKey(rsaKeySize int) (PrivateAndPublicKeys, error) {
 
 func generateECDSAKey() (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
+	// Curve size currently not configurable, using the NIST recommendation.
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return generatedKeys, errors.Wrap(err, "unable to generate ECDSA private key")
