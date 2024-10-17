@@ -4827,7 +4827,7 @@ workflows:
   test-e2e-upgrade:
     triggers:
       - schedule:
-          # cron: "0 * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
+          cron: "*/5 * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
           filters: *release-upgrade  # Only runs on the release branches
     jobs:
       - build-proto
