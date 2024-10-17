@@ -270,14 +270,33 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    loadedSelectedExperimentIds.forEach((info) => {
-      rows = rows.add(info.index);
-    });
+    if (settings.selection.type === 'ONLY_IN') {
+      loadedSelectedExperimentIds.forEach((exp) => {
+        rows = rows.add(exp.index);
+      });
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      rows = rows.add([0, total.getOrElse(1) - 1]);
+      settings.selection.exclusions.forEach((exc) => {
+        const excIndex = loadedSelectedExperimentIds.get(exc)?.index;
+        if (excIndex !== undefined) {
+          rows = rows.remove(excIndex);
+        }
+      });
+    }
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [loadedSelectedExperimentIds]);
+  }, [loadedSelectedExperimentIds, settings.selection, total]);
+
+  const selectionSize = useMemo(() => {
+    if (settings.selection.type === 'ONLY_IN') {
+      return settings.selection.selections.length;
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      return total.getOrElse(0) - settings.selection.exclusions.length;
+    }
+    return 0;
+  }, [settings.selection, total]);
 
   const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
@@ -906,35 +925,36 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
+  const isRangeSelected = useCallback(
+    (range: [number, number]): boolean => {
+      if (settings.selection.type === 'ONLY_IN') {
+        const includedSet = new Set(settings.selection.selections);
+        return rowRangeToIds(range).every((id) => includedSet.has(id));
+      } else if (settings.selection.type === 'ALL_EXCEPT') {
+        const excludedSet = new Set(settings.selection.exclusions);
+        return rowRangeToIds(range).every((id) => !excludedSet.has(id));
+      }
+      return false; // should never be reached
+    },
+    [rowRangeToIds, settings.selection],
+  );
+
+  const handleHeaderClick = useCallback(
+    (columnId: string): void => {
+      if (columnId === MULTISELECT) {
+        if (isRangeSelected([0, settings.pageLimit])) {
+          handleSelectionChange?.('remove', [0, settings.pageLimit]);
+        } else {
+          handleSelectionChange?.('add', [0, settings.pageLimit]);
+        }
+      }
+    },
+    [handleSelectionChange, isRangeSelected, settings.pageLimit],
+  );
+
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
-      const items: MenuItem[] = [
-        settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
-          ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                handleSelectionChange?.('remove-all');
-              },
-            }
-          : null,
-        ...[5, 10, 25].map((n) => ({
-          key: `select-${n}`,
-          label: `Select first ${n}`,
-          onClick: () => {
-            handleSelectionChange?.('set', [0, n]);
-            dataGridRef.current?.scrollToTop();
-          },
-        })),
-        {
-          key: 'select-all',
-          label: 'Select all',
-          onClick: () => {
-            handleSelectionChange?.('add', [0, settings.pageLimit]);
-          },
-        },
-      ];
-      return items;
+      return [];
     }
     const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
     if (!column) {
@@ -1097,6 +1117,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={allSelectedExperimentIds}
+        selectionSize={selectionSize}
         sorts={sorts}
         total={total}
         onActionComplete={handleActionComplete}
@@ -1172,6 +1193,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
+                onHeaderClicked={handleHeaderClick}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onSelectionChange={handleSelectionChange}
               />

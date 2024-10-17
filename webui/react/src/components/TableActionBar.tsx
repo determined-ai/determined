@@ -107,6 +107,7 @@ interface Props {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
+  selectionSize: number;
   sorts: Sort[];
   pinnedColumnsCount?: number;
   total: Loadable<number>;
@@ -150,6 +151,7 @@ const TableActionBar: React.FC<Props> = ({
   bannedFilterColumns,
   bannedSortColumns,
   entityCopy,
+  selectionSize,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -382,8 +384,6 @@ const TableActionBar: React.FC<Props> = ({
     }, [] as MenuItem[]);
   }, [availableBatchActions]);
 
-  const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
-
   return (
     <div className={css.base} data-test-component="tableActionBar">
       <Row>
@@ -420,7 +420,7 @@ const TableActionBar: React.FC<Props> = ({
             />
             <OptionsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
             {selectedExperimentIds.length > 0 && (
-              <Dropdown menu={editMenuItems} onClick={handleAction}>
+              <Dropdown menu={editMenuItems} onClick={handleBatchAction}>
                 <Button data-test="actionsDropdown" hideChildren={isMobile}>
                   Actions
                 </Button>
@@ -430,7 +430,7 @@ const TableActionBar: React.FC<Props> = ({
               labelPlural={labelPlural}
               labelSingular={labelSingular}
               pageSize={pageSize}
-              selectedCount={selectedExperimentIds.length}
+              selectedCount={selectionSize}
               total={total}
               onActualSelectAll={onActualSelectAll}
               onClearSelect={onClearSelect}
