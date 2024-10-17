@@ -66,11 +66,11 @@ release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
       - /.*/
+      - carolinac/upgrade-tests
   tags:
     only:
       # Tags like: v2.5.0, v3.0.1+rc2
       - /v\d+\.\d+\.\d+(rc\d+)?/
-      - carolinac/upgrade-tests
 
 rc-filters: &rc-filters
   branches:
@@ -4822,9 +4822,9 @@ workflows:
   test-e2e-upgrade:
     jobs:
       - build-proto:
-        filters: *release-and-rc-filters
+          filters: *release-and-rc-filters
       - build-helm:
-        filters: *release-and-rc-filters
+          filters: *release-and-rc-filters
       - build-react:
           dev-mode: true
           filters: *release-and-rc-filters
