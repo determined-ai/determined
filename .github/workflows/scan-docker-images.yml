@@ -37,7 +37,7 @@ jobs:
       - name: Scan ${{ matrix.image }}
         id: scan
         continue-on-error: true
-        uses: anchore/scan-action@v4
+        uses: anchore/scan-action@v5
         with:
           image: ${{ matrix.image }}
           acs-report-enable: true
