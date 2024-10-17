@@ -37,7 +37,7 @@ func (b LogPoliciesConfigV0) WithDefaults() LogPoliciesConfigV0 {
 	return b
 }
 
-// Merge implemenets the mergable interface.
+// Merge implements the Mergable psuedo-interface.
 func (b LogPoliciesConfigV0) Merge(
 	other LogPoliciesConfigV0,
 ) LogPoliciesConfigV0 {
@@ -150,80 +150,67 @@ type LogPolicyV0 struct {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (b *LogPolicyV0) UnmarshalJSON(data []byte) error {
-	type DefaultParser LogPolicyV0
-	var jsonItems DefaultParser
-	if err := json.Unmarshal(data, &jsonItems); err != nil {
-		return fmt.Errorf("failed to parse log policy: %w", err)
-	}
-	b.RawPattern = jsonItems.RawPattern
+	// First, check if we can unmarshal the log policy item as a legacy item.
+	type LegacyCancelRetries struct {}
 
-	// Backward compatiblity. Move data in the legacy action field to the newer actions field.
-	if jsonItems.RawLegacyAction != nil && jsonItems.RawActions == nil {
-		if jsonItems.RawLegacyAction.RawCancelRetries != nil {
-			b.RawActions = []LogActionV0{{CancelRetries: &LogActionCancelRetries{}}}
-		} else if jsonItems.RawLegacyAction.RawExcludeNode != nil {
-			b.RawActions = []LogActionV0{{ExcludeNode: &LogActionExcludeNode{}}}
+	type LegacyExcludeNode struct {}
+
+	type LegacyAction struct {
+		CancelRetries *LegacyCancelRetries `union:"type,cancel_retries" json:"-"`
+		ExcludeNode   *LegacyExcludeNode   `union:"type,exclude_node" json:"-"`
+	}
+
+	type LegacyPolicy struct {
+		Pattern string        `json:"pattern"`
+		Action  *LegacyAction  `json:"action"`
+	}
+
+	var legacy LegacyPolicy
+	err := json.Unmarshal(data, &legacy)
+	// For this to be a valid LegacyPolicy, the Action must have been provided.
+	if err == nil && legacy.Action != nil {
+		// Apply shim to bring legacy policy into the current format.
+		var action LogActionV0
+		if legacy.Action.CancelRetries {
+			action = LogActionV0{Type: LogActionTypeCancelRetries}
 		} else {
-			return fmt.Errorf("invalid legacy log action: %+v", jsonItems.RawLegacyAction)
+			action = LogActionV0{Type: LogActionTypeExcludeNode}
 		}
-		b.RawLegacyAction = nil
-	} else if jsonItems.RawLegacyAction == nil && jsonItems.RawActions != nil {
-		b.RawActions = jsonItems.RawActions
-	} else {
-		return fmt.Errorf("invalid log policy: %+v", jsonItems)
+		*b = LogPolicyV0{
+			RawPattern: legacy.Pattern,
+			RawActions: []LogActionV0{action},
+		}
+		return nil
 	}
 
-	return nil
-}
-
-// LogActionV0 is a policy to take after matching.
-//
-//go:generate ../gen.sh
-type LogLegacyActionV0 struct {
-	RawCancelRetries *LogLegacyActionCancelRetriesV0 `union:"type,cancel_retries" json:"-"`
-	RawExcludeNode   *LogLegacyActionExcludeNodeV0   `union:"type,exclude_node" json:"-"`
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (s LogLegacyActionV0) MarshalJSON() ([]byte, error) {
-	return union.MarshalEx(s, true)
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (s *LogLegacyActionV0) UnmarshalJSON(data []byte) error {
-	if err := union.Unmarshal(data, s); err != nil {
-		return err
-	}
-	type DefaultParser *LogLegacyActionV0
-	if err := json.Unmarshal(data, DefaultParser(s)); err != nil {
-		return fmt.Errorf("failed to parse LogLegacyActionV0: %w", err)
+	// Shimming is not necessary.
+	type DefaultParser *LogPolicyV0
+	if err := json.Unmarshal(data, DefaultParser(b)); err != nil {
+		return fmt.Errorf("failed to parse LogPolicyV0: %w", err)
 	}
 	return nil
 }
+
+type LogActionType string
+
+const LogActionTypeCancelRetries LogActionType = "cancel_retries"
+const LogActionTypeExcludeNodes LogActionType = "exclude_nodes"
+const LogActionTypeSignal LogActionType = "signal"
 
 // LogActionV0 is a policy to take after matching.
 type LogActionV0 struct {
-	Signal        *string
-	CancelRetries *LogActionCancelRetries
-	ExcludeNode   *LogActionExcludeNode
-}
+	Type LogActionType
 
-func (l LogActionV0) GetUnionMember() interface{} {
-	if l.Signal != nil {
-		return *l.Signal
-	} else if l.CancelRetries != nil {
-		return *l.CancelRetries
-	} else if l.ExcludeNode != nil {
-		return *l.ExcludeNode
-	}
-	panic("no union member defined")
+	// Only used by the "signal" action.
+	Signal string
 }
 
 // MarshalJSON implements the json.Marshaler interface.
 func (s LogActionV0) MarshalJSON() ([]byte, error) {
+	// XXX case statement here
 	if s.Signal != nil {
 		return json.Marshal(struct {
-			Signal string `json:"signal,omitempty"`
+			Signal string `json:"signal"`
 		}{Signal: *s.Signal})
 	} else if s.CancelRetries != nil {
 		return json.Marshal(cancelRetries)
@@ -238,44 +225,24 @@ func (s *LogActionV0) UnmarshalJSON(data []byte) error {
 	var action string
 	if err := json.Unmarshal(data, &action); err == nil {
 		switch action {
-		case cancelRetries:
-			s.CancelRetries = &LogActionCancelRetries{}
-		case excludeNode:
-			s.ExcludeNode = &LogActionExcludeNode{}
+		case LogActionTypeCancelRetries:
+			*s = LogActionV0{Type: LogActionTypeCancelRetries}
+			return nil
+		case LogActionTypeExcludeNode:
+			*s = LogActionV0{Type: LogActionTypeExcludeNode}
+			return nil
 		default:
 			return fmt.Errorf("invalid log action: %v", action)
 		}
 	}
 
 	// Handle Signal
-	out := struct {
-		Signal *string `json:"signal,omitempty"`
+	temp := struct {
+		Signal *string `json:"signal"`
 	}{}
-	if err := json.Unmarshal(data, &out); err == nil {
-		s.Signal = out.Signal
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return fmt.Errorf("failed to unmarshal log action: %q", string(data))
 	}
-
+	*s = LogActionV0{Type: LogActionTypeSignal, Signal: out.Signal}
 	return nil
-}
-
-// LogActionCancelRetries doesn't retry the trial if it fails.
-type LogActionCancelRetries struct{}
-
-// LogActionExcludeNodeV0 will exclude the node the log was seen on
-// (only for that trial) and reschedule.
-type LogActionExcludeNode struct{}
-
-// LogLegacyActionCancelRetriesV0 doesn't retry the trial if it fails.
-//
-//go:generate ../gen.sh
-type LogLegacyActionCancelRetriesV0 struct {
-	// This comment is needed to stop ../gen.sh from complaining.
-}
-
-// LogLegacyActionExcludeNodeV0 will exclude the node the log was seen on
-// (only for that trial) and reschedule.
-//
-//go:generate ../gen.sh
-type LogLegacyActionExcludeNodeV0 struct {
-	// This comment is needed to stop ../gen.sh from complaining.
 }
