@@ -4779,6 +4779,55 @@ class v1GenericTaskState(DetEnum):
     STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
     STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
 
+class v1GetAccessTokensRequestSortBy(DetEnum):
+    """Sort token info by the given field.
+    - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+    - SORT_BY_USER_ID: Returns token info sorted by user id.
+    - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+    - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+    - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+    - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
+    - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    USER_ID = "SORT_BY_USER_ID"
+    EXPIRY = "SORT_BY_EXPIRY"
+    CREATED_AT = "SORT_BY_CREATED_AT"
+    TOKEN_TYPE = "SORT_BY_TOKEN_TYPE"
+    REVOKED = "SORT_BY_REVOKED"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+
+class v1GetAccessTokensResponse(Printable):
+    """Response to GetAccessTokensRequest."""
+    pagination: "typing.Optional[v1Pagination]" = None
+
+    def __init__(
+        self,
+        *,
+        tokenInfo: "typing.Sequence[v1TokenInfo]",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
+    ):
+        self.tokenInfo = tokenInfo
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetAccessTokensResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "tokenInfo": [v1TokenInfo.from_json(x) for x in obj["tokenInfo"]],
+        }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "tokenInfo": [x.to_json(omit_unset) for x in self.tokenInfo],
+        }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
+        return out
+
 class v1GetActiveTasksCountResponse(Printable):
     """Response to GetActiveTasksCountRequest."""
 
@@ -10099,6 +10148,72 @@ class v1Pagination(Printable):
             out["total"] = self.total
         return out
 
+class v1PatchAccessTokenRequest(Printable):
+    """Patch user's access token info."""
+    description: "typing.Optional[str]" = None
+    setRevoked: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        tokenId: int,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        setRevoked: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.tokenId = tokenId
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(setRevoked, Unset):
+            self.setRevoked = setRevoked
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchAccessTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "tokenId": obj["tokenId"],
+        }
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "setRevoked" in obj:
+            kwargs["setRevoked"] = obj["setRevoked"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "tokenId": self.tokenId,
+        }
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "setRevoked" in vars(self):
+            out["setRevoked"] = self.setRevoked
+        return out
+
+class v1PatchAccessTokenResponse(Printable):
+    """Response to PatchAccessTokenRequest."""
+    tokenInfo: "typing.Optional[v1TokenInfo]" = None
+
+    def __init__(
+        self,
+        *,
+        tokenInfo: "typing.Union[v1TokenInfo, None, Unset]" = _unset,
+    ):
+        if not isinstance(tokenInfo, Unset):
+            self.tokenInfo = tokenInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchAccessTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "tokenInfo" in obj:
+            kwargs["tokenInfo"] = v1TokenInfo.from_json(obj["tokenInfo"]) if obj["tokenInfo"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "tokenInfo" in vars(self):
+            out["tokenInfo"] = None if self.tokenInfo is None else self.tokenInfo.to_json(omit_unset)
+        return out
+
 class v1PatchCheckpoint(Printable):
     """Request to change checkpoint database information."""
     resources: "typing.Optional[PatchCheckpointOptionalResources]" = None
@@ -11248,6 +11363,12 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.
     - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.
     - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.
+    - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.
+    - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.
+    - PERMISSION_TYPE_CREATE_TOKEN: Ability to create one's own token
+    - PERMISSION_TYPE_CREATE_OTHER_TOKEN: Ability to create another user's token
+    - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token
+    - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
     """
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
@@ -11304,6 +11425,12 @@ class v1PermissionType(DetEnum):
     MODIFY_WORKSPACE_CONFIG_POLICIES = "PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES"
     VIEW_GLOBAL_CONFIG_POLICIES = "PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES"
     VIEW_WORKSPACE_CONFIG_POLICIES = "PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES"
+    ADMINISTRATE_TOKEN = "PERMISSION_TYPE_ADMINISTRATE_TOKEN"
+    UPDATE_TOKEN = "PERMISSION_TYPE_UPDATE_TOKEN"
+    CREATE_TOKEN = "PERMISSION_TYPE_CREATE_TOKEN"
+    CREATE_OTHER_TOKEN = "PERMISSION_TYPE_CREATE_OTHER_TOKEN"
+    VIEW_OTHER_TOKEN = "PERMISSION_TYPE_VIEW_OTHER_TOKEN"
+    VIEW_TOKEN = "PERMISSION_TYPE_VIEW_TOKEN"
 
 class v1PolymorphicFilter(Printable):
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -11353,6 +11480,80 @@ class v1PolymorphicFilter(Printable):
             out["name"] = self.name
         if not omit_unset or "timeRange" in vars(self):
             out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
+        return out
+
+class v1PostAccessTokenRequest(Printable):
+    """Create the requested user's accessToken."""
+    description: "typing.Optional[str]" = None
+    lifespan: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        userId: int,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        lifespan: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.userId = userId
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(lifespan, Unset):
+            self.lifespan = lifespan
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAccessTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "userId": obj["userId"],
+        }
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "lifespan" in obj:
+            kwargs["lifespan"] = obj["lifespan"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "userId": self.userId,
+        }
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "lifespan" in vars(self):
+            out["lifespan"] = self.lifespan
+        return out
+
+class v1PostAccessTokenResponse(Printable):
+    """Response to PostAccessTokenRequest."""
+    token: "typing.Optional[str]" = None
+    tokenId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        token: "typing.Union[str, None, Unset]" = _unset,
+        tokenId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(token, Unset):
+            self.token = token
+        if not isinstance(tokenId, Unset):
+            self.tokenId = tokenId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAccessTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "token" in obj:
+            kwargs["token"] = obj["token"]
+        if "tokenId" in obj:
+            kwargs["tokenId"] = obj["tokenId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "token" in vars(self):
+            out["token"] = self.token
+        if not omit_unset or "tokenId" in vars(self):
+            out["tokenId"] = self.tokenId
         return out
 
 class v1PostAllocationAcceleratorDataRequest(Printable):
@@ -16331,6 +16532,83 @@ class v1TimestampFieldFilter(Printable):
             out["lte"] = self.lte
         return out
 
+class v1TokenInfo(Printable):
+    """TokenInfo represents a token entry in the database."""
+    createdAt: "typing.Optional[str]" = None
+    description: "typing.Optional[str]" = None
+    expiry: "typing.Optional[str]" = None
+    revoked: "typing.Optional[bool]" = None
+    tokenType: "typing.Optional[v1TokenType]" = None
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        userId: int,
+        createdAt: "typing.Union[str, None, Unset]" = _unset,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        expiry: "typing.Union[str, None, Unset]" = _unset,
+        revoked: "typing.Union[bool, None, Unset]" = _unset,
+        tokenType: "typing.Union[v1TokenType, None, Unset]" = _unset,
+    ):
+        self.id = id
+        self.userId = userId
+        if not isinstance(createdAt, Unset):
+            self.createdAt = createdAt
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(expiry, Unset):
+            self.expiry = expiry
+        if not isinstance(revoked, Unset):
+            self.revoked = revoked
+        if not isinstance(tokenType, Unset):
+            self.tokenType = tokenType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TokenInfo":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+            "userId": obj["userId"],
+        }
+        if "createdAt" in obj:
+            kwargs["createdAt"] = obj["createdAt"]
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "expiry" in obj:
+            kwargs["expiry"] = obj["expiry"]
+        if "revoked" in obj:
+            kwargs["revoked"] = obj["revoked"]
+        if "tokenType" in obj:
+            kwargs["tokenType"] = v1TokenType(obj["tokenType"]) if obj["tokenType"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+            "userId": self.userId,
+        }
+        if not omit_unset or "createdAt" in vars(self):
+            out["createdAt"] = self.createdAt
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "expiry" in vars(self):
+            out["expiry"] = self.expiry
+        if not omit_unset or "revoked" in vars(self):
+            out["revoked"] = self.revoked
+        if not omit_unset or "tokenType" in vars(self):
+            out["tokenType"] = None if self.tokenType is None else self.tokenType.value
+        return out
+
+class v1TokenType(DetEnum):
+    """Token type.
+    - TOKEN_TYPE_UNSPECIFIED: Default token type.
+    - TOKEN_TYPE_USER_SESSION: User Session token.
+    - TOKEN_TYPE_ACCESS_TOKEN: Access token.
+    """
+    UNSPECIFIED = "TOKEN_TYPE_UNSPECIFIED"
+    USER_SESSION = "TOKEN_TYPE_USER_SESSION"
+    ACCESS_TOKEN = "TOKEN_TYPE_ACCESS_TOKEN"
+
 class v1TrialClosed(Printable):
     """TrialClosed is a searcher event triggered when a trial has successfully
     finished.
@@ -19553,6 +19831,63 @@ def get_ExpMetricNames(
             raise APIHttpStreamError("get_ExpMetricNames", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_ExpMetricNames", _resp)
+
+def get_GetAccessTokens(
+    session: "api.BaseSession",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    showInactive: "typing.Optional[bool]" = None,
+    sortBy: "typing.Optional[v1GetAccessTokensRequestSortBy]" = None,
+    tokenIds: "typing.Optional[typing.Sequence[int]]" = None,
+    username: "typing.Optional[str]" = None,
+) -> "v1GetAccessTokensResponse":
+    """Get a list of all access token records.
+
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order token info in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - showInactive: Filter by active status.
+    - sortBy: Sort token info by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+ - SORT_BY_USER_ID: Returns token info sorted by user id.
+ - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+ - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+ - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+ - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
+ - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+    - tokenIds: Filter on token_ids.
+    - username: Filter by username.
+    """
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "showInactive": str(showInactive).lower() if showInactive is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "tokenIds": tokenIds,
+        "username": username,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/tokens",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetAccessTokensResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAccessTokens", _resp)
 
 def get_GetActiveTasksCount(
     session: "api.BaseSession",
@@ -23348,6 +23683,31 @@ def put_OverwriteRPWorkspaceBindings(
         return
     raise APIHttpError("put_OverwriteRPWorkspaceBindings", _resp)
 
+def patch_PatchAccessToken(
+    session: "api.BaseSession",
+    *,
+    body: "v1PatchAccessTokenRequest",
+    tokenId: int,
+) -> "v1PatchAccessTokenResponse":
+    """Patch an access token's mutable fields.
+
+    - tokenId: The id of the token.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/tokens/{tokenId}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchAccessTokenResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchAccessToken", _resp)
+
 def patch_PatchCheckpoints(
     session: "api.BaseSession",
     *,
@@ -23813,6 +24173,27 @@ def post_PinWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PinWorkspace", _resp)
+
+def post_PostAccessToken(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostAccessTokenRequest",
+) -> "v1PostAccessTokenResponse":
+    """Create and get a user's access token"""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/tokens",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostAccessTokenResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostAccessToken", _resp)
 
 def post_PostAllocationAcceleratorData(
     session: "api.BaseSession",
@@ -25893,6 +26274,7 @@ def get_health(
 # Paginated is a union type of objects whose .pagination
 # attribute is a v1Pagination-type object.
 Paginated = typing.Union[
+    v1GetAccessTokensResponse,
     v1GetAgentsResponse,
     v1GetCommandsResponse,
     v1GetExperimentCheckpointsResponse,

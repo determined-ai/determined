@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/saas"
@@ -29,6 +30,9 @@ const (
 // ErrRemoteUserTokenExpired notifies that the remote user's token has expired.
 var ErrRemoteUserTokenExpired = status.Error(codes.Unauthenticated, "remote user token expired")
 
+// ErrAccessTokenRevoked notifies that the user's access token has been revoked.
+var ErrAccessTokenRevoked = status.Error(codes.Unauthenticated, "user access token revoked")
+
 // UserSessionOption is the return type for WithInheritedClaims helper function.
 type UserSessionOption func(f *model.UserSession)
 
@@ -41,9 +45,14 @@ func WithInheritedClaims(claims map[string]string) UserSessionOption {
 
 // StartSession creates a row in the user_sessions table.
 func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOption) (string, error) {
+	now := time.Now().UTC()
+
 	userSession := &model.UserSession{
-		UserID: user.ID,
-		Expiry: time.Now().Add(SessionDuration),
+		UserID:    user.ID,
+		Expiry:    now.Add(SessionDuration),
+		CreatedAt: now,
+		TokenType: model.TokenTypeUserSession,
+		RevokedAt: null.Time{},
 	}
 
 	for _, opt := range opts {
@@ -51,16 +60,16 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 	}
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := db.Bun().NewInsert().
+		_, err := tx.NewInsert().
 			Model(userSession).
-			Column("user_id", "expiry").
+			Column("user_id", "expiry", "created_at", "token_type", "revoked_at").
 			Returning("id").
 			Exec(ctx, &userSession.ID)
 		if err != nil {
 			return err
 		}
 
-		_, err = db.Bun().NewUpdate().
+		_, err = tx.NewUpdate().
 			Table("users").
 			SetColumn("last_auth_at", "NOW()").
 			Where("id = (?)", user.ID).
@@ -116,12 +125,20 @@ func Update(
 				Where("id = ?", updated.ID).Exec(ctx); err != nil {
 				return fmt.Errorf("error setting active status of %q: %s", updated.Username, err)
 			}
+			// Revoke all access tokens of a user when it is deactivated.
+			if !updated.Active {
+				err := revokeUserAccessTokens(ctx, tx, updated.ID)
+				if err != nil {
+					return fmt.Errorf("error revoking active access token of %q: %s", updated.Username, err)
+				}
+			}
 		}
 
 		if slices.Contains(toUpdate, "password_hash") {
 			if _, err := tx.NewDelete().
 				Table("user_sessions").
-				Where("user_id = ?", updated.ID).Exec(ctx); err != nil {
+				Where("user_id = ?", updated.ID).
+				Where("token_type = ?", model.TokenTypeUserSession).Exec(ctx); err != nil {
 				return fmt.Errorf("error deleting user sessions: %s", err)
 			}
 		}
@@ -137,6 +154,17 @@ func Update(
 
 		return nil
 	})
+}
+
+// Revoke all access tokens of a user when it is deactivated.
+func revokeUserAccessTokens(ctx context.Context, tx bun.Tx, userID model.UserID) error {
+	_, err := tx.NewUpdate().
+		Table("user_sessions").
+		Set("revoked_at = ?", time.Now().UTC()).
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeAccessToken).
+		Exec(ctx)
+	return err
 }
 
 // SetActive changes multiple users' activation status.
@@ -389,7 +417,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		return nil, nil, err
 	}
 
-	if session.Expiry.Before(time.Now()) {
+	if session.Expiry.Before(time.Now().UTC()) {
 		var isRemote bool
 		if err := db.Bun().NewSelect().
 			Model(&model.User{}).
@@ -406,6 +434,10 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		}
 
 		return nil, nil, db.ErrNotFound
+	}
+
+	if session.TokenType == model.TokenTypeAccessToken && !session.RevokedAt.IsZero() {
+		return nil, nil, ErrAccessTokenRevoked
 	}
 
 	var user model.User
