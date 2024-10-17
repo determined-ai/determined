@@ -592,3 +592,8 @@ export interface UpdateGlobalConfigPolicies {
 export interface DeleteGlobalConfigPolicies {
   workloadType: 'NTSC' | 'EXPERIMENT';
 }
+
+export interface PostRunMetadata {
+  runId: number;
+  body: Api.V1PostRunMetadataRequest;
+}
