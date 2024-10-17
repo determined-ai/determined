@@ -266,14 +266,33 @@ const Searches: React.FC<Props> = ({ project }) => {
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    loadedSelectedExperimentIds.forEach((info) => {
-      rows = rows.add(info.index);
-    });
+    if (settings.selection.type === 'ONLY_IN') {
+      loadedSelectedExperimentIds.forEach((exp) => {
+        rows = rows.add(exp.index);
+      });
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      rows = rows.add([0, total.getOrElse(1) - 1]);
+      settings.selection.exclusions.forEach((exc) => {
+        const excIndex = loadedSelectedExperimentIds.get(exc)?.index;
+        if (excIndex !== undefined) {
+          rows = rows.remove(excIndex);
+        }
+      });
+    }
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [loadedSelectedExperimentIds]);
+  }, [loadedSelectedExperimentIds, settings.selection, total]);
+
+  const selectionSize = useMemo(() => {
+    if (settings.selection.type === 'ONLY_IN') {
+      return settings.selection.selections.length;
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      return total.getOrElse(0) - settings.selection.exclusions.length;
+    }
+    return 0;
+  }, [settings.selection, total]);
 
   const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
 
@@ -885,6 +904,7 @@ const Searches: React.FC<Props> = ({ project }) => {
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={allSelectedExperimentIds}
+        selectionSize={selectionSize}
         sorts={sorts}
         total={total}
         onActionComplete={handleActionComplete}

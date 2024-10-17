@@ -290,18 +290,37 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    loadedSelectedRunIds.forEach((info) => {
-      rows = rows.add(info.index);
-    });
+    if (settings.selection.type === 'ONLY_IN') {
+      loadedSelectedRunIds.forEach((info) => {
+        rows = rows.add(info.index);
+      });
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      rows = rows.add([0, total.getOrElse(1) - 1]);
+      settings.selection.exclusions.forEach((exc) => {
+        const excIndex = loadedSelectedRunIds.get(exc)?.index;
+        if (excIndex !== undefined) {
+          rows = rows.remove(excIndex);
+        }
+      });
+    }
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [loadedSelectedRunIds]);
+  }, [loadedSelectedRunIds, settings.selection, total]);
 
   const selectedRuns: FlatRun[] = useMemo(() => {
     return Loadable.filterNotLoaded(runs, (run) => selectedRunIdSet.has(run.id));
   }, [runs, selectedRunIdSet]);
+
+  const selectionSize = useMemo(() => {
+    if (settings.selection.type === 'ONLY_IN') {
+      return settings.selection.selections.length;
+    } else if (settings.selection.type === 'ALL_EXCEPT') {
+      return total.getOrElse(0) - settings.selection.exclusions.length;
+    }
+    return 0;
+  }, [settings.selection, total]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -882,28 +901,37 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     handleSelectionChange?.('remove-all');
   }, [handleSelectionChange]);
 
+  const isRangeSelected = useCallback(
+    (range: [number, number]): boolean => {
+      if (settings.selection.type === 'ONLY_IN') {
+        const includedSet = new Set(settings.selection.selections);
+        return rowRangeToIds(range).every((id) => includedSet.has(id));
+      } else if (settings.selection.type === 'ALL_EXCEPT') {
+        const excludedSet = new Set(settings.selection.exclusions);
+        return rowRangeToIds(range).every((id) => !excludedSet.has(id));
+      }
+      return false; // should never be reached
+    },
+    [rowRangeToIds, settings.selection],
+  );
+
+  const handleHeaderClick = useCallback(
+    (columnId: string): void => {
+      if (columnId === MULTISELECT) {
+        if (isRangeSelected([0, settings.pageLimit])) {
+          handleSelectionChange?.('remove', [0, settings.pageLimit]);
+        } else {
+          handleSelectionChange?.('add', [0, settings.pageLimit]);
+        }
+      }
+    },
+    [handleSelectionChange, isRangeSelected, settings.pageLimit],
+  );
+
   const getHeaderMenuItems = useCallback(
     (columnId: string, colIdx: number): MenuItem[] => {
       if (columnId === MULTISELECT) {
-        const items: MenuItem[] = [
-          settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
-            ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  handleSelectionChange?.('remove-all');
-                },
-              }
-            : null,
-          {
-            key: 'select-all',
-            label: 'Select all',
-            onClick: () => {
-              handleSelectionChange?.('add-all');
-            },
-          },
-        ];
-        return items;
+        return [];
       }
 
       const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
@@ -1055,11 +1083,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       bannedSortColumns,
       projectColumns,
       settings.pinnedColumnsCount,
-      settings.selection,
       settings.heatmapOn,
       settings.heatmapSkipped,
       isMobile,
-      handleSelectionChange,
       columnsIfLoaded,
       handleColumnsOrderChange,
       rootFilterChildren,
@@ -1131,7 +1157,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               labelPlural="runs"
               labelSingular="run"
               pageSize={settings.pageLimit}
-              selectedCount={selectedRunIdSet.size}
+              selectedCount={selectionSize}
               total={total}
               onActualSelectAll={handleActualSelectAll}
               onClearSelect={handleClearSelect}
@@ -1222,6 +1248,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
+              onHeaderClicked={handleHeaderClick}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />
