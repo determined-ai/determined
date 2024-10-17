@@ -405,7 +405,7 @@ commands:
         type: string
         default: $CIRCLE_SHA1
     steps:
-      - run: git checkout <<parameters.package-SHA>>
+      - run: git checkout <<parameters.package-commit>>
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
