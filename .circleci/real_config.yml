@@ -1543,7 +1543,7 @@ jobs:
       - skip-if-only-webui
       - attach_workspace:
           at: .
-      - reinstall go
+      - reinstall-go
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
@@ -2330,7 +2330,7 @@ jobs:
       - skip-if-only-webui
       - attach_workspace:
           at: .
-      - reinstall go
+      - reinstall-go
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
