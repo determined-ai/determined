@@ -127,7 +127,6 @@ export const getColumnDefs = ({
   },
   checkpointCount: {
     id: 'checkpointCount',
-    isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       data: Number(record.checkpointCount),
@@ -136,11 +135,11 @@ export const getColumnDefs = ({
     }),
     title: 'Checkpoints',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.checkpointCount ?? defaultColumnWidths.checkpointCount ?? MIN_COLUMN_WIDTH,
   },
   checkpointSize: {
     id: 'checkpointSize',
-    isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: humanReadableBytes(record.checkpointSize),
@@ -149,11 +148,11 @@ export const getColumnDefs = ({
     }),
     title: 'Checkpoint Size',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.checkpointSize ?? defaultColumnWidths.checkpointSize ?? MIN_COLUMN_WIDTH,
   },
   duration: {
     id: 'duration',
-    isNumerical: true,
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.duration, (data) => ({
         allowOverlay: false,
@@ -169,6 +168,7 @@ export const getColumnDefs = ({
       })),
     title: 'Duration',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.duration ?? defaultColumnWidths.duration ?? MIN_COLUMN_WIDTH,
   },
   experimentDescription: {
@@ -186,6 +186,7 @@ export const getColumnDefs = ({
       ),
     title: 'Search Description',
     tooltip: () => undefined,
+    type: 'text',
     width:
       columnWidths.experimentDescription ??
       defaultColumnWidths.experimentDescription ??
@@ -249,6 +250,7 @@ export const getColumnDefs = ({
       })),
     title: 'Search Name',
     tooltip: () => undefined,
+    type: 'text',
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
 
@@ -263,6 +265,7 @@ export const getColumnDefs = ({
       })),
     title: 'Search Progress',
     tooltip: () => undefined,
+    type: 'number',
     width:
       columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
   },
@@ -278,6 +281,7 @@ export const getColumnDefs = ({
       })),
     title: 'External Experiment ID',
     tooltip: () => undefined,
+    type: 'text',
     width:
       columnWidths.externalExperimentId ??
       defaultColumnWidths.externalExperimentId ??
@@ -294,6 +298,7 @@ export const getColumnDefs = ({
       })),
     title: 'External Run ID',
     tooltip: () => undefined,
+    type: 'text',
     width: columnWidths.externalRunId ?? defaultColumnWidths.externalRunId ?? MIN_COLUMN_WIDTH,
   },
   forkedFrom: {
@@ -321,6 +326,7 @@ export const getColumnDefs = ({
       })),
     title: 'Forked From',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.forkedFrom ?? defaultColumnWidths.forkedFrom ?? MIN_COLUMN_WIDTH,
   },
   id: {
@@ -353,6 +359,7 @@ export const getColumnDefs = ({
     }),
     title: 'ID',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.id ?? defaultColumnWidths.id ?? MIN_COLUMN_WIDTH,
   },
   isExpMultitrial: {
@@ -394,7 +401,6 @@ export const getColumnDefs = ({
   },
   searcherMetric: {
     id: 'searcherMetric',
-    isNumerical: false,
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.searcherMetric, (data) => ({
         allowOverlay: false,
@@ -421,7 +427,6 @@ export const getColumnDefs = ({
   },
   startTime: {
     id: 'startTime',
-    isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.startTime)),
@@ -430,6 +435,7 @@ export const getColumnDefs = ({
     }),
     title: 'Start Time',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.startTime ?? defaultColumnWidths.startTime ?? MIN_COLUMN_WIDTH,
   },
   state: {
@@ -505,7 +511,6 @@ export const searcherMetricsValColumn = (
 ): ColumnDef<FlatRun> => {
   return {
     id: 'searcherMetricsVal',
-    isNumerical: true,
     renderer: (record: FlatRun) => {
       const sMetricValue = record.searcherMetricValue;
 
@@ -528,6 +533,7 @@ export const searcherMetricsValColumn = (
     },
     title: 'Searcher Metric Value',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidth ?? defaultColumnWidths.searcherMetricsVal ?? MIN_COLUMN_WIDTH,
   };
 };
