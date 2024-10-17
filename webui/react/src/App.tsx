@@ -143,7 +143,7 @@ const AppView: React.FC = () => {
                     workspace={workspace ?? undefined}
                   />
                   <Omnibar />
-                  <VersionChecker />
+                  <VersionChecker version={info.version} />
                   <Navigation isClusterMessagePresent={!!info.clusterMessage}>
                     <main>
                       <Suspense fallback={<Spinner center spinning />}>
