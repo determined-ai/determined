@@ -22,14 +22,14 @@ const (
 type LogPoliciesConfigV0 []LogPolicyV0
 
 // WithDefaults implements the Defaultable psuedointerface.
-func (b *LogPoliciesConfigV0) WithDefaults() *LogPoliciesConfigV0 {
+func (b LogPoliciesConfigV0) WithDefaults() LogPoliciesConfigV0 {
 	eccErrorPattern := ECCErrorPattern
 	eccErrorSignal := ECCErrorSignal
 	cudaOomPattern := CUDAOOMPattern
 	cudaOomSignal := CUDAOOMSignal
 
-	if b != nil && len(*b) == 0 {
-		return &LogPoliciesConfigV0{
+	if b != nil && len(b) == 0 {
+		return LogPoliciesConfigV0{
 			LogPolicyV0{RawPattern: eccErrorPattern, RawActions: []LogActionV0{{Signal: &eccErrorSignal}}},
 			LogPolicyV0{RawPattern: cudaOomPattern, RawActions: []LogActionV0{{Signal: &cudaOomSignal}}},
 		}
