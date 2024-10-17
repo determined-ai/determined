@@ -102,6 +102,7 @@ release-upgrade: &release-upgrade
   branches:
     only:
       - /v\d+\.\d+\.\d+(rc\d+)?/
+      - carolinac/upgradetests
     ignore:
       - /.*/
 
