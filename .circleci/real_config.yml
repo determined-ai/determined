@@ -1748,7 +1748,7 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - reinstall-go
-      
+      - license-gen
       - attach_workspace:
           at: .
       - setup_remote_docker:
