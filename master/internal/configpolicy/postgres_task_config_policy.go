@@ -40,32 +40,21 @@ func SetTaskConfigPolicies(ctx context.Context,
 	})
 }
 
-// SetTaskConfigPoliciesTx adds the task invariant config and constraints config policies to
+// SetTaskConfigPoliciesTx adds the task invariant config and constraints policies to
 // the database.
 func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 	tcp *model.TaskConfigPolicies,
 ) error {
 	q := db.Bun().NewInsert().Model(tcp)
 
-	if tcp.InvariantConfig == nil {
-		q = q.ExcludeColumn("invariant_config")
-	}
-	if tcp.Constraints == nil {
-		q = q.ExcludeColumn("constraints")
-	}
+	q = q.Set("last_updated_by = ?, last_updated_time = ?", tcp.LastUpdatedBy, tcp.LastUpdatedTime)
+	q = q.Set("invariant_config = ?", tcp.InvariantConfig)
+	q = q.Set("constraints = ?", tcp.Constraints)
 
 	if tcp.WorkspaceID == nil {
 		q = q.On("CONFLICT (workload_type) WHERE workspace_id IS NULL DO UPDATE")
 	} else {
 		q = q.On("CONFLICT (workspace_id, workload_type) WHERE workspace_id IS NOT NULL DO UPDATE")
-	}
-
-	q = q.Set("last_updated_by = ?, last_updated_time = ?", tcp.LastUpdatedBy, tcp.LastUpdatedTime)
-	if tcp.InvariantConfig != nil {
-		q = q.Set("invariant_config = ?", tcp.InvariantConfig)
-	}
-	if tcp.Constraints != nil {
-		q = q.Set("constraints = ?", tcp.Constraints)
 	}
 
 	_, err := q.Exec(ctx)
