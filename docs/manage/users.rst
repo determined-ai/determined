@@ -12,6 +12,9 @@ Only the ``admin`` user can create users, change users' passwords, and activate 
 Upon initial installation, the admin should set an admin password. Upon initial installation, the
 admin must set a strong admin password.
 
+The admin can also set Config Policies to govern user behavior more closely at the workspace and
+cluster level.
+
 Default Accounts
 ================
 
@@ -285,3 +288,17 @@ When combining the ``det-nobody`` user with custom Docker images, administrators
 the custom image as layers on top of the default Determined Environments as illustrated in
 :ref:`custom-docker-images`, or they should create the ``det-nobody`` user themselves in their
 custom images using ``groupadd`` and ``useradd``.
+
+*********************
+ Set Config Policies
+*********************
+
+Determined supports :ref:`Config Policies <config-policies>`, which allow administrators to set
+limits on how users can define workloads. These policies interact with user roles in the following
+ways:
+
+-  Only users with the :ref:`ClusterAdmin <rbac-clusteradmin>` role can create, modify, or delete
+   global Config Policies.
+-  Users with the :ref:`WorkspaceAdmin <rbac-workspaceadmin>` role can create, modify, or delete
+   Config Policies for their respective workspaces.
+-  Config Policies set at the cluster level take precedence over workspace-level policies.
