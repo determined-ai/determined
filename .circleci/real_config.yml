@@ -64,9 +64,10 @@ parameters:
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
+    only:
+      - carolinac/upgrade-tests
     ignore:
       - /.*/
-      - carolinac/upgrade-tests
   tags:
     only:
       # Tags like: v2.5.0, v3.0.1+rc2
