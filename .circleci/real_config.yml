@@ -1533,12 +1533,8 @@ commands:
 
 jobs:
   start-stop-devcluster:
-    machine:
-      image: <<pipeline.parameters.machine-image>>
     docker:
       - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
     steps:
       - checkout
       - add-and-fetch-upstream
