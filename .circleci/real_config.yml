@@ -401,7 +401,7 @@ commands:
         type: string
       package-location:
         type: string
-      package-SHA: 
+      package-commit: 
         type: string
         default: $CIRCLE_SHA1
     steps:
@@ -434,7 +434,7 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
-      determined_SHA:
+      determined-SHA:
         type: string
         default: $CIRCLE_SHA1
     steps:
@@ -3240,7 +3240,7 @@ jobs:
 
       - setup-python-venv:
           determined: True
-          determined_SHA: <<parameters.determined-SHA>>
+          determined-SHA: <<parameters.determined-SHA>>
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
