@@ -12016,6 +12016,7 @@ class v1ProjectColumn(Printable):
     project.
     """
     displayName: "typing.Optional[str]" = None
+    groupable: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -12024,12 +12025,15 @@ class v1ProjectColumn(Printable):
         location: "v1LocationType",
         type: "v1ColumnType",
         displayName: "typing.Union[str, None, Unset]" = _unset,
+        groupable: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.column = column
         self.location = location
         self.type = type
         if not isinstance(displayName, Unset):
             self.displayName = displayName
+        if not isinstance(groupable, Unset):
+            self.groupable = groupable
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ProjectColumn":
@@ -12040,6 +12044,8 @@ class v1ProjectColumn(Printable):
         }
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
+        if "groupable" in obj:
+            kwargs["groupable"] = obj["groupable"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -12050,6 +12056,8 @@ class v1ProjectColumn(Printable):
         }
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
+        if not omit_unset or "groupable" in vars(self):
+            out["groupable"] = self.groupable
         return out
 
 class v1ProxyPortConfig(Printable):

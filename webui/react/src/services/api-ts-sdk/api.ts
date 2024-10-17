@@ -8771,6 +8771,12 @@ export interface V1ProjectColumn {
      * @memberof V1ProjectColumn
      */
     displayName?: string;
+    /**
+     * True if column can be used in row grouping.
+     * @type {boolean}
+     * @memberof V1ProjectColumn
+     */
+    groupable?: boolean;
 }
 /**
  * ProxyPortConfig configures a proxy the allocation should start.

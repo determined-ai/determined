@@ -59,6 +59,8 @@ message ProjectColumn {
   determined.project.v1.ColumnType type = 3;
   // Human-friendly name.
   string display_name = 4;
+  // True if column can be used in row grouping.
+  bool groupable = 5;
 }
 // Note is a user comment connected to a project.
 message Note {
