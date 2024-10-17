@@ -1533,8 +1533,9 @@ commands:
 
 jobs:
   start-stop-devcluster:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: large
     steps:
       - checkout
       - add-and-fetch-upstream
