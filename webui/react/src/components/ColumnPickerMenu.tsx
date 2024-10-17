@@ -1,3 +1,4 @@
+import Badge from 'hew/Badge';
 import Button from 'hew/Button';
 import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
 import Dropdown from 'hew/Dropdown';
@@ -7,7 +8,7 @@ import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
-import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { V1LocationType } from 'services/api-ts-sdk';
@@ -97,6 +98,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const allFilteredColumnsChecked = useMemo(() => {
     return filteredColumns.every((col) => columnState.includes(col.column));
   }, [columnState, filteredColumns]);
+  const [metadataColumns, setMetadataColumns] = useState(() => new Map<string, number[]>()); // a map of metadata columns and found indexes
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce(
@@ -165,6 +167,18 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const rows = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
+      const getColDisplayName = (col: ProjectColumn) => {
+        const metCol = metadataColumns.get(col.column);
+        if (metCol !== undefined && metCol.length > 1) {
+          return (
+            <>
+              {col.column} <Badge text={col.type.replace('COLUMN_TYPE_', '').toLowerCase()} />
+            </>
+          );
+        }
+
+        return col.displayName || col.column;
+      };
       return (
         <div
           className={css.rows}
@@ -177,13 +191,27 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
             data-test="checkbox"
             id={col.column}
             onChange={handleColumnChange}>
-            {col.displayName || col.column}
+            {getColDisplayName(col)}
           </Checkbox>
         </div>
       );
     },
-    [filteredColumns, checkedColumns, handleColumnChange],
+    [filteredColumns, checkedColumns, metadataColumns, handleColumnChange],
   );
+
+  useEffect(() => {
+    for (const [index, { column }] of totalColumns.entries()) {
+      if (column.includes('metadata')) {
+        const columnEntry = metadataColumns.get(column) ?? [];
+        if (!columnEntry.includes(index)) {
+          setMetadataColumns((prev) => {
+            prev.set(column, [...columnEntry, index]);
+            return prev;
+          });
+        }
+      }
+    }
+  }, [totalColumns, metadataColumns]);
 
   return (
     <div data-test-component="columnPickerTab" data-testid="column-picker-tab">
