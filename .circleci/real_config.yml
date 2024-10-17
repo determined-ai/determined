@@ -401,11 +401,15 @@ commands:
         type: string
       package-location:
         type: string
+      package-SHA: 
+        type: string
+        default: $CIRCLE_SHA1
     steps:
+      - run: git checkout <<parameters.package-SHA>>
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
-          command: | # TODO CAROLINA FIX THIS
+          command: |
             make build
             pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
             pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
@@ -430,6 +434,9 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
+      determined_SHA:
+        type: string
+        default: $CIRCLE_SHA1
     steps:
       - run:
           name: Write cache key
@@ -515,6 +522,7 @@ commands:
             - install-wheel:
                 package-name: determined
                 package-location: ./harness
+                package-commit: <<parameters.determined-SHA>>
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -3211,6 +3219,9 @@ jobs:
       k8s-version:
         type: string
         default: "1.29.5"
+      determined-SHA:
+        type: string
+        default: $CIRCLE_SHA1
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3229,6 +3240,7 @@ jobs:
 
       - setup-python-venv:
           determined: True
+          determined_SHA: <<parameters.determined-SHA>>
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
@@ -4825,10 +4837,10 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-upgrade:
-    triggers:
-      - schedule:
-          cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
-          filters: *release-upgrade  # Only runs on the release branches
+    #triggers:
+    #  - schedule:
+    #      cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
+    #      filters: *release-upgrade  # Only runs on the release branches
     jobs:
       - build-proto
       - build-helm
