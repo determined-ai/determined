@@ -352,3 +352,261 @@ func TestCheckConstraintsConflicts(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestValidateConfigs(t *testing.T) {
+	t.Run("exp global config conflicts with global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 3
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("ntsc global config conflicts with global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 3
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("exp global config complies with constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 10
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc global config complies with constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 10
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+
+	t.Run("exp workspace config complies with global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+max_slots: 15
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc workspace config complies with global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+max_slots: 15
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+
+	t.Run("exp workspace config complies with workspace and global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 15
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc workspace config complies with workspace and global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 15
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+
+	// Workspace invariant config complies with workspace constraints, violates global constraints
+	t.Run("exp workspace config violates global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 8
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("ntsc workspace config violates global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 8
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	// Workspace constraints conflicts with global constraints
+	t.Run("exp workspace constraints conflict with global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("ntsc workspace constraints conflict with global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("exp workspace invariant config different from global", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			InvariantConfig: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 12
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc workspace invariant config different from global", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			InvariantConfig: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 12
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+}
