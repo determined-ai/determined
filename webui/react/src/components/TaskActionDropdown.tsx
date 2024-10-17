@@ -108,7 +108,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
           await copyToClipboard(task.id);
           openToast({
             severity: 'Confirm',
-            title: 'Task id has been copied to clipboard.',
+            title: 'Task ID has been copied to clipboard.',
           });
           break;
       }
