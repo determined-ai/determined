@@ -227,39 +227,46 @@ func TestUpdateTaskConfigPolicies(t *testing.T) {
 		}
 	}()
 
-	config1 := `
+	config1JSON := `
 { 
 	"resources": {
   		"priority": 99
-	}
-	"max_restarts": 20,
+	},
+	"max_restarts": 20
 }
 `
-	config2 := `
+	config2JSON := `
 { 
 	"resources": {
   		"priority": 100
-	}
-	"max_restarts": 25,
+	},
+	"max_restarts": 25
 }
 `
 
-	constraints1 := `
+	constraints1JSON := `
 {
 	"resources": {
 		"max_slots": 50
-	}
-	"priority_limit": 99,
+	},
+	"priority_limit": 99
 }
 `
-	constraints2 := `
+	constraints2JSON := `
 {
 	"resources": {
 		"max_slots": 80
-	}
-	"priority_limit": 100,
+	},
+	"priority_limit": 100
 }
 `
+	whitespace := regexp.MustCompile(`[\s]`)
+
+	config1 := whitespace.ReplaceAllString(config1JSON, "")
+	config2 := whitespace.ReplaceAllString(config2JSON, "")
+	constraints1 := whitespace.ReplaceAllString(constraints1JSON, "")
+	constraints2 := whitespace.ReplaceAllString(constraints2JSON, "")
+
 	tests := []struct {
 		name        string
 		tcps        *model.TaskConfigPolicies
@@ -328,8 +335,6 @@ func TestUpdateTaskConfigPolicies(t *testing.T) {
 		},
 	}
 
-	whitespace := regexp.MustCompile(`[\s]`)
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
@@ -353,18 +358,18 @@ func TestUpdateTaskConfigPolicies(t *testing.T) {
 			require.NoError(t, err)
 
 			if test.tcpsUpdated.InvariantConfig != nil {
-				expectedInvariantConfig := whitespace.ReplaceAllString(
-					*test.tcpsUpdated.InvariantConfig,
-					"")
 				require.NotNil(t, tcps.InvariantConfig)
-				require.Equal(t, expectedInvariantConfig,
-					*tcps.InvariantConfig)
+				invariantConfig := whitespace.ReplaceAllString(
+					*tcps.InvariantConfig,
+					"")
+				require.Equal(t, *test.tcpsUpdated.InvariantConfig,
+					invariantConfig)
 			}
 			if test.tcpsUpdated.Constraints != nil {
-				expectedConstraints := whitespace.ReplaceAllString(*test.tcpsUpdated.Constraints,
-					"")
 				require.NotNil(t, tcps.Constraints)
-				require.Equal(t, expectedConstraints, *tcps.Constraints)
+				constraints := whitespace.ReplaceAllString(*tcps.Constraints,
+					"")
+				require.Equal(t, *test.tcpsUpdated.Constraints, constraints)
 			}
 		})
 	}
