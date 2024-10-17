@@ -6154,7 +6154,7 @@ export interface V1LaunchShellRequest {
      */
     files?: Array<V1File>;
     /**
-     * Additional data.
+     * Deprecated: Do not use.
      * @type {string}
      * @memberof V1LaunchShellRequest
      */

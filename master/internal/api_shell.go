@@ -3,7 +3,6 @@ package internal
 import (
 	"archive/tar"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -253,20 +252,7 @@ func (a *apiServer) LaunchShell(
 	}
 	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, oidcPachydermEnvVars)
 
-	var passphrase *string
-	if len(req.Data) > 0 {
-		var data map[string]interface{}
-		if err = json.Unmarshal(req.Data, &data); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse data %s: %s", req.Data, err)
-		}
-		if pwd, ok := data["passphrase"]; ok {
-			if typed, typedOK := pwd.(string); typedOK {
-				passphrase = &typed
-			}
-		}
-	}
-
-	keys, err := ssh.GenerateKey(launchReq.Spec.Base.SSHConfig, passphrase)
+	keys, err := ssh.GenerateKey(launchReq.Spec.Base.SSHConfig)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
