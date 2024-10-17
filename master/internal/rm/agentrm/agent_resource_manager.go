@@ -230,11 +230,6 @@ func (a *ResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcesReque
 	return resp.CapacityExceeded, nil
 }
 
-// ExternalPreemptionPending implements rm.ResourceManager.
-func (*ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error {
-	return rmerrors.ErrNotSupported
-}
-
 // GetAgent implements rm.ResourceManager.
 func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
 	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))

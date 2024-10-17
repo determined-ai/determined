@@ -173,11 +173,6 @@ func (ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, er
 	return sproto.EmptyDeleteJobResponse(), nil
 }
 
-// ExternalPreemptionPending implements rm.ResourceManager.
-func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error {
-	return rmerrors.ErrNotSupported
-}
-
 // HealthCheck tries to call the KubeAPI.
 func (k *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{

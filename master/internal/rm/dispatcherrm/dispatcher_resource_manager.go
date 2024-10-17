@@ -243,26 +243,6 @@ func (m *DispatcherResourceManager) DeleteJob(
 	return sproto.EmptyDeleteJobResponse(), nil
 }
 
-// ExternalPreemptionPending notifies a task of a preemption from the underlying resource manager.
-func (m *DispatcherResourceManager) ExternalPreemptionPending(msg sproto.PendingPreemption) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.syslog.WithField("allocation-id", msg.AllocationID).
-		Info("pending preemption of allocation, terminating")
-	allocReq, ok := m.reqList.TaskByID(msg.AllocationID)
-	if ok {
-		rmevents.Publish(allocReq.AllocationID, &sproto.ReleaseResources{
-			Reason:          "preempted by the scheduler",
-			ForcePreemption: true,
-		})
-	} else {
-		m.syslog.WithField("allocation-id", msg.AllocationID).
-			Errorf("unable to find allocation actor for allocation")
-	}
-	return nil
-}
-
 // HealthCheck tries to call launcher and check if it is reachable.
 func (m *DispatcherResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	status := model.Healthy
