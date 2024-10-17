@@ -441,9 +441,10 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+2)
 	expectedHparam = &projectv1.ProjectColumn{
-		Column:   "hp.test1.test2",
-		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
-		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Column:    "hp.test1.test2",
+		Location:  projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+		Type:      projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable: true,
 	}
 	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
 
