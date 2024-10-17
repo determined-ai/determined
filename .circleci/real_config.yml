@@ -70,7 +70,7 @@ release-and-rc-filters: &release-and-rc-filters
     only:
       # Tags like: v2.5.0, v3.0.1+rc2
       - /v\d+\.\d+\.\d+(rc\d+)?/
-      - carolinac/cm-544 # for testing purposes
+      - carolinac/upgrade-tests
 
 rc-filters: &rc-filters
   branches:
@@ -80,7 +80,6 @@ rc-filters: &rc-filters
     only:
       # Tags like: v2.5.0rc3
       - /v\d+\.\d+\.\d+rc\d+/
-      - carolinac/cm-544 # for testing purposes
 
 release-filters: &release-filters
   branches:
@@ -90,7 +89,6 @@ release-filters: &release-filters
     only:
       # Tags like: v2.1.2
       - /v\d+\.\d+\.\d+/
-      - carolinac/cm-544 # for testing purposes
 
 release-dryrun: &release-dryrun
   branches:
@@ -402,7 +400,7 @@ commands:
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
-          command: |
+          command: | # TODO CAROLINA FIX THIS
             make build
             pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
             pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
@@ -4822,12 +4820,14 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-upgrade:
-    <<: *do-not-run-on-manual-trigger
     jobs:
-      - build-proto
-      - build-helm
+      - build-proto:
+        filters: *release-and-rc-filters
+      - build-helm:
+        filters: *release-and-rc-filters
       - build-react:
           dev-mode: true
+          filters: *release-and-rc-filters
       - test-e2e-react:
           name: test-e2e-react-ee
           ee: true
@@ -4837,14 +4837,16 @@ workflows:
             - playwright
             - github-read
             - dev-ci-cluster-default-user-credentials
-          filters: *any-upstream
+          filters: *release-and-rc-filters
       - build-docs:
           requires:
             - build-helm
             - build-proto
+          filters: *release-and-rc-filters
       - build-go:
           name: build-go-ee
           context: github-read
+          filters: *release-and-rc-filters
       # TODO CAROLINA MAKE THIS RUN WEEKLY
       - start-stop-devcluster:
           context:
@@ -4852,6 +4854,7 @@ workflows:
           requires:
             - build-go-ee
           name: start-stop-devcluster
+          filters: *release-and-rc-filters
       # rebuild updated go
       - build-go: 
           name: build-upgraded-go
@@ -4859,6 +4862,7 @@ workflows:
           commit_SHA: ${LATEST_MAIN_SHA}
           requires:
             - start-stop-devcluster
+          filters: *release-and-rc-filters
           
 
       - test-e2e:
@@ -4870,6 +4874,7 @@ workflows:
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4881,6 +4886,7 @@ workflows:
           resource-class: xlarge
           tf2: true
           mark: e2e_cpu
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4894,6 +4900,7 @@ workflows:
           mark: e2e_cpu_2a
           target-stage: agent2
           devcluster-config: double-priority.devcluster.yaml
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4905,6 +4912,7 @@ workflows:
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
           target-stage: agent1
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4916,6 +4924,7 @@ workflows:
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
           target-stage: agent1
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4932,6 +4941,7 @@ workflows:
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4946,6 +4956,7 @@ workflows:
           managed-devcluster: true
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4960,6 +4971,7 @@ workflows:
           devcluster-config: multi-k8s.devcluster.yaml
           run-minikubes: true
           multi-k8s: true
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4972,6 +4984,7 @@ workflows:
           target-stage: master
           devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4983,6 +4996,7 @@ workflows:
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -4995,6 +5009,7 @@ workflows:
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -5007,6 +5022,7 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "10"
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -5019,6 +5035,7 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "14"
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -5033,6 +5050,7 @@ workflows:
           matrix:
             parameters:
               agent-version: ["0.17.10"]
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
@@ -5045,6 +5063,7 @@ workflows:
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
+          filters: *release-and-rc-filters
 
       - test-e2e:
           name: test-e2e-saml
@@ -5056,6 +5075,7 @@ workflows:
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
+          filters: *release-and-rc-filters
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
