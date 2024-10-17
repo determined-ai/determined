@@ -1536,19 +1536,23 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
-      - checkout
+      - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - skip-if-only-webui
       - attach_workspace:
           at: .
-      - reinstall-go
+      - react-get-deps
       - setup-python-venv:
-          determined: True
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          determined: true
+          install-python: true
           executor: <<pipeline.parameters.machine-image>>
-      - setup-go-intg-deps
+      - install-protoc
+      - license-gen
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster
       - run: sleep 10
