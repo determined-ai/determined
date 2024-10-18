@@ -320,7 +320,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+        return columns.reduce((acc, col) => {
+          const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+
+          if (col.column.includes('metadata')) return ({ ...acc, [col.column.concat(`_${colType}`)]: col });
+
+          return ({ ...acc, [col.column]: col });
+        }, {});
       },
     );
     const columnDefs = getColumnDefs({
@@ -358,13 +364,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           };
 
         let dataPath: string | undefined = undefined;
+        const colType = columnName.split('_')[1];
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.RUN:
           case V1LocationType.RUNMETADATA:
-            dataPath = currentColumn.column;
+            dataPath = currentColumn.column.concat(`_${colType}`);
             break;
           case V1LocationType.HYPERPARAMETERS:
             dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
@@ -402,8 +409,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -415,8 +422,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -427,8 +434,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -437,8 +444,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -449,8 +456,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
