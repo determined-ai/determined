@@ -50,9 +50,11 @@ func (a *apiServer) validatePoliciesAndWorkloadType(
 	_, priorityEnabledErr := a.m.rm.SmallerValueIsHigherPriority()
 	switch workloadType {
 	case model.ExperimentType:
-		return configpolicy.ValidateExperimentConfig(globalConfigPolicies, configPolicies, priorityEnabledErr)
+		return configpolicy.ValidateExperimentConfig(globalConfigPolicies, configPolicies,
+			priorityEnabledErr)
 	case model.NTSCType:
-		return configpolicy.ValidateNTSCConfig(globalConfigPolicies, configPolicies, priorityEnabledErr)
+		return configpolicy.ValidateNTSCConfig(globalConfigPolicies, configPolicies,
+			priorityEnabledErr)
 	default:
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType))
 	}
@@ -127,7 +129,8 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = a.validatePoliciesAndWorkloadType(globalConfigPolicies, req.WorkloadType, req.ConfigPolicies)
+	err = a.validatePoliciesAndWorkloadType(globalConfigPolicies, req.WorkloadType,
+		req.ConfigPolicies)
 	if err != nil {
 		return nil, err
 	}
