@@ -425,7 +425,7 @@ resources:
 			`
 invariant_config:
   resources:
-max_slots: 15
+    max_slots: 15
 `, nil,
 		)
 		require.NoError(t, err)
