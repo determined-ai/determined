@@ -318,9 +318,12 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	obj := objectForURL(url)
 	err = json.Unmarshal(byts, &obj)
 	assert.NilError(t, err)
+	v, _ := obj.(ExperimentConfigV0)
+	fmt.Printf("obj: %#v\n", v.RawLogPolicies)
 
 	// Round-trip through json.
 	jByts, err := json.Marshal(obj)
+	fmt.Printf("\njson output: %#v\n", string(jByts))
 	assert.NilError(t, err)
 	cpy := objectForURL(url)
 	err = json.Unmarshal(jByts, &cpy)

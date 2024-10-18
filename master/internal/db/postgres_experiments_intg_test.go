@@ -439,21 +439,29 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	eccErrorSignal := "ECC Error"
 	cudaOOMSignal := "CUDA OOM"
 	expected := expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: ".*uncorrectable ECC error encountered.*", RawSignal: &eccErrorSignal},
-		expconf.LogPolicy{RawPattern: ".*CUDA out of memory.*", RawSignal: &cudaOOMSignal},
+		expconf.LogPolicy{
+			RawPattern: ".*uncorrectable ECC error encountered.*",
+			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeSignal, Signal: &eccErrorSignal}},
+		},
+		expconf.LogPolicy{
+			RawPattern: ".*CUDA out of memory.*",
+			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeSignal, Signal: &cudaOOMSignal}},
+		},
 	}
 
 	require.Equal(t, expected, policies)
 
 	activeConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
-	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawActions: []expconf.LogAction{{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawActions: []expconf.LogAction{{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}}},
+	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
+		expconf.LogPolicy{
+			RawPattern: "sub",
+			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries}},
+		},
+		expconf.LogPolicy{
+			RawPattern: `\d{5}$`,
+			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode}},
+		},
 	}
 
 	v, err := json.Marshal(activeConfig)

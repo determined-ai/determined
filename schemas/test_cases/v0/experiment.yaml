@@ -202,13 +202,7 @@
       add_capabilities: []
       drop_capabilities: []
     hyperparameters: {}
-    log_policies:
-      - pattern: '*'
-        actions:
-          - signal: '*'
-      - pattern: '*'
-        actions:
-          - signal: '*'
+    log_policies: []
     labels: []
     max_restarts: 5
     min_checkpoint_period:

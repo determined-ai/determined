@@ -61,18 +61,6 @@
     type: directory
     container_path: /path/on/disk
 
-- name: log action cancel_retries
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json
-  case:
-    type: cancel_retries
-
-- name: log action exclude_node
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json
-  case:
-    type: exclude_node
-
 - name: records length (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/length.json
