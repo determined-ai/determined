@@ -2262,14 +2262,3 @@ export const updateGlobalConfigPolicies: DetApi<
       options,
     ),
 };
-
-export const postRunMetadata: DetApi<
-  Service.PostRunMetadata,
-  Api.V1PostRunMetadataResponse,
-  Api.V1PostRunMetadataResponse
-> = {
-  name: 'postRunMetadata',
-  postProcess: identity,
-  request: (params: Service.PostRunMetadata, options) =>
-    detApi.Internal.postRunMetadata(params.runId, params.body, options),
-};
