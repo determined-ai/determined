@@ -10,7 +10,8 @@ import { ExperimentBase } from 'types';
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
-  const waitTableStable = async (timeout?:number) => await projectDetailsPage._page.waitForTimeout(timeout ?? 2_000);
+  const waitTableStable = async (timeout?: number) =>
+    await projectDetailsPage._page.waitForTimeout(timeout ?? 2_000);
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
