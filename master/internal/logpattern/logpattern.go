@@ -78,21 +78,21 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 			if compiledRegex.MatchString(log.Log) {
 				if actions := policy.Actions(); len(actions) > 0 {
 					for _, a := range actions {
-						switch a.GetUnionMember().(type) {
-						case expconf.LogActionCancelRetries:
+						switch a.Type {
+						case expconf.LogActionTypeCancelRetries:
 							if err := addDontRetry(
 								ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
 							); err != nil {
 								return fmt.Errorf("adding don't retry: %w", err)
 							}
 
-						case expconf.LogActionExcludeNode:
+						case expconf.LogActionTypeExcludeNode:
 							if err := addRetryOnDifferentNode(
 								ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
 							); err != nil {
 								return fmt.Errorf("adding retry on different node: %w", err)
 							}
-						case string:
+						case expconf.LogActionTypeSignal:
 							signal := a.Signal
 							if signal != nil {
 								err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

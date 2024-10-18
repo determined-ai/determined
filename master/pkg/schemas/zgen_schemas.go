@@ -848,6 +848,7 @@ var (
                 "array",
                 "null"
             ],
+            "$comment": "The default value doesn't matter here. It's controlled by WithDefaults()",
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/log-policies.json"
         },
