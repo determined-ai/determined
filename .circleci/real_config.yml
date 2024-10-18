@@ -2285,9 +2285,17 @@ jobs:
         environment:
           GO111MODULE: "on"
     steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - reinstall-go
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - attach_workspace:
           at: .
-      - checkout
       - run:
           name: Check for latest commit file
           command: |
@@ -2299,14 +2307,7 @@ jobs:
             else
               echo "No latest commit file found. Skipping checkout."
             fi
-      - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
-      - reinstall-go
-      - when:
-          condition: << parameters.ee >>
-          steps:
-            - license-gen
+
       - restore_cache:
           keys:
             - det-go-build-$LATEST_MAIN_SHA-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
