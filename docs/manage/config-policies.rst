@@ -131,8 +131,7 @@ Limiting Resources
 ==================
 
 Administrators can set constraints on resource usage, allowing them to manage how users allocate
-resources for workloads such as experiments and NTSC tasks. The
-configurable constraints are:
+resources for workloads such as experiments and NTSC tasks. The configurable constraints are:
 
 -  ``constraints.resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can
    be used by submitted workloads. Specify whether this applies to experiment workloads or NTSC
@@ -179,6 +178,49 @@ In this case:
 -  Users cannot set ``resources.max_slots`` greater than 4 for NTSC tasks.
 -  Users cannot set a priority higher than 10 for NTSC tasks in Kubernetes environments, and no
    lower than 10 for Agent environments.
+
+**Example: Interaction between Global and Workspace Constraints**
+
+This example demonstrates how global and workspace constraints interact and which constraints are
+ultimately enforced.
+
+Global NTSC constraints:
+
+.. code:: yaml
+
+   constraints:
+     resources:
+       max_slots: 4
+
+Workspace NTSC constraints:
+
+.. code:: yaml
+
+   constraints:
+     resources:
+       max_slots: 8
+     priority_limit: 20
+
+Resulting enforced constraints:
+
+.. code:: yaml
+
+   constraints:
+     resources:
+       max_slots: 4
+     priority_limit: 20
+
+In this scenario:
+
+-  The global ``max_slots`` constraint of 4 overrides the workspace ``max_slots`` constraint of 8.
+-  The workspace ``priority_limit`` of 20 is enforced because no global priority constraint was set.
+-  Users in this workspace cannot set ``resources.max_slots`` greater than 4 for NTSC tasks.
+-  Users in this workspace cannot set a priority higher than 20 for NTSC tasks in Kubernetes
+   environments, and no lower than 20 for Agent environments.
+
+This example illustrates that global constraints take precedence over workspace constraints when
+both are set for the same field. When a constraint is only set at the workspace level, it is
+enforced as specified.
 
 Limit Maximum GPU Usage per Experiment
 ======================================
