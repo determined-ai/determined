@@ -989,6 +989,12 @@ class _PyTorchTrialController:
 
             # Get best validation before reporting metrics.
             best_validation_before = self.core_context.train.get_experiment_best_validation()
+
+            # We report "batch" and "epoch" only if these keys are not already reported in user
+            # metrics.
+            metrics["batches"] = metrics.get("batches", self.state.batches_trained)
+            metrics["epochs"] = metrics.get("epochs", self.state.epochs_trained)
+
             self.core_context.train.report_validation_metrics(
                 steps_completed=self.state.batches_trained, metrics=metrics
             )
