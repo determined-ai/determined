@@ -85,6 +85,7 @@ def create_token(args: argparse.Namespace) -> None:
             raise errors.CliError(f"User '{username}' not found or does not have an ID")
 
         # convert days into hours Go duration format
+        expiration_in_hours = None
         if args.expiration_days:
             expiration_in_hours = str(24 * args.expiration_days) + "h"
 
