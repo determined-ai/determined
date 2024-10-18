@@ -27,7 +27,7 @@ stages:
         security:
           initial_user_password: $INITIAL_USER_PASSWORD
           ssh:
-            crypto_system: ED25519
+            key_type: ED25519
         resource_manager:
           type: agent
           default_aux_resource_pool: default

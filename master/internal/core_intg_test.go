@@ -121,7 +121,7 @@ func TestRun(t *testing.T) {
 						DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 					},
 				},
-				taskSpec: &tasks.TaskSpec{SSHConfig: config.SSHConfig{RsaKeySize: 1024, CryptoSystem: "RSA"}},
+				taskSpec: &tasks.TaskSpec{SSHConfig: config.SSHConfig{RsaKeySize: 1024, KeyType: "RSA"}},
 			}
 			require.NoError(t, m.config.Resolve())
 			m.config.DB = config.DBConfig{

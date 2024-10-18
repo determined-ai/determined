@@ -118,7 +118,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
 				ResourceConfig:        *config.DefaultResourceConfig(),
 			},
-			taskSpec: &tasks.TaskSpec{SSHConfig: config.SSHConfig{RsaKeySize: 1024, CryptoSystem: "RSA"}},
+			taskSpec: &tasks.TaskSpec{SSHConfig: config.SSHConfig{RsaKeySize: 1024, KeyType: "RSA"}},
 			allRms:   map[string]rm.ResourceManager{config.DefaultClusterName: mockRM},
 		},
 	}

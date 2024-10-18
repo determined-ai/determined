@@ -29,7 +29,7 @@ type PrivateAndPublicKeys struct {
 // GenerateKey returns a private and public SSH key.
 func GenerateKey(conf config.SSHConfig) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
-	switch conf.CryptoSystem {
+	switch conf.KeyType {
 	case config.RSACryptoSystem:
 		return generateRSAKey(conf.RsaKeySize)
 	case config.ECDSACryptoSystem:

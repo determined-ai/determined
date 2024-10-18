@@ -117,8 +117,8 @@ func DefaultConfig() *Config {
 				Group: "root",
 			},
 			SSH: SSHConfig{
-				RsaKeySize:   1024,
-				CryptoSystem: RSACryptoSystem,
+				RsaKeySize: 1024,
+				KeyType:    RSACryptoSystem,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 		},
@@ -462,8 +462,8 @@ type SecurityConfig struct {
 
 // SSHConfig is the configuration setting for SSH.
 type SSHConfig struct {
-	RsaKeySize   int    `json:"rsa_key_size"`
-	CryptoSystem string `json:"crypto_system"`
+	RsaKeySize int    `json:"rsa_key_size"`
+	KeyType    string `json:"key_type"`
 }
 
 // TLSConfig is the configuration for setting up serving over TLS.
@@ -486,8 +486,11 @@ func (t *TLSConfig) Validate() []error {
 // Validate implements the check.Validatable interface.
 func (t *SSHConfig) Validate() []error {
 	var errs []error
-	if t.CryptoSystem != RSACryptoSystem && t.CryptoSystem != ECDSACryptoSystem && t.CryptoSystem != ED25519CryptoSystem {
+	if t.KeyType != RSACryptoSystem && t.KeyType != ECDSACryptoSystem && t.KeyType != ED25519CryptoSystem {
 		errs = append(errs, errors.New("Crypto system must be one of 'RSA', 'ECDSA' or 'ED25519'"))
+	}
+	if t.KeyType != RSACryptoSystem {
+		return errs
 	}
 	if t.RsaKeySize < 1 {
 		errs = append(errs, errors.New("RSA Key size must be greater than 0"))
