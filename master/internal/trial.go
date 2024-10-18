@@ -676,15 +676,6 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			}
 		}
 
-		// Clear the stored signal before trial restarts, as the log in the new trial
-		// may be different.
-		if err := logpattern.ClearSignal(context.TODO(), t.taskID); err != nil {
-			return t.transition(model.StateWithReason{
-				State:               model.ErrorState,
-				InformationalReason: err.Error(),
-			})
-		}
-
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
