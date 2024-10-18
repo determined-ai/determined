@@ -15,6 +15,7 @@ import {
 
 import { ApiAuthFixture } from './api.auth.fixture';
 import { ApiProjectFixture } from './api.project.fixture';
+import { ApiRoleFixture } from './api.roles.fixture';
 import { ApiUserFixture } from './api.user.fixture';
 import { ApiWorkspaceFixture } from './api.workspace.fixture';
 import { AuthFixture } from './auth.fixture';
@@ -39,6 +40,7 @@ type CustomWorkerFixtures = {
   newProject: { request: V1PostProjectRequest; response: V1PostProjectResponse };
   backgroundApiAuth: ApiAuthFixture;
   backgroundApiUser: ApiUserFixture;
+  backgroundApiRole: ApiRoleFixture;
   backgroundApiWorkspace: ApiWorkspaceFixture;
   backgroundApiProject: ApiProjectFixture;
   backgroundAuthedPage: Page;
@@ -128,6 +130,13 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     },
     { scope: 'worker' },
   ],
+  backgroundApiRole: [
+    async ({ backgroundApiAuth }, use) => {
+      const backgroundApiRole = new ApiRoleFixture(backgroundApiAuth);
+      await use(backgroundApiRole);
+    },
+    { scope: 'worker' },
+  ],
   /**
    * Allows calling the user api without a page so that it can run in beforeAll(). You will need to get a bearer
    * token by calling backgroundApiUser.apiAuth.loginAPI(). This will also provision a page in the background which
@@ -181,7 +190,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
    * Creates an admin and logs in as that admin for the duraction of the test suite
    */
   newAdmin: [
-    async ({ backgroundApiUser }, use, workerInfo) => {
+    async ({ backgroundApiUser, backgroundApiRole }, use, workerInfo) => {
       const request = backgroundApiUser.new({
         userProps: {
           user: {
@@ -192,6 +201,11 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
         },
       });
       const adminUser = await backgroundApiUser.createUser(request);
+      await backgroundApiRole.createAssignment({
+        userRoleAssignments: [
+          { roleAssignment: { role: { roleId: 1 } }, userId: adminUser.user!.id! },
+        ],
+      });
       await use({ request, response: adminUser });
       await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
     },
