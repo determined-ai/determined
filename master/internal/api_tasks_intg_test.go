@@ -218,13 +218,9 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 
 	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
 	require.NoError(t, err)
-	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawActions: []expconf.LogActionV0{{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawActions: []expconf.LogActionV0{{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}}},
+	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "sub", RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries}}},
+		expconf.LogPolicy{RawPattern: `\d{5}$`, RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode}}},
 	}
 
 	v, err := json.Marshal(activeConfig)
@@ -452,9 +448,11 @@ func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
 	require.NoError(t, err)
 
 	signal := "sub"
-	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawSignal: &signal},
-		expconf.LogPolicy{RawPattern: `\d{5}$`},
+	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
+		expconf.LogPolicy{
+			RawPattern: "sub",
+			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeSignal, Signal: &signal}},
+		},
 	}
 
 	v, err := json.Marshal(activeConfig)

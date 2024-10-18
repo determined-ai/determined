@@ -118,6 +118,7 @@
 
 - name: recognize action field for backward compatibility
   merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
+  comment: merge_src is legacy log policies, merged is modern log policies
   case: []
   merge_src:
     - pattern: a

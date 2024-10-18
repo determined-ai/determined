@@ -4,7 +4,6 @@ package expconf
 import (
 	"encoding/json"
 	"testing"
-	"fmt"
 
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
@@ -116,29 +115,4 @@ func TestName(t *testing.T) {
 	assert.NilError(t, err)
 
 	assert.DeepEqual(t, newConfig.Name().String(), "my_name")
-}
-
-func TestLogPolicies(t *testing.T) {
-	newConfig := ExperimentConfig{}
-	bytes := []byte(`{
-		"log_policies": [
-		]
-	}`)
-/*
-			{
-				"pattern": "x",
-				"actions": [
-					"cancel_retries"
-				]
-			}
-*/
-	err := json.Unmarshal(bytes, &newConfig)
-	assert.NilError(t, err)
-	panic(
-		fmt.Sprintf(
-			"newConfig.RawLogPolicies: (nil?%v) %v\n",
-			newConfig.RawLogPolicies == nil,
-			newConfig.RawLogPolicies,
-		),
-	)
 }
