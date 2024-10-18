@@ -323,9 +323,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         return columns.reduce((acc, col) => {
           const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
 
-          if (col.column.includes('metadata')) return ({ ...acc, [col.column.concat(`_${colType}`)]: col });
+          if (col.column.includes('metadata'))
+            return { ...acc, [col.column.concat(`_${colType}`)]: col };
 
-          return ({ ...acc, [col.column]: col });
+          return { ...acc, [col.column]: col };
         }, {});
       },
     );
@@ -409,8 +410,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -422,8 +423,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -434,8 +435,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-              defaultColumnWidths[currentColumn.column as RunColumn] ??
-              MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -444,8 +445,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-              defaultColumnWidths[currentColumn.column as RunColumn] ??
-              MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -456,8 +457,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-              defaultColumnWidths[currentColumn.column as RunColumn] ??
-              MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
