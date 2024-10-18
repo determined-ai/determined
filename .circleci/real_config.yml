@@ -2310,7 +2310,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - det-go-build-$LATEST_MAIN_SHA-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+            - det-go-build-${LATEST_MAIN_SHA}-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -2320,7 +2320,7 @@ jobs:
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
       - save_cache:
-          key: det-go-build-$LATEST_MAIN_SHA-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+          key: det-go-build-${LATEST_MAIN_SHA}-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
