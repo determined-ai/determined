@@ -372,7 +372,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             break;
           case V1LocationType.RUN:
           case V1LocationType.RUNMETADATA:
-            dataPath = currentColumn.column.concat(`_${colType}`);
+            dataPath = currentColumn.column;
             break;
           case V1LocationType.HYPERPARAMETERS:
             dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
@@ -417,6 +417,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   max: heatmap.max,
                   min: heatmap.min,
                 },
+                colType,
               );
             } else {
               columnDefs[currentColumn.column] = defaultNumberColumn(
@@ -426,6 +427,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   defaultColumnWidths[currentColumn.column as RunColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
+                undefined,
+                colType,
               );
             }
             break;
@@ -438,6 +441,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 defaultColumnWidths[currentColumn.column as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
+              colType,
             );
             break;
           case V1ColumnType.ARRAY:
@@ -448,6 +452,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 defaultColumnWidths[currentColumn.column as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
+              colType,
             );
             break;
           case V1ColumnType.TEXT:
@@ -460,6 +465,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 defaultColumnWidths[currentColumn.column as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
+              colType,
             );
         }
         if (currentColumn.column === 'searcherMetricsVal') {
