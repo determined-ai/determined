@@ -15,6 +15,7 @@
 -  :ref:`det.pytorch.samplers <pytorch-samplers>`
 -  :ref:`det.pytorch.deepspeed <deepspeed-reference>`
 -  :ref:`det.keras <keras-reference>`
+-  :ref:`det.transformers <transformers-reference>`
 
 *******************************
  Experiment Configuration File
