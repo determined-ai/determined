@@ -286,6 +286,10 @@ func (a *apiServer) LaunchTensorboard(
 	if err != nil {
 		return nil, err
 	}
+
+	if launchReq.Spec.Base.ExtraEnvVars == nil {
+		launchReq.Spec.Base.ExtraEnvVars = map[string]string{}
+	}
 	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, oidcPachydermEnvVars)
 
 	if launchReq.Spec.Config.Debug {
