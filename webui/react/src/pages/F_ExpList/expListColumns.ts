@@ -136,7 +136,6 @@ export const getColumnDefs = ({
   },
   checkpointCount: {
     id: 'checkpointCount',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       data: Number(record.experiment.checkpoints),
@@ -149,7 +148,6 @@ export const getColumnDefs = ({
   },
   checkpointSize: {
     id: 'checkpointSize',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: record.experiment.checkpointSize
@@ -176,7 +174,6 @@ export const getColumnDefs = ({
   },
   duration: {
     id: 'duration',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getDurationInEnglish(record.experiment),
@@ -305,7 +302,6 @@ export const getColumnDefs = ({
   },
   numTrials: {
     id: 'numTrials',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       data: record.experiment.numTrials,
@@ -346,7 +342,6 @@ export const getColumnDefs = ({
   },
   searcherMetric: {
     id: 'searcherMetric',
-    isNumerical: false,
     renderer: (record: ExperimentWithTrial) => {
       const sMetric = record.experiment.searcherMetric ?? '';
       return {
@@ -374,7 +369,6 @@ export const getColumnDefs = ({
   },
   startTime: {
     id: 'startTime',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.experiment.startTime)),
@@ -456,7 +450,6 @@ export const searcherMetricsValColumn = (
 ): ColumnDef<ExperimentWithTrial> => {
   return {
     id: 'searcherMetricsVal',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
       const sMetricValue = record.bestTrial?.searcherMetricsVal;
 

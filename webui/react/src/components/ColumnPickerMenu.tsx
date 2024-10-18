@@ -99,32 +99,41 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     return filteredColumns.every((col) => {
       const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
 
-      if (col.column.includes('metadata')) return columnState.includes(col.column.concat(`_${colType}`));
+      if (col.column.includes('metadata'))
+        return columnState.includes(col.column.concat(`_${colType}`));
       return columnState.includes(col.column);
     });
   }, [columnState, filteredColumns]);
   const [metadataColumns, setMetadataColumns] = useState(() => new Map<string, number[]>()); // a map of metadata columns and found indexes
 
   const handleShowHideAll = useCallback(() => {
-    const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce(
-      (acc, col) => {
-        const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+    const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => {
+      const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
 
-        if (col.column.includes('metadata')) return ({ ...acc, [col.column.concat(`_${colType}`)]: columnState.includes(col.column.concat(`_${colType}`)) });
+      if (col.column.includes('metadata'))
+        return {
+          ...acc,
+          [col.column.concat(`_${colType}`)]: columnState.includes(
+            col.column.concat(`_${colType}`),
+          ),
+        };
 
-        return ({ ...acc, [col.column]: columnState.includes(col.column) });
-      },
-      {},
-    );
+      return { ...acc, [col.column]: columnState.includes(col.column) };
+    }, {});
 
     const newColumns = allFilteredColumnsChecked
       ? columnState.filter((col) => !filteredColumnMap[col])
-      : [...new Set([...columnState, ...filteredColumns.map((col) => {
-        const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+      : [
+          ...new Set([
+            ...columnState,
+            ...filteredColumns.map((col) => {
+              const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
 
-        if (col.column.includes('metadata')) return col.column.concat(`_${colType}`);
-        return col.column;
-      })])]; // TODO: check if that needs to be mapped with the metadata
+              if (col.column.includes('metadata')) return col.column.concat(`_${colType}`);
+              return col.column;
+            }),
+          ]),
+        ]; // TODO: check if that needs to be mapped with the metadata
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
         newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
@@ -208,7 +217,8 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         );
       };
       const getChecked = () => {
-        if (col.column.includes('metadata')) return checkedColumnNames.has(`${col.column}_${colType}`);
+        if (col.column.includes('metadata'))
+          return checkedColumnNames.has(`${col.column}_${colType}`);
         return checkedColumnNames.has(col.column);
       };
       return (
