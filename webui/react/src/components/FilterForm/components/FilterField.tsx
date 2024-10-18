@@ -238,15 +238,21 @@ const FilterField = ({
 
   const getColDisplayName = (col: V1ProjectColumn) => {
     const metCol = metadataColumns.get(col.column);
+    const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+
     if (metCol !== undefined && metCol.length > 1) {
       return (
         <>
-          {col.column} <Badge text={col.type.replace('COLUMN_TYPE_', '').toLowerCase()} />
+          {col.column} <Badge text={colType} />
         </>
       );
     }
 
-    return col.displayName || col.column;
+    return (
+      <>
+        {col.displayName || col.column} <Badge text={colType} />
+      </>
+    );
   };
 
   return (
