@@ -61,6 +61,7 @@ interface Props {
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActionComplete?: () => void | Promise<void>;
   selection: SelectionType;
+  selectionSize: number;
 }
 
 const FlatRunActionButton = ({
@@ -69,6 +70,7 @@ const FlatRunActionButton = ({
   selectedRuns,
   projectId,
   selection,
+  selectionSize,
   workspaceId,
   onActionSuccess,
   onActionComplete,
@@ -254,7 +256,7 @@ const FlatRunActionButton = ({
 
   return (
     <>
-      {selectedRuns.length > 0 && (
+      {selectionSize > 0 && (
         <Dropdown menu={editMenuItems} onClick={handleBatchAction}>
           <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
             Actions

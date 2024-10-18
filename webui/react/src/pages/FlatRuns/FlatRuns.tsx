@@ -1037,6 +1037,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               projectId={projectId}
               selectedRuns={loadedSelectedRuns}
               selection={settings.selection}
+              selectionSize={selectionSize}
               tableFilterString={filtersString}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
