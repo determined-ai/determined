@@ -661,6 +661,7 @@ const Searches: React.FC<Props> = ({ project }) => {
           };
 
         let dataPath: string | undefined = undefined;
+        const colType = currentColumn.type.replace('COLUMN_TYPE_', '').toLowerCase();
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -676,6 +677,8 @@ const Searches: React.FC<Props> = ({ project }) => {
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
+              undefined,
+              colType,
             );
             break;
           }
@@ -685,6 +688,7 @@ const Searches: React.FC<Props> = ({ project }) => {
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
+              colType,
             );
             break;
           case V1ColumnType.TEXT:
@@ -695,6 +699,7 @@ const Searches: React.FC<Props> = ({ project }) => {
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
+              colType,
             );
         }
         if (currentColumn.column === 'searcherMetricsVal') {

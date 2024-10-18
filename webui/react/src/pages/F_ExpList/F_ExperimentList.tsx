@@ -783,6 +783,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           };
 
         let dataPath: string | undefined = undefined;
+        const colType = currentColumn.type.replace('COLUMN_TYPE_', '').toLowerCase();
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -828,6 +829,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                   max: heatmap.max,
                   min: heatmap.min,
                 },
+                colType,
               );
             } else {
               columnDefs[currentColumn.column] = defaultNumberColumn(
@@ -837,6 +839,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                   defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
+                undefined,
+                colType,
               );
             }
             break;
@@ -849,6 +853,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
+              colType,
             );
             break;
           case V1ColumnType.TEXT:
@@ -861,6 +866,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
+              colType,
             );
         }
         if (currentColumn.column === 'searcherMetricsVal') {
