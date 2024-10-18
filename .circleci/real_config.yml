@@ -4788,7 +4788,7 @@ workflows:
     triggers:
       - schedule:
           cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
-          #filters: *release-upgrade  # Only runs on the release branches  
+          filters: *release-upgrade  # Only runs on the release branches  
     jobs:
       - build-proto
       - build-helm
