@@ -62,24 +62,6 @@ func (r RequestID) String() string {
 	return uuid.UUID(r).String()
 }
 
-// ParseRequestID decodes s into a request id or returns an error.
-func ParseRequestID(s string) (RequestID, error) {
-	parsed, err := uuid.Parse(s)
-	if err != nil {
-		return RequestID{}, err
-	}
-	return RequestID(parsed), nil
-}
-
-// MustParseRequestID decodes s into a request id or panics.
-func MustParseRequestID(s string) RequestID {
-	parsed, err := ParseRequestID(s)
-	if err != nil {
-		panic(err)
-	}
-	return parsed
-}
-
 // Value implements the sql.Driver interface.
 func (r RequestID) Value() (driver.Value, error) {
 	return r.String(), nil

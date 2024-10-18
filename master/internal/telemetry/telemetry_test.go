@@ -138,14 +138,11 @@ func initMockedTelemetry(t *testing.T) (*mockClient, *mocks.ResourceManager) {
 
 // Helper function for ReportExperimentCreated.
 func createExpConfig() expconf.ExperimentConfig {
-	maxLength := expconf.NewLengthInBatches(100)
 	//nolint:exhaustruct
 	activeConfig := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
-			RawMetric: ptrs.Ptr("loss"),
-			RawSingleConfig: &expconf.SingleConfig{
-				RawMaxLength: &maxLength,
-			},
+			RawMetric:       ptrs.Ptr("loss"),
+			RawSingleConfig: &expconf.SingleConfig{},
 		},
 		RawEntrypoint:      &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
 		RawHyperparameters: expconf.Hyperparameters{},

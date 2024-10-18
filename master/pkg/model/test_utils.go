@@ -28,13 +28,10 @@ func (f ExperimentModelOptionFunc) apply(experiment *Experiment) {
 // ExperimentModel returns a new experiment with the specified options.
 // nolint: exhaustruct
 func ExperimentModel(opts ...ExperimentModelOption) (*Experiment, expconf.ExperimentConfig) {
-	maxLength := expconf.NewLengthInBatches(100)
 	activeConfig := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
-			RawMetric: ptrs.Ptr("loss"),
-			RawSingleConfig: &expconf.SingleConfig{
-				RawMaxLength: &maxLength,
-			},
+			RawMetric:       ptrs.Ptr("loss"),
+			RawSingleConfig: &expconf.SingleConfig{},
 		},
 		RawEntrypoint:      &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
 		RawHyperparameters: expconf.Hyperparameters{},

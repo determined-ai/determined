@@ -67,13 +67,6 @@
         }
       },
       "description": "https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"
-    },
-    "v1CompleteValidateAfterOperation": {
-        "properties": {
-            "searcherMetric": {
-                "type": null
-            }
-        }
     }
   }
 }

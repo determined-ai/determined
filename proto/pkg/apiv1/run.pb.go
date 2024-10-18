@@ -27,7 +27,7 @@ type RunPrepareForReportingRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// RunID to sync to.
+	// TrialID to sync to.
 	RunId int32 `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	// Checkpoint storage config.
 	CheckpointStorage *_struct.Struct `protobuf:"bytes,2,opt,name=checkpoint_storage,json=checkpointStorage,proto3,oneof" json:"checkpoint_storage,omitempty"`

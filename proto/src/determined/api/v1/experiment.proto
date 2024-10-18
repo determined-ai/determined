@@ -285,8 +285,8 @@ message PreviewHPSearchRequest {
 }
 // Response to PreviewSearchRequest.
 message PreviewHPSearchResponse {
-  // The resulting simulation.
-  determined.experiment.v1.ExperimentSimulation simulation = 1;
+  // The resulting summary.
+  determined.experiment.v1.SearchSummary summary = 1;
 }
 
 // Activate an experiment.

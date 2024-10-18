@@ -6,7 +6,6 @@ package internal
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"testing"
 	"time"
@@ -32,30 +31,22 @@ import (
 )
 
 func TestTrial(t *testing.T) {
-	_, rID, tr, alloc, done := setup(t)
-
+	_, tr, alloc, done := setup(t)
+	// xxx: fix this test
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create: searcher.Create{RequestID: rID},
-		Op: searcher.ValidateAfter{
-			RequestID: rID,
-			Length:    10,
-		},
-		Complete: false,
-		Closed:   true,
+		Create:  searcher.Create{},
+		Stopped: false,
+		Closed:  false,
 	}))
 
 	// Running stage.
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create: searcher.Create{RequestID: rID},
-		Op: searcher.ValidateAfter{
-			RequestID: rID,
-			Length:    10,
-		},
-		Complete: true,
-		Closed:   true,
+		Create:  searcher.Create{},
+		Stopped: false,
+		Closed:  true,
 	}))
 	require.True(t, alloc.AssertExpectations(t))
 	require.NotNil(t, tr.allocationID)
@@ -79,18 +70,14 @@ func TestTrial(t *testing.T) {
 }
 
 func TestTrialRestarts(t *testing.T) {
-	pgDB, rID, tr, _, done := setup(t)
+	pgDB, tr, _, done := setup(t)
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create: searcher.Create{RequestID: rID},
-		Op: searcher.ValidateAfter{
-			RequestID: rID,
-			Length:    10,
-		},
-		Complete: false,
-		Closed:   true,
+		Create:  searcher.Create{},
+		Stopped: false,
+		Closed:  false,
 	}))
 
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
@@ -120,7 +107,6 @@ func TestTrialRestarts(t *testing.T) {
 
 func setup(t *testing.T) (
 	*internaldb.PgDB,
-	model.RequestID,
 	*trial,
 	*allocationmocks.AllocationService,
 	chan bool,
@@ -143,9 +129,9 @@ func setup(t *testing.T) (
 	j := &model.Job{JobID: model.NewJobID(), JobType: model.JobTypeExperiment}
 	require.NoError(t, internaldb.AddJob(j))
 
+	eID := 1
 	// instantiate the trial
-	rID := model.NewRequestID(rand.Reader)
-	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
+	taskID := model.TaskID(fmt.Sprintf("%d.%s", eID, model.NewTaskID()))
 	done := make(chan bool)
 
 	// create expconf merged with task container defaults
@@ -163,9 +149,9 @@ func setup(t *testing.T) (
 		taskID,
 		j.JobID,
 		time.Now(),
-		1,
+		eID,
 		model.PausedState,
-		experiment.TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		experiment.TrialSearcherState{Create: searcher.Create{}, Closed: true},
 		rmImpl,
 		a.m.db,
 		expConf,
@@ -177,12 +163,11 @@ func setup(t *testing.T) (
 		},
 		ssh.PrivateAndPublicKeys{},
 		false,
-		nil, nil, func(ri model.RequestID, reason *model.ExitedReason) {
-			require.Equal(t, rID, ri)
+		nil, nil, func(ri int32, reason *model.ExitedReason) {
 			done <- true
 			close(done)
 		},
 	)
 	require.NoError(t, err)
-	return a.m.db, rID, tr, &as, done
+	return a.m.db, tr, &as, done
 }

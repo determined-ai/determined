@@ -924,6 +924,76 @@ the model architecture of this experiment.
 Optional. Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize
 weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
 
+.. _experiment-configuration-searcher-asha:
+
+Asynchronous Halving (ASHA)
+===========================
+
+The ``async_halving`` search performs a version of the asynchronous successive halving algorithm
+(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_) that stops trials early if there is enough evidence
+to terminate training. Once trials are stopped, they will not be resumed.
+
+``metric``
+----------
+
+Required. The name of the validation metric used to evaluate the performance of a hyperparameter
+configuration.
+
+``time_metric``
+---------------
+
+Required. The name of the validation metric used to evaluate the progress of a given trial.
+
+``max_time``
+------------
+
+Required. The maximum value that ``time_metric`` should take when a trial finishes training. Early
+stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
+value.
+
+``max_trials``
+--------------
+
+Required. The number of trials, i.e., hyperparameter configurations, to evaluate.
+
+``num_rungs``
+-------------
+
+Required. The number of rounds of successive halving to perform.
+
+``smaller_is_better``
+---------------------
+
+Optional. Whether to minimize or maximize the metric defined above. The default value is ``true``
+(minimize).
+
+``divisor``
+-----------
+
+Optional. The fraction of trials to keep at each rung, and also determines the training length for
+each rung. The default setting is ``4``; only advanced users should consider changing this value.
+
+``max_concurrent_trials``
+-------------------------
+
+Optional. The maximum number of trials that can be worked on simultaneously. The default value is
+``16``, and we set reasonable values depending on ``max_trials`` and the number of rungs in the
+brackets. This is akin to controlling the degree of parallelism of the experiment. If this value is
+less than the number of brackets produced by the adaptive algorithm, it will be rounded up.
+
+``source_trial_id``
+-------------------
+
+Optional. If specified, the weights of *every* trial in the search will be initialized to the most
+recent checkpoint of the given trial ID. This will fail if the source trial's model architecture is
+inconsistent with the model architecture of any of the trials in this experiment.
+
+``source_checkpoint_uuid``
+--------------------------
+
+Optional. Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize
+weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
+
 .. _experiment-configuration-searcher-adaptive:
 
 Adaptive ASHA
@@ -942,12 +1012,12 @@ configuration.
 ``time_metric``
 ---------------
 
-Required.  The name of the validation metric used to evaluate the progress of a given trial.
+Required. The name of the validation metric used to evaluate the progress of a given trial.
 
 ``max_time``
 ------------
 
-Required.  The maximum value that ``time_metric`` should take when a trial finishes training.  Early
+Required. The maximum value that ``time_metric`` should take when a trial finishes training. Early
 stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
 value.
 
@@ -974,14 +1044,6 @@ hyperparameter configurations, but at the risk of discarding a configuration too
 end of the spectrum, ``conservative`` mode performs significantly less downsampling, but as a
 consequence does not explore as many configurations given the same budget. We recommend using either
 ``aggressive`` or ``standard`` mode.
-
-``stop_once``
--------------
-
-Optional. If ``stop_once`` is set to ``true``, we will use a variant of ASHA that will not resume
-trials once stopped. This variant defaults to continuing training and will only stop trials if there
-is enough evidence to terminate training. We recommend using this version of ASHA when training a
-trial for the max length as fast as possible is important or when fault tolerance is too expensive.
 
 ``divisor``
 -----------

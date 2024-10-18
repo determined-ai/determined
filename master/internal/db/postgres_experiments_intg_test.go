@@ -757,17 +757,12 @@ func TestDeleteExperiments(t *testing.T) {
 		// Create experiment snapshot
 		//nolint:exhaustruct
 		config := expconf.SearcherConfig{
-			RawSingleConfig: &expconf.SingleConfigV0{
-				RawMaxLength: &expconf.LengthV0{
-					Unit:  expconf.Batches,
-					Units: 10,
-				},
-			},
+			RawSingleConfig: &expconf.SingleConfigV0{},
 		}
 		searcher1 := searcher.NewSearcher(3, searcher.NewSearchMethod(config), nil)
-		_, err := searcher1.InitialOperations()
+		_, err := searcher1.InitialTrials()
 		require.NoError(t, err)
-		_, err = searcher1.TrialExitedEarly(model.RequestID(uuid.New()), model.Errored)
+		_, err = searcher1.TrialExitedEarly(1, model.Errored)
 		require.NoError(t, err)
 
 		snapshot, err := searcher1.Snapshot()

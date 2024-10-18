@@ -11,34 +11,32 @@ type context struct {
 	hparams expconf.Hyperparameters
 }
 
-// SearchMethod is the interface for hyper-parameter tuning methods. Implementations of this
+// SearchMethod is the interface for hyperparameter tuning methods. Implementations of this
 // interface should use pointer receivers to ensure interface equality is calculated through pointer
 // equality.
 type SearchMethod interface {
-	// initialOperations returns a set of initial operations that the searcher would like to take.
+	// initialTrials returns a set of initial trials the searcher would like to create.
 	// This should be called only once after the searcher has been created.
-	initialOperations(ctx context) ([]Operation, error)
+	initialTrials(ctx context) ([]Action, error)
 	// trialCreated informs the searcher that a trial has been created as a result of a Create
-	// operation.
-	trialCreated(ctx context, requestID model.RequestID) ([]Operation, error)
-	// validationCompleted informs the searcher that the validation workload initiated by the same
-	// searcher has completed. It returns any new operations as a result of this workload
-	// completing.
-	validationCompleted(ctx context, requestID model.RequestID,
-		metric interface{}, op ValidateAfter) ([]Operation, error)
-	// trialClosed informs the searcher that the trial has been closed as a result of a Close
-	// operation.
-	trialClosed(ctx context, requestID model.RequestID) ([]Operation, error)
-	// progress returns experiment progress as a float between 0.0 and 1.0.
-	progress(map[model.RequestID]PartialUnits, map[model.RequestID]bool) float64
+	// action and returns any additional Actions to perform.
+	trialCreated(ctx context, trialID int32, action Create) ([]Action, error)
+	// validationCompleted informs the searcher that a validation metric has been reported
+	// and returns any resulting actions.
+	validationCompleted(ctx context, trialID int32,
+		metrics map[string]interface{}) ([]Action, error)
+	// trialExited informs the searcher that the trial has exited.
+	trialExited(ctx context, trialID int32) ([]Action, error)
+	// progress returns search progress as a float between 0.0 and 1.0.
+	progress(map[int32]float64, map[int32]bool) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(
-		ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
-	) ([]Operation, error)
+		ctx context, trialID int32, exitedReason model.ExitedReason,
+	) ([]Action, error)
 
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
-	expconf.InUnits
+	Type() SearchMethodType
 }
 
 // SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
@@ -52,8 +50,6 @@ const (
 	RandomSearch SearchMethodType = "random"
 	// GridSearch is the SearchMethodType for a grid searcher.
 	GridSearch SearchMethodType = "grid"
-	// AdaptiveSearch is the SearchMethodType for an adaptive searcher.
-	AdaptiveSearch SearchMethodType = "adaptive"
 	// ASHASearch is the SearchMethodType for an ASHA searcher.
 	ASHASearch SearchMethodType = "asha"
 	// AdaptiveASHASearch is the SearchMethodType for an adaptive ASHA searcher.
@@ -70,12 +66,9 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 	case c.RawGridConfig != nil:
 		return newGridSearch(*c.RawGridConfig)
 	case c.RawAsyncHalvingConfig != nil:
-		if c.RawAsyncHalvingConfig.StopOnce() {
-			return newAsyncHalvingStoppingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
-		}
-		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
+		return newAsyncHalvingStoppingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter(), c.Metric())
 	case c.RawAdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
+		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter(), c.Metric())
 	default:
 		panic("no searcher type specified")
 	}
@@ -83,24 +76,22 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 
 type defaultSearchMethod struct{}
 
-func (defaultSearchMethod) trialCreated(context, model.RequestID) ([]Operation, error) {
+func (defaultSearchMethod) trialCreated(context, int32, Create) ([]Action, error) {
 	return nil, nil
 }
 
-func (defaultSearchMethod) validationCompleted(
-	context, model.RequestID, interface{}, ValidateAfter,
-) ([]Operation, error) {
+func (defaultSearchMethod) validationCompleted(context, int32, map[string]interface{}) ([]Action, error) {
 	return nil, nil
 }
 
 // nolint:unused
-func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, error) {
+func (defaultSearchMethod) trialExited(context, int32) ([]Action, error) {
 	return nil, nil
 }
 
 // nolint:unused
 func (defaultSearchMethod) trialExitedEarly(
-	context, model.RequestID, model.ExitedReason,
-) ([]Operation, error) {
-	return []Operation{Shutdown{Failure: true}}, nil
+	context, int32, model.ExitedReason,
+) ([]Action, error) {
+	return []Action{Shutdown{Failure: true}}, nil
 }
