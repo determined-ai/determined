@@ -6,14 +6,9 @@ import { expect } from 'e2e/fixtures/global-fixtures';
 import { safeName } from 'e2e/utils/naming';
 import { ProjectsApi, V1PostProjectRequest, V1PostProjectResponse } from 'services/api-ts-sdk/api';
 
-import { ApiAuthFixture } from './api.auth.fixture';
+import { apiFixture } from './api';
 
-export class ApiProjectFixture {
-  readonly apiAuth: ApiAuthFixture;
-  constructor(apiAuth: ApiAuthFixture) {
-    this.apiAuth = apiAuth;
-  }
-
+export class ApiProjectFixture extends apiFixture(ProjectsApi) {
   new({ projectProps = {}, projectPrefix = 'test-project' } = {}): V1PostProjectRequest {
     const defaults = {
       name: safeName(projectPrefix),
@@ -23,21 +18,6 @@ export class ApiProjectFixture {
       ...defaults,
       ...projectProps,
     };
-  }
-
-  private static normalizeUrl(url: string): string {
-    if (url.endsWith('/')) {
-      return url.substring(0, url.length - 1);
-    }
-    return url;
-  }
-
-  private async startProjectRequest(): Promise<ProjectsApi> {
-    return new ProjectsApi(
-      { apiKey: await this.apiAuth.getBearerToken() },
-      ApiProjectFixture.normalizeUrl(this.apiAuth.baseURL),
-      fetch,
-    );
   }
 
   /**
@@ -53,7 +33,7 @@ export class ApiProjectFixture {
     workspaceId: number,
     req: V1PostProjectRequest,
   ): Promise<V1PostProjectResponse> {
-    const projectResp = await (await this.startProjectRequest())
+    const projectResp = await this.api
       .postProject(workspaceId, req, {})
       .catch(async function (error) {
         const respBody = await streamConsumers.text(error.body);
@@ -75,19 +55,17 @@ export class ApiProjectFixture {
     await expect
       .poll(
         async () => {
-          const projectResp = await (await this.startProjectRequest())
-            .deleteProject(id)
-            .catch(async function (error) {
-              const respBody = await streamConsumers.text(error.body);
-              if (error.status === 404) {
-                return { completed: true };
-              }
-              throw new Error(
-                `Delete Project Request failed. Status: ${error.status} Request: ${JSON.stringify(
-                  id,
-                )} Response: ${respBody}`,
-              );
-            });
+          const projectResp = await this.api.deleteProject(id).catch(async function (error) {
+            const respBody = await streamConsumers.text(error.body);
+            if (error.status === 404) {
+              return { completed: true };
+            }
+            throw new Error(
+              `Delete Project Request failed. Status: ${error.status} Request: ${JSON.stringify(
+                id,
+              )} Response: ${respBody}`,
+            );
+          });
           return projectResp.completed;
         },
         {
