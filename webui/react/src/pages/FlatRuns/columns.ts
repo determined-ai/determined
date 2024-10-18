@@ -127,7 +127,6 @@ export const getColumnDefs = ({
   },
   checkpointCount: {
     id: 'checkpointCount',
-    isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       data: Number(record.checkpointCount),
@@ -140,7 +139,6 @@ export const getColumnDefs = ({
   },
   checkpointSize: {
     id: 'checkpointSize',
-    isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: humanReadableBytes(record.checkpointSize),
@@ -153,7 +151,6 @@ export const getColumnDefs = ({
   },
   duration: {
     id: 'duration',
-    isNumerical: true,
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.duration, (data) => ({
         allowOverlay: false,
@@ -394,7 +391,6 @@ export const getColumnDefs = ({
   },
   searcherMetric: {
     id: 'searcherMetric',
-    isNumerical: false,
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.searcherMetric, (data) => ({
         allowOverlay: false,
@@ -421,7 +417,6 @@ export const getColumnDefs = ({
   },
   startTime: {
     id: 'startTime',
-    isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.startTime)),
@@ -505,7 +500,6 @@ export const searcherMetricsValColumn = (
 ): ColumnDef<FlatRun> => {
   return {
     id: 'searcherMetricsVal',
-    isNumerical: true,
     renderer: (record: FlatRun) => {
       const sMetricValue = record.searcherMetricValue;
 
