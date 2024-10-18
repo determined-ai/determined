@@ -1660,7 +1660,5 @@ nodes or specifying a PBS constraint in the experiment configuration.
 ******************
 
 Determined supports logging arbitrary metadata for experiments. This feature allows users to store
-additional context and information about their runs. To log metadata, use the following function in
-your code:
-
-TO DO: ADD EXAMPLE USAGE
+additional context and information about their runs. To learn how to log custom metadata, visit
+:ref:`the tutorial <metadata-logging-tutorial>`.
