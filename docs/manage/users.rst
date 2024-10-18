@@ -293,9 +293,8 @@ custom images using ``groupadd`` and ``useradd``.
  Set Config Policies
 *********************
 
-Determined supports :ref:`Config Policies <config-policies>`, which allow administrators to set
-limits on how users can define workloads. These policies interact with user roles in the following
-ways:
+:ref:`Config Policies <config-policies>` allow administrators to set limits on how users can define
+workloads. These policies interact with user roles in the following ways:
 
 -  Only users with the :ref:`ClusterAdmin <rbac-clusteradmin>` role can create, modify, or delete
    global Config Policies.
