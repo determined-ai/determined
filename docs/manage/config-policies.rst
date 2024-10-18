@@ -233,13 +233,13 @@ user's settings.
    -  Existing workloads are not impacted by new or updated policies.
    -  Updating config policies replaces the entire set of invariant configs and constraints.
 
-*******************
- Priority Override
-*******************
+**********************
+ Priority Enforcement
+**********************
 
-If a global or workspace-level policy sets a default priority, it can be overridden using the
-`SetJobPriority` API endpoint. However, the new priority must respect the constraints defined in the
-applicable policies.
+If a global or workspace-level policy sets a priority limit, any workload in the relevant scope that
+exceeds this limit will be rejected. This ensures that all workloads adhere to the configured
+priority constraints.
 
 .. note::
 
