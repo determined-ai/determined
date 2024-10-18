@@ -420,8 +420,8 @@ commands:
           working_directory: <<parameters.package-location>>
           command: |
             make build
-            pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
-            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
+            pip install --find-links dist <<parameters.package-name>>
+            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>
 
   setup-python-venv:
     description: Set up and create Python venv.
