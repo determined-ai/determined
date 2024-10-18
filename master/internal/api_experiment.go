@@ -2018,7 +2018,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
 	var metricMeasurements []db.MetricMeasurements
-	xAxisLabelMetrics := []string{"epoch"}
 
 	trial.TrialId = trialID
 
@@ -2037,7 +2036,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
 		[]string{metricName},
-		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		startBatches, endBatches, maxDatapoints,
 		"batches", nil, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")

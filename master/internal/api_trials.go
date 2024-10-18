@@ -845,10 +845,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
 	var metrics []*apiv1.DownsampledMetrics
-	// For now "epoch" is the only custom xAxis metric label supported so we
-	// build the `MetricSeriesEpoch` array. In the future this logic should
-	// be updated to support any number of xAxis metric options
-	xAxisLabelMetrics := []string{"epoch"}
 
 	if err := db.ValidatePolymorphicFilter(timeSeriesFilter); err != nil {
 		return nil, err
@@ -900,7 +896,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		var metric apiv1.DownsampledMetrics
 		metricMeasurements, err := trials.MetricsTimeSeries(
 			trialID, startTime, aMetricNames, startBatches, endBatches,
-			xAxisLabelMetrics,
 			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricGroup)
 		if err != nil {
 			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
