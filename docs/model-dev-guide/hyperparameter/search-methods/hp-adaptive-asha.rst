@@ -25,7 +25,7 @@ Resource budget:
    <experiment-configuration_training_units>`). Note that the searcher will expect this metric to
    appear in validation metrics reported by the model. This quantity is domain-specific and should
    roughly reflect the number of minibatches the model must be trained on for it to converge on the
-   data set. For users who would like to determine this number experimentally, train a model with
+   dataset. For users who would like to determine this number experimentally, train a model with
    reasonable hyperparameters using the ``single`` search method.
 
 -  ``max_trials``: This indicates the total number of hyperparameter settings that will be evaluated
