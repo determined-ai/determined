@@ -43,8 +43,8 @@ The experiment seed is used as a source of randomness for any hyperparameter sam
 The experiment seed is also used to generate a **trial seed** for every trial associated with the
 experiment.
 
-In the ``Trial`` interface, the trial seed is accessible within the trial class using
-``self.ctx.get_trial_seed()``.
+When training on-cluster, the trial seed is accessible via
+:class:`det.get_cluster_info().trial.trial_seed <determined.get_cluster_info>`
 
 *******************
  Coding Guidelines
@@ -67,16 +67,12 @@ To achieve reproducible initial conditions in an experiment, please follow these
 **************************************
 
 When doing CPU-only training with TensorFlow, it is possible to achieve floating-point
-reproducibility throughout optimization. If using the :class:`~determined.keras.TFKerasTrial` API,
-implement the optional :meth:`~determined.keras.TFKerasTrial.session_config` method to override the
-default session configuration:
+reproducibility throughout optimization:
 
 .. code:: python
 
-   def session_config(self) -> tf.ConfigProto:
-       return tf.ConfigProto(
-           intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
-       )
+   tf.config.threading.set_intra_op_parallelism_threads(1)
+   tf.config.threading.set_inter_op_parallelism_threads(1)
 
 .. warning::
 
