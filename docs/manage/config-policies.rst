@@ -26,10 +26,22 @@ override user-submitted configurations.
 -  Apply policies via WebUI or CLI
 -  Define limits for resource usage, environment settings, and more
 -  Apply policies at different levels (cluster-wide or workspace)
--  Override capabilities for specific user roles or groups
 -  Set different priority limits for experiments and NTSC (notebooks, TensorBoards, shells, and
    commands) tasks
--  Allow priority overrides within policy constraints
+-  Enforce strict adherence to configured priority limits
+
+Before setting policies, please note the following:
+
+.. warning::
+
+   Do not set both constraints and invariant configs for the same field within the same workload
+   type and scope. This may lead to unpredictable behavior.
+
+.. important::
+
+   -  Existing workloads are not impacted by new or updated policies.
+   -  Updating config policies replaces the entire set of invariant configs and constraints for the
+      affected scope.
 
 ******************
  Setting Policies
@@ -72,21 +84,36 @@ Administrators can set Config Policies at both the cluster and workspace levels.
 CLI
 ===
 
-Use the following commands to manage Task Config Policies via CLI:
+Use the following command to manage workspace-level Config Policies via CLI:
 
 .. code:: bash
 
-   # List existing policies
-   det policy list
+   det config-policies
 
-   # Create a new policy
-   det policy create <policy_name> --config <policy_config_file.yaml>
+This command has several subcommands:
 
-   # Update an existing policy
-   det policy update <policy_name> --config <updated_policy_config_file.yaml>
+.. code:: bash
 
-   # Delete a policy
-   det policy delete <policy_name>
+   # Show help for the config-policies command
+   det config-policies help
+
+   # Delete config policies
+   det config-policies delete
+
+   # Describe config policies
+   det config-policies describe
+
+   # Set config policies
+   det config-policies set
+
+For more detailed information on each subcommand, you can use the `-h` or `--help` flag. For
+example:
+
+.. code:: bash
+
+   det config-policies set -h
+
+This will display the specific options and arguments available for the `set` subcommand.
 
 *****************
  Policy Examples
@@ -101,53 +128,29 @@ Administrators can set constraints on resource usage, allowing them to manage ho
 resources for workloads such as experiments, notebooks, tensorboards, shells, and commands. The two
 main configurable constraints are:
 
--  ``resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can be used.
--  ``resources.priority_limit``: Sets the priority limit for tasks.
+-  ``constraints.resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can
+   be used.
+-  ``constraints.priority_limit``: Sets the priority limit for tasks.
 
 For Kubernetes resource managers, higher priority values indicate higher priority. For Agent
 resource managers, lower priority values indicate higher priority.
 
-**Example 1: Limiting GPU/CPU Slots and Priority for Experiments**
+**Example: Limiting GPU/CPU Slots and Priority for Experiments**
 
 The following example demonstrates how to set a maximum of 4 slots (GPUs or CPUs) and a priority
 limit of 15. This configuration applies to both Kubernetes and Agent resource managers, though the
 priority system behaves differently across the two:
 
--  In Kubernetes, higher priority values indicate higher priority.
--  In Agent resource managers, lower priority values indicate higher priority.
-
 .. code:: yaml
 
    constraints:
+     priority_limit: 15
      resources:
        max_slots: 4
-       priority_limit: 15
 
 In this example: - Users cannot set ``max_slots`` greater than 4. - Users cannot set a priority
-lower than 15 for Agent RMs or higher than 15 for Kubernetes RMs.
-
-**Example 2: Limiting Resources for Agent Resource Manager (RM)**
-
-This example limits the number of slots and sets a priority limit specifically for an Agent resource
-manager (RM). The ``priority_limit`` is set to ``15``, and ``max_slots`` is set to ``1``. This means
-a user cannot set a priority value lower than 15 and cannot set ``max_slots`` greater than 1.
-
-.. note::
-
-   Tasks such as NTSC (notebooks, tensorboards, shells, and commands) and resource managers (RMs)
-   have priority levels ranging from 1 to 99. The default cluster priority is typically 42. In Agent
-   RMs, a lower priority number means a higher priority, while in Kubernetes RMs, a higher priority
-   number means a higher priority.
-
-.. code:: yaml
-
-   constraints:
-      priority_limit: 15
-      resources:
-         max_slots: 1
-
-If a user tries to set a notebook priority to 10 when the limit is 15, the request will fail, and
-the system will display an error message.
+lower than 15 for Agent RMs or higher than 15 for Kubernetes RMs. - Any workload that exceeds these
+limits will be rejected, ensuring adherence to the configured constraints.
 
 Limit Maximum GPU Usage per Experiment
 ======================================
@@ -171,18 +174,14 @@ The following policy is configured in the Config Policies > Experiments tab.
 .. code:: yaml
 
    constraints:
-     resources:
-       priority_limit: <experiment limit>
+     priority_limit: <experiment limit>
 
 The following policy is configured in the Config Policies > Tasks tab.
-
--  Tasks
 
 .. code:: yaml
 
    constraints:
-     resources:
-       priority_limit: <task limit>
+     priority_limit: <task limit>
 
 Invariant Configs
 =================
@@ -222,29 +221,6 @@ environment variables and is set in the Experiments tab:
 
 When a user submits a workload, these settings will be applied in addition to (or overriding) the
 user's settings.
-
-.. warning::
-
-   Do not set both constraints and configs for the same field within the same workload type and
-   scope. It may lead to unpredictable behavior.
-
-.. important::
-
-   -  Existing workloads are not impacted by new or updated policies.
-   -  Updating config policies replaces the entire set of invariant configs and constraints.
-
-**********************
- Priority Enforcement
-**********************
-
-If a global or workspace-level policy sets a priority limit, any workload in the relevant scope that
-exceeds this limit will be rejected. This ensures that all workloads adhere to the configured
-priority constraints.
-
-.. note::
-
-   Higher values indicate higher priority in Kubernetes resource managers, while lower values
-   indicate higher priority in Agent resource managers.
 
 ****************
  Best Practices

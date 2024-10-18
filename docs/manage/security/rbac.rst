@@ -544,6 +544,8 @@ assigned globally.
 The ``TokenCreator`` grants users the ability to create, view, and revoke their own access tokens.
 It can only be assigned globally.
 
+.. _rbac-clusteradmin:
+
 ``ClusterAdmin``
 ================
 
