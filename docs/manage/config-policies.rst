@@ -4,16 +4,17 @@
  Config Policies Guide
 #######################
 
-Config Policies allow administrators to set limits on how users can define workloads (e.g.,
-experiments, notebooks, tensorboards, shells, and commands). Administrators can include any
-parameter referenced in the :ref:`experiment configuration reference <experiment-config-reference>`.
+Config Policies enable administrators to control how users define workloads, such as experiments,
+notebooks, tensorboards, shells, and commands. Administrators can include any parameter from the
+:ref:`experiment configuration reference <experiment-config-reference>` to set up experiment
+invariant configurations.
 
 .. include:: ../_shared/attn-enterprise-edition.txt
 
-Config Policies allow admins to define two types of configurations:
+Admins can define two types of configuration policies:
 
--  **Invariant Configs**: Settings applied to all workloads within a scope (global or workspace).
 -  **Constraints**: Restrictions that prevent users from exceeding resource limits.
+-  **Invariant Configs**: Settings applied to all workloads within a scope (global or workspace).
 
 These policies are essential for managing task priorities, resource allocation, and setting specific
 configurations across the organization. Global policies override workspace policies, and both
@@ -24,18 +25,16 @@ override user-submitted configurations.
 **************
 
 -  Apply policies via WebUI or CLI
--  Define limits for resource usage, environment settings, and more
--  Apply policies at different levels (cluster-wide or workspace)
+-  Define limits and non-overridable defaults for resource usage, environment settings, and more
+-  Enforce policies at both cluster and workspace levels
 -  Set different priority limits for experiments and NTSC (notebooks, TensorBoards, shells, and
    commands) tasks
 -  Enforce strict adherence to configured priority limits
 
-Before setting policies, please note the following:
-
 .. warning::
 
-   Do not set both constraints and invariant configs for the same field within the same workload
-   type and scope. This may lead to unpredictable behavior.
+   To avoid unpredictable behavior, avoid setting both constraints and invariant configs for the
+   same field within the same workload type and scope.
 
 .. important::
 
@@ -49,6 +48,12 @@ Before setting policies, please note the following:
 
 Administrators can set Config Policies at either the cluster or workspace levels through the WebUI
 or CLI.
+
+.. important::
+
+   Config policies are set as a complete unit. When updating config policies using the WebUI or CLI,
+   both the invariant config and constraints for a given scope are updated together. It is not
+   possible to update only one of these components independently.
 
 WebUI
 =====
@@ -125,11 +130,11 @@ Limiting Resources
 ==================
 
 Administrators can set constraints on resource usage, allowing them to manage how users allocate
-resources for workloads such as experiments, notebooks, tensorboards, shells, and commands. The two
-main configurable constraints are:
+resources for workloads such as experiments, notebooks, tensorboards, shells, and commands. The
+configurable constraints are:
 
 -  ``constraints.resources.max_slots``: Limits the maximum number of slots (GPUs or CPUs) that can
-   be used.
+   be used by submitted workloads.
 -  ``constraints.priority_limit``: Sets the priority limit for tasks.
 
 For Kubernetes resource managers, higher priority values indicate higher priority. For Agent
@@ -219,7 +224,7 @@ environment variables and is set in the Experiments tab:
          cpu:
            - cpuval=originalcpu
 
-When a user submits a workload, these settings will be applied in addition to (or overriding) the
+When a user submits a workload, these settings will be applied in addition to (or override) the
 user's settings.
 
 ****************
@@ -227,11 +232,11 @@ user's settings.
 ****************
 
 -  Start with cluster-wide policies for broad governance.
--  Use workspace and project-level policies for more granular control.
+-  Use workspace-level policies for more granular control of the projects in a workspace.
 -  Set different priority limits for experiments and NTSC tasks to better manage resource
    allocation.
 -  Regularly review and update policies as organizational needs evolve.
--  Communicate policy changes clearly to users to ensure smooth adoption.
+-  Communicate configuration policies to users to ensure smooth adoption.
 -  Use the SetJobPriority API cautiously, ensuring that priority changes do not violate existing
    policies.
 -  Use invariant configs to set default behaviors across workloads.
