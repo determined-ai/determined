@@ -1505,31 +1505,6 @@ commands:
     steps:
       - run: 
           command: pkill -SIGHUP -f "devcluster" && rm -rf /tmp/devcluster/lock
-         
-  make-component:
-    description: "Basic parameterized version of make for building Determined components."
-    parameters:
-      component:
-        type: string
-        default: ""
-      target:
-        type: string
-        default: ""
-      dryrun:
-        type: boolean
-        default: false
-      no_output_timeout:
-        type: string
-        default: "10m"
-    steps:
-      - run:
-          no_output_timeout: <<parameters.no_output_timeout>>
-          command: |
-            if <<parameters.dryrun>>; then
-              make -C <<parameters.component>> <<parameters.target>>
-            else
-              make -C <<parameters.component>> <<parameters.target>>-dryrun
-            fi
 
 jobs:
   start-stop-devcluster:
@@ -4810,10 +4785,10 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-upgrade:
-    #triggers:
-    #  - schedule:
-    #      cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
-    #      filters: *release-upgrade  # Only runs on the release branches  
+    triggers:
+      - schedule:
+          cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
+          filters: *release-upgrade  # Only runs on the release branches  
     jobs:
       - build-proto
       - build-helm
