@@ -304,7 +304,7 @@ Optional. Specifies the minimum frequency at which validation should be run for 
 
 -  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
    :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
+   ``records_per_epoch`` must be specified.
 
 .. _experiment-config-perform-initial-validation:
 
@@ -345,7 +345,7 @@ Optional. Specifies the minimum frequency for running checkpointing for each tri
 
 -  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
    :class:`~determined.keras.TFKerasTrial`: If the unit is in epochs, you must also specify
-   :ref:`records_per_epoch <config-records-per-epoch>`.
+   ``records_per_epoch``.
 
 ``checkpoint_policy``
 =====================
