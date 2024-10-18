@@ -1,4 +1,5 @@
-from determined.__version__ import __version__
+from importlib import metadata
+
 from determined._experiment_config import ExperimentConfig
 from determined._info import RendezvousInfo, TrialInfo, ResourcesInfo, ClusterInfo, get_cluster_info
 from determined._import import import_from_path
@@ -22,6 +23,14 @@ from determined._execution import (
 )
 from determined import errors
 from determined import util
+
+try:
+    # Attempt to get the version from the package metadata. This should
+    # exist if using a built distribution (i.e. for most users), which
+    # includes pip editable installations.
+    __version__ = metadata.version(__name__)
+except metadata.PackageNotFoundError:
+    __version__ = "2!0.0.0+unknown"
 
 # LOG_FORMAT is the standard format for use with the logging module, which is required for the
 # WebUI's log viewer to filter logs by log level.
