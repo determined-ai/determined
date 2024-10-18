@@ -493,6 +493,50 @@ export const changeExperimentLogRetention = generateDetApi<
   Type.BulkActionResult
 >(Config.changeExperimentLogRetention);
 
+/* Searches */
+
+export const archiveSearches = generateDetApi<
+  Api.V1ArchiveSearchesRequest,
+  Api.V1ArchiveSearchesResponse,
+  Type.BulkActionResult
+>(Config.archiveSearches);
+
+export const deleteSearches = generateDetApi<
+  Api.V1DeleteSearchesRequest,
+  Api.V1DeleteSearchesResponse,
+  Type.BulkActionResult
+>(Config.deleteSearches);
+
+export const killSearches = generateDetApi<
+  Api.V1KillSearchesRequest,
+  Api.V1KillSearchesResponse,
+  Type.BulkActionResult
+>(Config.killSearches);
+
+export const moveSearches = generateDetApi<
+  Api.V1MoveSearchesRequest,
+  Api.V1MoveSearchesResponse,
+  Type.BulkActionResult
+>(Config.moveSearches);
+
+export const unarchiveSearches = generateDetApi<
+  Api.V1UnarchiveSearchesRequest,
+  Api.V1UnarchiveSearchesResponse,
+  void
+>(Config.unarchiveSearches);
+
+export const pauseSearches = generateDetApi<
+  Api.V1ResumeSearchesRequest,
+  Api.V1ResumeSearchesResponse,
+  Type.BulkActionResult
+>(Config.pauseSearches);
+
+export const resumeSearches = generateDetApi<
+  Api.V1ResumeSearchesRequest,
+  Api.V1ResumeSearchesResponse,
+  Type.BulkActionResult
+>(Config.resumeSearches);
+
 /* Tasks */
 
 export const getTask = generateDetApi<

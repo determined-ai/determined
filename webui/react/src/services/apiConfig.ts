@@ -1153,6 +1153,78 @@ export const getTrialWorkloads: DetApi<
     ),
 };
 
+/* Searches */
+
+export const archiveSearches: DetApi<
+  Api.V1ArchiveSearchesRequest,
+  Api.V1ArchiveSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'archiveSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.archiveSearches(params, options),
+};
+
+export const deleteSearches: DetApi<
+  Api.V1DeleteSearchesRequest,
+  Api.V1DeleteSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'deleteSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.deleteSearches(params, options),
+};
+
+export const killSearches: DetApi<
+  Api.V1KillSearchesRequest,
+  Api.V1KillSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'killSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.killSearches(params, options),
+};
+
+export const moveSearches: DetApi<
+  Api.V1MoveSearchesRequest,
+  Api.V1MoveSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'moveSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.moveSearches(params, options),
+};
+
+export const unarchiveSearches: DetApi<
+  Api.V1UnarchiveSearchesRequest,
+  Api.V1UnarchiveSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'unarchiveSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.unarchiveSearches(params, options),
+};
+
+export const pauseSearches: DetApi<
+  Api.V1PauseSearchesRequest,
+  Api.V1PauseSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'pauseSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.pauseSearches(params, options),
+};
+
+export const resumeSearches: DetApi<
+  Api.V1ResumeSearchesRequest,
+  Api.V1ResumeSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'resumeSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.resumeSearches(params, options),
+};
+
 /* Runs */
 
 export const searchRuns: DetApi<

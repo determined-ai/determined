@@ -32,6 +32,7 @@ interface UseSelectionReturn<T> {
   handleSelectionChange: HandleSelectionChangeType;
   rowRangeToIds: (range: [number, number]) => number[];
   loadedSelectedRecords: T[];
+  loadedSelectedRecordIds: number[];
   isRangeSelected: (range: [number, number]) => boolean;
 }
 
@@ -72,17 +73,13 @@ const useSelection = <T extends HasId>(config: SelectionConfig<T>): UseSelection
       });
     } else if (config.selection.type === 'ALL_EXCEPT') {
       rows = rows.add([0, config.total.getOrElse(1) - 1]);
-      console.log(config.selection.exclusions);
-      console.log(loadedRecordIdMap);
       config.selection.exclusions.forEach((exc) => {
         const excIndex = loadedRecordIdMap.get(exc)?.index;
-        console.log(excIndex);
         if (excIndex !== undefined) {
           rows = rows.remove(excIndex);
         }
       });
     }
-    console.log(rows);
     return {
       columns: CompactSelection.empty(),
       rows,
@@ -92,6 +89,10 @@ const useSelection = <T extends HasId>(config: SelectionConfig<T>): UseSelection
   const loadedSelectedRecords: T[] = useMemo(() => {
     return Loadable.filterNotLoaded(config.records, (record) => selectedRecordIdSet.has(record.id));
   }, [config.records, selectedRecordIdSet]);
+
+  const loadedSelectedRecordIds: number[] = useMemo(() => {
+    return loadedSelectedRecords.map((record) => record.id);
+  }, [loadedSelectedRecords]);
 
   const selectionSize = useMemo(() => {
     if (config.selection.type === 'ONLY_IN') {
@@ -184,6 +185,7 @@ const useSelection = <T extends HasId>(config: SelectionConfig<T>): UseSelection
     dataGridSelection,
     handleSelectionChange,
     isRangeSelected,
+    loadedSelectedRecordIds,
     loadedSelectedRecords,
     rowRangeToIds,
     selectionSize,
