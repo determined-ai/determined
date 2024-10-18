@@ -476,13 +476,12 @@ test.describe('Experiment List', () => {
           const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
           await multiSortMenu.open();
           await multiSortMenu.multiSort.reset.pwLocator.click();
+          await multiSortMenu.open();
 
           for (let i = 0; i < sorts.length; i++) {
             const sort = sorts[i];
             const sortRow = multiSortMenu.multiSort.rows.nth(i);
-            // would use selectmenuoptino here but it doesn't work for some reason
-            await sortRow.column.pwLocator.locator('input').fill(sort.column);
-            await sortRow.column.menuItem(sort.column).pwLocator.click();
+            await sortRow.column.selectMenuOption(sort.column);
             // select order menu item by value not label
             await sortRow.order.openMenu();
             await sortRow.order._menu.pwLocator
