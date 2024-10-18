@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -84,15 +85,32 @@ func ValidateExperimentConfig(
 	// policies (since these fields will be overridden by the respective fields in the global
 	// policies).
 	var globalConstraints *model.Constraints
+	var globalConfig *expconf.ExperimentConfig
 	if globalConfigPolicies != nil {
-		globalConstraints, err = UnmarshalConfigPolicy[model.Constraints](*globalConfigPolicies.Constraints,
-			InvalidExperimentConfigPolicyErr)
-		if err != nil {
-			ConfigPolicyWarning(err.Error())
-			return nil
+		if globalConfigPolicies.Constraints != nil {
+			globalConstraints, err = UnmarshalConfigPolicy[model.Constraints](
+				*globalConfigPolicies.Constraints,
+				InvalidExperimentConfigPolicyErr,
+			)
+			if err != nil {
+				ConfigPolicyWarning(err.Error())
+				return err
+			}
 		}
-		configPolicyOverlap(globalConfigPolicies.Constraints, cp.Constraints)
-		configPolicyOverlap(globalConfigPolicies.InvariantConfig, cp.InvariantConfig)
+
+		if globalConfigPolicies.InvariantConfig != nil {
+			globalConfig, err = UnmarshalConfigPolicy[expconf.ExperimentConfig](
+				*globalConfigPolicies.InvariantConfig,
+				InvalidExperimentConfigPolicyErr,
+			)
+			if err != nil {
+				ConfigPolicyWarning(err.Error())
+				return err
+			}
+		}
+
+		warnConfigPolicyOverlap(globalConstraints, cp.Constraints)
+		warnConfigPolicyOverlap(globalConfig, cp.InvariantConfig)
 	}
 
 	if cp.Constraints != nil {
@@ -110,11 +128,9 @@ func ValidateExperimentConfig(
 			}
 
 			// Verify the workspace invariant config doesn't conflict with global constraints.
-			if globalConstraints != nil {
-				if err := checkConstraintConflicts(globalConstraints, cp.InvariantConfig.RawResources.RawMaxSlots,
-					cp.InvariantConfig.RawResources.RawSlotsPerTrial, cp.InvariantConfig.RawResources.RawPriority); err != nil {
-					return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidExperimentConfigPolicyErr+": %s.", err))
-				}
+			if err := checkConstraintConflicts(globalConstraints, cp.InvariantConfig.RawResources.RawMaxSlots,
+				cp.InvariantConfig.RawResources.RawSlotsPerTrial, cp.InvariantConfig.RawResources.RawPriority); err != nil {
+				return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidExperimentConfigPolicyErr+": %s.", err))
 			}
 		}
 	}
@@ -142,16 +158,27 @@ func ValidateNTSCConfig(
 	// policies (since these fields will be overridden by the respective fields in the global
 	// policies).
 	var globalConstraints *model.Constraints
+	var globalConfig *model.CommandConfig
 	if globalConfigPolicies != nil {
-		globalConstraints, err = UnmarshalConfigPolicy[model.Constraints](*globalConfigPolicies.Constraints,
-			InvalidNTSCConfigPolicyErr)
-		if err != nil {
-			ConfigPolicyWarning(err.Error())
-			return nil
+		if globalConfigPolicies.Constraints != nil {
+			globalConstraints, err = UnmarshalConfigPolicy[model.Constraints](*globalConfigPolicies.Constraints,
+				InvalidNTSCConfigPolicyErr)
+			if err != nil {
+				ConfigPolicyWarning(err.Error())
+				return err
+			}
 		}
-		configPolicyOverlap(globalConfigPolicies.Constraints, cp.Constraints)
-		configPolicyOverlap(
-			globalConfigPolicies.InvariantConfig, cp.InvariantConfig)
+		if globalConfigPolicies.InvariantConfig != nil {
+			globalConfig, err = UnmarshalConfigPolicy[model.CommandConfig](*globalConfigPolicies.InvariantConfig,
+				InvalidNTSCConfigPolicyErr)
+			if err != nil {
+				ConfigPolicyWarning(err.Error())
+				return err
+			}
+		}
+
+		warnConfigPolicyOverlap(globalConstraints, cp.Constraints)
+		warnConfigPolicyOverlap(globalConfig, cp.InvariantConfig)
 	}
 
 	if cp.Constraints != nil {
@@ -175,12 +202,10 @@ func ValidateNTSCConfig(
 		}
 
 		// Verify the workspace invariant config conflict with global constraints.
-		if globalConstraints != nil {
-			if err := checkConstraintConflicts(globalConstraints,
-				cp.InvariantConfig.Resources.MaxSlots, slots,
-				cp.InvariantConfig.Resources.Priority); err != nil {
-				return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidNTSCConfigPolicyErr+": %s.", err))
-			}
+		if err := checkConstraintConflicts(globalConstraints,
+			cp.InvariantConfig.Resources.MaxSlots, slots,
+			cp.InvariantConfig.Resources.Priority); err != nil {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidNTSCConfigPolicyErr+": %s.", err))
 		}
 	}
 
@@ -217,9 +242,16 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 	return nil
 }
 
-// configPolicyOverlap compares two different configurations and
+// warnConfigPolicyOverlap compares two different configurations and
 // warns the user when both configurations define the same field.
-func configPolicyOverlap(config1, config2 interface{}) {
+func warnConfigPolicyOverlap(config1, config2 interface{}) {
+	if reflect.ValueOf(config1).Type() != reflect.ValueOf(config2).Type() &&
+		reflect.ValueOf(config1).Type() != reflect.ValueOf(&model.Constraints{}).Type() &&
+		reflect.ValueOf(config1).Type() != reflect.ValueOf(&model.CommandConfig{}).Type() &&
+		reflect.ValueOf(config1).Type() != reflect.ValueOf(&expconf.ExperimentConfig{}).Type() {
+		return
+	}
+
 	v1 := reflect.ValueOf(config1)
 	v2 := reflect.ValueOf(config2)
 
