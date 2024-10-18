@@ -9,7 +9,7 @@ import InputSelect from 'hew/InputSelect';
 import Select, { SelectProps, SelectValue } from 'hew/Select';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Observable, useObservable } from 'micro-observables';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
@@ -74,21 +74,6 @@ const FilterField = ({
     () => columns.find((c) => c.column === field.columnName),
     [columns, field.columnName],
   );
-  const [metadataColumns, setMetadataColumns] = useState(() => new Map<string, number[]>()); // a map of metadata columns and found indexes
-
-  useEffect(() => {
-    for (const [index, { column }] of columns.entries()) {
-      if (column.includes('metadata')) {
-        const columnEntry = metadataColumns.get(column) ?? [];
-        if (!columnEntry.includes(index)) {
-          setMetadataColumns((prev) => {
-            prev.set(column, [...columnEntry, index]);
-            return prev;
-          });
-        }
-      }
-    }
-  }, [columns, metadataColumns]);
 
   const columnType = useMemo(() => {
     if (field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT) {
@@ -237,16 +222,7 @@ const FilterField = ({
   );
 
   const getColDisplayName = (col: V1ProjectColumn) => {
-    const metCol = metadataColumns.get(col.column);
     const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
-
-    if (metCol !== undefined && metCol.length > 1) {
-      return (
-        <>
-          {col.column} <Badge text={colType} />
-        </>
-      );
-    }
 
     return (
       <>
