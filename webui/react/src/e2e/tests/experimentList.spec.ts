@@ -476,6 +476,9 @@ test.describe('Experiment List', () => {
           const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
           await multiSortMenu.open();
           await multiSortMenu.multiSort.reset.pwLocator.click();
+          // weirdness alert: reset closes the sort menu normally, but doesn't
+          // in playwright locally. in ci the locators become unstable
+          await multiSortMenu.close();
           await multiSortMenu.open();
 
           for (let i = 0; i < sorts.length; i++) {
