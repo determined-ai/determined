@@ -25,17 +25,18 @@ import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
 import {
-  activateExperiments,
-  archiveExperiments,
+  archiveSearches,
   cancelExperiments,
-  deleteExperiments,
+  deleteSearches,
   getExperiments,
-  killExperiments,
+  killSearches,
   openOrCreateTensorBoard,
-  pauseExperiments,
-  unarchiveExperiments,
+  pauseSearches,
+  resumeSearches,
+  unarchiveSearches,
 } from 'services/api';
 import { V1LocationType } from 'services/api-ts-sdk';
+import { SearchBulkActionParams } from 'services/types';
 import {
   BulkActionResult,
   BulkExperimentItem,
@@ -43,11 +44,13 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
+  SelectionType,
 } from 'types';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,
+  getIdsFilter,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { capitalizeWord } from 'utils/string';
@@ -107,6 +110,7 @@ interface Props {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
+  selection: SelectionType;
   selectionSize: number;
   sorts: Sort[];
   pinnedColumnsCount?: number;
@@ -117,11 +121,13 @@ interface Props {
   bannedFilterColumns?: Set<string>;
   bannedSortColumns?: Set<string>;
   entityCopy?: string;
+  tableFilterString: string;
 }
 
 const TableActionBar: React.FC<Props> = ({
   compareViewOn,
   formStore,
+  tableFilterString,
   heatmapBtnVisible,
   heatmapOn,
   initialVisibleColumns,
@@ -152,6 +158,7 @@ const TableActionBar: React.FC<Props> = ({
   bannedSortColumns,
   entityCopy,
   selectionSize,
+  selection,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -209,29 +216,41 @@ const TableActionBar: React.FC<Props> = ({
   );
 
   const availableBatchActions = useMemo(() => {
-    const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
-    // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [selectedExperimentIds, experimentMap, permissions]);
+    if (selection.type === 'ONLY_IN') {
+      const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
+      return getActionsForExperimentsUnion(experiments, [...batchActions], permissions); // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
+    } else if (selection.type === 'ALL_EXCEPT') {
+      return batchActions.filter(
+        (action) =>
+          action !== ExperimentAction.OpenTensorBoard && action !== ExperimentAction.Cancel,
+      );
+    }
+    return []; // should never be reached
+  }, [selection.type, selectedExperimentIds, permissions, experimentMap]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
-      const validExperimentIds = selectedExperiments
-        .filter((exp) => !exp.unmanaged && canActionExperiment(action, exp))
-        .map((exp) => exp.id);
-      const params = {
-        experimentIds: validExperimentIds,
-        projectId: project.id,
-      };
+      const params: SearchBulkActionParams = { projectId: project.id };
+      if (selection.type === 'ONLY_IN') {
+        const validSearchIds = selectedExperiments
+          .filter((exp) => !exp.unmanaged && canActionExperiment(action, exp))
+          .map((exp) => exp.id);
+        params.searchIds = validSearchIds;
+      } else if (selection.type === 'ALL_EXCEPT') {
+        const filters = JSON.parse(tableFilterString);
+        params.filter = JSON.stringify(getIdsFilter(filters, selection));
+      }
+
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
-          if (validExperimentIds.length !== selectedExperiments.length) {
+          if (params.searchIds === undefined) break;
+          if (params.searchIds.length !== selectedExperiments.length) {
             // if unmanaged experiments are selected, open experimentTensorBoardModal
             openExperimentTensorBoardModal();
           } else {
             openCommandResponse(
               await openOrCreateTensorBoard({
-                experimentIds: params.experimentIds,
+                experimentIds: params.searchIds,
                 workspaceId: project?.workspaceId,
               }),
             );
@@ -243,27 +262,34 @@ const TableActionBar: React.FC<Props> = ({
         case ExperimentAction.RetainLogs:
           return ExperimentRetainLogsModal.open();
         case ExperimentAction.Activate:
-          return await activateExperiments(params);
+          return await resumeSearches(params);
         case ExperimentAction.Archive:
-          return await archiveExperiments(params);
+          return await archiveSearches(params);
         case ExperimentAction.Cancel:
-          return await cancelExperiments(params);
+          if (params.searchIds === undefined) break;
+          return await cancelExperiments({
+            experimentIds: params.searchIds,
+            projectId: params.projectId,
+          });
         case ExperimentAction.Kill:
-          return await killExperiments(params);
+          return await killSearches(params);
         case ExperimentAction.Pause:
-          return await pauseExperiments(params);
+          return await pauseSearches(params);
         case ExperimentAction.Unarchive:
-          return await unarchiveExperiments(params);
+          return await unarchiveSearches(params);
         case ExperimentAction.Delete:
-          return await deleteExperiments(params);
+          return await deleteSearches(params);
       }
     },
     [
+      project.id,
+      project?.workspaceId,
+      selection,
       selectedExperiments,
+      tableFilterString,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
       openExperimentTensorBoardModal,
-      project,
     ],
   );
 
@@ -320,8 +346,7 @@ const TableActionBar: React.FC<Props> = ({
             closeable: true,
             description: `${action} succeeded for ${numSuccesses} out of ${
               numFailures + numSuccesses
-            } eligible
-            ${labelPlural.toLowerCase()}`,
+            } ${labelPlural.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
           });
@@ -419,7 +444,7 @@ const TableActionBar: React.FC<Props> = ({
               onVisibleColumnChange={onVisibleColumnChange}
             />
             <OptionsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
-            {selectedExperimentIds.length > 0 && (
+            {selectionSize > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleBatchAction}>
                 <Button data-test="actionsDropdown" hideChildren={isMobile}>
                   Actions

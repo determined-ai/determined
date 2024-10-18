@@ -1,4 +1,3 @@
-import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
@@ -11,15 +10,7 @@ import {
   MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
-import DataGrid, {
-  DataGridHandle,
-  HandleSelectionChangeType,
-  RangelessSelectionType,
-  SelectionType,
-  Sort,
-  validSort,
-  ValidSort,
-} from 'hew/DataGrid/DataGrid';
+import DataGrid, { DataGridHandle, Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Link from 'hew/Link';
@@ -56,6 +47,7 @@ import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
+import useSelection from 'hooks/useSelection';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { paths } from 'routes/utils';
@@ -75,7 +67,6 @@ import {
   Project,
   ProjectColumn,
   RunState,
-  SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -183,6 +174,13 @@ const Searches: React.FC<Props> = ({ project }) => {
   const isMobile = useMobile();
   const { openToast } = useToast();
 
+  const { selectionSize, dataGridSelection, handleSelectionChange, rowRangeToIds } = useSelection({
+    records: experiments.map((loadable) => loadable.map((exp) => exp.experiment)),
+    selection: settings.selection,
+    total,
+    updateSettings,
+  });
+
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
@@ -263,36 +261,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     });
     return selectedMap;
   }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
-
-  const selection = useMemo<GridSelection>(() => {
-    let rows = CompactSelection.empty();
-    if (settings.selection.type === 'ONLY_IN') {
-      loadedSelectedExperimentIds.forEach((exp) => {
-        rows = rows.add(exp.index);
-      });
-    } else if (settings.selection.type === 'ALL_EXCEPT') {
-      rows = rows.add([0, total.getOrElse(1) - 1]);
-      settings.selection.exclusions.forEach((exc) => {
-        const excIndex = loadedSelectedExperimentIds.get(exc)?.index;
-        if (excIndex !== undefined) {
-          rows = rows.remove(excIndex);
-        }
-      });
-    }
-    return {
-      columns: CompactSelection.empty(),
-      rows,
-    };
-  }, [loadedSelectedExperimentIds, settings.selection, total]);
-
-  const selectionSize = useMemo(() => {
-    if (settings.selection.type === 'ONLY_IN') {
-      return settings.selection.selections.length;
-    } else if (settings.selection.type === 'ALL_EXCEPT') {
-      return total.getOrElse(0) - settings.selection.exclusions.length;
-    }
-    return 0;
-  }, [settings.selection, total]);
 
   const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
 
@@ -417,71 +385,6 @@ const Searches: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
-
-  const rowRangeToIds = useCallback(
-    (range: [number, number]) => {
-      const slice = experiments.slice(range[0], range[1]);
-      return Loadable.filterNotLoaded(slice).map(({ experiment }) => experiment.id);
-    },
-    [experiments],
-  );
-
-  const handleSelectionChange: HandleSelectionChangeType = useCallback(
-    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
-      let newSettings: SelectionState = { ...settings.selection };
-
-      switch (selectionType) {
-        case 'add':
-          if (!range) return;
-          if (newSettings.type === 'ALL_EXCEPT') {
-            const excludedSet = new Set(newSettings.exclusions);
-            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
-            newSettings.exclusions = Array.from(excludedSet);
-          } else {
-            const includedSet = new Set(newSettings.selections);
-            rowRangeToIds(range).forEach((id) => includedSet.add(id));
-            newSettings.selections = Array.from(includedSet);
-          }
-
-          break;
-        case 'add-all':
-          newSettings = {
-            exclusions: [],
-            type: 'ALL_EXCEPT' as const,
-          };
-
-          break;
-        case 'remove':
-          if (!range) return;
-          if (newSettings.type === 'ALL_EXCEPT') {
-            const excludedSet = new Set(newSettings.exclusions);
-            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
-            newSettings.exclusions = Array.from(excludedSet);
-          } else {
-            const includedSet = new Set(newSettings.selections);
-            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
-            newSettings.selections = Array.from(includedSet);
-          }
-
-          break;
-        case 'remove-all':
-          newSettings = DEFAULT_SELECTION;
-
-          break;
-        case 'set':
-          if (!range) return;
-          newSettings = {
-            ...DEFAULT_SELECTION,
-            selections: Array.from(rowRangeToIds(range)),
-          };
-
-          break;
-      }
-
-      updateSettings({ selection: newSettings });
-    },
-    [rowRangeToIds, settings.selection, updateSettings],
-  );
 
   const handleActionComplete = useCallback(async () => {
     /**
@@ -658,7 +561,7 @@ const Searches: React.FC<Props> = ({ project }) => {
     const gridColumns = [...STATIC_COLUMNS, ...columnsIfLoaded]
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
+          return (columnDefs[columnName] = defaultSelectionColumn(dataGridSelection.rows, false));
         }
 
         if (!Loadable.isLoaded(projectColumnsMap)) {
@@ -731,7 +634,7 @@ const Searches: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     appTheme,
     isDarkMode,
-    selection.rows,
+    dataGridSelection.rows,
     users,
   ]);
 
@@ -904,8 +807,10 @@ const Searches: React.FC<Props> = ({ project }) => {
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={allSelectedExperimentIds}
+        selection={settings.selection}
         selectionSize={selectionSize}
         sorts={sorts}
+        tableFilterString={filtersString}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
@@ -965,7 +870,7 @@ const Searches: React.FC<Props> = ({ project }) => {
                 );
               }}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-              selection={selection}
+              selection={dataGridSelection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
               onColumnResize={handleColumnWidthChange}

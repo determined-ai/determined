@@ -21,10 +21,11 @@ import {
   resumeRuns,
   unarchiveRuns,
 } from 'services/api';
+import { RunBulkActionParams } from 'services/types';
 import projectStore from 'stores/projects';
-import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
+import { BulkActionResult, ExperimentAction, FlatRun, Project, SelectionType } from 'types';
 import handleError from 'utils/error';
-import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
+import { canActionFlatRun, getActionsForFlatRunsUnion, getIdsFilter } from 'utils/flatRun';
 import { capitalizeWord, pluralizer } from 'utils/string';
 
 const BATCH_ACTIONS = [
@@ -52,18 +53,22 @@ const ACTION_ICONS: Record<BatchAction, IconName> = {
 const LABEL_PLURAL = 'runs';
 
 interface Props {
+  tableFilterString: string;
   isMobile: boolean;
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
   projectId: number;
   workspaceId: number;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActionComplete?: () => void | Promise<void>;
+  selection: SelectionType;
 }
 
 const FlatRunActionButton = ({
+  tableFilterString,
   isMobile,
   selectedRuns,
   projectId,
+  selection,
   workspaceId,
   onActionSuccess,
   onActionComplete,
@@ -80,13 +85,16 @@ const FlatRunActionButton = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
-      const validRunIds = selectedRuns
-        .filter((exp) => canActionFlatRun(action, exp))
-        .map((run) => run.id);
-      const params = {
-        projectId,
-        runIds: validRunIds,
-      };
+      const params: RunBulkActionParams = { projectId };
+      if (selection.type === 'ONLY_IN') {
+        const validRunIds = selectedRuns
+          .filter((run) => canActionFlatRun(action, run))
+          .map((run) => run.id);
+        params.runIds = validRunIds;
+      } else if (selection.type === 'ALL_EXCEPT') {
+        const filters = JSON.parse(tableFilterString);
+        params.filter = JSON.stringify(getIdsFilter(filters, selection));
+      }
       switch (action) {
         case ExperimentAction.Move:
           flatRunMoveModalOpen();
@@ -105,7 +113,7 @@ const FlatRunActionButton = ({
           return await resumeRuns(params);
       }
     },
-    [flatRunMoveModalOpen, projectId, selectedRuns],
+    [flatRunMoveModalOpen, projectId, selectedRuns, selection, tableFilterString],
   );
 
   const submitBatchAction = useCallback(
@@ -139,7 +147,7 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses} eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses}{' '}
             ${pluralizer(numFailures + numSuccesses, 'run')}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -175,8 +183,13 @@ const FlatRunActionButton = ({
   );
 
   const availableBatchActions = useMemo(() => {
-    return getActionsForFlatRunsUnion(selectedRuns, [...BATCH_ACTIONS], permissions);
-  }, [selectedRuns, permissions]);
+    if (selection.type === 'ONLY_IN') {
+      return getActionsForFlatRunsUnion(selectedRuns, [...BATCH_ACTIONS], permissions);
+    } else if (selection.type === 'ALL_EXCEPT') {
+      return BATCH_ACTIONS;
+    }
+    return [];
+  }, [selection.type, selectedRuns, permissions]);
 
   const editMenuItems = useMemo(() => {
     const groupedBatchActions = [BATCH_ACTIONS];

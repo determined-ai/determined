@@ -164,6 +164,18 @@ export interface SearchRunsParams extends PaginationParams {
   sort?: string;
 }
 
+export interface RunBulkActionParams {
+  projectId: number;
+  filter?: string;
+  runIds?: number[];
+}
+
+export interface SearchBulkActionParams {
+  projectId: number;
+  filter?: string;
+  searchIds?: number[];
+}
+
 export interface GetTaskParams {
   taskId: string;
 }

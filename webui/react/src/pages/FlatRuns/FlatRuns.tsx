@@ -1,4 +1,3 @@
-import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Button from 'hew/Button';
 import Column from 'hew/Column';
@@ -14,15 +13,7 @@ import {
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
-import DataGrid, {
-  DataGridHandle,
-  HandleSelectionChangeType,
-  RangelessSelectionType,
-  SelectionType,
-  Sort,
-  validSort,
-  ValidSort,
-} from 'hew/DataGrid/DataGrid';
+import DataGrid, { DataGridHandle, Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Link from 'hew/Link';
@@ -67,6 +58,7 @@ import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
+import useSelection from 'hooks/useSelection';
 import { useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
@@ -75,14 +67,7 @@ import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'se
 import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import {
-  DetailedUser,
-  FlatRun,
-  FlatRunAction,
-  ProjectColumn,
-  RunState,
-  SelectionType as SelectionState,
-} from 'types';
+import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
@@ -204,6 +189,19 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const { width: containerWidth } = useResize(contentRef);
 
   const {
+    selectionSize,
+    dataGridSelection,
+    handleSelectionChange,
+    rowRangeToIds,
+    loadedSelectedRecords: loadedSelectedRuns,
+  } = useSelection({
+    records: runs,
+    selection: settings.selection,
+    total,
+    updateSettings,
+  });
+
+  const {
     ui: { theme: appTheme },
     isDarkMode,
   } = useUI();
@@ -248,18 +246,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     return new Set([...BANNED_SORT_COLUMNS, ...arrayTypeColumns]);
   }, [arrayTypeColumns]);
 
-  const selectedRunIdSet = useMemo(() => {
-    if (settings.selection.type === 'ONLY_IN') {
-      return new Set(settings.selection.selections);
-    } else if (settings.selection.type === 'ALL_EXCEPT') {
-      const excludedSet = new Set(settings.selection.exclusions);
-      return new Set(
-        Loadable.filterNotLoaded(runs, (run) => !excludedSet.has(run.id)).map((run) => run.id),
-      );
-    }
-    return new Set<number>(); // should never be reached
-  }, [runs, settings.selection]);
-
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -271,56 +257,22 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
-  const loadedSelectedRunIds = useMemo(() => {
-    const selectedMap = new Map<number, { run: FlatRun; index: number }>();
+  const loadedRunIdMap = useMemo(() => {
+    const runMap = new Map<number, { run: FlatRun; index: number }>();
 
     if (isLoadingSettings) {
-      return selectedMap;
+      return runMap;
     }
 
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
-        if (selectedRunIdSet.has(run.id)) {
-          selectedMap.set(run.id, { index, run });
-        }
+        runMap.set(run.id, { index, run });
       });
     });
-    return selectedMap;
-  }, [isLoadingSettings, runs, selectedRunIdSet]);
+    return runMap;
+  }, [isLoadingSettings, runs]);
 
-  const selection = useMemo<GridSelection>(() => {
-    let rows = CompactSelection.empty();
-    if (settings.selection.type === 'ONLY_IN') {
-      loadedSelectedRunIds.forEach((info) => {
-        rows = rows.add(info.index);
-      });
-    } else if (settings.selection.type === 'ALL_EXCEPT') {
-      rows = rows.add([0, total.getOrElse(1) - 1]);
-      settings.selection.exclusions.forEach((exc) => {
-        const excIndex = loadedSelectedRunIds.get(exc)?.index;
-        if (excIndex !== undefined) {
-          rows = rows.remove(excIndex);
-        }
-      });
-    }
-    return {
-      columns: CompactSelection.empty(),
-      rows,
-    };
-  }, [loadedSelectedRunIds, settings.selection, total]);
-
-  const selectedRuns: FlatRun[] = useMemo(() => {
-    return Loadable.filterNotLoaded(runs, (run) => selectedRunIdSet.has(run.id));
-  }, [runs, selectedRunIdSet]);
-
-  const selectionSize = useMemo(() => {
-    if (settings.selection.type === 'ONLY_IN') {
-      return settings.selection.selections.length;
-    } else if (settings.selection.type === 'ALL_EXCEPT') {
-      return total.getOrElse(0) - settings.selection.exclusions.length;
-    }
-    return 0;
-  }, [settings.selection, total]);
+  const colorMap = useGlasbey([...loadedRunIdMap.keys()]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -328,8 +280,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       formStore.sweep();
     }
   }, []);
-
-  const colorMap = useGlasbey([...loadedSelectedRunIds.keys()]);
 
   const handleToggleComparisonView = useCallback(() => {
     updateSettings({ compare: !settings.compare });
@@ -359,7 +309,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return defaultSelectionColumn(selection.rows, false);
+          return defaultSelectionColumn(dataGridSelection.rows, false);
         }
 
         if (!Loadable.isLoaded(projectColumnsMap)) {
@@ -502,7 +452,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     isDarkMode,
     projectColumns,
     projectHeatmap,
-    selection.rows,
+    dataGridSelection.rows,
     settings.columnWidths,
     settings.compare,
     settings.heatmapOn,
@@ -724,70 +674,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       });
     },
     [settings.columnWidths, updateColumnWidths],
-  );
-
-  const rowRangeToIds = useCallback(
-    (range: [number, number]) => {
-      const slice = runs.slice(range[0], range[1]);
-      return Loadable.filterNotLoaded(slice).map((run) => run.id);
-    },
-    [runs],
-  );
-
-  const handleSelectionChange: HandleSelectionChangeType = useCallback(
-    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
-      let newSettings: SelectionState = { ...settings.selection };
-
-      switch (selectionType) {
-        case 'add':
-          if (!range) return;
-          if (newSettings.type === 'ALL_EXCEPT') {
-            const excludedSet = new Set(newSettings.exclusions);
-            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
-            newSettings.exclusions = Array.from(excludedSet);
-          } else {
-            const includedSet = new Set(newSettings.selections);
-            rowRangeToIds(range).forEach((id) => includedSet.add(id));
-            newSettings.selections = Array.from(includedSet);
-          }
-
-          break;
-        case 'add-all':
-          newSettings = {
-            exclusions: [],
-            type: 'ALL_EXCEPT',
-          };
-
-          break;
-        case 'remove':
-          if (!range) return;
-          if (newSettings.type === 'ALL_EXCEPT') {
-            const excludedSet = new Set(newSettings.exclusions);
-            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
-            newSettings.exclusions = Array.from(excludedSet);
-          } else {
-            const includedSet = new Set(newSettings.selections);
-            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
-            newSettings.selections = Array.from(includedSet);
-          }
-
-          break;
-        case 'remove-all':
-          newSettings = DEFAULT_SELECTION;
-
-          break;
-        case 'set':
-          if (!range) return;
-          newSettings = {
-            ...DEFAULT_SELECTION,
-            selections: Array.from(rowRangeToIds(range)),
-          };
-
-          break;
-      }
-      updateSettings({ selection: newSettings });
-    },
-    [rowRangeToIds, settings.selection, updateSettings],
   );
 
   const onActionComplete = useCallback(async () => {
@@ -1149,7 +1035,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             <FlatRunActionButton
               isMobile={isMobile}
               projectId={projectId}
-              selectedRuns={selectedRuns}
+              selectedRuns={loadedSelectedRuns}
+              selection={settings.selection}
+              tableFilterString={filtersString}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
             />
@@ -1242,7 +1130,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 );
               }}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-              selection={selection}
+              selection={dataGridSelection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
               onColumnResize={handleColumnWidthChange}
