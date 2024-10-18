@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 from determined.common import api, util
 

@@ -10,8 +10,6 @@ resources:
 records_per_epoch: 1000
 searcher:
   name: single
-  max_length:
-    epochs: 5
   metric: eval_loss
 hyperparameters:
   training_arguments:
