@@ -568,19 +568,33 @@ test.describe('Experiment List', () => {
     let experimentId: number;
 
     // create a new project, workspace and experiment
-    test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace, newProject: { response: { project } } }) => {
-      destinationWorkspace = (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())).workspace;
-      destinationProject = (await backgroundApiProject.createProject(
-        project.workspaceId,
-        backgroundApiProject.new({ projectProps: { workspaceId: project.workspaceId } }),
-      )).project;
+    test.beforeAll(
+      async ({
+        backgroundApiProject,
+        backgroundApiWorkspace,
+        newProject: {
+          response: { project },
+        },
+      }) => {
+        destinationWorkspace = (
+          await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
+        ).workspace;
+        destinationProject = (
+          await backgroundApiProject.createProject(
+            project.workspaceId,
+            backgroundApiProject.new({ projectProps: { workspaceId: project.workspaceId } }),
+          )
+        ).project;
 
-      const expId = Number(detExecSync(
-        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
-      ).split(' ')[2]); // returns in the format "Created experiment <exp_id>"
+        const expId = Number(
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
+          ).split(' ')[2],
+        ); // returns in the format "Created experiment <exp_id>"
 
-      if (!Number.isNaN(expId)) experimentId = expId;
-    });
+        if (!Number.isNaN(expId)) experimentId = expId;
+      },
+    );
 
     // cleanup
     test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
