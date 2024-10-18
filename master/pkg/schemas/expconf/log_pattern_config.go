@@ -16,7 +16,7 @@ import (
 //go:generate ../gen.sh
 type LogPoliciesConfigV0 []LogPolicyV0
 
-// WithDefaults implements the Defaultable psuedointerface.
+// WithDefaults implements the Defaultable pseudo-interface.
 func (b LogPoliciesConfigV0) WithDefaults() LogPoliciesConfigV0 {
 	cudaOomPattern := CUDAOOMPattern
 	cudaOomSignal := CUDAOOMSignal
@@ -25,14 +25,20 @@ func (b LogPoliciesConfigV0) WithDefaults() LogPoliciesConfigV0 {
 
 	if b == nil {
 		return LogPoliciesConfigV0{
-			LogPolicyV0{RawPattern: cudaOomPattern, RawActions: []LogActionV0{{Type: LogActionTypeSignal, Signal: &cudaOomSignal}}},
-			LogPolicyV0{RawPattern: eccErrorPattern, RawActions: []LogActionV0{{Type: LogActionTypeSignal, Signal: &eccErrorSignal}}},
+			LogPolicyV0{
+				RawPattern: cudaOomPattern,
+				RawActions: []LogActionV0{{Type: LogActionTypeSignal, Signal: &cudaOomSignal}},
+			},
+			LogPolicyV0{
+				RawPattern: eccErrorPattern,
+				RawActions: []LogActionV0{{Type: LogActionTypeSignal, Signal: &eccErrorSignal}},
+			},
 		}
 	}
 	return b
 }
 
-// Merge implements the Mergable psuedo-interface.
+// Merge implements the Mergable pseudo-interface.
 // We appends all LogPolicyV0s to the output slice, but if there are any with the same pattern, we merge
 // their actions and save them as one LogPolicyV0.
 func (b LogPoliciesConfigV0) Merge(
@@ -121,7 +127,7 @@ func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 	for _, lp := range patternToLp {
 		temp = append(temp, lp)
 	}
-	LogPoliciesConfigV0(temp).sort()
+	temp.sort()
 	*b = temp
 
 	return nil
@@ -134,6 +140,7 @@ func (b LogPoliciesConfigV0) sort() {
 	})
 }
 
+// LogActionsV0 is a list of log actions.
 type LogActionsV0 []LogActionV0
 
 // LogPolicyV0 is an action to take if we match against trial logs.
@@ -265,8 +272,10 @@ func (s LogActionsV0) sort() {
 	})
 }
 
+// LogActionType is the type of an action.
 type LogActionType string
 
+// LogActionType refers to the action user can take when a pattern is detected in the log.
 const (
 	LogActionTypeCancelRetries LogActionType = "cancel_retries"
 	LogActionTypeExcludeNode   LogActionType = "exclude_node"
@@ -299,17 +308,20 @@ func (s LogActionV0) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (s *LogActionV0) UnmarshalJSON(data []byte) error {
 	var action string
-	if err := json.Unmarshal(data, &action); err == nil {
-		switch LogActionType(action) {
-		case LogActionTypeCancelRetries:
-			*s = LogActionV0{Type: LogActionTypeCancelRetries}
-			return nil
-		case LogActionTypeExcludeNode:
-			*s = LogActionV0{Type: LogActionTypeExcludeNode}
-			return nil
-		}
-	} else {
-		return fmt.Errorf("failed to unmarshal log action type CancelRetries and ExcludeNode: %w, data: %q", err, string(data))
+	if err := json.Unmarshal(data, &action); err != nil {
+		return fmt.Errorf(
+			"failed to unmarshal log action type CancelRetries and ExcludeNode: %w, data: %q", err, string(data),
+		)
+	}
+
+	// Handle all the types beside signal
+	switch LogActionType(action) {
+	case LogActionTypeCancelRetries:
+		*s = LogActionV0{Type: LogActionTypeCancelRetries}
+		return nil
+	case LogActionTypeExcludeNode:
+		*s = LogActionV0{Type: LogActionTypeExcludeNode}
+		return nil
 	}
 
 	// Handle Signal

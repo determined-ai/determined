@@ -2,7 +2,6 @@ package union
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 
 // Unmarshal unmarshals the provided union type from a JSON byte array.
 func Unmarshal(data []byte, v interface{}) error {
-	fmt.Printf("\n\nunion unmarshal is called!\n\n")
 	value := reflect.ValueOf(v)
 	expectedFields := make(map[string]bool)
 	unionTypes, err := parseUnionTypes(value.Type().Elem())
