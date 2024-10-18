@@ -22,7 +22,7 @@ const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   return (
-    <div data-testId="jupyter-lab-button">
+    <div data-testid="jupyter-lab-button">
       {enabled ? (
         <>
           <Tooltip content={shortcutToString(jupyterLabShortcut)}>
