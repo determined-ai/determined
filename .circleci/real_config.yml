@@ -98,15 +98,6 @@ release-dryrun: &release-dryrun
       # Tags like: v3.1.3+dryrun
       - /v\d+\.\d+\.\d+\+dryrun/
 
-release-dryrun: &release-dryrun
-  branches:
-    ignore:
-      - /.*/
-  tags:
-    only:
-      # Tags like: v3.1.3+dryrun
-      - /v\d+\.\d+\.\d+\+dryrun/
-
 release-upgrade: &release-upgrade
   branches:
     only:
@@ -4844,6 +4835,7 @@ workflows:
       - build-go:
           name: build-go-ee
           context: github-read
+
       - start-stop-devcluster:
           context:
             - dev-ci-cluster-default-user-credentials
@@ -4853,6 +4845,19 @@ workflows:
           name: start-stop-devcluster
       - build-go: 
           name: build-upgraded-go
+          context: github-read
+          requires:
+            - start-stop-devcluster          
+
+      - start-stop-devcluster:
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          name: start-stop-rbac-devcluster
+      - build-go: 
+          name: build-upgraded-rbac-go
           context: github-read
           requires:
             - start-stop-devcluster          
@@ -5031,49 +5036,13 @@ workflows:
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
-
-  test-e2e-upgrade-rbac:
-    jobs:
-      - build-proto
-      - build-helm
-      - build-react:
-          dev-mode: true
-      - test-e2e-react:
-          name: test-e2e-react-ee
-          ee: true
-          requires:
-            - build-go-ee
-          context:
-            - playwright
-            - github-read
-            - dev-ci-cluster-default-user-credentials
-      - build-docs:
-          requires:
-            - build-helm
-            - build-proto
-      - build-go:
-          name: build-go-ee
-          context: github-read
-      - start-stop-devcluster:
-          context:
-            - dev-ci-cluster-default-user-credentials
-            - github-read
-          requires:
-            - build-go-ee
-          name: start-stop-devcluster
-          devcluster-config: single-rbac.devcluster.yaml
-      - build-go: 
-          name: build-upgraded-go
-          context: github-read
-          requires:
-            - start-stop-devcluster          
-
+      
       - test-e2e:
           name: test-e2e-rbac
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-upgraded-go
+            - build-upgraded-rbac-go
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
@@ -5083,7 +5052,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-upgraded-go
+            - build-upgraded-rbac-go
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
