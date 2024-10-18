@@ -63,15 +63,13 @@
 
 - name: log action cancel_retries
   sane_as:
-    - http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json
-    - http://determined.ai/schemas/expconf/v0/log-action.json
+    - http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json
   case:
     type: cancel_retries
 
 - name: log action exclude_node
   sane_as:
-    - http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json
-    - http://determined.ai/schemas/expconf/v0/log-action.json
+    - http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json
   case:
     type: exclude_node
 

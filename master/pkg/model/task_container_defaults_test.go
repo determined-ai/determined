@@ -440,8 +440,8 @@ func TestLogPatternUnmarshal(t *testing.T) {
 	var tcd TaskContainerDefaultsConfig
 	require.NoError(t, json.Unmarshal([]byte(string(`{
 		    "log_policies": [
-		        {"pattern": "test", "action": {"type": "exclude_node"}},
-		        {"pattern": "test2", "action": {"type": "cancel_retries"}}
+		        {"pattern": "test", "actions": [{"type": "exclude_node"}]},
+		        {"pattern": "test2", "actions": [{"type": "cancel_retries"}]}
 		    ]
 		}`)), &tcd))
 
@@ -449,13 +449,13 @@ func TestLogPatternUnmarshal(t *testing.T) {
 		ShmSizeBytes:      4294967296,
 		NetworkMode:       "bridge",
 		PreemptionTimeout: DefaultPreemptionTimeout,
-		LogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "test", RawAction: expconf.LogAction{
+		LogPolicies: &expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "test", RawActions: []expconf.LogAction{{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
-			expconf.LogPolicy{RawPattern: "test2", RawAction: expconf.LogAction{
+			}}},
+			expconf.LogPolicy{RawPattern: "test2", RawActions: []expconf.LogAction{{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
-			}},
+			}}},
 		},
 	}
 	require.Equal(t, expected, tcd)
@@ -463,45 +463,49 @@ func TestLogPatternUnmarshal(t *testing.T) {
 
 func TestLogPatternPoliciesMerging(t *testing.T) {
 	defaults := &TaskContainerDefaultsConfig{
-		LogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "a", RawAction: expconf.LogAction{
+		LogPolicies: &expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "a", RawActions: []expconf.LogAction{{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
-			}},
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
+			}}},
+			expconf.LogPolicy{RawPattern: "b", RawActions: []expconf.LogAction{
+				{
+					RawExcludeNode: &expconf.LogActionExcludeNode{},
+				},
+				{
+					RawCancelRetries: &expconf.LogActionCancelRetries{},
+				},
 			}},
 		},
 	}
 
 	conf := expconf.ExperimentConfig{
-		RawLogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+		RawLogPolicies: &expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "b", RawActions: []expconf.LogAction{{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
-			}},
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+			}}},
+			expconf.LogPolicy{RawPattern: "c", RawActions: []expconf.LogAction{{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
-			expconf.LogPolicy{RawPattern: "c", RawAction: expconf.LogAction{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
+			}}},
 		},
 	}
 
 	defaults.MergeIntoExpConfig(&conf)
 
-	expected := expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "a", RawAction: expconf.LogAction{
+	expected := &expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "a", RawActions: []expconf.LogAction{{
 			RawCancelRetries: &expconf.LogActionCancelRetries{},
+		}}},
+		expconf.LogPolicy{RawPattern: "b", RawActions: []expconf.LogAction{
+			{
+				RawExcludeNode: &expconf.LogActionExcludeNode{},
+			},
+			{
+				RawCancelRetries: &expconf.LogActionCancelRetries{},
+			},
 		}},
-		expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+		expconf.LogPolicy{RawPattern: "c", RawActions: []expconf.LogAction{{
 			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
-		expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}},
-		expconf.LogPolicy{RawPattern: "c", RawAction: expconf.LogAction{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
+		}}},
 	}
 
 	require.Equal(t, expected, conf.RawLogPolicies)

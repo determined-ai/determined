@@ -120,7 +120,7 @@ message FlatRun {
   // Project level local id of run.
   string local_id = 22;
   // Log signal.
-  string log_signal = 23;
+  optional string log_signal = 23;
 }
 
 // Flat run respresentation.
