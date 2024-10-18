@@ -84,6 +84,7 @@ import {
   SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
+import { COLUMN_SEPARATOR } from 'utils/flatRun';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
@@ -320,7 +321,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+        return columns.reduce(
+          (acc, col) => ({
+            ...acc,
+            [`${col.type}${COLUMN_SEPARATOR}${col.column}`]: col,
+            [col.column]: col,
+          }),
+          {},
+        );
       },
     );
     const columnDefs = getColumnDefs({
@@ -388,6 +396,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           default:
             break;
         }
+
+        const columnKey = `${currentColumn.type}${COLUMN_SEPARATOR}${currentColumn.column}`;
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER: {
             const heatmap = projectHeatmap
@@ -398,7 +408,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               settings.heatmapOn &&
               !settings.heatmapSkipped.includes(currentColumn.column)
             ) {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
+              columnDefs[columnKey] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
@@ -411,7 +421,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 },
               );
             } else {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
+              columnDefs[columnKey] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
@@ -423,7 +433,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             break;
           }
           case V1ColumnType.DATE:
-            columnDefs[currentColumn.column] = defaultDateColumn(
+            columnDefs[columnKey] = defaultDateColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -433,7 +443,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             );
             break;
           case V1ColumnType.ARRAY:
-            columnDefs[currentColumn.column] = defaultArrayColumn(
+            columnDefs[columnKey] = defaultArrayColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -445,7 +455,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           case V1ColumnType.TEXT:
           case V1ColumnType.UNSPECIFIED:
           default:
-            columnDefs[currentColumn.column] = defaultTextColumn(
+            columnDefs[columnKey] = defaultTextColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -459,7 +469,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             .getOrElse([])
             .find((h) => h.metricsName === currentColumn.column);
 
-          columnDefs[currentColumn.column] = searcherMetricsValColumn(
+          columnDefs[columnKey] = searcherMetricsValColumn(
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
@@ -469,7 +479,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               : undefined,
           );
         }
-        return columnDefs[currentColumn.column];
+        return columnDefs[columnKey];
       })
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;
