@@ -1,5 +1,6 @@
 import { expect as baseExpect, test as baseTest, Page } from '@playwright/test';
 
+import { detExec, fullPath } from 'e2e/utils/detCLI';
 import { apiUrl, isEE } from 'e2e/utils/envVars';
 import { safeName } from 'e2e/utils/naming';
 import {
@@ -21,6 +22,11 @@ import { AuthFixture } from './auth.fixture';
 import { DevFixture } from './dev.fixture';
 import { UserFixture } from './user.fixture';
 
+type ExperimentOpts = {
+  configFile: string;
+  paused?: boolean;
+};
+
 type CustomFixtures = {
   devSetup: Page;
   auth: AuthFixture;
@@ -30,6 +36,7 @@ type CustomFixtures = {
   apiWorkspace: ApiWorkspaceFixture;
   apiProject: ApiProjectFixture;
   authedPage: Page;
+  testExperiments: (count: number, opts: ExperimentOpts) => Promise<string[]>;
 };
 
 type CustomWorkerFixtures = {
@@ -232,6 +239,33 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
       await backgroundApiWorkspace.deleteWorkspace(newWorkspace.workspace!.id!);
     },
     { scope: 'worker' },
+  ],
+  testExperiments: [
+    async ({ newProject }, use) => {
+      const expIds: string[] = [];
+      const makeExperiments = (count: number, { configFile, paused }: ExperimentOpts) => {
+        const projectId = newProject.response.project.id;
+        const pausedFlag = paused ? '--paused' : '';
+        return Promise.all(
+          Array(count)
+            .fill(null)
+            .map(async () => {
+              const output = await detExec(
+                `e create ${fullPath(configFile)} ${pausedFlag} --project_id ${projectId}`,
+              );
+              const expId = output.match(/(\d+)[\r\n]/)?.[1];
+              if (!expId) {
+                throw new Error('experiment id not found');
+              }
+              expIds.push(expId);
+              return expId;
+            }),
+        );
+      };
+      await use(makeExperiments);
+      return Promise.all(expIds.map((id) => detExec(`e delete --yes ${id}`)));
+    },
+    { scope: 'test' },
   ],
   user: async ({ page }, use) => {
     const user = new UserFixture(page);
