@@ -28,6 +28,9 @@ const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
         isMobile={false}
         projectId={1}
         selectedRuns={selectedFlatRuns}
+        selection={{ selections: selectedFlatRuns.map((run) => run.id), type: 'ONLY_IN' }}
+        selectionSize={selectedFlatRuns.length}
+        tableFilterString=""
         workspaceId={1}
         onActionComplete={onActionComplete}
         onActionSuccess={onActionSuccess}
