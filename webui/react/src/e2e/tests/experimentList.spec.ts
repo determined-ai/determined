@@ -607,23 +607,21 @@ test.describe('Experiment List', () => {
       await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
     });
 
-    test('move experiment', async () => {
+    test('move experiment', async ({ newWorkspace: { response: { workspace } } }) => {
       if (experimentId === undefined) return;
 
       const newExperimentRow = await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue('ID', experimentId.toString());
 
       const menuMove = await newExperimentRow.experimentActionDropdown.open();
+      console.log(destinationProject.workspaceName)
 
       await menuMove.menuItem('Move').pwLocator.click();
-      await menuMove.moveModal.destinationWorkspace.pwLocator.fill(destinationProject.workspaceName ?? '');
+      await menuMove.moveModal.destinationWorkspace.pwLocator.fill(workspace.name);
+      await menuMove.moveModal.destinationWorkspace.selectMenuOption(workspace.name);
       await menuMove.moveModal.destinationProject.pwLocator.waitFor({ state: 'visible' });
       await menuMove.moveModal.destinationProject.pwLocator.fill(destinationProject.name);
+      await menuMove.moveModal.destinationWorkspace.selectMenuOption(destinationProject.name);
       await menuMove.moveModal.footer.submit.pwLocator.click();
-      // TODO: check why it's failing on submit (somehow  the check bellow isn' passing)
-      /**
-       * const handleSubmit = async () => {
-          if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
-       */
       await menuMove.moveModal.pwLocator.waitFor({ state: 'hidden' });
 
       await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
