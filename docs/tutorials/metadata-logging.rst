@@ -4,15 +4,15 @@
  Arbitrary Metadata Logging
 ############################
 
-This tutorial demonstrates how to use Arbitrary Metadata Logging in Determined AI to log custom metadata for your experiments.
+This tutorial demonstrates how to log custom metadata for your experiments.
 
 **Why Use Arbitrary Metadata Logging?**
 
 Arbitrary Metadata Logging allows you to:
 
-- Capture experiment-specific information beyond standard metrics
-- Compare and analyze custom data across experiments
-- Filter and sort experiments based on custom metadata
+-  Capture experiment-specific information beyond standard metrics
+-  Compare and analyze custom data across experiments
+-  Filter and sort experiments based on custom metadata
 
 ******************
  Logging Metadata
@@ -20,13 +20,13 @@ Arbitrary Metadata Logging allows you to:
 
 You can log metadata using the Determined Core API. Here's how to do it in your training code:
 
-1. Import the necessary module:
+#. Import the necessary module:
 
    .. code:: python
 
       from determined.core import Context
 
-2. In your trial class, add a method to log metadata:
+#. In your trial class, add a method to log metadata:
 
    .. code:: python
 
@@ -40,13 +40,13 @@ You can log metadata using the Determined Core API. Here's how to do it in your 
               }
           })
 
-3. Call this method in your training loop:
+#. Call this method in your training loop:
 
    .. code:: python
 
       def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
           # Existing training code...
-          
+
           if batch_idx == 0:
               self.log_metadata(self.context)
 
@@ -60,21 +60,21 @@ This example logs metadata at the beginning of each epoch. Adjust the frequency 
 
 To view logged metadata:
 
-1. Open the WebUI and navigate to your experiment.
-2. Click on the trial you want to inspect.
-3. In the trial details page, find the "Metadata" section under the "Overview" tab.
+#. Open the WebUI and navigate to your experiment.
+#. Click on the trial you want to inspect.
+#. In the trial details page, find the "Metadata" section under the "Overview" tab.
 
 ***********************************
  Filtering and Sorting by Metadata
 ***********************************
 
-The :ref:`Web UI <web-ui-if>` allows you to filter and sort experiments based on logged metadata:
+The :ref:`Web UI <web-ui-if>` allows you to filter and sort experiment runs based on logged
+metadata:
 
-1. Navigate to the Experiments List page in the WebUI.
-2. Click on the filter icon.
-3. Select a metadata field from the dropdown menu.
-4. Choose a condition (is, is not, or contains) and enter a value.
-5. Click "Apply" to filter the experiments based on the metadata.
+#. Navigate to the Runs Table in the WebUI.
+#. Click on the filter icon.
+#. Select a metadata field from the dropdown menu.
+#. Choose a condition (is, is not, or contains) and enter a value.
 
 For more detailed instructions on filtering and sorting, refer to the WebUI guide:
 
@@ -83,15 +83,16 @@ Performance Considerations
 
 When using Arbitrary Metadata Logging, consider the following:
 
-- Metadata is stored efficiently for fast retrieval and filtering.
-- Avoid logging very large metadata objects, as this may impact performance.
-- Use consistent naming conventions for keys to make filtering and sorting easier.
-- For deeply nested JSON structures, filtering and sorting are supported at the top level.
+-  Metadata is stored efficiently for fast retrieval and filtering.
+-  Avoid logging very large metadata objects, as this may impact performance.
+-  Use consistent naming conventions for keys to make filtering and sorting easier.
+-  For deeply nested JSON structures, filtering and sorting are supported at the top level.
 
 Example Use Case
 ================
 
-Let's say you're running experiments to benchmark different hardware setups. For each run, you might log:
+Let's say you're running experiments to benchmark different hardware setups. For each run, you might
+log:
 
 .. code:: python
 
@@ -111,27 +112,30 @@ Let's say you're running experiments to benchmark different hardware setups. For
 
 You can then use these logged metadata fields to:
 
-1. Filter for experiments that ran on a specific GPU model.
-2. Compare runtimes across different hardware configurations.
-3. Analyze the impact of software versions on performance.
+#. Filter for experiments that ran on a specific GPU model.
+#. Compare runtimes across different hardware configurations.
+#. Analyze the impact of software versions on performance.
 
 Summary
 =======
 
 Arbitrary Metadata Logging enhances your experiment tracking capabilities by allowing you to:
 
-1. Log custom metadata specific to your experiments.
-2. View logged metadata in the WebUI for each trial.
-3. Filter and sort experiments based on custom metadata.
-4. Compare and analyze experiments using custom metadata fields.
+#. Log custom metadata specific to your experiments.
+#. View logged metadata in the WebUI for each trial.
+#. Filter and sort experiment runs based on custom metadata.
+#. Compare and analyze experiments using custom metadata fields.
 
-By leveraging this feature, you can capture and analyze experiment-specific information beyond standard metrics, leading to more insightful comparisons and better experiment management within the Determined AI platform.
+By leveraging this feature, you can capture and analyze experiment-specific information beyond
+standard metrics, leading to more insightful comparisons and better experiment management within the
+Determined AI platform.
 
 Next Steps
 ==========
 
-- Experiment with logging different types of metadata in your trials.
-- Use the filtering and sorting capabilities in the WebUI to analyze your experiments.
-- Integrate metadata logging into your existing Determined AI workflows to enhance your experiment tracking.
+-  Experiment with logging different types of metadata in your trials.
+-  Use the filtering and sorting capabilities in the WebUI to analyze your experiments.
+-  Integrate metadata logging into your existing Determined AI workflows to enhance your experiment
+   tracking.
 
 For more tutorials and guides, visit the :ref:`tutorials-index`.
