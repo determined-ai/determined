@@ -222,7 +222,7 @@ const FilterField = ({
   );
 
   const getColDisplayName = (col: V1ProjectColumn) => {
-    const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+    const colType = col.type.replace('COLUMN_TYPE_', '');
 
     return (
       <>
