@@ -1030,9 +1030,3 @@ export const deleteGlobalConfigPolicies = generateDetApi<
   Api.V1DeleteGlobalConfigPoliciesResponse,
   Api.V1DeleteGlobalConfigPoliciesResponse
 >(Config.deleteGlobalConfigPolicies);
-
-export const postRunMetadata = generateDetApi<
-  Service.PostRunMetadata,
-  Api.V1PostRunMetadataResponse,
-  Api.V1PostRunMetadataResponse
->(Config.postRunMetadata);
