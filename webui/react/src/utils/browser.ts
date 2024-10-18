@@ -3,7 +3,7 @@ import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { BrandingType } from 'stores/determinedInfo';
-import { parseUrl, routeToExternalUrl } from 'utils/routes';
+import { routeToExternalUrl } from 'utils/routes';
 
 /*
  * In mobile view the definition of viewport height varies between
@@ -83,8 +83,11 @@ export const setCookie = (name: string, value: string): void => {
  */
 export const refreshPage = (): void => {
   const now = Date.now();
-  const url = parseUrl(window.location.href);
-  url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+
+  params.set('ts', now.toString());
+
   routeToExternalUrl(url.toString());
 };
 
