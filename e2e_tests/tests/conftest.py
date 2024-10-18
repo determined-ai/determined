@@ -35,7 +35,6 @@ _INTEG_MARKERS = {
     "e2e_saml",
     "e2e_slurm",
     "e2e_slurm_restart",
-    "e2e_slurm_preemption",
     "e2e_slurm_internet_connected_cluster",
     "det_deploy_local",
     "test_oauth",
