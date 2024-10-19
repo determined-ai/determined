@@ -5,6 +5,7 @@ import { TreeNode } from 'hew/utils/types';
 import yaml from 'js-yaml';
 import React, { useMemo } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import { useAsync } from 'hooks/useAsync';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
@@ -14,8 +15,6 @@ import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 import css from './ExperimentCodeViewer.module.scss';
-
-const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const configIcon = <Icon name="settings" title="settings" />;
 

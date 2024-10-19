@@ -11,6 +11,7 @@ import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -79,8 +80,6 @@ interface FullConfigProps {
 interface Props {
   workspace?: Workspace;
 }
-
-const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const idPrefix = useId();
