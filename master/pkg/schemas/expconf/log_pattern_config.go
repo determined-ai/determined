@@ -22,6 +22,10 @@ type LogPoliciesConfigV0 []LogPolicyV0
 func (b LogPoliciesConfigV0) Merge(
 	src LogPoliciesConfigV0,
 ) LogPoliciesConfigV0 {
+	// src is nil and b is an empty slice.
+	if src == nil && b != nil && len(b) == 0 {
+		return make(LogPoliciesConfigV0, 0)
+	}
 	var out LogPoliciesConfigV0
 
 	patternTosrcLp := make(map[string]LogPolicyV0)
