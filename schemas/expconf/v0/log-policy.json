@@ -14,7 +14,6 @@
             "default": null
         },
         "actions": {
-            "$comment": "\"default\": [] is for passing lint. The actual default can be found in const.go",
             "type": [
                 "array",
                 "null"
@@ -34,7 +33,7 @@
         }
     },
     "checks": {
-        "both the depreated \"action\" field and the newer \"actions\" field are detected": {
+        "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field": {
             "oneOf": [
                 {
                     "required": [

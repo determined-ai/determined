@@ -16,48 +16,26 @@ import (
 //go:generate ../gen.sh
 type LogPoliciesConfigV0 []LogPolicyV0
 
-// WithDefaults implements the Defaultable pseudo-interface.
-func (b LogPoliciesConfigV0) WithDefaults() LogPoliciesConfigV0 {
-	cudaOomPattern := CUDAOOMPattern
-	cudaOomSignal := CUDAOOMSignal
-	eccErrorPattern := ECCErrorPattern
-	eccErrorSignal := ECCErrorSignal
-
-	if b == nil {
-		return LogPoliciesConfigV0{
-			LogPolicyV0{
-				RawPattern: cudaOomPattern,
-				RawActions: []LogActionV0{{Type: LogActionTypeSignal, Signal: &cudaOomSignal}},
-			},
-			LogPolicyV0{
-				RawPattern: eccErrorPattern,
-				RawActions: []LogActionV0{{Type: LogActionTypeSignal, Signal: &eccErrorSignal}},
-			},
-		}
-	}
-	return b
-}
-
 // Merge implements the Mergable pseudo-interface.
 // We appends all LogPolicyV0s to the output slice, but if there are any with the same pattern, we merge
 // their actions and save them as one LogPolicyV0.
 func (b LogPoliciesConfigV0) Merge(
-	other LogPoliciesConfigV0,
+	src LogPoliciesConfigV0,
 ) LogPoliciesConfigV0 {
 	var out LogPoliciesConfigV0
 
 	patternTosrcLp := make(map[string]LogPolicyV0)
-	for _, lp := range b {
+	for _, lp := range src {
 		patternTosrcLp[lp.RawPattern] = lp
 	}
 
-	for _, otherLp := range other {
+	for _, otherLp := range b {
 		pattern := otherLp.RawPattern
 		if srcLp, ok := patternTosrcLp[pattern]; ok {
 			// Merge actions of two LogPolicies if they have the same pattern.
 			patternTosrcLp[pattern] = LogPolicyV0{
 				RawPattern: pattern,
-				RawActions: srcLp.RawActions.merge(otherLp.RawActions),
+				RawActions: otherLp.RawActions.merge(srcLp.RawActions),
 			}
 		} else {
 			// Source LogPoliciesConfig doesn't have this pattern.
@@ -101,12 +79,7 @@ func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &jsonItems); err != nil {
 		return errors.Wrapf(err, "failed to parse runtime items")
 	}
-	// By distinguishing [] and nil input, user can override the default log policies and get empty.
-	// log policies. If a user provides [], the default values won't be applied.
 	if jsonItems == nil {
-		return nil
-	} else if len(jsonItems) == 0 {
-		*b = make([]LogPolicyV0, 0)
 		return nil
 	}
 
@@ -123,7 +96,8 @@ func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 		patternToLp[pattern] = LogPolicyV0{RawPattern: pattern, RawActions: mergedActions}
 	}
 
-	var temp LogPoliciesConfigV0
+	// if the input data is [] and we use `var temp LogPolicies`, function return will return nil
+	temp := make(LogPoliciesConfigV0, 0)
 	for _, lp := range patternToLp {
 		temp = append(temp, lp)
 	}
@@ -234,11 +208,11 @@ func (b *LogPolicyV0) UnmarshalJSON(data []byte) error {
 
 // Merge LogActionsV0. The value of LogActionTypeSignal from other takes precedence.
 // Union merge the other LogAction types.
-func (s LogActionsV0) merge(other LogActionsV0) LogActionsV0 {
+func (l LogActionsV0) merge(src LogActionsV0) LogActionsV0 {
 	// Store unique actions except signal, and find source signal.
 	actions := set.New[LogActionV0]()
 	var srcSignal *LogActionV0
-	for _, a := range s {
+	for _, a := range src {
 		if a.Type == LogActionTypeSignal {
 			srcSignal = &a
 			continue
@@ -248,7 +222,7 @@ func (s LogActionsV0) merge(other LogActionsV0) LogActionsV0 {
 
 	// Store unique actions except signal, and find other signal.
 	var otherSignal *LogActionV0
-	for _, a := range other {
+	for _, a := range l {
 		if a.Type == LogActionTypeSignal {
 			otherSignal = &a
 			continue
@@ -266,9 +240,9 @@ func (s LogActionsV0) merge(other LogActionsV0) LogActionsV0 {
 }
 
 // Sort LogActionsV0 by type so the output is in deterministic state. Testing will be easier.
-func (s LogActionsV0) sort() {
-	sort.Slice(s, func(i, j int) bool {
-		return s[i].Type < s[j].Type
+func (l LogActionsV0) sort() {
+	sort.Slice(l, func(i, j int) bool {
+		return l[i].Type < l[j].Type
 	})
 }
 
@@ -308,28 +282,25 @@ func (s LogActionV0) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (s *LogActionV0) UnmarshalJSON(data []byte) error {
 	var action string
-	if err := json.Unmarshal(data, &action); err != nil {
-		return fmt.Errorf(
-			"failed to unmarshal log action type CancelRetries and ExcludeNode: %w, data: %q", err, string(data),
-		)
-	}
-
-	// Handle all the types beside signal
-	switch LogActionType(action) {
-	case LogActionTypeCancelRetries:
-		*s = LogActionV0{Type: LogActionTypeCancelRetries}
-		return nil
-	case LogActionTypeExcludeNode:
-		*s = LogActionV0{Type: LogActionTypeExcludeNode}
-		return nil
+	// err is not nil means input data is not cancel_retries or exclude_node.
+	if err := json.Unmarshal(data, &action); err == nil {
+		// Handle all the types beside signal
+		switch LogActionType(action) {
+		case LogActionTypeCancelRetries:
+			*s = LogActionV0{Type: LogActionTypeCancelRetries}
+			return nil
+		case LogActionTypeExcludeNode:
+			*s = LogActionV0{Type: LogActionTypeExcludeNode}
+			return nil
+		}
 	}
 
 	// Handle Signal
 	temp := struct {
 		Signal *string `json:"signal"`
 	}{}
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return fmt.Errorf("failed to unmarshal log action type signal: %w, data: %q", err, string(data))
+	if err := json.Unmarshal(data, &temp); err != nil || temp.Signal == nil {
+		return fmt.Errorf("failed to unmarshal log action: %w, data: %q", err, string(data))
 	}
 	*s = LogActionV0{Type: LogActionTypeSignal, Signal: temp.Signal}
 

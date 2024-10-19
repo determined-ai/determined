@@ -440,8 +440,8 @@ func TestLogPatternUnmarshal(t *testing.T) {
 	var tcd TaskContainerDefaultsConfig
 	require.NoError(t, json.Unmarshal([]byte(string(`{
 		    "log_policies": [
-		        {"pattern": "test", "actions": [{"type": "exclude_node"}]},
-		        {"pattern": "test2", "actions": [{"type": "cancel_retries"}]}
+		        {"pattern": "test", "actions": ["exclude_node"]},
+		        {"pattern": "test2", "actions": ["cancel_retries"]}
 		    ]
 		}`)), &tcd))
 

@@ -17,7 +17,7 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
         regex = r"(.*) this should not match (.*)"
 
     config = {
-        "log_policies": [{"pattern": regex, "actions": [{"type": "cancel_retries"}]}],
+        "log_policies": [{"pattern": regex, "action": {"type": "cancel_retries"}}],
         "max_restarts": 1,
     }
     exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
@@ -48,7 +48,7 @@ def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
     assert agents[0].slots is not None
 
     config = {
-        "log_policies": [{"pattern": regex, "actions": [{"type": "exclude_node"}]}],
+        "log_policies": [{"pattern": regex, "action": {"type": "exclude_node"}}],
         "resources": {"slots_per_trial": len(agents[0].slots)},
         "max_restarts": 1,
     }
@@ -91,7 +91,7 @@ def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
     assert agents[0].slots is not None
 
     config = {
-        "log_policies": [{"pattern": regex, "actions": [{"type": "exclude_node"}]}],
+        "log_policies": [{"pattern": regex, "action": {"type": "exclude_node"}}],
         "resources": {"slots_per_trial": len(agents[0].slots)},
         "max_restarts": 1,
     }
@@ -134,7 +134,7 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
         regex = r"(.*) this should not match (.*)"
 
     config = {
-        "log_policies": [{"pattern": regex, "actions": [{"type": "exclude_node"}]}],
+        "log_policies": [{"pattern": regex, "action": {"type": "exclude_node"}}],
         "max_restarts": 1,
     }
     exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
@@ -165,7 +165,7 @@ def test_log_signal(should_match: bool) -> None:
 
     expected_signal = "Test Signal"
     config = {
-        "log_policies": [{"pattern": regex, "signal": expected_signal}],
+        "log_policies": [{"pattern": regex, "actions": [{"signal": expected_signal}]}],
         "max_restarts": 1,
     }
 
@@ -193,7 +193,7 @@ def test_signal_clear_after_exp_continue() -> None:
 
     expected_signal = "Test Signal"
     config = {
-        "log_policies": [{"pattern": regex, "signal": expected_signal}],
+        "log_policies": [{"pattern": regex, "actions": [{"signal": expected_signal}]}],
         "max_restarts": 0,
     }
 
@@ -216,8 +216,7 @@ def test_signal_clear_after_exp_continue() -> None:
             "e",
             "continue",
             str(exp_ref.id),
-            "--config",
-            "hyperparameters.crash_on_startup=false",
+            *noop.cli_config_overrides([noop.Exit(0)]),
         ],
     )
     exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.COMPLETED)

@@ -848,8 +848,25 @@ var (
                 "array",
                 "null"
             ],
-            "$comment": "The default value doesn't matter here. It's controlled by WithDefaults()",
-            "default": [],
+            "$comment": "If ther's no default field or the default is null, LogPoliciesConfigV0 WithDefaults() won't be called.",
+            "default": [
+                {
+                    "pattern": ".*CUDA out of memory.*",
+                    "actions": [
+                        {
+                            "signal": "CUDA OOM"
+                        }
+                    ]
+                },
+                {
+                    "pattern": ".*uncorrectable ECC error encountered.*",
+                    "actions": [
+                        {
+                            "signal": "ECC Error"
+                        }
+                    ]
+                }
+            ],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/log-policies.json"
         },
         "retention_policy": {
@@ -1617,7 +1634,6 @@ var (
             "default": null
         },
         "actions": {
-            "$comment": "\"default\": [] is for passing lint. The actual default can be found in const.go",
             "type": [
                 "array",
                 "null"
@@ -1637,7 +1653,7 @@ var (
         }
     },
     "checks": {
-        "both the depreated \"action\" field and the newer \"actions\" field are detected": {
+        "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field": {
             "oneOf": [
                 {
                     "required": [

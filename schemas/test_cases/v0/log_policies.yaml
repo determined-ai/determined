@@ -11,7 +11,7 @@
 - name: log policy is invalid with both action and actions
   sanity_errors:
     http://determined.ai/schemas/expconf/v0/log-policy.json:
-      - "<config>: both the depreated \"action\" field and the newer \"actions\" field are detected"
+      - "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field"
   case:
     pattern: a
     actions:
@@ -85,16 +85,19 @@
     - pattern: a
       actions:
         - exclude_node
+        - signal: sig1
   merge_src:
     - pattern: a
       actions:
         - cancel_retries
         - exclude_node
+        - signal: sig2
   merged:
     - pattern: a
       actions:
         - cancel_retries
         - exclude_node
+        - signal: sig1
 
 - name: user can override default values
   sane_as:
@@ -103,6 +106,7 @@
     http://determined.ai/schemas/expconf/v0/log-policies.json
   case: []
   defaulted: []
+
 
 - name: log action cancel_retries
   sane_as:
@@ -139,7 +143,7 @@
       actions:
         - exclude_node
 
-- name: legacy log policies merging      
+- name: legacy log policies merging
   merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
   case:
     - pattern: b
