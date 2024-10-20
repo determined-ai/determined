@@ -59,23 +59,27 @@ func (b LogPoliciesConfigV0) Merge(
 // can be associated with a pattern. For example:
 //
 //   - pattern: a
-//     action: cancel_retries
+//     action:
+//       type: cancel_retries
 //   - pattern: a
-//     action: exclude_node
+//     action:
+//       type: exclude_node
 //
 // All legacy policies become mordern policies after shimming:
 //   - pattern: a
-//     actions: [cancel_retries]
+//     actions:
+//      - cancel_retries
 //   - pattern: a
-//     actions: [exclude_node]
+//     actions:
+//      - exclude_node
 //
 // The modern log policy has an actions field. Multiple entires can be associated with a pattern. No more
 // duplicated pattern in log policies config. For example the policies above will be combined into:
 //
 //   - pattern: a
 //     actions:
-//   - cancel_retries
-//   - exclude_node
+//      - cancel_retries
+//      - exclude_node
 func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 	// jsonItems may have duplicated patterns after applying shim to the legacy policy.
 	type DefaultParser LogPoliciesConfigV0
@@ -100,7 +104,7 @@ func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 		patternToLp[pattern] = LogPolicyV0{RawPattern: pattern, RawActions: mergedActions}
 	}
 
-	// if the input data is [] and we use `var temp LogPolicies`, function return will return nil
+	// Can't use `var temp LogPolicies`. If the input data is [], function will return nil
 	temp := make(LogPoliciesConfigV0, 0)
 	for _, lp := range patternToLp {
 		temp = append(temp, lp)
@@ -111,7 +115,7 @@ func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Sort LogPolicyV0 by pattern so the output is in deterministic state. Testing will be easier.
+// Sort LogPoliciesConfigV0 by pattern so the output is in deterministic state. Testing will be easier.
 func (b LogPoliciesConfigV0) sort() {
 	sort.Slice(b, func(i, j int) bool {
 		return b[i].RawPattern < b[j].RawPattern
@@ -210,8 +214,8 @@ func (b *LogPolicyV0) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Merge LogActionsV0. The value of LogActionTypeSignal from other takes precedence.
-// Union merge the other LogAction types.
+// Merge LogActionsV0. The value of LogActionTypeSignal from l takes precedence.
+// Union merge other LogAction types from l and src.
 func (l LogActionsV0) merge(src LogActionsV0) LogActionsV0 {
 	// Store unique actions except signal, and find source signal.
 	actions := set.New[LogActionV0]()

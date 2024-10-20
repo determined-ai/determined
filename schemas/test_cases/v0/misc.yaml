@@ -331,3 +331,4 @@
       - "<config>.shm_size: must be a valid memory size"
   case:
     shm_size: 1 i
+

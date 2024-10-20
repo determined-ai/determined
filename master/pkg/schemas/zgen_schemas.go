@@ -848,7 +848,6 @@ var (
                 "array",
                 "null"
             ],
-            "$comment": "If ther's no default field or the default is null, LogPoliciesConfigV0 WithDefaults() won't be called.",
             "default": [
                 {
                     "pattern": ".*CUDA out of memory.*",
