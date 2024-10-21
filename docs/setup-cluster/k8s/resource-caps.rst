@@ -26,6 +26,20 @@ bindings and resource quotas using either the WebUI or the CLI.
    otherwise bound to the release namespace. For non-helm Determined deployments, it falls back to
    the default Kubernetes namespace, ``default``.
 
+   To ensure that this field is set during a helm install or update, make sure to specify the
+   following in your values.yaml:
+
+   .. code:: yaml
+
+      resourceManager:
+        defaultNamespace: <workload_namespace>
+
+   Where ``workload_namespace`` as specified above can be the release namespace or can be any
+   namespace in which you wish to launch workloads for the given resource manager.
+
+When using multiple resource managers, this defaultNamespace field can be configured in the
+additional_resource_manager config by specifying additional_resource_manager.default_namespace
+
 #. Toggle the "Auto Create Namespace" option on or off. When enabled, the system automatically
    creates a namespace in the cluster, allowing you to edit the resource quota directly in
    Determined.
