@@ -4,121 +4,6 @@
  Arbitrary Metadata Logging
 ############################
 
-This tutorial demonstrates how to log custom metadata for your experiments.
-
-**Why Use Arbitrary Metadata Logging?**
-
-Arbitrary Metadata Logging allows you to:
-
--  Capture experiment-specific information beyond standard metrics
--  Compare and analyze custom data across experiments
--  Filter and sort experiments based on custom metadata
-
-******************
- Logging Metadata
-******************
-
-You can log metadata using the Determined Core API. Here's how to do it in your training code:
-
-#. Import the necessary module:
-
-   .. code:: python
-
-      from determined.core import Context
-
-#. In your trial class, add a method to log metadata:
-
-   .. code:: python
-
-      def log_metadata(self, context: Context):
-          context.train.report_metadata({
-              "dataset_version": "MNIST-v1.0",
-              "preprocessing": "normalization",
-              "hardware": {
-                  "gpu": "NVIDIA A100",
-                  "cpu": "Intel Xeon"
-              }
-          })
-
-#. Call this method in your training loop:
-
-   .. code:: python
-
-      def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-          # Existing training code...
-
-          if batch_idx == 0:
-              self.log_metadata(self.context)
-
-          # Rest of the training code...
-
-This example logs metadata at the beginning of each epoch. Adjust the frequency based on your needs.
-
-*******************************
- Viewing Metadata in the WebUI
-*******************************
-
-To view logged metadata:
-
-#. Open the WebUI and navigate to your experiment.
-#. Click on the trial you want to inspect.
-#. In the trial details page, find the "Metadata" section under the "Overview" tab.
-
-***********************************
- Filtering and Sorting by Metadata
-***********************************
-
-The :ref:`Web UI <web-ui-if>` allows you to filter and sort experiment runs based on logged
-metadata:
-
-#. Navigate to the Runs Table in the WebUI.
-#. Click on the filter icon.
-#. Select a metadata field from the dropdown menu.
-#. Choose a condition (is, is not, or contains) and enter a value.
-
-For more detailed instructions on filtering and sorting, refer to the WebUI guide:
-
-Performance Considerations
-==========================
-
-When using Arbitrary Metadata Logging, consider the following:
-
--  Metadata is stored efficiently for fast retrieval and filtering.
--  Avoid logging very large metadata objects, as this may impact performance.
--  Use consistent naming conventions for keys to make filtering and sorting easier.
--  For deeply nested JSON structures, filtering and sorting are supported at the top level.
-
-Example Use Case
-================
-
-Let's say you're running experiments to benchmark different hardware setups. For each run, you might
-log:
-
-.. code:: python
-
-   def log_hardware_metadata(self, context: Context):
-       context.train.report_metadata({
-           "hardware": {
-               "gpu": "NVIDIA A100",
-               "cpu": "Intel Xeon",
-               "ram": "64GB"
-           },
-           "software": {
-               "cuda_version": "11.2",
-               "python_version": "3.8.10"
-           },
-           "runtime_seconds": 3600
-       })
-
-You can then use these logged metadata fields to:
-
-#. Filter for experiments that ran on a specific GPU model.
-#. Compare runtimes across different hardware configurations.
-#. Analyze the impact of software versions on performance.
-
-Summary
-=======
-
 Arbitrary Metadata Logging enhances your experiment tracking capabilities by allowing you to:
 
 #. Log custom metadata specific to your experiments.
@@ -128,10 +13,67 @@ Arbitrary Metadata Logging enhances your experiment tracking capabilities by all
 
 By leveraging this feature, you can capture and analyze experiment-specific information beyond
 standard metrics, leading to more insightful comparisons and better experiment management within the
-Determined AI platform.
+Determined platform.
 
-Next Steps
-==========
+******************
+ Example Use Case
+******************
+
+This example creates an arbitrary metadata field ``effectiveness`` and then (does something else).
+
+**Section Title**
+
+#. Run an experiment to create a :ref:`single-trial run <qs-webui-concepts>`.
+#. Note the Run ID, e.g., Run 110.
+#. Navigate to the cluster address for your training environment, e.g., **http://localhost:8080/**.
+#. In the WebUI, click **API(Beta)** in the left navigation pane.
+#. Execute the following PostRunMetadata ``/Internal/PostRunMetadata``
+
+.. code:: bash
+
+   {
+       "runId": 110,
+       "metadata": {
+        "effectiveness": 20
+   }
+   }
+
+Next, we'll filter our runs by a specific metadata condition.
+
+**Filter by Metadata**
+
+#. In the WebUI, select your experiment to view the Runs table.
+#. Select the **Filter**.
+#. In **Show runs...**, select your metadata field from the dropdown menu.
+#. Choose a condition (e.g., is, is not, or contains) and enter a value.
+
+.. image:: /assets/images/webui-runs-metadata-filter.png
+   :alt: Determined AI metadata filter for runs for an experiment
+
+Finally, let's view the logged metadata for our run.
+
+**View Metadata**
+
+To view the logged metadata:
+
+#. In the WebUI, navigate to your experiment.
+#. Click on the run you want to inspect.
+#. In the Run details page, find the "Metadata" section under the "Overview" tab.
+
+****************************
+ Performance Considerations
+****************************
+
+When using Arbitrary Metadata Logging, consider the following:
+
+-  Metadata is stored efficiently for fast retrieval and filtering.
+-  Avoid logging very large metadata objects, as this may impact performance.
+-  Use consistent naming conventions for keys to make filtering and sorting easier.
+-  For deeply nested JSON structures, filtering and sorting are supported at the top level.
+
+************
+ Next Steps
+************
 
 -  Experiment with logging different types of metadata in your trials.
 -  Use the filtering and sorting capabilities in the WebUI to analyze your experiments.
