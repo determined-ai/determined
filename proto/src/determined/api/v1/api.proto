@@ -2886,4 +2886,14 @@ service Determined {
       tags: "Alpha"
     };
   }
+
+  rpc GetRunGroups(GetRunGroupsRequest)
+    returns (GetRunGroupsResponse) {
+      option (google.api.http) = {
+        get: "/api/v1/runs/groups"
+      };
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        tags: "Internal"
+      };
+    }
 }
