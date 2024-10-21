@@ -607,13 +607,20 @@ test.describe('Experiment List', () => {
       await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
     });
 
-    test('move experiment', async ({ newWorkspace: { response: { workspace } } }) => {
+    test('move experiment', async ({
+      newWorkspace: {
+        response: { workspace },
+      },
+    }) => {
       if (experimentId === undefined) return;
 
-      const newExperimentRow = await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue('ID', experimentId.toString());
+      const newExperimentRow =
+        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+          'ID',
+          experimentId.toString(),
+        );
 
       const menuMove = await newExperimentRow.experimentActionDropdown.open();
-      console.log(destinationProject.workspaceName)
 
       await menuMove.menuItem('Move').pwLocator.click();
       await menuMove.moveModal.destinationWorkspace.pwLocator.fill(workspace.name);
@@ -628,7 +635,14 @@ test.describe('Experiment List', () => {
 
       await projectDetailsPage.gotoProject(destinationProject.id);
       await waitTableStable();
-      await expect((await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue('ID', experimentId.toString())).pwLocator).toBeVisible();
+      await expect(
+        (
+          await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+            'ID',
+            experimentId.toString(),
+          )
+        ).pwLocator,
+      ).toBeVisible();
     });
   });
 });
