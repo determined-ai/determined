@@ -46,7 +46,6 @@ jobs:
     executor: continuation/default
     steps:
       - checkout
-      - run: git fetch --tags
       - attach_workspace:
           at: '<<pipeline.parameters.workspace_path>>'
       - continuation/continue:
@@ -59,8 +58,6 @@ jobs:
     steps:
       - gh/install
       - checkout
-      - run: git fetch --tags
-      - run: "./version.sh"
 
       # this must be first; default to an empty params list
       - run:
