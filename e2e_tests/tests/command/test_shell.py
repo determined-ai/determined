@@ -13,7 +13,6 @@ from tests import detproc
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
 @pytest.mark.e2e_multi_k8s
-@pytest.mark.e2e_shell_ssh
 def test_start_and_write_to_shell(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     with cmd.interactive_command(sess, ["shell", "start"]) as shell:

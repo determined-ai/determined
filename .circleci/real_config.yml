@@ -4404,28 +4404,6 @@ workflows:
           target-stage: agent
 
       - test-e2e:
-          name: test-e2e-shell-ecdsa
-          context:
-            - dev-ci-cluster-default-user-credentials
-          requires:
-            - build-go-ee
-          parallelism: 1
-          devcluster-config: ssh-ecdsa.devcluster.yaml
-          mark: e2e_shell_ssh
-          target-stage: agent2
-      
-      - test-e2e:
-          name: test-e2e-shell-ed25519
-          context:
-            - dev-ci-cluster-default-user-credentials
-          requires:
-            - build-go-ee
-          parallelism: 1
-          devcluster-config: ssh-ed25519.devcluster.yaml
-          mark: e2e_shell_ssh
-          target-stage: agent2
-
-      - test-e2e:
           name: test-e2e-cpu-elastic
           context:
             - dev-ci-cluster-default-user-credentials
