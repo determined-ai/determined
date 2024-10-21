@@ -440,8 +440,8 @@ func TestLogPatternUnmarshal(t *testing.T) {
 	var tcd TaskContainerDefaultsConfig
 	require.NoError(t, json.Unmarshal([]byte(string(`{
 		    "log_policies": [
-		        {"pattern": "test", "action": {"type": "exclude_node"}},
-		        {"pattern": "test2", "action": {"type": "cancel_retries"}}
+		        {"pattern": "test", "actions": ["exclude_node"]},
+		        {"pattern": "test2", "actions": ["cancel_retries"]}
 		    ]
 		}`)), &tcd))
 
@@ -450,61 +450,17 @@ func TestLogPatternUnmarshal(t *testing.T) {
 		NetworkMode:       "bridge",
 		PreemptionTimeout: DefaultPreemptionTimeout,
 		LogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "test", RawAction: expconf.LogAction{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
-			expconf.LogPolicy{RawPattern: "test2", RawAction: expconf.LogAction{
-				RawCancelRetries: &expconf.LogActionCancelRetries{},
-			}},
+			expconf.LogPolicy{
+				RawPattern: "test",
+				RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode}},
+			},
+			expconf.LogPolicy{
+				RawPattern: "test2",
+				RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries}},
+			},
 		},
 	}
 	require.Equal(t, expected, tcd)
-}
-
-func TestLogPatternPoliciesMerging(t *testing.T) {
-	defaults := &TaskContainerDefaultsConfig{
-		LogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "a", RawAction: expconf.LogAction{
-				RawCancelRetries: &expconf.LogActionCancelRetries{},
-			}},
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
-		},
-	}
-
-	conf := expconf.ExperimentConfig{
-		RawLogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-				RawCancelRetries: &expconf.LogActionCancelRetries{},
-			}},
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
-			expconf.LogPolicy{RawPattern: "c", RawAction: expconf.LogAction{
-				RawExcludeNode: &expconf.LogActionExcludeNode{},
-			}},
-		},
-	}
-
-	defaults.MergeIntoExpConfig(&conf)
-
-	expected := expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "a", RawAction: expconf.LogAction{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}},
-		expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
-		expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}},
-		expconf.LogPolicy{RawPattern: "c", RawAction: expconf.LogAction{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
-	}
-
-	require.Equal(t, expected, conf.RawLogPolicies)
 }
 
 func TestPodSpecsDefaultMerging(t *testing.T) {

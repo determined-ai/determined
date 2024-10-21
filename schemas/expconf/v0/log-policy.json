@@ -3,22 +3,51 @@
     "$id": "http://determined.ai/schemas/expconf/v0/log-policy.json",
     "title": "LogPolicy",
     "additionalProperties": false,
-    "required": [
-        "pattern",
-        "action"
-    ],
     "type": "object",
     "properties": {
         "pattern": {
+            "$comment": "default doesn't apply here because pattern is a required field",
             "type": [
-                "string"
-            ]
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "actions": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            },
+            "default": null
         },
         "action": {
             "type": [
-                "object"
+                "object",
+                "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
+            "default": null
+        }
+    },
+    "checks": {
+        "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field": {
+            "oneOf": [
+                {
+                    "required": [
+                        "pattern",
+                        "actions"
+                    ]
+                },
+                {
+                    "required": [
+                        "pattern",
+                        "action"
+                    ]
+                }
+            ]
         }
     }
 }

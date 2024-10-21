@@ -323,7 +323,7 @@ func (c TaskContainerDefaultsConfig) Merge(
 		if res.LogPolicies == nil {
 			res.LogPolicies = other.LogPolicies
 		} else {
-			res.LogPolicies = res.LogPolicies.Merge(other.LogPolicies)
+			res.LogPolicies = other.LogPolicies.Merge(res.LogPolicies)
 		}
 	}
 
