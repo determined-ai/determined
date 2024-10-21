@@ -44,37 +44,39 @@ func ValidWorkloadType(val string) bool {
 	}
 }
 
-func UnmarshalConfigPolicies[T any](errMsg string, constraints,
-	invariantConfig *string) (*model.Constraints, *T,
+// UnmarshalConfigPolicies unmarshals optionally specified invariant config and constraint
+// configurations presented as YAML or JSON strings.
+func UnmarshalConfigPolicies[T any](errMsg string, constraintsStr,
+	configStr *string) (*model.Constraints, *T,
 	error,
 ) {
-	var globalConstraints *model.Constraints
-	var globalConfig *T
+	var constraints *model.Constraints
+	var config *T
 
-	if constraints != nil {
+	if constraintsStr != nil {
 		unmarshaledConstraints, err := UnmarshalConfigPolicy[model.Constraints](
-			*constraints,
+			*constraintsStr,
 			errMsg,
 		)
 		if err != nil {
 			ConfigPolicyWarning(err.Error())
 			return nil, nil, err
 		}
-		globalConstraints = unmarshaledConstraints
+		constraints = unmarshaledConstraints
 	}
 
-	if invariantConfig != nil {
+	if configStr != nil {
 		unmarshaledConfig, err := UnmarshalConfigPolicy[T](
-			*invariantConfig,
+			*configStr,
 			errMsg,
 		)
 		if err != nil {
 			ConfigPolicyWarning(err.Error())
 			return nil, nil, err
 		}
-		globalConfig = unmarshaledConfig
+		config = unmarshaledConfig
 	}
-	return globalConstraints, globalConfig, nil
+	return constraints, config, nil
 }
 
 // UnmarshalConfigPolicy is a generic helper function to unmarshal both JSON and YAML strings.
