@@ -61,6 +61,7 @@ jobs:
       - checkout
       - run: git fetch --tags
       - run: git tag --list
+      - run: git -c versionsort.suffix='-rc' tag --sort='-v:refname:short' --format='%(refname:short)' --no-contains=$(git merge-base HEAD main) | grep -E -v 'v0.12|-ee' | head -n 1
 
       # this must be first; default to an empty params list
       - run:
