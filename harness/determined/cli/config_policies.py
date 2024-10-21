@@ -58,9 +58,7 @@ def set_config_policies(args: argparse.Namespace) -> None:
     body = bindings.v1PutGlobalConfigPoliciesRequest(
         workloadType=workload_type, configPolicies=data
     )
-    resp = bindings.put_PutGlobalConfigPolicies(
-        sess, workloadType=workload_type, body=body
-    )
+    resp = bindings.put_PutGlobalConfigPolicies(sess, workloadType=workload_type, body=body)
     print(f"Set global {args.workload_type} config policies:")
     print(util.yaml_safe_dump(resp.configPolicies, default_flow_style=False))
 
@@ -74,12 +72,16 @@ def delete_config_policies(args: argparse.Namespace) -> None:
 
     if args.workspace_name:
         wksp = api.workspace_by_name(sess, args.workspace_name)
-        
+
         bindings.delete_DeleteWorkspaceConfigPolicies(
             sess, workloadType=workload_type, workspaceId=wksp.id
         )
-        print("Successfully deleted "+ workload_type+ "config policies for workspace "+
-            args.workspace_name)
+        print(
+            "Successfully deleted "
+            + workload_type
+            + "config policies for workspace "
+            + args.workspace_name
+        )
         return
 
     bindings.delete_DeleteGlobalConfigPolicies(sess, workloadType=workload_type)
@@ -131,7 +133,7 @@ args_description: cli.ArgsDescription = [
                         help="path to the YAML or JSON file containing defined config policies "
                         "(can be absolute or relative to the current directory)",
                     ),
-                     cli.Arg(
+                    cli.Arg(
                         "-w",
                         "--workspace-name",
                         type=str,
@@ -151,7 +153,7 @@ args_description: cli.ArgsDescription = [
                         choices=["experiment", "tasks"],
                         help="the type (Experiment or Tasks) of config policies",
                     ),
-                     cli.Arg(
+                    cli.Arg(
                         "-w",
                         "--workspace-name",
                         type=str,
