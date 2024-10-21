@@ -117,8 +117,7 @@ func DefaultConfig() *Config {
 				Group: "root",
 			},
 			SSH: SSHConfig{
-				RsaKeySize: 1024,
-				KeyType:    RSACryptoSystem,
+				KeyType: ED25519CryptoSystem,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 		},
