@@ -365,7 +365,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           };
 
         let dataPath: string | undefined = undefined;
-        const colType = columnName.split('_')[1];
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -417,7 +416,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   max: heatmap.max,
                   min: heatmap.min,
                 },
-                colType,
               );
             } else {
               columnDefs[currentColumn.column] = defaultNumberColumn(
@@ -428,7 +426,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   MIN_COLUMN_WIDTH,
                 dataPath,
                 undefined,
-                colType,
               );
             }
             break;
@@ -441,7 +438,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 defaultColumnWidths[currentColumn.column as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
-              colType,
             );
             break;
           case V1ColumnType.ARRAY:
@@ -452,7 +448,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 defaultColumnWidths[currentColumn.column as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
-              colType,
             );
             break;
           case V1ColumnType.TEXT:
@@ -465,7 +460,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 defaultColumnWidths[currentColumn.column as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
-              colType,
             );
         }
         if (currentColumn.column === 'searcherMetricsVal') {
