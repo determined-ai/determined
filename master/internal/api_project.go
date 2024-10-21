@@ -35,150 +35,175 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		DisplayName: "Global Run ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   false,
 	},
 	{
 		Column:      "experimentDescription",
 		DisplayName: "Search Description",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   false,
 	},
 	{
 		Column:      "tags",
 		DisplayName: "Tags",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   false,
 	},
 	{
 		Column:      "forkedFrom",
 		DisplayName: "Forked",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   true,
 	},
 	{
 		Column:      "startTime",
 		DisplayName: "Start Time",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+		Groupable:   false,
 	},
 	{
 		Column:      "endTime",
 		DisplayName: "End Time",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+		Groupable:   false,
 	},
 	{
 		Column:      "duration",
 		DisplayName: "Duration",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   false,
 	},
 	{
 		Column:      "state",
 		DisplayName: "State",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   true,
 	},
 	{
 		Column:      "searcherType",
 		DisplayName: "Searcher",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   true,
 	},
 	{
 		Column:      "resourcePool",
 		DisplayName: "Resource Pool",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   true,
 	},
 	{
 		Column:      "checkpointSize",
 		DisplayName: "Checkpoint Size",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   true,
 	},
 	{
 		Column:      "checkpointCount",
 		DisplayName: "Checkpoints",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   true,
 	},
 	{
 		Column:      "user",
 		DisplayName: "User",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   true,
 	},
 	{
 		Column:      "searcherMetric",
 		DisplayName: "Searcher Metric",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   true,
 	},
 	{
 		Column:      "searcherMetricsVal",
 		DisplayName: "Searcher Metric Value",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   true,
 	},
 	{
 		Column:      "externalExperimentId",
 		DisplayName: "External Experiment ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   false,
 	},
 	{
 		Column:      "projectId",
 		DisplayName: "Project ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   false,
 	},
 	{
 		Column:      "externalRunId",
 		DisplayName: "External Run ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   false,
 	},
 	{
 		Column:      "experimentProgress",
 		DisplayName: "Search Progress",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   false,
 	},
 	{
 		Column:      "experimentId",
 		DisplayName: "Search ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		Groupable:   false,
 	},
 	{
 		Column:      "experimentName",
 		DisplayName: "Search Name",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   false,
 	},
 	{
 		Column:      "isExpMultitrial",
 		DisplayName: "Part of Search",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
+		Groupable:   false,
 	},
 	{
 		Column:      "parentArchived",
 		DisplayName: "Parent Archived",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
+		Groupable:   false,
 	},
 	{
 		Column:      "localId",
 		DisplayName: "Run ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Groupable:   false,
 	},
 	{
 		Column:      "archived",
 		DisplayName: "Archived",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED, // no boolean type
+		Groupable:   false,
 	},
 }
 
@@ -559,9 +584,10 @@ func (a *apiServer) getProjectRunColumnsByID(
 	columns = append(columns, summaryMetricColumns...)
 	for _, hparam := range hyperparameters {
 		columns = append(columns, &projectv1.ProjectColumn{
-			Column:   fmt.Sprintf("hp.%s", hparam.Hparam),
-			Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
-			Type:     parseMetricsType(hparam.Type),
+			Column:    fmt.Sprintf("hp.%s", hparam.Hparam),
+			Location:  projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+			Type:      parseMetricsType(hparam.Type),
+			Groupable: true,
 		})
 	}
 
@@ -591,9 +617,10 @@ func (a *apiServer) getProjectRunColumnsByID(
 
 	for _, data := range metadata {
 		columns = append(columns, &projectv1.ProjectColumn{
-			Column:   data.Metadata,
-			Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
-			Type:     parseMetricsType(data.Type),
+			Column:    data.Metadata,
+			Location:  projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+			Type:      parseMetricsType(data.Type),
+			Groupable: true,
 		})
 	}
 
