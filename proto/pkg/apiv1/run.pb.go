@@ -1365,6 +1365,158 @@ func (x *PostRunMetadataResponse) GetMetadata() *_struct.Struct {
 	return nil
 }
 
+// Group runs in Run Table.
+type GetRunGroupsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// ID of the project to look at
+	ProjectId *int32 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3,oneof" json:"project_id,omitempty"`
+	// How many experiments to skip before including in the results
+	Offset int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	// How many results to show
+	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+	Sort *string `protobuf:"bytes,4,opt,name=sort,proto3,oneof" json:"sort,omitempty"`
+	// Filter expression
+	Filter *string `protobuf:"bytes,5,opt,name=filter,proto3,oneof" json:"filter,omitempty"`
+	// Column to group the runs by
+	Group string `protobuf:"bytes,6,opt,name=group,proto3" json:"group,omitempty"`
+}
+
+func (x *GetRunGroupsRequest) Reset() {
+	*x = GetRunGroupsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_run_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRunGroupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRunGroupsRequest) ProtoMessage() {}
+
+func (x *GetRunGroupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_run_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRunGroupsRequest.ProtoReflect.Descriptor instead.
+func (*GetRunGroupsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetRunGroupsRequest) GetProjectId() int32 {
+	if x != nil && x.ProjectId != nil {
+		return *x.ProjectId
+	}
+	return 0
+}
+
+func (x *GetRunGroupsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *GetRunGroupsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetRunGroupsRequest) GetSort() string {
+	if x != nil && x.Sort != nil {
+		return *x.Sort
+	}
+	return ""
+}
+
+func (x *GetRunGroupsRequest) GetFilter() string {
+	if x != nil && x.Filter != nil {
+		return *x.Filter
+	}
+	return ""
+}
+
+func (x *GetRunGroupsRequest) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+// Response to GetRunGroupsRequest.
+type GetRunGroupsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The list of returned groups.
+	Groups []*runv1.RunGroup `protobuf:"bytes,1,rep,name=groups,proto3" json:"groups,omitempty"`
+	// Pagination information of the full dataset.
+	Pagination *Pagination `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (x *GetRunGroupsResponse) Reset() {
+	*x = GetRunGroupsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_run_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRunGroupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRunGroupsResponse) ProtoMessage() {}
+
+func (x *GetRunGroupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_run_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRunGroupsResponse.ProtoReflect.Descriptor instead.
+func (*GetRunGroupsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GetRunGroupsResponse) GetGroups() []*runv1.RunGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+func (x *GetRunGroupsResponse) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
+}
+
 var File_determined_api_v1_run_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_run_proto_rawDesc = []byte{
@@ -1564,11 +1716,35 @@ var file_determined_api_v1_run_proto_rawDesc = []byte{
 	0x33, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x17, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x62, 0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61,
-	0x64, 0x61, 0x74, 0x61, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69,
-	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x64, 0x61, 0x74, 0x61, 0x22, 0xd6, 0x01, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6e, 0x47,
+	0x72, 0x6f, 0x75, 0x70, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x22, 0x0a, 0x0a,
+	0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
+	0x48, 0x00, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x88, 0x01, 0x01,
+	0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69,
+	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x17,
+	0x0a, 0x04, 0x73, 0x6f, 0x72, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x48, 0x01, 0x52, 0x04,
+	0x73, 0x6f, 0x72, 0x74, 0x88, 0x01, 0x01, 0x12, 0x1b, 0x0a, 0x06, 0x66, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x48, 0x02, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x88, 0x01, 0x01, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x06, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x42, 0x0d, 0x0a, 0x0b, 0x5f, 0x70,
+	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x42, 0x07, 0x0a, 0x05, 0x5f, 0x73, 0x6f,
+	0x72, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x22, 0xa7, 0x01,
+	0x0a, 0x14, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
+	0x6e, 0x65, 0x64, 0x2e, 0x72, 0x75, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6e, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x52, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x12, 0x3d, 0x0a, 0x0a, 0x70,
+	0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a,
+	0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x1b, 0x92, 0x41, 0x18, 0x0a,
+	0x16, 0xd2, 0x01, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0xd2, 0x01, 0x0a, 0x70, 0x61, 0x67,
+	0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
+	0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1583,7 +1759,7 @@ func file_determined_api_v1_run_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_run_proto_rawDescData
 }
 
-var file_determined_api_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_determined_api_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_determined_api_v1_run_proto_goTypes = []interface{}{
 	(*RunPrepareForReportingRequest)(nil),  // 0: determined.api.v1.RunPrepareForReportingRequest
 	(*RunPrepareForReportingResponse)(nil), // 1: determined.api.v1.RunPrepareForReportingResponse
@@ -1608,14 +1784,17 @@ var file_determined_api_v1_run_proto_goTypes = []interface{}{
 	(*GetRunMetadataResponse)(nil),         // 20: determined.api.v1.GetRunMetadataResponse
 	(*PostRunMetadataRequest)(nil),         // 21: determined.api.v1.PostRunMetadataRequest
 	(*PostRunMetadataResponse)(nil),        // 22: determined.api.v1.PostRunMetadataResponse
-	(*_struct.Struct)(nil),                 // 23: google.protobuf.Struct
-	(*runv1.FlatRun)(nil),                  // 24: determined.run.v1.FlatRun
-	(*Pagination)(nil),                     // 25: determined.api.v1.Pagination
+	(*GetRunGroupsRequest)(nil),            // 23: determined.api.v1.GetRunGroupsRequest
+	(*GetRunGroupsResponse)(nil),           // 24: determined.api.v1.GetRunGroupsResponse
+	(*_struct.Struct)(nil),                 // 25: google.protobuf.Struct
+	(*runv1.FlatRun)(nil),                  // 26: determined.run.v1.FlatRun
+	(*Pagination)(nil),                     // 27: determined.api.v1.Pagination
+	(*runv1.RunGroup)(nil),                 // 28: determined.run.v1.RunGroup
 }
 var file_determined_api_v1_run_proto_depIdxs = []int32{
-	23, // 0: determined.api.v1.RunPrepareForReportingRequest.checkpoint_storage:type_name -> google.protobuf.Struct
-	24, // 1: determined.api.v1.SearchRunsResponse.runs:type_name -> determined.run.v1.FlatRun
-	25, // 2: determined.api.v1.SearchRunsResponse.pagination:type_name -> determined.api.v1.Pagination
+	25, // 0: determined.api.v1.RunPrepareForReportingRequest.checkpoint_storage:type_name -> google.protobuf.Struct
+	26, // 1: determined.api.v1.SearchRunsResponse.runs:type_name -> determined.run.v1.FlatRun
+	27, // 2: determined.api.v1.SearchRunsResponse.pagination:type_name -> determined.api.v1.Pagination
 	4,  // 3: determined.api.v1.MoveRunsResponse.results:type_name -> determined.api.v1.RunActionResult
 	4,  // 4: determined.api.v1.KillRunsResponse.results:type_name -> determined.api.v1.RunActionResult
 	4,  // 5: determined.api.v1.DeleteRunsResponse.results:type_name -> determined.api.v1.RunActionResult
@@ -1623,14 +1802,16 @@ var file_determined_api_v1_run_proto_depIdxs = []int32{
 	4,  // 7: determined.api.v1.UnarchiveRunsResponse.results:type_name -> determined.api.v1.RunActionResult
 	4,  // 8: determined.api.v1.PauseRunsResponse.results:type_name -> determined.api.v1.RunActionResult
 	4,  // 9: determined.api.v1.ResumeRunsResponse.results:type_name -> determined.api.v1.RunActionResult
-	23, // 10: determined.api.v1.GetRunMetadataResponse.metadata:type_name -> google.protobuf.Struct
-	23, // 11: determined.api.v1.PostRunMetadataRequest.metadata:type_name -> google.protobuf.Struct
-	23, // 12: determined.api.v1.PostRunMetadataResponse.metadata:type_name -> google.protobuf.Struct
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	25, // 10: determined.api.v1.GetRunMetadataResponse.metadata:type_name -> google.protobuf.Struct
+	25, // 11: determined.api.v1.PostRunMetadataRequest.metadata:type_name -> google.protobuf.Struct
+	25, // 12: determined.api.v1.PostRunMetadataResponse.metadata:type_name -> google.protobuf.Struct
+	28, // 13: determined.api.v1.GetRunGroupsResponse.groups:type_name -> determined.run.v1.RunGroup
+	27, // 14: determined.api.v1.GetRunGroupsResponse.pagination:type_name -> determined.api.v1.Pagination
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_run_proto_init() }
@@ -1916,6 +2097,30 @@ func file_determined_api_v1_run_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_run_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRunGroupsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_run_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRunGroupsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_run_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	file_determined_api_v1_run_proto_msgTypes[1].OneofWrappers = []interface{}{}
@@ -1927,13 +2132,14 @@ func file_determined_api_v1_run_proto_init() {
 	file_determined_api_v1_run_proto_msgTypes[13].OneofWrappers = []interface{}{}
 	file_determined_api_v1_run_proto_msgTypes[15].OneofWrappers = []interface{}{}
 	file_determined_api_v1_run_proto_msgTypes[17].OneofWrappers = []interface{}{}
+	file_determined_api_v1_run_proto_msgTypes[23].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_run_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
