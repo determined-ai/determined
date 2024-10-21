@@ -47,9 +47,8 @@ func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 ) error {
 	q := db.Bun().NewInsert().Model(tcp)
 
-	q = q.Set("last_updated_by = ?, last_updated_time = ?", tcp.LastUpdatedBy, tcp.LastUpdatedTime)
-	q = q.Set("invariant_config = ?", tcp.InvariantConfig)
-	q = q.Set("constraints = ?", tcp.Constraints)
+	q = q.Set("last_updated_by = ?, last_updated_time = ?, invariant_config = ?, constraints = ?",
+		tcp.LastUpdatedBy, tcp.LastUpdatedTime, tcp.InvariantConfig, tcp.Constraints)
 
 	if tcp.WorkspaceID == nil {
 		q = q.On("CONFLICT (workload_type) WHERE workspace_id IS NULL DO UPDATE")
