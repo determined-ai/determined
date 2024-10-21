@@ -17,7 +17,7 @@ const VersionChecker: React.FC<Props> = ({ version }: Props) => {
   } = useTheme();
   const [closed, setClosed] = useState(false);
   // vi.stubEnv uses string type to set process.env.IS_DEV:
-  const isDev = JSON.parse(process.env.IS_DEV ?? 'undefined');
+  const isDev = JSON.parse(process.env.IS_DEV ?? 'false');
 
   /*
    * Check to make sure the WebUI version matches the platform version.
@@ -40,16 +40,18 @@ const VersionChecker: React.FC<Props> = ({ version }: Props) => {
       </div>
     );
     if (!closed) {
-      notification.warning({
-        btn,
-        className: themeClass,
-        description,
-        duration: 0,
-        key: 'version-mismatch',
-        message,
-        onClose: () => setClosed(true),
-        placement: 'bottomRight',
-      });
+      setTimeout(() => {
+        notification.warning({
+          btn,
+          className: themeClass,
+          description,
+          duration: 0,
+          key: 'version-mismatch',
+          message,
+          onClose: () => setClosed(true),
+          placement: 'bottomRight',
+        });
+      }, 0); // 0ms setTimeout needed to make sure UIProvider is available.
     }
   }
 

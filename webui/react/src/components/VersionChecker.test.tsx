@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import VersionChecker from 'components/VersionChecker';
@@ -48,19 +48,21 @@ describe('VersionChecker', () => {
     mockWarning.mockReset();
   });
 
-  it('shows warning if version mismatch in production mode', () => {
+  it('shows warning if version mismatch in production mode', async () => {
     vi.stubEnv('IS_DEV', 'false');
     vi.stubEnv('VERSION', OLDER_VERSION);
     setup();
-    expect(mockWarning).toHaveBeenCalledWith(
-      expect.objectContaining({
-        className: THEME_CLASS,
-        duration: 0,
-        key: 'version-mismatch',
-        message: 'New WebUI Version',
-        placement: 'bottomRight',
-      }),
-    );
+    await waitFor(() => {
+      expect(mockWarning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: THEME_CLASS,
+          duration: 0,
+          key: 'version-mismatch',
+          message: 'New WebUI Version',
+          placement: 'bottomRight',
+        }),
+      );
+    });
   });
 
   it('does not show warning in development mode', () => {
