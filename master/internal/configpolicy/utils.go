@@ -44,6 +44,39 @@ func ValidWorkloadType(val string) bool {
 	}
 }
 
+func UnmarshalConfigPolicies[T any](errMsg string, constraints,
+	invariantConfig *string) (*model.Constraints, *T,
+	error,
+) {
+	var globalConstraints *model.Constraints
+	var globalConfig *T
+
+	if constraints != nil {
+		unmarshaledConstraints, err := UnmarshalConfigPolicy[model.Constraints](
+			*constraints,
+			errMsg,
+		)
+		if err != nil {
+			ConfigPolicyWarning(err.Error())
+			return nil, nil, err
+		}
+		globalConstraints = unmarshaledConstraints
+	}
+
+	if invariantConfig != nil {
+		unmarshaledConfig, err := UnmarshalConfigPolicy[T](
+			*invariantConfig,
+			errMsg,
+		)
+		if err != nil {
+			ConfigPolicyWarning(err.Error())
+			return nil, nil, err
+		}
+		globalConfig = unmarshaledConfig
+	}
+	return globalConstraints, globalConfig, nil
+}
+
 // UnmarshalConfigPolicy is a generic helper function to unmarshal both JSON and YAML strings.
 func UnmarshalConfigPolicy[T any](str string, errString string) (*T, error) {
 	var configPolicy T
@@ -81,11 +114,22 @@ func ValidateExperimentConfig(
 		return err
 	}
 
+	// Warn the user when fields specified in workspace config policies overlap with global config
+	// policies (since these fields will be overridden by the respective fields in the global
+	// policies).
+	var globalConstraints *model.Constraints
+	var globalConfig *expconf.ExperimentConfig
 	if globalConfigPolicies != nil {
-		checkAgainstGlobalConfig[model.Constraints](globalConfigPolicies.Constraints, cp.Constraints, "invalid constraints")
-		checkAgainstGlobalConfig[expconf.ExperimentConfig](
-			globalConfigPolicies.InvariantConfig, cp.InvariantConfig, InvalidExperimentConfigPolicyErr,
-		)
+		globalConstraints, globalConfig, err = UnmarshalConfigPolicies[expconf.ExperimentConfig](
+			InvalidExperimentConfigPolicyErr,
+			globalConfigPolicies.Constraints,
+			globalConfigPolicies.InvariantConfig)
+		if err != nil {
+			return err
+		}
+
+		configPolicyOverlap(globalConstraints, cp.Constraints)
+		configPolicyOverlap(globalConfig, cp.InvariantConfig)
 	}
 
 	if cp.Constraints != nil {
@@ -95,7 +139,15 @@ func ValidateExperimentConfig(
 	if cp.InvariantConfig != nil {
 		if cp.InvariantConfig.RawResources != nil {
 			checkAgainstGlobalPriority(priorityEnabledErr, cp.InvariantConfig.RawResources.RawPriority)
+
+			// Verify the workspace invariant config doesn't conflict with workspace constraints.
 			if err := checkConstraintConflicts(cp.Constraints, cp.InvariantConfig.RawResources.RawMaxSlots,
+				cp.InvariantConfig.RawResources.RawSlotsPerTrial, cp.InvariantConfig.RawResources.RawPriority); err != nil {
+				return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidExperimentConfigPolicyErr+": %s.", err))
+			}
+
+			// Verify the workspace invariant config doesn't conflict with global constraints.
+			if err := checkConstraintConflicts(globalConstraints, cp.InvariantConfig.RawResources.RawMaxSlots,
 				cp.InvariantConfig.RawResources.RawSlotsPerTrial, cp.InvariantConfig.RawResources.RawPriority); err != nil {
 				return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidExperimentConfigPolicyErr+": %s.", err))
 			}
@@ -120,11 +172,25 @@ func ValidateNTSCConfig(
 		  please remove "invariant_config" section and try again`
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(NotSupportedConfigPolicyErr+": %s.", msg))
 	}
+
+	// Warn the user when fields specified in workspace config policies overlap with global config
+	// policies (since these fields will be overridden by the respective fields in the global
+	// policies).
+	var globalConstraints *model.Constraints
+	var globalConfig *model.CommandConfig
 	if globalConfigPolicies != nil {
-		checkAgainstGlobalConfig[model.Constraints](globalConfigPolicies.Constraints, cp.Constraints, "invalid constraints")
-		checkAgainstGlobalConfig[model.CommandConfig](
-			globalConfigPolicies.InvariantConfig, cp.InvariantConfig, InvalidNTSCConfigPolicyErr,
-		)
+		if globalConfigPolicies.Constraints != nil {
+			globalConstraints, globalConfig, err = UnmarshalConfigPolicies[model.CommandConfig](
+				InvalidNTSCConfigPolicyErr,
+				globalConfigPolicies.Constraints,
+				globalConfigPolicies.InvariantConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		configPolicyOverlap(globalConstraints, cp.Constraints)
+		configPolicyOverlap(globalConfig, cp.InvariantConfig)
 	}
 
 	if cp.Constraints != nil {
@@ -141,8 +207,16 @@ func ValidateNTSCConfig(
 			slots = &cp.InvariantConfig.Resources.Slots
 		}
 
+		// Verify the workspace invariant config doesn't conflict with workspace constraints.
 		if err := checkConstraintConflicts(cp.Constraints, cp.InvariantConfig.Resources.MaxSlots,
 			slots, cp.InvariantConfig.Resources.Priority); err != nil {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidNTSCConfigPolicyErr+": %s.", err))
+		}
+
+		// Verify the workspace invariant config conflict with global constraints.
+		if err := checkConstraintConflicts(globalConstraints,
+			cp.InvariantConfig.Resources.MaxSlots, slots,
+			cp.InvariantConfig.Resources.Priority); err != nil {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidNTSCConfigPolicyErr+": %s.", err))
 		}
 	}
@@ -180,25 +254,16 @@ func checkConstraintConflicts(constraints *model.Constraints, maxSlots, slots, p
 	return nil
 }
 
-// checkAgainstGlobalConfig is a generic to check constraints & invariant configs against the global config.
-func checkAgainstGlobalConfig[T any](
-	globalConfigPolicies *string,
-	config *T,
-	errorMsg string,
-) {
-	if globalConfigPolicies != nil && config != nil {
-		global, err := UnmarshalConfigPolicy[T](*globalConfigPolicies, errorMsg)
-		if err != nil {
-			ConfigPolicyWarning(err.Error())
-			return
-		}
-		configPolicyConflict(global, config)
+// configPolicyOverlap compares two different configurations and warns the user when both
+// configurations define the same field.
+func configPolicyOverlap(config1, config2 interface{}) {
+	if reflect.ValueOf(config1).Type() != reflect.ValueOf(config2).Type() &&
+		reflect.ValueOf(config1).Type() != reflect.ValueOf(&model.Constraints{}).Type() &&
+		reflect.ValueOf(config1).Type() != reflect.ValueOf(&model.CommandConfig{}).Type() &&
+		reflect.ValueOf(config1).Type() != reflect.ValueOf(&expconf.ExperimentConfig{}).Type() {
+		return
 	}
-}
 
-// configPolicyConflict compares two different configurations and
-// returns an error if both try to define the same field.
-func configPolicyConflict(config1, config2 interface{}) {
 	v1 := reflect.ValueOf(config1)
 	v2 := reflect.ValueOf(config2)
 
