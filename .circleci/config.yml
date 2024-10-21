@@ -58,6 +58,7 @@ jobs:
     steps:
       - gh/install
       - checkout
+      - run: git fetch
 
       # this must be first; default to an empty params list
       - run:
