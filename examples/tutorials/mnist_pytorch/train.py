@@ -80,7 +80,6 @@ class MNistTrial(pytorch.PyTorchTrial):
         return {
             "validation_loss": validation_loss,
             "accuracy": accuracy,
-            "batch": self.context.current_train_batch(),
         }
 
 
@@ -115,7 +114,11 @@ def run(max_length, local: bool = False):
     with pytorch.init() as train_context:
         trial = MNistTrial(train_context, hparams=hparams)
         trainer = pytorch.Trainer(trial, train_context)
-        trainer.fit(max_length=max_length, latest_checkpoint=latest_checkpoint)
+        trainer.fit(
+            max_length=max_length,
+            latest_checkpoint=latest_checkpoint,
+            validation_period=pytorch.Batch(100),
+        )
 
 
 if __name__ == "__main__":
