@@ -1248,9 +1248,18 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		LogRetentionDays:      m.config.RetentionPolicy.LogRetentionDays,
 	}
 	if m.config.RetentionPolicy.Schedule != nil {
-		if err := logretention.Schedule(m.config.RetentionPolicy); err != nil {
-			return errors.Wrap(err, "initializing log retention")
+		lrs, err := logretention.NewScheduler()
+		if err != nil {
+			return fmt.Errorf("initializing log retention scheduler: %w", err)
 		}
+		if err := lrs.Schedule(m.config.RetentionPolicy); err != nil {
+			return fmt.Errorf("scheduling log retention enforcer: %w", err)
+		}
+		defer func() {
+			if err := lrs.Shutdown(); err != nil {
+				log.WithError(err).Warn("shutting down log retention workers")
+			}
+		}()
 	}
 
 	go m.cleanUpExperimentSnapshots()
