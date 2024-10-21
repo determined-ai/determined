@@ -78,8 +78,9 @@ def delete_config_policies(args: argparse.Namespace) -> None:
         bindings.delete_DeleteWorkspaceConfigPolicies(
             sess, workloadType=workload_type, workspaceId=wksp.id
         )
-        print(f"Successfully deleted {workload_type} config policies for workspace "
-              f"{args.workspace_name}" 
+        print(
+            f"Successfully deleted {workload_type} config policies for workspace "
+            f"{args.workspace_name}"
         )
         return
 
