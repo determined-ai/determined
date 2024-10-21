@@ -260,3 +260,30 @@ message PostRunMetadataResponse {
   // The new metadata of the run.
   google.protobuf.Struct metadata = 1;
 }
+
+
+// Group runs in Run Table.
+message GetRunGroupsRequest {
+  // ID of the project to look at
+  optional int32 project_id = 1;
+  // How many experiments to skip before including in the results
+  int32 offset = 2;
+  // How many results to show
+  int32 limit = 3;
+  // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+  optional string sort = 4;
+  // Filter expression
+  optional string filter = 5;
+  // Column to group the runs by
+  string group = 6;
+}
+// Response to GetRunGroupsRequest.
+message GetRunGroupsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "groups", "pagination" ] }
+  };
+  // The list of returned groups.
+  repeated determined.run.v1.RunGroup groups = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}

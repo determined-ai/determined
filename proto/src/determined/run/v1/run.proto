@@ -236,3 +236,41 @@ message Run {
   // Number of days to retain logs for.
   optional int32 log_retention_days = 42;
 }
+
+// Flat run respresentation. Used for the rows of the Run Table.
+message RunGroup {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "start_time",
+        "state",
+        "checkpoint_size",
+        "checkpoint_count"
+      ]
+    }
+  };
+  // Name of the grouping category.
+  string group_name = 1;
+  // The time the run was started.
+  google.protobuf.Timestamp start_time = 2;
+  // The time the run ended.
+  google.protobuf.Timestamp end_time = 3;
+  // The current state of the run(trial).
+  determined.trial.v1.State state = 4;
+  // The total size of checkpoints.
+  int64 checkpoint_size = 5;
+  // The count of checkpoints.
+  int32 checkpoint_count = 6;
+  // Signed searcher metrics value.
+  optional double searcher_metric_value = 7;
+  // The id of the user who created the run.
+  optional int32 user_id = 8;
+  // Time in seconds which the run ran or has been running.
+  optional int32 duration = 9;
+  // The type of searcher for the experiment.
+  string searcher_type = 10;
+  // The searcher metric name for the experiment.
+  string searcher_metric = 11;
+  // The resource pool the experiment was created in.
+  repeated string resource_pool = 12;
+}
