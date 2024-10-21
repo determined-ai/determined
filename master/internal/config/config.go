@@ -42,6 +42,15 @@ const (
 	preemptionScheduler       = "preemption"
 )
 
+const (
+	// RSACryptoSystem uses RSA.
+	RSACryptoSystem = "RSA"
+	// ECDSACryptoSystem uses ECDSA.
+	ECDSACryptoSystem = "ECDSA"
+	// ED25519CryptoSystem uses ED25519.
+	ED25519CryptoSystem = "ED25519"
+)
+
 type (
 	// ExperimentConfigPatch is the updatedble fields for patching an experiment.
 	ExperimentConfigPatch struct {
@@ -109,6 +118,7 @@ func DefaultConfig() *Config {
 			},
 			SSH: SSHConfig{
 				RsaKeySize: 1024,
+				KeyType:    RSACryptoSystem,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 		},
@@ -452,7 +462,8 @@ type SecurityConfig struct {
 
 // SSHConfig is the configuration setting for SSH.
 type SSHConfig struct {
-	RsaKeySize int `json:"rsa_key_size"`
+	RsaKeySize int    `json:"rsa_key_size"`
+	KeyType    string `json:"key_type"`
 }
 
 // TLSConfig is the configuration for setting up serving over TLS.
@@ -475,6 +486,12 @@ func (t *TLSConfig) Validate() []error {
 // Validate implements the check.Validatable interface.
 func (t *SSHConfig) Validate() []error {
 	var errs []error
+	if t.KeyType != RSACryptoSystem && t.KeyType != ECDSACryptoSystem && t.KeyType != ED25519CryptoSystem {
+		errs = append(errs, errors.New("Crypto system must be one of 'RSA', 'ECDSA' or 'ED25519'"))
+	}
+	if t.KeyType != RSACryptoSystem {
+		return errs
+	}
 	if t.RsaKeySize < 1 {
 		errs = append(errs, errors.New("RSA Key size must be greater than 0"))
 	} else if t.RsaKeySize > 16384 {

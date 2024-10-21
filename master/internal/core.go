@@ -1242,7 +1242,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            config.GetCertPEM(cert),
-		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
+		SSHConfig:             m.config.Security.SSH,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 		LogRetentionDays:      m.config.RetentionPolicy.LogRetentionDays,
