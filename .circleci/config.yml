@@ -46,6 +46,7 @@ jobs:
     executor: continuation/default
     steps:
       - checkout
+      - run: git fetch
       - attach_workspace:
           at: '<<pipeline.parameters.workspace_path>>'
       - continuation/continue:
