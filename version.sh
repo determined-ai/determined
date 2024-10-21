@@ -95,10 +95,11 @@ if [[ -z ${VERSION} ]]; then
     # Filter out additional +metadata from the tag, should it
     # exist. This prevents version strings like
     # 0.751.0+dryrun+27a014b44.
-    # Note: we use [0-9] instead of \d here, because while BSD grep's -E
-    # includes the \d character class, while GNU grep's does not. This means
-    # using \d on macOS will work fine, but it will break on Linux (and thus,
-    # CI). To avoid this, we fall back to standard character sets.
+    # Note: we use [0-9] instead of \d here, because while BSD grep's
+    # -E includes the \d character class, GNU grep's -E does not. This
+    # means using \d on macOS will work fine, but it will break on
+    # Linux (and thus, CI). To avoid this, we fall back to standard
+    # character sets.
     MAYBE_TAG=$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' <(printf "%s" "$MAYBE_TAG"))
 
     # Munge the tag into the form we want. Note: we always append a SHA hash,
