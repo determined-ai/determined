@@ -879,6 +879,7 @@ To run Trainer API solely on-cluster, the code is much simpler:
            trial_inst = model.MNistTrial(train_context)
            trainer = det.pytorch.Trainer(trial_inst, train_context)
            trainer.fit(
+               max_length=pytorch.Epoch(11),
                checkpoint_period=pytorch.Batch(100),
                validation_period=pytorch.Batch(100),
                latest_checkpoint=det.get_cluster_info().latest_checkpoint,
