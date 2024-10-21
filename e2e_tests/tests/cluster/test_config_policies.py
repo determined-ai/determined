@@ -12,6 +12,7 @@ VALID_EXPERIMENT_JSON = "config_policies/valid_experiment.json"
 VALID_NTSC_YAML = "config_policies/valid_ntsc.yaml"
 VALID_NTSC_JSON = "config_policies/valid_ntsc.json"
 
+
 @pytest.mark.e2e_cpu
 def test_set_config_policies() -> None:
     sess = api_utils.admin_session()
@@ -58,8 +59,8 @@ def test_set_config_policies() -> None:
     with open(conf.fixtures_path(VALID_NTSC_YAML), "r") as f:
         data += f.read()
     assert data.rstrip() == stdout.rstrip()
-    
-        # global valid path with experiment type JSON
+
+    # global valid path with experiment type JSON
     stdout = detproc.check_output(
         sess,
         [
@@ -71,7 +72,7 @@ def test_set_config_policies() -> None:
         ],
     )
 
-    data = f"Set global experiment config policies:\n"
+    data = "Set global experiment config policies:\n"
     with open(conf.fixtures_path(VALID_EXPERIMENT_YAML), "r") as f:
         data += f.read()
     print(stdout)
@@ -89,11 +90,11 @@ def test_set_config_policies() -> None:
             conf.fixtures_path(VALID_NTSC_YAML),
         ],
     )
-    data = f"Set global tasks config policies:\n"
+    data = "Set global tasks config policies:\n"
     with open(conf.fixtures_path(VALID_NTSC_YAML), "r") as f:
         data += f.read()
     assert data.rstrip() == stdout.rstrip()
-    
+
     # workload type not provided
     detproc.check_error(
         sess,
@@ -157,8 +158,8 @@ def test_describe_config_policies() -> None:
             workspace_name,
         ],
     )
-    
-     # set global config policies
+
+    # set global config policies
     detproc.check_call(
         sess,
         [
@@ -185,7 +186,7 @@ def test_describe_config_policies() -> None:
     with open(conf.fixtures_path(VALID_EXPERIMENT_YAML), "r") as f:
         data = f.read()
     assert data.rstrip() == stdout.rstrip()
-    
+
     # global no specified return type.
     stdout = detproc.check_output(
         sess,
@@ -216,8 +217,8 @@ def test_describe_config_policies() -> None:
     with open(conf.fixtures_path(VALID_EXPERIMENT_YAML), "r") as f:
         data = f.read()
     assert data.rstrip() == stdout.rstrip()
-    
-     # global yaml return type
+
+    # global yaml return type
     stdout = detproc.check_output(
         sess,
         [
@@ -250,7 +251,7 @@ def test_describe_config_policies() -> None:
     original_data = yaml.load(data, Loader=yaml.SafeLoader)
     # check if output is a valid json containing original data
     assert original_data == json.loads(stdout)
-    
+
     # global json return type
     stdout = detproc.check_output(
         sess,
@@ -290,7 +291,7 @@ def test_delete_config_policies() -> None:
             workspace_name,
         ],
     )
-    
+
     # workspace delete config policies
     stdout = detproc.check_output(
         sess,
@@ -304,7 +305,7 @@ def test_delete_config_policies() -> None:
         ],
     )
     assert "Successfully deleted" in stdout
-    
+
     # global set config policies
     detproc.check_call(
         sess,
@@ -316,7 +317,7 @@ def test_delete_config_policies() -> None:
             conf.fixtures_path(VALID_EXPERIMENT_YAML),
         ],
     )
-    
+
     # global delete config policies
     stdout = detproc.check_output(
         sess,
