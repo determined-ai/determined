@@ -13,7 +13,7 @@ func verifyKeys(t *testing.T, keys PrivateAndPublicKeys) {
 	privateKey, err := ssh.ParsePrivateKey(keys.PrivateKey)
 	assert.NilError(t, err)
 
-	publickKey, _, _, _, err := ssh.ParseAuthorizedKey(keys.PublicKey)
+	publickKey, _, _, _, err := ssh.ParseAuthorizedKey(keys.PublicKey) //nolint:dogsled
 	assert.NilError(t, err)
 	assert.Equal(t, string(publickKey.Marshal()), string(privateKey.PublicKey().Marshal()))
 }
