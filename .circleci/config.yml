@@ -60,6 +60,7 @@ jobs:
       - gh/install
       - checkout
       - run: git fetch --tags
+      - run: git tag --list
 
       # this must be first; default to an empty params list
       - run:
