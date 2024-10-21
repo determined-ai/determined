@@ -321,7 +321,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       projectColumns,
       (columns) => {
         return columns.reduce((acc, col) => {
-          const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+          const colType = col.type.replace('COLUMN_TYPE_', '');
 
           if (col.column.includes('metadata'))
             return { ...acc, [col.column.concat(`_${colType}`)]: col };
