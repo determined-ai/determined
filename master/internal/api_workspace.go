@@ -307,6 +307,17 @@ func (a *apiServer) workspaceHasModels(ctx context.Context, workspaceID int32) (
 	return exists, nil
 }
 
+func (a *apiServer) workspaceHasExperiments(ctx context.Context, workspaceID int32) (bool, error) {
+	exists, err := db.Bun().NewSelect().Table("experiments").
+		Join("INNER JOIN projects ON experiments.project_id = projects.id").
+		Where("projects.workspace_id=?", workspaceID).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("checking workspace for experiments: %w", err)
+	}
+	return exists, nil
+}
+
 func (a *apiServer) GetWorkspace(
 	ctx context.Context, req *apiv1.GetWorkspaceRequest,
 ) (*apiv1.GetWorkspaceResponse, error) {
@@ -1293,14 +1304,34 @@ func (a *apiServer) DeleteWorkspace(
 		return nil, err
 	}
 
-	modelsExist, err := a.workspaceHasModels(ctx, req.Id)
-	if err != nil {
-		return nil, err
+	checks := []struct {
+		checkFunc func(context.Context, int32) (bool, error)
+		errorStr  string
+	}{
+		{a.workspaceHasModels, "workspace (%d) contains models; move or delete models first"},
+		{a.workspaceHasExperiments, "workspace (%d) contains experiments; move or delete experiments first"},
 	}
-	if modelsExist {
-		return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first",
-			req.Id)
+
+	for _, check := range checks {
+		exists, err := check.checkFunc(ctx, req.Id)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, status.Errorf(codes.FailedPrecondition, check.errorStr, req.Id)
+		}
 	}
+
+	// modelsExist, err := a.workspaceHasModels(ctx, req.Id)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if modelsExist {
+	// 	return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first",
+	// 		req.Id)
+	// }
+
+	// experimentsExist, err :=
 
 	holder := &workspacev1.Workspace{}
 	// TODO(kristine): DET-10138 update workspace state in transaction with template delete
