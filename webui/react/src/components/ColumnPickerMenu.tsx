@@ -198,7 +198,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const rows = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
-      const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+      const colType = col.type.replace('COLUMN_TYPE_', '');
       const getColDisplayName = (col: ProjectColumn) => {
         const metCol = metadataColumns.get(col.column);
 
