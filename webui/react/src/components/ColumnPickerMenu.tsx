@@ -97,7 +97,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
   const allFilteredColumnsChecked = useMemo(() => {
     return filteredColumns.every((col) => {
-      const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+      const colType = col.type.replace('COLUMN_TYPE_', '');
 
       if (col.column.includes('metadata'))
         return columnState.includes(col.column.concat(`_${colType}`));
@@ -108,7 +108,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => {
-      const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+      const colType = col.type.replace('COLUMN_TYPE_', '');
 
       if (col.column.includes('metadata'))
         return {
@@ -127,7 +127,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           ...new Set([
             ...columnState,
             ...filteredColumns.map((col) => {
-              const colType = col.type.replace('COLUMN_TYPE_', '').toLowerCase();
+              const colType = col.type.replace('COLUMN_TYPE_', '');
 
               if (col.column.includes('metadata')) return col.column.concat(`_${colType}`);
               return col.column;
@@ -179,7 +179,6 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         if (!checked) {
           onHeatmapSelectionRemove?.(targetCol);
         }
-        // TODO: work on a logic to map the metadata columns
         const newColumnSet = new Set(columnState);
         checked ? newColumnSet.add(targetCol) : newColumnSet.delete(targetCol);
         onVisibleColumnChange?.([...newColumnSet], pinnedCount);
