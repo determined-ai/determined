@@ -87,6 +87,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
   const knownRoles = useObservable(roleStore.roles);
 
+  const [canSubmit, setCanSubmit] = useState(!!user);
   const [isRemote, setIsRemote] = useState(false);
 
   const editPasswordRules = PASSWORD_RULES.map((rule) => {
@@ -177,7 +178,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
       data-test-component="createUserModal"
       size="small"
       submit={{
-        disabled: hasErrors(form),
+        disabled: !canSubmit,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
@@ -194,13 +195,24 @@ const CreateUserModalComponent: React.FC<Props> = ({
       <Spinner
         spinning={user !== undefined && userRoles?.isNotLoaded && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form className={css.createUserModalForm} form={form} id={idPrefix + FORM_ID}>
+        <Form
+          className={css.createUserModalForm}
+          form={form}
+          id={idPrefix + FORM_ID}
+          onFieldsChange={() =>
+            setCanSubmit(
+              !hasErrors(form) &&
+                form.getFieldValue(USER_NAME_NAME) &&
+                (user ||
+                  (form.getFieldValue(USER_PASSWORD_NAME) &&
+                    form.getFieldValue(USER_PASSWORD_CONFIRM_NAME))),
+            )
+          }>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}
             name={USER_NAME_NAME}
-            required
-            validateTrigger={['onSubmit']}>
+            required>
             <Input
               autoFocus
               data-testid="username"
@@ -247,8 +259,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
                 label={USER_PASSWORD_LABEL}
                 name={USER_PASSWORD_NAME}
                 required={!user && !isRemote}
-                rules={editPasswordRules}
-                validateTrigger={['onSubmit']}>
+                rules={editPasswordRules}>
                 <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
               </Form.Item>
               <Form.Item
@@ -267,8 +278,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
                       );
                     },
                   }),
-                ]}
-                validateTrigger={['onSubmit']}>
+                ]}>
                 <Input.Password data-testid="confirmPassword" disabled={viewOnly} />
               </Form.Item>
             </>
