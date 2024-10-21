@@ -84,7 +84,7 @@ type trial struct {
 	// state is the current state of the trial. It's patched by experiment changes and kill trial.
 	state model.State
 	// searcher encapsulates the searcher state of the trial.
-	searcher experiment.RunSearcherState
+	searcher experiment.TrialSearcherState
 	// restarts is a failure count, it increments when the trial fails and we retry it.
 	restarts int
 	// runID is a count of how many times the task container(s) have stopped and restarted, which
@@ -110,7 +110,7 @@ func newTrial(
 	jobSubmissionTime time.Time,
 	experimentID int,
 	initialState model.State,
-	searcher experiment.RunSearcherState,
+	searcher experiment.TrialSearcherState,
 	rm rm.ResourceManager,
 	pgDB db.DB,
 	config expconf.ExperimentConfig,
@@ -224,7 +224,7 @@ func (t *trial) PatchState(req model.StateWithReason) error {
 	return t.patchState(req)
 }
 
-func (t *trial) PatchSearcherState(req experiment.RunSearcherState) error {
+func (t *trial) PatchSearcherState(req experiment.TrialSearcherState) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -269,7 +269,7 @@ func (t *trial) PatchRP(rp string) {
 	}
 }
 
-func (t *trial) SetUserInitiatedEarlyExit(req experiment.UserInitiatedEarlyRunExit) error {
+func (t *trial) SetUserInitiatedEarlyExit(req experiment.UserInitiatedEarlyTrialExit) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -307,7 +307,7 @@ func (t *trial) create() error {
 		t.experimentID,
 		model.JSONObj(t.searcher.Create.Hparams),
 		t.warmStartCheckpoint,
-		int64(t.searcher.Create.RunSeed),
+		int64(t.searcher.Create.TrialSeed),
 		t.taskSpec.LogRetentionDays,
 	)
 
@@ -546,7 +546,7 @@ func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
 		TrialRunID:       t.runID,
 		ExperimentConfig: schemas.Copy(t.config),
 		HParams:          t.searcher.Create.Hparams,
-		TrialSeed:        t.searcher.Create.RunSeed,
+		TrialSeed:        t.searcher.Create.TrialSeed,
 		StepsCompleted:   stepsCompleted,
 		LatestCheckpoint: latestCheckpoint,
 
