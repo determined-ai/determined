@@ -1228,14 +1228,14 @@ class TestPyTorchTrial:
                 return_value=checkpoint_condition["best_validation"]
             )
             controller._checkpoint = mock.MagicMock()
-            controller._validate(det.core.DummySearcherOperation(length=100, is_chief=True))
+            controller._validate()
             controller.core_context.train.get_experiment_best_validation.assert_called_once()
             if checkpoint_condition["checkpoint"]:
                 controller._checkpoint.assert_called_once()
             controller.core_context.train.get_experiment_best_validation.reset_mock()
             controller._checkpoint.reset_mock()
 
-    @mock.patch.object(det.core.DummySearcherOperation, "report_progress")
+    @mock.patch.object(det.core.DummyTrainContext, "report_progress")
     def test_searcher_progress_reporting(self, mock_report_progress: mock.MagicMock):
         trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
@@ -1246,8 +1246,8 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-        exp_prog = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-        got_prog = [x.args[0] for x in mock_report_progress.call_args_list]
+        exp_prog = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        got_prog = [x.kwargs["progress"] for x in mock_report_progress.call_args_list]
         assert exp_prog == got_prog
 
     def test_test_mode(self):
