@@ -198,6 +198,7 @@ class Trainer:
                         "release. Please set `fit(max_length=X)` with your desired training length "
                         "directly.",
                         FutureWarning,
+                        stacklevel=2,
                     )
                     max_length_unit = core._parse_searcher_units(self._info.trial._config)
                     max_length = pytorch.TrainUnit._from_searcher_unit(
