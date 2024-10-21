@@ -676,6 +676,7 @@ const Searches: React.FC<Props> = ({ project }) => {
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
+              undefined,
             );
             break;
           }

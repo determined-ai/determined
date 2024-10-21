@@ -320,7 +320,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+        return columns.reduce((acc, col) => {
+          const colType = col.type.replace('COLUMN_TYPE_', '');
+
+          if (col.column.includes('metadata'))
+            return { ...acc, [col.column.concat(`_${colType}`)]: col };
+
+          return { ...acc, [col.column]: col };
+        }, {});
       },
     );
     const columnDefs = getColumnDefs({
@@ -418,6 +425,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   defaultColumnWidths[currentColumn.column as RunColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
+                undefined,
               );
             }
             break;
