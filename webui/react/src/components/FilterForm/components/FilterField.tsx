@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import Badge from 'hew/Badge';
 import Button from 'hew/Button';
 import DatePicker, { DatePickerProps } from 'hew/DatePicker';
 import Icon from 'hew/Icon';
@@ -69,7 +70,10 @@ const FilterField = ({
 }: Props): JSX.Element => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
-  const currentColumn = columns.find((c) => c.column === field.columnName);
+  const currentColumn = useMemo(
+    () => columns.find((c) => c.column === field.columnName),
+    [columns, field.columnName],
+  );
 
   const columnType = useMemo(() => {
     if (field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT) {
@@ -96,19 +100,18 @@ const FilterField = ({
   };
 
   const onChangeColumnName = (value: SelectValue) => {
-    const prevType = currentColumn?.type;
-    const newColName = value?.toString() ?? '';
-    const newCol = columns.find((c) => c.column === newColName);
+    const prevType = field.type;
+    const [newColName, type] = (value?.toString() ?? '').split(' ');
+    const newCol = columns.find((c) => c.column === newColName && type === c.type);
     if (newCol) {
       Observable.batch(() => {
         formStore.setFieldColumnName(field.id, newCol);
-
         if ((SpecialColumnNames as ReadonlyArray<string>).includes(newColName)) {
           formStore.setFieldOperator(field.id, Operator.Eq);
           updateFieldValue(field.id, null);
-        } else if (prevType !== newCol?.type) {
+        } else if (prevType !== newCol.type) {
           const defaultOperator: Operator =
-            AvailableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+            AvailableOperators[newCol.type ?? V1ColumnType.UNSPECIFIED][0];
           formStore.setFieldOperator(field.id, defaultOperator);
           updateFieldValue(field.id, null);
         }
@@ -218,6 +221,16 @@ const FilterField = ({
     [columnType, field.type, formStore, index, inputOpen, parentId],
   );
 
+  const getColDisplayName = (col: V1ProjectColumn) => {
+    const colType = col.type.replace('COLUMN_TYPE_', '');
+
+    return (
+      <>
+        {col.displayName || col.column} <Badge text={colType} />
+      </>
+    );
+  };
+
   return (
     <div className={css.base} data-test-component="FilterField" ref={(node) => drop(node)}>
       <ConjunctionContainer
@@ -234,10 +247,10 @@ const FilterField = ({
           dropdownMatchSelectWidth={300}
           options={columns.map((col, idx) => ({
             key: `${col.column} ${idx}`,
-            label: col.displayName || col.column,
-            value: col.column,
+            label: getColDisplayName(col),
+            value: `${col.column} ${col.type}`,
           }))}
-          value={field.columnName}
+          value={`${field.columnName} ${field.type}`}
           width={'100%'}
           onChange={onChangeColumnName}
         />
