@@ -60,8 +60,7 @@ jobs:
       - gh/install
       - checkout
       - run: git fetch --tags
-      - run: echo $SHELL
-      - run: git -c versionsort.suffix='-rc' tag --sort='-v:refname:short' --format='%(refname:short)' --no-contains=$(git merge-base HEAD main)
+      - run: "./version.sh"
 
       # this must be first; default to an empty params list
       - run:

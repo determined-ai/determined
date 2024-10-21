@@ -68,11 +68,13 @@ fi
 if [[ -z ${VERSION} ]]; then
     # Check if this branch has any tags (typically, only release branches will
     # have tags).
+    echo "test1"
     MAYBE_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
     SHA=$(git rev-parse --short HEAD)
 
     # No tag on current branch.
     if [[ -z ${MAYBE_TAG} ]]; then
+        echo "test2"
         # Use git to find the merge base between the current branch and main,
         # and then find the closest tag behind that, using --no-contains. Then,
         # use grep to remove some special cases, namely: old Determined version
@@ -90,12 +92,19 @@ if [[ -z ${VERSION} ]]; then
                 | grep -E -v 'v0.12|-ee' \
                 | head -n 1
         )
+
+        echo "test3"
+        echo "[${MAYBE_TAG}]"
     fi
+
+    echo "test4"
 
     # Filter out additional +metadata from the tag, should it
     # exist. This prevents version strings like
     # 0.751.0+dryrun+27a014b44.
     MAYBE_TAG=$(grep -Eo 'v?\d+\.\d+\.\d+' <(printf "%s" "$MAYBE_TAG"))
+
+    echo "[${MAYBE_TAG}]"
 
     # Munge the tag into the form we want. Note: we always append a SHA hash,
     # even if we're on the commit with the tag. This is partially because I feel
