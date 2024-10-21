@@ -68,7 +68,6 @@ def test_set_config_policies() -> None:
             "set",
             "experiment",
             conf.fixtures_path(VALID_EXPERIMENT_YAML),
-             "--glob",
         ],
     )
 
@@ -88,7 +87,6 @@ def test_set_config_policies() -> None:
             "set",
             "tasks",
             conf.fixtures_path(VALID_NTSC_YAML),
-            "--glob",
         ],
     )
     data = f"Set global tasks config policies:\n"
@@ -104,7 +102,6 @@ def test_set_config_policies() -> None:
             "config-policies",
             "set",
             conf.fixtures_path(VALID_NTSC_YAML),
-            "--glob",
         ],
         "argument workload_type",
     )
@@ -124,19 +121,6 @@ def test_set_config_policies() -> None:
         "No such file or directory",
     )
 
-    # scope not provided
-    detproc.check_error(
-        sess,
-        [
-            "det",
-            "config-policies",
-            "set",
-            "experiment",
-            conf.fixtures_path(VALID_EXPERIMENT_YAML),
-        ],
-        "must provide either --workspace-name WORKSPACE_NAME or --glob",
-    )
-
     # path not provided
     detproc.check_error(
         sess,
@@ -153,7 +137,7 @@ def test_set_config_policies() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_get_config_policies() -> None:
+def test_describe_config_policies() -> None:
     sess = api_utils.admin_session()
 
     workspace_name = api_utils.get_random_string()
@@ -183,7 +167,6 @@ def test_get_config_policies() -> None:
             "set",
             "experiment",
             conf.fixtures_path(VALID_EXPERIMENT_YAML),
-            "--glob",
         ],
     )
 
@@ -193,7 +176,7 @@ def test_get_config_policies() -> None:
         [
             "det",
             "config-policies",
-            "get",
+            "describe",
             "experiment",
             "--workspace",
             workspace_name,
@@ -209,9 +192,8 @@ def test_get_config_policies() -> None:
         [
             "det",
             "config-policies",
-            "get",
+            "describe",
             "experiment",
-            "--glob",
         ],
     )
     with open(conf.fixtures_path(VALID_EXPERIMENT_YAML), "r") as f:
@@ -224,7 +206,7 @@ def test_get_config_policies() -> None:
         [
             "det",
             "config-policies",
-            "get",
+            "describe",
             "experiment",
             "--workspace",
             workspace_name,
@@ -241,9 +223,8 @@ def test_get_config_policies() -> None:
         [
             "det",
             "config-policies",
-            "get",
+            "describe",
             "experiment",
-            "--glob",
             "--yaml",
         ],
     )
@@ -257,7 +238,7 @@ def test_get_config_policies() -> None:
         [
             "det",
             "config-policies",
-            "get",
+            "describe",
             "experiment",
             "--workspace",
             workspace_name,
@@ -276,9 +257,8 @@ def test_get_config_policies() -> None:
         [
             "det",
             "config-policies",
-            "get",
+            "describe",
             "experiment",
-            "--glob",
             "--json",
         ],
     )
@@ -287,18 +267,6 @@ def test_get_config_policies() -> None:
     original_data = yaml.load(data, Loader=yaml.SafeLoader)
     # check if output is a valid json containing original data
     assert original_data == json.loads(stdout)
-
-    # scope not provided
-    detproc.check_error(
-        sess,
-        [
-            "det",
-            "config-policies",
-            "get",
-            "experiment",
-        ],
-        "must provide either --workspace-name WORKSPACE_NAME or --glob",
-    )
 
 
 @pytest.mark.e2e_cpu
@@ -346,7 +314,6 @@ def test_delete_config_policies() -> None:
             "set",
             "experiment",
             conf.fixtures_path(VALID_EXPERIMENT_YAML),
-            "--glob",
         ],
     )
     
@@ -358,19 +325,6 @@ def test_delete_config_policies() -> None:
             "config-policies",
             "delete",
             "experiment",
-            "--glob",
         ],
     )
     assert "Successfully deleted" in stdout
-
-    # scope not provided
-    detproc.check_error(
-        sess,
-        [
-            "det",
-            "config-policies",
-            "delete",
-            "experiment",
-        ],
-        "must provide either --workspace-name WORKSPACE_NAME or --glob",
-    )

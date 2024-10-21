@@ -6,12 +6,9 @@ from determined.common import api, util
 from determined.common.api import bindings
 
 
-def get_config_policies(args: argparse.Namespace) -> None:
+def describe_config_policies(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    if not args.workspace_name and not args.glob:
-         raise api.errors.BadRequestException(
-            "must provide either --workspace-name WORKSPACE_NAME or --glob"
-        ) 
+
     workload_type = "EXPERIMENT"
     if args.workload_type.upper() == "TASKS":
         workload_type = "NTSC"
@@ -36,11 +33,7 @@ def get_config_policies(args: argparse.Namespace) -> None:
 
 def set_config_policies(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    if not args.workspace_name and not args.glob:
-         raise api.errors.BadRequestException(
-            "must provide either --workspace-name WORKSPACE_NAME or --glob"
-        ) 
-         
+
     try:
         with open(args.config_file, "r") as f:
             data = f.read()
@@ -74,15 +67,11 @@ def set_config_policies(args: argparse.Namespace) -> None:
 
 def delete_config_policies(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
+
     workload_type = "EXPERIMENT"
     if args.workload_type.upper() == "TASKS":
         workload_type = "NTSC"
 
-    if not args.workspace_name and not args.glob:
-         raise api.errors.BadRequestException(
-            "must provide either --workspace-name WORKSPACE_NAME or --glob"
-        ) 
-        
     if args.workspace_name:
         wksp = api.workspace_by_name(sess, args.workspace_name)
         
@@ -104,9 +93,9 @@ args_description: cli.ArgsDescription = [
         "manage config policies",
         [
             cli.Cmd(
-                "get",
-                get_config_policies,
-                "get config policies",
+                "describe",
+                describe_config_policies,
+                "display config policies",
                 [
                     cli.Arg(
                         "workload_type",
@@ -114,19 +103,12 @@ args_description: cli.ArgsDescription = [
                         choices=["experiment", "tasks"],
                         help="the type (Experiment or Tasks) of config policies",
                     ),
-                    cli.Group(
-                        cli.Arg(
-                            "-w",
-                            "--workspace-name",
-                            type=str,
-                            help="apply config policies to workspace",
-                        ),
-                         cli.Arg(
-                        "-g",
-                        "--glob",
-                        action="store_true",
-                        help="globally apply config policies",
-                        ), 
+                    cli.Arg(
+                        "-w",
+                        "--workspace-name",
+                        type=str,
+                        required=False,
+                        help="apply config policies to workspace",
                     ),
                     cli.Group(cli.output_format_args["json"], cli.output_format_args["yaml"]),
                 ],
@@ -149,19 +131,12 @@ args_description: cli.ArgsDescription = [
                         help="path to the YAML or JSON file containing defined config policies "
                         "(can be absolute or relative to the current directory)",
                     ),
-                    cli.Group(
-                        cli.Arg(
-                            "-w",
-                            "--workspace-name",
-                            type=str,
-                            help="apply config policies to this workspace",
-                        ),
-                         cli.Arg(
-                        "-g",
-                        "--glob",
-                        action="store_true",
-                        help="globally apply config policies",
-                        ), 
+                     cli.Arg(
+                        "-w",
+                        "--workspace-name",
+                        type=str,
+                        required=False,
+                        help="apply config policies to this workspace",
                     ),
                 ],
             ),
@@ -176,19 +151,12 @@ args_description: cli.ArgsDescription = [
                         choices=["experiment", "tasks"],
                         help="the type (Experiment or Tasks) of config policies",
                     ),
-                    cli.Group(
-                        cli.Arg(
-                            "-w",
-                            "--workspace-name",
-                            type=str,
-                            help="apply config policies to workspace",
-                        ),
-                         cli.Arg(
-                        "-g",
-                        "--glob",
-                        action="store_true",
-                        help="globally apply config policies",
-                        ), 
+                     cli.Arg(
+                        "-w",
+                        "--workspace-name",
+                        type=str,
+                        required=False,
+                        help="apply config policies to workspace",
                     ),
                 ],
             ),
