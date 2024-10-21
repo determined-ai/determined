@@ -103,6 +103,8 @@ if [[ -z ${VERSION} ]]; then
 
     echo "test5"
 
+    which printf
+    which grep
     echo $(grep -Eo 'v?\d+\.\d+\.\d+' <(printf "%s" "$MAYBE_TAG"))
 
     echo "test6"
