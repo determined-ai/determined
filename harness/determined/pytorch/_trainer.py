@@ -2,6 +2,7 @@ import contextlib
 import logging
 import random
 import sys
+import warnings
 from typing import Any, Dict, Iterator, Optional
 
 import numpy as np
@@ -151,9 +152,12 @@ class Trainer:
             if max_length is None:
                 raise ValueError("max_length must be defined in local training mode.")
 
-            if not isinstance(max_length.value, int):
+            if not isinstance(max_length, (pytorch.Batch, pytorch.Epoch)) or not isinstance(
+                max_length.value, int
+            ):
                 raise TypeError(
-                    "max_length must either be a det.pytorch.Batch() or det.pytorch.Epoch() type"
+                    "max_length must either be a det.pytorch.Batch(int) or det.pytorch.Epoch(int) "
+                    "type"
                 )
 
             if profiling_enabled:
@@ -188,10 +192,12 @@ class Trainer:
             if max_length is None:
                 max_length_val = core._parse_searcher_max_length(self._info.trial._config)
                 if max_length_val:
-                    logger.warning(
-                        "Configuring `max_length` from the `searcher.max_length` experiment config,"
-                        " which was deprecated in XXYYZZ and will be removed in a future release. "
-                        "Please set `fit(max_length=X)` with your desired training length directly."
+                    warnings.warn(
+                        "Configuring `max_length` from the `searcher.max_length` experiment "
+                        "config, which was deprecated in XXYYZZ and will be removed in a future "
+                        "release. Please set `fit(max_length=X)` with your desired training length "
+                        "directly.",
+                        FutureWarning,
                     )
                     max_length_unit = core._parse_searcher_units(self._info.trial._config)
                     max_length = pytorch.TrainUnit._from_searcher_unit(
@@ -203,9 +209,12 @@ class Trainer:
                 raise ValueError(
                     "`fit(max_length=X)` must be set with your desired training length."
                 )
-            if not isinstance(max_length.value, int):
+            if not isinstance(max_length, (pytorch.Batch, pytorch.Epoch)) or not isinstance(
+                max_length.value, int
+            ):
                 raise TypeError(
-                    "max_length must either be a det.pytorch.Batch() or det.pytorch.Epoch() type."
+                    "max_length must either be a det.pytorch.Batch(int) or det.pytorch.Epoch(int) "
+                    "type."
                 )
 
             _check_searcher_length(exp_conf=self._info.trial._config, max_length=max_length)
