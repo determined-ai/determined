@@ -92,8 +92,9 @@ if [[ -z ${VERSION} ]]; then
         )
     fi
 
-    # Filter out additional +metadata from tag, should it exist. This prevents
-    # tags like 0.751.0+dryrun+27a014b44.
+    # Filter out additional +metadata from the tag, should it
+    # exist. This prevents version strings like
+    # 0.751.0+dryrun+27a014b44.
     MAYBE_TAG=$(grep -Eo 'v?\d+\.\d+\.\d+' <(printf "%s" "$MAYBE_TAG"))
 
     # Munge the tag into the form we want. Note: we always append a SHA hash,
