@@ -102,7 +102,7 @@ class Trainer:
 
                    If using an ASHA searcher, this value should match the searcher config values in
                    the experiment config (i.e. ``Epoch(1)`` = `max_time: 1` and `time_metric:
-                   "epoch"`).
+                   "epochs"`).
 
             reporting_period: The number of steps to train for before reporting metrics and
                 searcher progress. For local training mode, metrics are printed to stdout. This
@@ -152,7 +152,9 @@ class Trainer:
                 raise ValueError("max_length must be defined in local training mode.")
 
             if not isinstance(max_length.value, int):
-                raise TypeError("max_length must be configured in TrainUnit(int) types.")
+                raise TypeError(
+                    "max_length must either be a det.pytorch.Batch() or det.pytorch.Epoch() type"
+                )
 
             if profiling_enabled:
                 logger.warning("Profiling is not supported in local training mode.")
@@ -202,7 +204,9 @@ class Trainer:
                     "`fit(max_length=X)` must be set with your desired training length."
                 )
             if not isinstance(max_length.value, int):
-                raise TypeError("max_length must be configured in TrainUnit(int) types.")
+                raise TypeError(
+                    "max_length must either be a det.pytorch.Batch() or det.pytorch.Epoch() type."
+                )
 
             _check_searcher_length(exp_conf=self._info.trial._config, max_length=max_length)
 
@@ -241,7 +245,7 @@ def _check_searcher_length(
     if time_metric is not None:
         max_time = exp_conf["searcher"].get("max_time")
         assert max_time, "`searcher.max_time` not configured"
-        if time_metric == "batch":
+        if time_metric == "batches":
             if not isinstance(max_length, pytorch.Batch) or max_length.value != max_time:
                 logger.warning(
                     f"`max_length` passed into `fit()` method ({max_length}) does not match "
@@ -249,7 +253,7 @@ def _check_searcher_length(
                     f"(Batch(value={max_time})). This may result in unexpected hyperparameter "
                     f"search behavior."
                 )
-        elif time_metric == "epoch":
+        elif time_metric == "epochs":
             if not isinstance(max_length, pytorch.Epoch) or max_length.value != max_time:
                 logger.warning(
                     f"`max_length` passed into `fit()` method ({max_length}) does not match "
@@ -259,7 +263,7 @@ def _check_searcher_length(
                 )
         else:
             logger.warning(
-                "`searcher.time_metric` must be either 'batch' or 'epoch' "
+                "`searcher.time_metric` must be either 'batches' or 'epochs' "
                 f"for training with PyTorchTrials, but got {time_metric}. "
                 f"Training will proceed with {max_length} but may result in unexpected behavior."
             )
