@@ -99,6 +99,14 @@ if [[ -z ${VERSION} ]]; then
 
     echo "test4"
 
+    printf "%s" "$MAYBE_TAG"
+
+    echo "test5"
+
+    grep -Eo 'v?\d+\.\d+\.\d+' <(printf "%s" "$MAYBE_TAG")
+
+    echo "test6"
+
     # Filter out additional +metadata from the tag, should it
     # exist. This prevents version strings like
     # 0.751.0+dryrun+27a014b44.
