@@ -14,12 +14,10 @@ from model_def import DCGANTrial
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    # Optional arguments for the launch helper
-    parser.add_argument("--local",
-                        type=bool,
-                        default=False,
-                        help="Change behavior for local vs on-cluster"
-                             "training")
+    parser.add_argument("--config_file",
+                        type=str,
+                        default="mnist_trainer.yaml",
+                        help="path to experiment config")
     return parser.parse_args()
 
 def main(config_file: str, local: bool=True):
@@ -50,6 +48,7 @@ def main(config_file: str, local: bool=True):
 
 if __name__ == "__main__":
     args = parse_args()
+    local = det.get_cluster_info() is None
     # Configure logging
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
-    main("mnist.yaml", local=args.local)
+    main(config_file=args.config_file, local=local)

@@ -51,9 +51,9 @@ class DeepSpeedTrialController:
         self,
         trial_inst: det.LegacyTrial,
         context: det_ds.DeepSpeedTrialContext,
-        checkpoint_period: pytorch.TrainUnit,
-        validation_period: pytorch.TrainUnit,
-        reporting_period: pytorch.TrainUnit,
+        checkpoint_period: pytorch._TrainUnit,
+        validation_period: pytorch._TrainUnit,
+        reporting_period: pytorch._TrainUnit,
         smaller_is_better: bool,
         steps_completed: int,
         latest_checkpoint: Optional[str],
@@ -62,7 +62,7 @@ class DeepSpeedTrialController:
         searcher_metric_name: Optional[str],
         checkpoint_policy: str,
         step_zero_validation: bool,
-        max_length: Optional[pytorch.TrainUnit],
+        max_length: Optional[pytorch._TrainUnit],
         global_batch_size: Optional[int],
         profiling_enabled: Optional[bool],
     ) -> None:
@@ -92,7 +92,7 @@ class DeepSpeedTrialController:
             )
 
         # Don't initialize the state here because it will be invalid until we load a checkpoint.
-        self.state = None  # type: Optional[pytorch.TrialState]
+        self.state = None  # type: Optional[pytorch._TrialState]
         self.start_from_batch = steps_completed
         self.val_from_previous_run = self.core_context.train._get_last_validation()
         self.step_zero_validation = step_zero_validation
@@ -335,6 +335,7 @@ class DeepSpeedTrialController:
                 # Explicitly trigger the iterator's shutdown (which happens in __del__).
                 # See the rather long note in pytorch/torch/utils/data/dataloader.py.
                 del self.training_iterator
+                del self.training_enumerator
 
             exit_stack.enter_context(defer(cleanup_iterator))
 
@@ -347,7 +348,7 @@ class DeepSpeedTrialController:
                     self._load(load_path)
             else:
                 # If we are not loading, initialize a fresh state.
-                self.state = pytorch.TrialState(trial_id=self.trial_id)
+                self.state = pytorch._TrialState(trial_id=self.trial_id)
 
             for callback in self.callbacks.values():
                 callback.on_training_start()
@@ -385,7 +386,7 @@ class DeepSpeedTrialController:
                 if self.local_training:
                     train_unit = self.max_length
                 else:
-                    train_unit = pytorch.TrainUnit._from_searcher_unit(
+                    train_unit = pytorch._TrainUnit._from_searcher_unit(
                         op.length, self.searcher_unit, self.global_batch_size
                     )
                 assert train_unit
@@ -393,25 +394,25 @@ class DeepSpeedTrialController:
                 self._train_for_op(
                     op=op,
                     train_boundaries=[
-                        pytorch.TrainBoundary(
-                            step_type=pytorch.TrainBoundaryType.TRAIN,
+                        pytorch._TrainBoundary(
+                            step_type=pytorch._TrainBoundaryType.TRAIN,
                             unit=train_unit,
                         ),
-                        pytorch.TrainBoundary(
-                            step_type=pytorch.TrainBoundaryType.VALIDATE,
+                        pytorch._TrainBoundary(
+                            step_type=pytorch._TrainBoundaryType.VALIDATE,
                             unit=self.validation_period,
                         ),
-                        pytorch.TrainBoundary(
-                            step_type=pytorch.TrainBoundaryType.CHECKPOINT,
+                        pytorch._TrainBoundary(
+                            step_type=pytorch._TrainBoundaryType.CHECKPOINT,
                             unit=self.checkpoint_period,
                         ),
                         # Scheduling unit is always configured in batches
-                        pytorch.TrainBoundary(
-                            step_type=pytorch.TrainBoundaryType.REPORT, unit=self.reporting_period
+                        pytorch._TrainBoundary(
+                            step_type=pytorch._TrainBoundaryType.REPORT, unit=self.reporting_period
                         ),
                     ],
                 )
-        except pytorch.ShouldExit as e:
+        except pytorch._ShouldExit as e:
             # Checkpoint unsaved work and exit.
             if not e.skip_exit_checkpoint and not self._checkpoint_is_current():
                 self._checkpoint(already_exiting=True)
@@ -428,14 +429,14 @@ class DeepSpeedTrialController:
         return batch_id // cast(int, self.context._epoch_len)
 
     def _train_for_op(
-        self, op: core.SearcherOperation, train_boundaries: List[pytorch.TrainBoundary]
+        self, op: core.SearcherOperation, train_boundaries: List[pytorch._TrainBoundary]
     ) -> None:
         if self.test_mode:
             train_length = pytorch.Batch(1)
         elif self.local_training:
             train_length = self.max_length  # type: ignore
         else:
-            train_length = pytorch.TrainUnit._from_searcher_unit(
+            train_length = pytorch._TrainUnit._from_searcher_unit(
                 op.length, self.searcher_unit, self.global_batch_size
             )  # type: ignore
         assert train_length
@@ -460,18 +461,18 @@ class DeepSpeedTrialController:
                     continue
 
                 # Train step limits reached, proceed accordingly.
-                if train_boundary.step_type == pytorch.TrainBoundaryType.TRAIN:
+                if train_boundary.step_type == pytorch._TrainBoundaryType.TRAIN:
                     if not op._completed and self.is_chief and not step_reported:
                         self._report_searcher_progress(op, self.searcher_unit)
                         step_reported = True
-                elif train_boundary.step_type == pytorch.TrainBoundaryType.REPORT:
+                elif train_boundary.step_type == pytorch._TrainBoundaryType.REPORT:
                     if not op._completed and self.is_chief and not step_reported:
                         self._report_searcher_progress(op, self.searcher_unit)
                         step_reported = True
-                elif train_boundary.step_type == pytorch.TrainBoundaryType.VALIDATE:
+                elif train_boundary.step_type == pytorch._TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
                         self._validate(op)
-                elif train_boundary.step_type == pytorch.TrainBoundaryType.CHECKPOINT:
+                elif train_boundary.step_type == pytorch._TrainBoundaryType.CHECKPOINT:
                     if not self._checkpoint_is_current():
                         self._checkpoint(already_exiting=False)
 
@@ -494,11 +495,11 @@ class DeepSpeedTrialController:
             # op.length was already trained for and validated on; in that case just raise
             # ShouldExit; we have nothing to do.
             if not op._completed:
-                raise pytorch.ShouldExit(skip_exit_checkpoint=True)
+                raise pytorch._ShouldExit(skip_exit_checkpoint=True)
 
     def _train_with_boundaries(
-        self, training_enumerator: Iterator, train_boundaries: List[pytorch.TrainBoundary]
-    ) -> Tuple[List[pytorch.TrainBoundary], List]:
+        self, training_enumerator: Iterator, train_boundaries: List[pytorch._TrainBoundary]
+    ) -> Tuple[List[pytorch._TrainBoundary], List]:
         training_metrics = []
 
         # Start of train step: tell core API and set model mode
@@ -541,7 +542,7 @@ class DeepSpeedTrialController:
                             step.limit_reached = True
 
                 # Break early after one batch for test mode
-                if step.step_type == pytorch.TrainBoundaryType.TRAIN and self.test_mode:
+                if step.step_type == pytorch._TrainBoundaryType.TRAIN and self.test_mode:
                     step.limit_reached = True
 
             # Exit if any train step limits have been reached
@@ -715,20 +716,19 @@ class DeepSpeedTrialController:
             ):
                 self._save(path)
                 uuid = storage_id
-            uuid = self.context.distributed.broadcast(uuid)
             for callback in self.callbacks.values():
                 callback.on_checkpoint_upload_end(uuid=uuid)
         except det.InvalidHP:
             if not already_exiting:
                 self.core_context.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
-                raise pytorch.ShouldExit(skip_exit_checkpoint=True)
+                raise pytorch._ShouldExit(skip_exit_checkpoint=True)
             raise
 
     def _stop_requested(self) -> None:
         if self.core_context.preempt.should_preempt():
-            raise pytorch.ShouldExit()
+            raise pytorch._ShouldExit()
         if self.context.get_stop_requested():
-            raise pytorch.ShouldExit()
+            raise pytorch._ShouldExit()
 
     def _report_searcher_progress(
         self, op: core.SearcherOperation, unit: Optional[core.Unit]
@@ -752,7 +752,7 @@ class DeepSpeedTrialController:
         # State persists validation step in batches
         return self.state.last_val == self.state.batches_trained
 
-    def _steps_until_complete(self, train_unit: pytorch.TrainUnit) -> int:
+    def _steps_until_complete(self, train_unit: pytorch._TrainUnit) -> int:
         assert isinstance(train_unit.value, int), "invalid length type"
         assert self.state
         if isinstance(train_unit, pytorch.Batch):
@@ -907,7 +907,7 @@ class DeepSpeedTrialController:
             if self.local_training:
                 searcher_length = self.max_length
             else:
-                searcher_length = pytorch.TrainUnit._from_searcher_unit(
+                searcher_length = pytorch._TrainUnit._from_searcher_unit(
                     searcher_op.length, self.searcher_unit, self.global_batch_size
                 )
             if self.searcher_metric_name:
@@ -1041,10 +1041,10 @@ class DeepSpeedTrialController:
         # If the trial_id doesn't match our current trial id, we're continuing training a previous
         # trial and should start from a fresh state.
         if state.get("trial_id") != self.trial_id:
-            self.state = pytorch.TrialState(trial_id=self.trial_id)
+            self.state = pytorch._TrialState(trial_id=self.trial_id)
             return
 
-        self.state = pytorch.TrialState(**state)
+        self.state = pytorch._TrialState(**state)
         assert self.state
 
         # Detect the case where the final validation we made was against this exact checkpoint.  In
@@ -1109,13 +1109,9 @@ class DeepSpeedTrialController:
             load_data = {
                 "trial_type": "DeepSpeedTrial",
                 "experiment_config": exp_conf,
-                "hparams": hparams,
-                "trial_cls_spec": f"{trial_cls.__module__}:{trial_cls.__qualname__}",
-                "is_trainer": True,
+                "hparams": hparams
             }
 
-            if self.context._is_pre_trainer:
-                load_data.pop("is_trainer")
             json.dump(load_data, f2)
 
         for callback in self.callbacks.values():

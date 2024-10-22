@@ -27,11 +27,11 @@ from determined.pytorch._metric_utils import (
 from determined.pytorch._util import (
     Batch,
     Epoch,
-    ShouldExit,
-    TrainBoundary,
-    TrainBoundaryType,
-    TrainUnit,
-    TrialState,
+    _ShouldExit,
+    _TrainBoundary,
+    _TrainBoundaryType,
+    _TrainUnit,
+    _TrialState,
 )
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext
