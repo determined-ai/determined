@@ -1,14 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import dayjs from 'dayjs';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { useMemo } from 'react';
 
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { V1MoveRunsRequest } from 'services/api-ts-sdk';
-import { BulkActionResult, FlatRun, RunState } from 'types';
+import { BulkActionResult, SelectionType } from 'types';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 
@@ -32,23 +30,7 @@ const Container = ({
 }: {
   onSubmit?: (results: BulkActionResult, destinationProjectId: number) => void;
 }): JSX.Element => {
-  const BASE_FLAT_RUNS: FlatRun[] = useMemo(() => {
-    return [
-      {
-        archived: false,
-        checkpointCount: 0,
-        checkpointSize: 0,
-        id: 1,
-        parentArchived: false,
-        projectId: 1,
-        projectName: 'test',
-        startTime: dayjs('2024-05-24T23:03:45.415603Z').toDate(),
-        state: RunState.Active,
-        workspaceId: 1,
-        workspaceName: 'test',
-      },
-    ];
-  }, []);
+  const SELECTION: SelectionType = { selections: [1, 2, 3], type: 'ONLY_IN' };
 
   const flatRunMoveModal = useModal(FlatRunMoveModalComponent);
 
@@ -56,7 +38,8 @@ const Container = ({
     <div>
       <Button onClick={flatRunMoveModal.open}>{OPEN_MODAL_TEXT}</Button>
       <flatRunMoveModal.Component
-        flatRuns={BASE_FLAT_RUNS}
+        selection={SELECTION}
+        selectionSize={SELECTION.selections.length}
         sourceProjectId={1}
         onSubmit={onSubmit}
       />

@@ -217,7 +217,7 @@ const FlatRunActionButton = ({
     }, []);
   }, [availableBatchActions]);
 
-  const onSubmit = useCallback(
+  const onSubmitMove = useCallback(
     async (results: BulkActionResult, destinationProjectId: number) => {
       const numSuccesses = results?.successful.length ?? 0;
       const numFailures = results?.failed.length ?? 0;
@@ -277,10 +277,11 @@ const FlatRunActionButton = ({
         />
       )}
       <FlatRunMoveComponentModal
-        flatRuns={[...selectedRuns]}
+        selection={selection}
+        selectionSize={selectionSize}
         sourceProjectId={projectId}
         sourceWorkspaceId={workspaceId}
-        onSubmit={onSubmit}
+        onSubmit={onSubmitMove}
       />
     </>
   );
