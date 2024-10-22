@@ -67,7 +67,8 @@ interface ColumnTabProps {
 }
 
 export const formatColumnKey = (col: ProjectColumn): string => {
-  if (col.location === 'LOCATION_TYPE_RUN_METADATA') return `${col.type}${METADATA_SEPARATOR}${col.column}`;
+  if (col.location === 'LOCATION_TYPE_RUN_METADATA')
+    return `${col.type}${METADATA_SEPARATOR}${col.column}`;
   return col.column;
 };
 

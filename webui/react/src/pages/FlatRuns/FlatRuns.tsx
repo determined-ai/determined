@@ -320,7 +320,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce((acc, col) => ({ ...acc, [`${col.type}${METADATA_SEPARATOR}${col.column}`]: col }), {});
+        return columns.reduce(
+          (acc, col) => ({ ...acc, [`${col.type}${METADATA_SEPARATOR}${col.column}`]: col }),
+          {},
+        );
       },
     );
     const columnDefs = getColumnDefs({
