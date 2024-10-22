@@ -1,72 +1,38 @@
 import contextlib
 import logging
+import os
 import random
 import sys
-import warnings
 from typing import Any, Dict, Iterator, Optional
 
+import deepspeed
 import numpy as np
 import torch
-import torch.distributed as dist
 
 import determined as det
-from determined import core, gpu, horovod, pytorch
+from determined import core, gpu, pytorch
+from determined.pytorch import deepspeed as det_ds
 
-logger = logging.getLogger("determined.pytorch")
+logger = logging.getLogger("determined.pytorch.deepspeed")
 
 
 class Trainer:
     """
-    ``pytorch.Trainer`` is an abstraction on top of a vanilla PyTorch training loop that handles
-    many training details under-the-hood, and exposes APIs for configuring training-related features
-    such as automatic checkpointing, validation, profiling, metrics reporting, etc.
+    ``pytorch.deepspeed.Trainer`` is an abstraction on top of a  DeepSpeed training loop
+    that handles many training details under-the-hood, and exposes APIs for configuring
+    training-related features such as automatic checkpointing, validation, profiling,
+    metrics reporting, etc.
 
-    ``Trainer`` must be initialized and called from within a ``pytorch.PyTorchTrialContext``.
+    ``Trainer`` must be initialized and called from within a
+    ``pytorch.deepspeed.DeepSpeedTrialContext``.
     """
 
-    def __init__(self, trial: pytorch.PyTorchTrial, context: pytorch.PyTorchTrialContext):
+    def __init__(self, trial: det_ds.DeepSpeedTrial, context: det_ds.DeepSpeedTrialContext):
         self._trial = trial
         self._context = context
         self._core = self._context._core
-        self._distributed_backend = det._DistributedBackend()
         self._info = det.get_cluster_info()
         self._local_training = self._info is None or self._info.task_type != "TRIAL"
-
-    def configure_profiler(
-        self,
-        sync_timings: bool = True,
-        enabled: bool = False,
-        begin_on_batch: int = 0,
-        end_after_batch: Optional[int] = None,
-    ) -> None:
-        """
-        @deprecated: Configure `fit(..., profiling_enabled=True) instead`.
-
-        Configures the Determined profiler. This functionality is only supported for on-cluster
-        training. For local training mode, this method is a no-op.
-
-        This method should only be called before .fit(), and only once within the scope of init().
-        If called multiple times, the last call's configuration will be used.
-
-        Arguments:
-            sync_timings: (Optional) Specifies whether Determined should wait for all GPU kernel
-                streams before considering a timing as ended. Defaults to true. Applies only for
-                frameworks that collect timing metrics (currently just PyTorch).
-            enabled: (Optional) Defines whether profiles should be collected or not. Defaults to
-                false.
-            begin_on_batch: (Optional) Specifies the batch on which profiling should begin.
-                Defaults to 0.
-            end_after_batch: (Optional) Specifies the batch after which profiling should end.
-
-        .. note::
-
-           Profiles are collected for a maximum of 5 minutes, regardless of the settings above.
-
-        """
-        logger.error(
-            "`trainer.configure_profiler` has been replaced with "
-            "`fit(..., profiling_enabled=True)` and will be removed in a future release."
-        )
 
     def fit(
         self,
@@ -95,16 +61,11 @@ class Trainer:
                 of ``collections.abc.Container`` (list, tuple, etc.). For example, ``Batch(100)``
                 would validate every 100 batches, while ``Batch([5, 30, 45])`` would validate
                 after every 5th, 30th, and 45th batch.
-            max_length: The maximum number of steps to train for. This is a ``TrainUnit`` type
-                (``Batch`` or ``Epoch``) which takes an ``int``. For example, ``Epoch(1)`` would
-                train for a maximum length of one epoch.
-
-                .. note::
-
-                   If using an ASHA searcher, this value should match the searcher config values in
-                   the experiment config (i.e. ``Epoch(1)`` = `max_time: 1` and `time_metric:
-                   "epochs"`).
-
+            max_length: The maximum number of steps to train for. This value is required and
+                only applicable in local training mode. For on-cluster training, this value will
+                be ignored; the searcher’s ``max_length`` must be configured from the experiment
+                configuration. This is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which takes an
+                ``int``. For example, ``Epoch(1)`` would train for a maximum length of one epoch.
             reporting_period: The number of steps to train for before reporting metrics and
                 searcher progress. For local training mode, metrics are printed to stdout. This
                 is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which can take an ``int`` or
@@ -152,13 +113,8 @@ class Trainer:
             if max_length is None:
                 raise ValueError("max_length must be defined in local training mode.")
 
-            if not isinstance(max_length, (pytorch.Batch, pytorch.Epoch)) or not isinstance(
-                max_length.value, int
-            ):
-                raise TypeError(
-                    "max_length must either be a det.pytorch.Batch(int) or det.pytorch.Epoch(int) "
-                    "type"
-                )
+            if not isinstance(max_length.value, int):
+                raise TypeError("max_length must be configured in TrainUnit(int) types.")
 
             if profiling_enabled:
                 logger.warning("Profiling is not supported in local training mode.")
@@ -171,6 +127,12 @@ class Trainer:
             if test_mode:
                 raise ValueError("test_mode is only supported in local training mode.")
 
+            if max_length is not None:
+                logger.warning(
+                    "max_length is ignored when training on-cluster. Please configure the "
+                    "searcher instead."
+                )
+
             assert self._info, "Unable to detect cluster info."
             if latest_checkpoint is None and self._info.latest_checkpoint is not None:
                 logger.warning(
@@ -181,46 +143,12 @@ class Trainer:
 
             smaller_is_better = bool(self._info.trial._config["searcher"]["smaller_is_better"])
             searcher_metric_name = self._info.trial._config["searcher"]["metric"]
-
             steps_completed = int(self._info.trial._steps_completed)
             global_batch_size = self._info.trial.hparams.get("global_batch_size", None)
             if global_batch_size:
                 global_batch_size = int(global_batch_size)
 
-            # Backwards compatibility: try to parse legacy `searcher.max_length` if `max_length`
-            # isn't passed in.
-            if max_length is None:
-                max_length_val = core._parse_searcher_max_length(self._info.trial._config)
-                if max_length_val:
-                    warnings.warn(
-                        "Configuring `max_length` from the `searcher.max_length` experiment "
-                        "config, which was deprecated in XXYYZZ and will be removed in a future "
-                        "release. Please set `fit(max_length=X)` with your desired training length "
-                        "directly.",
-                        FutureWarning,
-                        stacklevel=2,
-                    )
-                    max_length_unit = core._parse_searcher_units(self._info.trial._config)
-                    max_length = pytorch._TrainUnit._from_searcher_unit(
-                        max_length_val, max_length_unit, global_batch_size
-                    )
-
-            # If we couldn't parse the legacy `searcher.max_length`, raise an error.
-            if not max_length:
-                raise ValueError(
-                    "`fit(max_length=X)` must be set with your desired training length."
-                )
-            if not isinstance(max_length, (pytorch.Batch, pytorch.Epoch)) or not isinstance(
-                max_length.value, int
-            ):
-                raise TypeError(
-                    "max_length must either be a det.pytorch.Batch(int) or det.pytorch.Epoch(int) "
-                    "type."
-                )
-
-            _check_searcher_length(exp_conf=self._info.trial._config, max_length=max_length)
-
-        trial_controller = pytorch._PyTorchTrialController(
+        trial_controller = det_ds.DeepSpeedTrialController(
             trial_inst=self._trial,
             context=self._context,
             checkpoint_period=checkpoint_period,
@@ -242,63 +170,25 @@ class Trainer:
         trial_controller.run()
 
 
-def _check_searcher_length(
-    exp_conf: Dict[str, Any],
-    max_length: pytorch._TrainUnit,
-) -> None:
-    """
-    Certain searchers (ASHA and Adaptive ASHA) require configuring the maximum training length in
-    the experiment config. We check that the `max_length` passed to `fit()` matches the experiment
-    config and log warnings if it doesn't.
-    """
-    time_metric = exp_conf["searcher"].get("time_metric")
-    if time_metric is not None:
-        max_time = exp_conf["searcher"].get("max_time")
-        assert max_time, "`searcher.max_time` not configured"
-        if time_metric == "batches":
-            if not isinstance(max_length, pytorch.Batch) or max_length.value != max_time:
-                logger.warning(
-                    f"`max_length` passed into `fit()` method ({max_length}) does not match "
-                    f"`searcher.max_time` and `searcher.time_metric` from the experiment config "
-                    f"(Batch(value={max_time})). This may result in unexpected hyperparameter "
-                    f"search behavior."
-                )
-        elif time_metric == "epochs":
-            if not isinstance(max_length, pytorch.Epoch) or max_length.value != max_time:
-                logger.warning(
-                    f"`max_length` passed into `fit()` method ({max_length}) does not match "
-                    f"`searcher.max_time` and `searcher.time_metric` from the experiment config "
-                    f"(Epoch(value={max_time})). This may result in unexpected hyperparameter "
-                    f"search behavior."
-                )
-        else:
-            logger.warning(
-                "`searcher.time_metric` must be either 'batches' or 'epochs' "
-                f"for training with PyTorchTrials, but got {time_metric}. "
-                f"Training will proceed with {max_length} but may result in unexpected behavior."
-            )
-
-
 def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
     info = det.get_cluster_info()
-
     distributed_backend = det._DistributedBackend()
-    if distributed_backend.use_horovod():
-        hvd = horovod.hvd
-        hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
-        hvd.init()
-        return core.DistributedContext.from_horovod(horovod.hvd)
-    elif distributed_backend.use_torch():
-        if torch.cuda.is_available():
-            dist.init_process_group(backend="nccl")
-        else:
-            dist.init_process_group(backend="gloo")
-        return core.DistributedContext.from_torch_distributed()
+
+    # We use an environment variable to allow users to enable custom initialization routine for
+    # distributed training since the pre_execute_hook runs before trial initialization.
+    manual_dist_init = os.environ.get("DET_MANUAL_INIT_DISTRIBUTED")
+    if not manual_dist_init:
+        # DeepSpeed's init_distributed handles situations in which only 1 gpu is used and
+        # also handles multiple calls to init in one process.
+        deepspeed.init_distributed(auto_mpi_discovery=False)
+        return core.DistributedContext.from_deepspeed()
+    elif distributed_backend.use_deepspeed():
+        deepspeed.init_distributed()
+        return core.DistributedContext.from_deepspeed()
     elif info and (len(info.container_addrs) > 1 or len(info.slot_ids) > 1):
         raise ValueError(
             "In multi-slot managed cluster training, you must wrap your training script with a "
-            "distributed launch layer such as determined.launch.torch_distributed or "
-            "determined.launch.horovod."
+            "distributed launch layer such as determined.launch.deepspeed."
         )
     return None
 
@@ -321,11 +211,11 @@ def init(
     distributed: Optional[core.DistributedContext] = None,
     aggregation_frequency: int = 1,
     enable_tensorboard_logging: bool = True,
-) -> Iterator[pytorch.PyTorchTrialContext]:
+) -> Iterator[det_ds.DeepSpeedTrialContext]:
     """
-    Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within
-    the scope of this context because there are resources started in __enter__ that must be
-    cleaned up in __exit__.
+    Creates a DeepSpeedTrialContext for use with a DeepSpeedTrial. All trainer.* calls
+    must be within the scope of this context because there are resources started in
+    __enter__ that must be cleaned up in __exit__.
 
     Arguments:
         hparams: (Optional) instance of hyperparameters for the trial
@@ -349,7 +239,6 @@ def init(
     if local_training:
         trial_seed = None
         steps_completed = 0
-        managed_training = True
         debug_enabled = False
         num_gpus = len(gpu.get_gpu_uuids())
     else:
@@ -358,7 +247,6 @@ def init(
         trial_seed = cluster_info.trial.trial_seed
         exp_conf = cluster_info.trial._config
         steps_completed = cluster_info.trial._steps_completed
-        managed_training = True
         num_gpus = len(cluster_info.gpu_uuids)
         debug_enabled = cluster_info.trial._debug
 
@@ -369,7 +257,7 @@ def init(
         preempt_mode=core.PreemptMode.WorkersAskChief,
         tensorboard_mode=core.TensorboardMode.MANUAL,
     ) as core_context:
-        context = pytorch.PyTorchTrialContext(
+        context = det_ds.DeepSpeedTrialContext(
             core_context=core_context,
             trial_seed=trial_seed,
             hparams=hparams,
@@ -378,7 +266,6 @@ def init(
             exp_conf=exp_conf,
             aggregation_frequency=aggregation_frequency,
             steps_completed=steps_completed,
-            managed_training=managed_training,
             debug_enabled=debug_enabled,
             enable_tensorboard_logging=enable_tensorboard_logging,
         )
