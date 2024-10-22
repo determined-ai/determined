@@ -154,8 +154,7 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses}{' '}
-            ${pluralizer(numFailures + numSuccesses, 'run')}`,
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses} ${pluralizer(numFailures + numSuccesses, 'run')}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
           });
