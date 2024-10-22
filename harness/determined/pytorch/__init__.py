@@ -24,7 +24,15 @@ from determined.pytorch._metric_utils import (
     _convert_metrics_to_numpy,
     _log_tb_metrics,
 )
-from determined.pytorch._util import Batch, Epoch, ShouldExit, TrainBoundary, TrainBoundaryType, TrainUnit, TrialState
+from determined.pytorch._util import (
+    Batch,
+    Epoch,
+    ShouldExit,
+    TrainBoundary,
+    TrainBoundaryType,
+    TrainUnit,
+    TrialState,
+)
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext
 from determined.pytorch._pytorch_trial import (

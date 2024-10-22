@@ -39,7 +39,9 @@ def main(train_entrypoint: str) -> int:
     # We can't import pytorch directly because if running TfKerasTrials with an image that contains
     # both torch and keras, keras will throw exceptions due to unexpected CUDNN library versions.
     if hasattr(det, "pytorch"):
-        if hasattr(det.pytorch, "deepspeed") and issubclass(trial_class, det.pytorch.deepspeed.DeepSpeedTrial):
+        if hasattr(det.pytorch, "deepspeed") and issubclass(
+            trial_class, det.pytorch.deepspeed.DeepSpeedTrial
+        ):
             return _run_deepspeed_trial(trial_class, info)
         elif issubclass(trial_class, det.pytorch.PyTorchTrial):
             return _run_pytorch_trial(trial_class, info)
@@ -196,6 +198,7 @@ def _run_pytorch_trial(
 
     return 0
 
+
 def _run_deepspeed_trial(
     trial_class: "Type[det.pytorch.deepspeed.DeepSpeedTrial]",
     info: det.ClusterInfo,
@@ -209,9 +212,9 @@ def _run_deepspeed_trial(
 
     with maybe_periodic_stacktraces(info.trial._debug):
         with det_ds.init(
-                hparams=info.trial.hparams,
-                exp_conf=info.trial._config,
-                aggregation_frequency=int(info.trial._config["optimizations"]["aggregation_frequency"]),
+            hparams=info.trial.hparams,
+            exp_conf=info.trial._config,
+            aggregation_frequency=int(info.trial._config["optimizations"]["aggregation_frequency"]),
         ) as train_context:
             fp16_compression = bool(info.trial._config["optimizations"]["gradient_compression"])
             average_aggregated_gradients = bool(
@@ -259,6 +262,7 @@ def _run_deepspeed_trial(
             )
 
     return 0
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

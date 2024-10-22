@@ -1,9 +1,10 @@
 import enum
 import sys
 from collections import abc
-from typing import Union, Optional
+from typing import Optional, Union
 
 from determined import core
+
 
 class TrainUnit:
     """
@@ -101,6 +102,7 @@ class Batch(TrainUnit):
     def _from_records(records: int, global_batch_size: int) -> "Batch":
         return Batch(max(records // global_batch_size, 1))
 
+
 class ShouldExit(Exception):
     """
     ShouldExit breaks out of the top-level train loop from inside function calls.
@@ -108,6 +110,7 @@ class ShouldExit(Exception):
 
     def __init__(self, skip_exit_checkpoint: bool = False):
         self.skip_exit_checkpoint = skip_exit_checkpoint
+
 
 class TrialState:
     def __init__(
@@ -127,11 +130,13 @@ class TrialState:
         self.batches_trained = batches_trained
         self.epochs_trained = epochs_trained
 
+
 class TrainBoundaryType(enum.Enum):
     CHECKPOINT = "CHECKPOINT"
     REPORT = "REPORT"
     VALIDATE = "VALIDATE"
     TRAIN = "TRAIN"
+
 
 class TrainBoundary:
     def __init__(self, step_type: TrainBoundaryType, unit: TrainUnit):

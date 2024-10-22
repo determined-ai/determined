@@ -27,7 +27,7 @@ class ModelParallelUnit:
 
 
 def make_data_parallel_mpu(dist_context: core.DistributedContext) -> ModelParallelUnit:
-    print("dist_context.get_rank(): ",dist_context.get_rank())
+    print("dist_context.get_rank(): ", dist_context.get_rank())
     print("dist_context.get_size(): ", dist_context.get_size())
     return ModelParallelUnit(
         data_parallel_rank=dist_context.get_rank(),

@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import core, gpu, horovod, pytorch
+from determined import core, gpu, pytorch
 from determined.pytorch import deepspeed as det_ds
 
 logger = logging.getLogger("determined.pytorch.deepspeed")
@@ -207,15 +207,13 @@ class Trainer:
 def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
     info = det.get_cluster_info()
 
-    distributed_backend = det._DistributedBackend()
     if torch.cuda.is_available():
         deepspeed.init_distributed()
         return core.DistributedContext.from_deepspeed()
     elif info and (len(info.container_addrs) > 1 or len(info.slot_ids) > 1):
         raise ValueError(
             "In multi-slot managed cluster training, you must wrap your training script with a "
-            "distributed launch layer such as determined.launch.torch_distributed or "
-            "determined.launch.horovod."
+            "distributed launch layer such as determined.launch.deepspeed."
         )
     return None
 

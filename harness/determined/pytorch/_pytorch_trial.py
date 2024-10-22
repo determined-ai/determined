@@ -514,7 +514,8 @@ class _PyTorchTrialController:
                             unit=train_unit,
                         ),
                         pytorch.TrainBoundary(
-                            step_type=pytorch.TrainBoundaryType.VALIDATE, unit=self.validation_period
+                            step_type=pytorch.TrainBoundaryType.VALIDATE,
+                            unit=self.validation_period,
                         ),
                         pytorch.TrainBoundary(
                             step_type=pytorch.TrainBoundaryType.CHECKPOINT,

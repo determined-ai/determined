@@ -66,19 +66,19 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
     5. Disable automatic gradient aggregation for non-pipeline-parallel training.
     """
 
-    def __init__(self,
-                 core_context: det.core.Context,
-                 trial_seed: Optional[int],
-                 hparams: Optional[Dict],
-                 slots_per_trial: int,
-                 num_gpus: int,
-                 exp_conf: Optional[Dict[str, Any]],
-                 aggregation_frequency: int,
-                 steps_completed: int,
-                 debug_enabled: bool,
-                 enable_tensorboard_logging: bool = True
-                 ) -> None:
-
+    def __init__(
+        self,
+        core_context: det.core.Context,
+        trial_seed: Optional[int],
+        hparams: Optional[Dict],
+        slots_per_trial: int,
+        num_gpus: int,
+        exp_conf: Optional[Dict[str, Any]],
+        aggregation_frequency: int,
+        steps_completed: int,
+        debug_enabled: bool,
+        enable_tensorboard_logging: bool = True,
+    ) -> None:
         self._core = core_context
         self.distributed = self._core.distributed
 

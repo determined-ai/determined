@@ -17,7 +17,7 @@ import torch
 from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
-from determined import core, pytorch, tensorboard, util, workload
+from determined import core, pytorch, tensorboard, util
 from determined.pytorch import deepspeed as det_ds
 
 logger = logging.getLogger("determined.pytorch")
@@ -31,7 +31,10 @@ logger = logging.getLogger("determined.pytorch")
 def get_length(self: ds_loader.RepeatingLoader) -> int:
     return len(self.loader)
 
-def dataloader_next(dataloader_iter: Iterator) -> Iterator:
+
+def dataloader_next(dataloader_iter: Optional[Iterator]) -> Iterator:
+    if dataloader_iter is None:
+        return None
     while True:
         try:
             batch = next(dataloader_iter)
@@ -61,9 +64,8 @@ class DeepSpeedTrialController:
         step_zero_validation: bool,
         max_length: Optional[pytorch.TrainUnit],
         global_batch_size: Optional[int],
-        profiling_enabled: Optional[bool]
+        profiling_enabled: Optional[bool],
     ) -> None:
-
         assert isinstance(
             trial_inst, DeepSpeedTrial
         ), "DeepSpeedTrialController needs a DeepSpeedTrial"
@@ -156,12 +158,6 @@ class DeepSpeedTrialController:
             tensorboard.util.get_rank_aware_path,
         )
 
-    @classmethod
-    def from_trial(
-        cls: Type["DeepSpeedTrialController"], *args: Any, **kwargs: Any
-    ) -> det.TrialController:
-        return cls(*args, **kwargs)
-
     def _set_data_loaders(self) -> None:
         skip_batches = self.start_from_batch
 
@@ -177,18 +173,11 @@ class DeepSpeedTrialController:
         nreplicas = self.context._mpu.data_parallel_world_size
         rank = self.context._mpu.data_parallel_rank
 
-        print("nreplicas: ", nreplicas)
-        print("rank: ", rank)
-        print("self.context._mpu.should_build_data_loader: ", self.context._mpu.should_build_data_loader)
-
         # The data loader is only required on ranks that take the data as input or require
         # the data to compute the loss.  There could be intermediate model parallel ranks
         # that do not need a data loader at all.
-        print("should we build a data loader?")
         if self.context._mpu.should_build_data_loader:
-            print("absolutely")
             train_data = self.trial.build_training_data_loader()
-            print("we built one")
             if isinstance(train_data, pytorch.DataLoader):
                 # Repeating the data loader is the default behavior for DeepSpeed data loaders when
                 # using pipeline parallel.
@@ -233,7 +222,6 @@ class DeepSpeedTrialController:
                         )
             else:
                 # Non-determined DataLoader; ensure the user meant to do this.
-                print("we didn't build a data loader")
                 if not self.context._data_repro_checks_disabled:
                     raise RuntimeError(
                         pytorch._dataset_repro_warning(
@@ -265,7 +253,7 @@ class DeepSpeedTrialController:
         )
         all_epoch_lens = self.context.distributed.gather(self.context._epoch_len)
         if self.is_chief:
-            all_epoch_lens = [le for le in all_epoch_lens if le is not None]
+            all_epoch_lens = [le for le in all_epoch_lens if le is not None]  # type: ignore
             if min(all_epoch_lens) < max(all_epoch_lens):
                 logger.warning(
                     "Training data loader length inconsistent across ranks. "
@@ -278,15 +266,19 @@ class DeepSpeedTrialController:
             (self.num_validation_batches, self.validation_batch_size)
         )
         if self.is_chief:
-            all_num_validation_batches, all_validation_batch_size = zip(*all_tuples)
-            all_num_validation_batches = [le for le in all_num_validation_batches if le is not None]
+            all_num_validation_batches, all_validation_batch_size = zip(*all_tuples)  # type: ignore
+            all_num_validation_batches = [
+                le for le in all_num_validation_batches if le is not None
+            ]  # type: ignore
             if min(all_num_validation_batches) < max(all_num_validation_batches):
                 logger.warning(
                     "Validation data loader length inconsistent across ranks. "
                     "Using the minimum for validation length."
                 )
             self.num_validation_batches = min(all_num_validation_batches)
-            all_validation_batch_size = [le for le in all_validation_batch_size if le is not None]
+            all_validation_batch_size = [
+                le for le in all_validation_batch_size if le is not None
+            ]  # type: ignore
             if min(all_validation_batch_size) < max(all_validation_batch_size):
                 logger.warning(
                     "Validation batch size inconsistent across ranks. "
@@ -338,15 +330,11 @@ class DeepSpeedTrialController:
             self.training_enumerator = enumerate(
                 dataloader_next(self.training_iterator), start=self.start_from_batch
             )
-            self.validation_iterator = (
-                iter(self.validation_loader) if self.training_loader is not None else None
-            )
 
             def cleanup_iterator() -> None:
                 # Explicitly trigger the iterator's shutdown (which happens in __del__).
                 # See the rather long note in pytorch/torch/utils/data/dataloader.py.
                 del self.training_iterator
-                del self.validation_iterator
 
             exit_stack.enter_context(defer(cleanup_iterator))
 
@@ -410,7 +398,8 @@ class DeepSpeedTrialController:
                             unit=train_unit,
                         ),
                         pytorch.TrainBoundary(
-                            step_type=pytorch.TrainBoundaryType.VALIDATE, unit=self.validation_period
+                            step_type=pytorch.TrainBoundaryType.VALIDATE,
+                            unit=self.validation_period,
                         ),
                         pytorch.TrainBoundary(
                             step_type=pytorch.TrainBoundaryType.CHECKPOINT,
@@ -424,7 +413,6 @@ class DeepSpeedTrialController:
                 )
         except pytorch.ShouldExit as e:
             # Checkpoint unsaved work and exit.
-            print("Caught SHOULDEXIT, CHECKPOINTING")
             if not e.skip_exit_checkpoint and not self._checkpoint_is_current():
                 self._checkpoint(already_exiting=True)
 
@@ -498,11 +486,8 @@ class DeepSpeedTrialController:
         # Finished training for op. Perform final checkpoint/validation if necessary.
         if not self._validation_is_current():
             self._validate(op)
-            print('FINISHED VALIDATION')
         if not self._checkpoint_is_current():
-            print("DOING CHECKPOINT")
             self._checkpoint(already_exiting=False)
-        print("FINISHED CHECKPOINT")
         # Test mode will break after one batch despite not completing op.
         if self.is_chief and not self.test_mode:
             # The only case where op isn't reported as completed is if we restarted but
@@ -528,7 +513,7 @@ class DeepSpeedTrialController:
         epoch_len = self.context._epoch_len
         assert epoch_len, "Training dataloader uninitialized."
 
-        for batch_idx  in range(epoch_len):
+        for batch_idx in range(epoch_len):
             epoch_idx, batch_in_epoch_idx = divmod(batch_idx, epoch_len)
 
             # Set the batch index on the trial context used by step_optimizer.
@@ -566,9 +551,7 @@ class DeepSpeedTrialController:
         # True epoch end
         return train_boundaries, training_metrics
 
-    def _train_batch(
-        self, epoch_idx: int, batch_idx: int
-    ) -> List[dict]:
+    def _train_batch(self, epoch_idx: int, batch_idx: int) -> List[dict]:
         num_micro_batches = self.context.num_micro_batches_per_slot
         if self.context.use_pipeline_parallel or self.context._manual_grad_accumulation:
             num_micro_batches = 1
@@ -620,15 +603,14 @@ class DeepSpeedTrialController:
 
         batch_dur = time.time() - batch_start_time
         batch_inputs = (
-                self.context.train_micro_batch_size_per_gpu
-                * self.context.num_micro_batches_per_slot
+            self.context.train_micro_batch_size_per_gpu * self.context.num_micro_batches_per_slot
         )
         samples_per_second = batch_inputs / batch_dur
         samples_per_second *= self.context.distributed.size
 
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1:
-             metrics = pytorch._combine_and_average_training_metrics(
+            metrics = pytorch._combine_and_average_training_metrics(
                 self.context.distributed, per_batch_metrics
             )
         else:
@@ -714,13 +696,11 @@ class DeepSpeedTrialController:
             callback.on_training_epoch_end(epoch_idx)
 
     def _checkpoint(self, already_exiting: bool) -> None:
-        print("WHAT IS GOING ON")
         if self.is_chief:
             self.core_context.train.set_status("checkpointing")
 
         assert self.state
         self.state.last_ckpt = self.state.batches_trained
-        print("self.state.last_ckpt ", self.state.last_ckpt)
         try:
             uuid = ""
             metadata = {
@@ -733,7 +713,6 @@ class DeepSpeedTrialController:
                 path,
                 storage_id,
             ):
-                print("path ", path)
                 self._save(path)
                 uuid = storage_id
             uuid = self.context.distributed.broadcast(uuid)
@@ -750,6 +729,7 @@ class DeepSpeedTrialController:
             raise pytorch.ShouldExit()
         if self.context.get_stop_requested():
             raise pytorch.ShouldExit()
+
     def _report_searcher_progress(
         self, op: core.SearcherOperation, unit: Optional[core.Unit]
     ) -> None:
@@ -812,19 +792,18 @@ class DeepSpeedTrialController:
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
 
+            validation_iterator = iter(self.validation_loader) if self.validation_loader else None
             for idx in range(cast(int, self.num_validation_batches)):
                 batches_evaluated += 1
                 num_inputs += cast(int, self.validation_batch_size)
-                # Note that when using pipeline parallelism, each call to evaluate_batch will request
-                # self.context.num_micro_batches_per_slot batches from the validation iterator.
-                # This is why we set self.num_validation_batches differently for pipeline parallel
-                # and no pipeline parallel when building the data loaders.
+                # Note that when using pipeline parallelism, each call to evaluate_batch will
+                # request self.context.num_micro_batches_per_slot batches from the validation
+                # iterator. This is why we set self.num_validation_batches differently for
+                # pipeline parallel and no pipeline parallel when building the data loaders.
                 if util.has_param(self.trial.evaluate_batch, "batch_idx", 2):
-                    vld_metrics = self.trial.evaluate_batch(
-                        self.validation_iterator,
-                        idx)
+                    vld_metrics = self.trial.evaluate_batch(validation_iterator, idx)
                 else:
-                    vld_metrics = self.trial.evaluate_batch(self.validation_iterator)  # type: ignore
+                    vld_metrics = self.trial.evaluate_batch(validation_iterator)  # type: ignore
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
@@ -921,11 +900,9 @@ class DeepSpeedTrialController:
             best_validation_before = self.core_context.train.get_experiment_best_validation()
 
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
-        print("REPORTED VALIDATION METRICS")
         searcher_metric = None
 
         # Report searcher status.
-        print("REPORTING SEARCHER STATUS")
         if self.is_chief and searcher_op:
             if self.local_training:
                 searcher_length = self.max_length
@@ -933,22 +910,16 @@ class DeepSpeedTrialController:
                 searcher_length = pytorch.TrainUnit._from_searcher_unit(
                     searcher_op.length, self.searcher_unit, self.global_batch_size
                 )
-            print("searcher_op.length: ", searcher_op.length)
-            print("self.searcher_unit: ", self.searcher_unit)
-            print("self.global_batch_size", self.global_batch_size)
-            print("self.state.batches_trained", self.state.batches_trained)
             if self.searcher_metric_name:
                 searcher_metric = self._check_searcher_metric(metrics)
 
             assert searcher_length
             if self._steps_until_complete(searcher_length) < 1 and not searcher_op._completed:
                 searcher_op.report_completed(searcher_metric)
-        print("FINISHED WITH REPORTING SEARCHER STATUS")
         should_checkpoint = False
 
         # Checkpoint according to policy.
         if self.is_chief:
-            print("CHECKPOINTING?")
             if not self._checkpoint_is_current():
                 if self.ckpt_policy == "all":
                     should_checkpoint = True
@@ -960,9 +931,7 @@ class DeepSpeedTrialController:
 
                     if self._is_best_validation(now=searcher_metric, before=best_validation_before):
                         should_checkpoint = True
-        print("Entering broadcast")
         should_checkpoint = self.context.distributed.broadcast(should_checkpoint)
-        print("should_checkpoint ", should_checkpoint)
         if should_checkpoint:
             self._checkpoint(already_exiting=False)
         return metrics
@@ -1001,7 +970,7 @@ class DeepSpeedTrialController:
             ["determined", "state_dict.pth"],
             ["pedl", "state_dict.pth"],
             ["checkpoint.pt"],
-            [f"det_state_dict_rank{self.context.distributed.rank}.pth"]
+            [f"det_state_dict_rank{self.context.distributed.rank}.pth"],
         ]
 
         # Load stateful things tracked by Determined on all slots.
@@ -1009,7 +978,6 @@ class DeepSpeedTrialController:
         for ckpt_path in potential_paths:
             maybe_ckpt = load_path.joinpath(*ckpt_path)
             if maybe_ckpt.exists():
-                print("TORCH LOAD BEHAVIOR")
                 checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")
                 break
 
@@ -1027,7 +995,6 @@ class DeepSpeedTrialController:
 
         # We allow users to override load behavior if needed, but we default to using
         # the load method provided by DeepSpeed.
-        print("DEEPSPEED LOADER")
         self.trial.load(self.context, load_path)
 
         if "rng_state" in checkpoint:
@@ -1066,10 +1033,8 @@ class DeepSpeedTrialController:
 
         save_path = load_path.joinpath("trial_state.pkl")
         if save_path.exists():
-            print("LOAD TRIAL STATE")
             with save_path.open("rb") as f:
                 self._load_state(pickle.load(f))
-
 
     def _load_state(self, state: Any) -> None:
         # Load our state from the checkpoint if we are continuing training after a pause or restart.
@@ -1090,26 +1055,6 @@ class DeepSpeedTrialController:
         if self.state.batches_trained == self.val_from_previous_run:
             self.state.last_val = self.state.batches_trained
 
-    def _load_wlsq_state(self, state: Any) -> None:
-        if state.get("trial_id") != self.trial_id:
-            self.state = pytorch.TrialState(trial_id=self.trial_id)
-            return
-
-        self.state = pytorch.TrialState(
-            trial_id=state.get("trial_id"),
-            last_ckpt=state.get("last_ckpt"),
-            last_val=state.get("last_val"),
-            step_id=state.get("step_id"),
-            # steps_completed is a legacy field kept to support loading from older checkpoints.
-            # checkpoints should only persist batches_trained and epochs_trained
-            batches_trained=state.get("steps_completed"),
-            epochs_trained=self._get_epoch_idx(state.get("steps_completed")),
-        )
-
-        assert self.state
-        if self.state.batches_trained == self.val_from_previous_run:
-            self.state.last_val = self.state.batches_trained
-
     def _save(self, path: pathlib.Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
@@ -1117,7 +1062,6 @@ class DeepSpeedTrialController:
             # We assume these stateful objects should be the same across slots and only have
             # the chief save them.
             util.write_user_code(path, not self.local_training)
-
 
         rng_state = {
             "cpu_rng_state": torch.random.get_rng_state(),
@@ -1142,7 +1086,6 @@ class DeepSpeedTrialController:
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_save_start(checkpoint)
-        print("torch saving")
         ckpt_name = f"det_state_dict_rank{self.context.distributed.rank}.pth"
         torch.save(checkpoint, str(path.joinpath(ckpt_name)))
 
@@ -1152,14 +1095,11 @@ class DeepSpeedTrialController:
 
         # We allow users to override save behavior if needed, but we default to using
         # the save method provided by DeepSpeed.
-        print("trial saving")
         self.trial.save(self.context, path)
 
         trial_cls = type(self.trial)
-        print('opening')
         with open(path.joinpath("load_data.json"), "w") as f2:
             try:
-                print('trying')
                 exp_conf = self.context.get_experiment_config()  # type: Optional[Dict[str, Any]]
                 hparams = self.context.get_hparams()  # type: Optional[Dict[str, Any]]
             except ValueError:
@@ -1176,54 +1116,12 @@ class DeepSpeedTrialController:
 
             if self.context._is_pre_trainer:
                 load_data.pop("is_trainer")
-            print("dumping")
             json.dump(load_data, f2)
 
         for callback in self.callbacks.values():
             # TODO(DET-7912): remove on_checkpoint_end once it has been deprecated long enough.
             callback.on_checkpoint_end(str(path))
             callback.on_checkpoint_write_end(str(path))
-        print('we should be done')
-
-
-    def _load_state(self, state: Any) -> None:
-        # Load our state from the checkpoint if we are continuing training after a pause or restart.
-        # If the trial_id doesn't match our current trial id, we're continuing training a previous
-        # trial and should start from a fresh state.
-        if state.get("trial_id") != self.trial_id:
-            self.state = pytorch.TrialState(trial_id=self.trial_id)
-            return
-
-        self.state = pytorch.TrialState(**state)
-        assert self.state
-
-        # Detect the case where the final validation we made was against this exact checkpoint.  In
-        # that case, the master will know about the validation, but it would not appear in the
-        # checkpoint state.  If the validation was before the last checkpoint, the checkpoint state
-        # is already correct, while any validations after the last checkpoint aren't valid anymore
-        # and can be safely ignored.
-        if self.state.batches_trained == self.val_from_previous_run:
-            self.state.last_val = self.state.batches_trained
-
-    def _load_wlsq_state(self, state: Any) -> None:
-        if state.get("trial_id") != self.trial_id:
-            self.state = pytorch.TrialState(trial_id=self.trial_id)
-            return
-
-        self.state = pytorch.TrialState(
-            trial_id=state.get("trial_id"),
-            last_ckpt=state.get("last_ckpt"),
-            last_val=state.get("last_val"),
-            step_id=state.get("step_id"),
-            # steps_completed is a legacy field kept to support loading from older checkpoints.
-            # checkpoints should only persist batches_trained and epochs_trained
-            batches_trained=state.get("steps_completed"),
-            epochs_trained=self._get_epoch_idx(state.get("steps_completed")),
-        )
-
-        assert self.state
-        if self.state.batches_trained == self.val_from_previous_run:
-            self.state.last_val = self.state.batches_trained
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
@@ -1408,6 +1306,25 @@ class DeepSpeedTrial(det.LegacyTrial):
         """
         pass
 
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
+        """
+        Calculate validation metrics on the entire validation dataset and
+        return them as a dictionary mapping metric names to reduced metric
+        values (i.e., each returned metric is the average or sum of that metric
+        across the entire validation set).
+
+        This validation cannot be distributed and is performed on a single
+        device, even when multiple devices (slots) are used for training. Only
+        one of :meth:`evaluate_full_dataset` and :meth:`evaluate_batch` should
+        be overridden by a trial.
+
+        The metrics returned from this function must be JSON-serializable.
+
+        Arguments:
+            data_loader (torch.utils.data.DataLoader): data loader for evaluating.
+        """
+        pass
+
     def evaluation_reducer(self) -> Union[pytorch.Reducer, Dict[str, pytorch.Reducer]]:
         """
         Return a reducer for all evaluation metrics, or a dict mapping metric
@@ -1447,7 +1364,6 @@ class DeepSpeedTrial(det.LegacyTrial):
         This method can be overwritten for more custom load behavior.
         """
         for i, m in enumerate(context.models):
-            print(f"loading model{i}")
             try:
                 m.load_checkpoint(load_path, tag=f"model{i}")
             except AssertionError:
