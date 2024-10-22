@@ -46,7 +46,8 @@ Examples let you build off of an existing model that already runs on Determined.
    :hidden:
 
    Quickstart for Model Developers <quickstart-mdldev>
-   Porting Your PyTorch Model to Determined <pytorch-mnist-tutorial>
+   Managing Logs and Log Policies <log-management>
    Get Started with Detached Mode <detached-mode/_index>
    Viewing Epoch-Based Metrics in the WebUI <viewing-epoch-based-metrics>
    Using Pachyderm to Create a Batch Inferencing Pipeline <pachyderm-cat-dog>
+   Porting Your PyTorch Model to Determined <pytorch-mnist-tutorial>
