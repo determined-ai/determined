@@ -41,6 +41,8 @@ const debounceFunc = debounce(1000, (func: () => void) => {
   func();
 });
 
+export const METADATA_SEPARATOR = '\u241F' as const; // TODO: unify after merging PR 10052
+
 const COLUMN_TYPE = {
   NormalColumnType: 'NormalColumnType',
   SpecialColumnType: 'SpecialColumnType',
@@ -101,7 +103,7 @@ const FilterField = ({
 
   const onChangeColumnName = (value: SelectValue) => {
     const prevType = field.type;
-    const [newColName, type] = (value?.toString() ?? '').split(' ');
+    const [type, newColName] = (value?.toString() ?? '').split(METADATA_SEPARATOR, 2);
     const newCol = columns.find((c) => c.column === newColName && type === c.type);
     if (newCol) {
       Observable.batch(() => {
@@ -245,12 +247,12 @@ const FilterField = ({
           autoFocus
           data-test="columnName"
           dropdownMatchSelectWidth={300}
-          options={columns.map((col, idx) => ({
-            key: `${col.column} ${idx}`,
+          options={columns.map((col) => ({
+            key: `${col.type}${METADATA_SEPARATOR}${col.column}`,
             label: getColDisplayName(col),
-            value: `${col.column} ${col.type}`,
+            value: `${col.type}${METADATA_SEPARATOR}${col.column}`,
           }))}
-          value={`${field.columnName} ${field.type}`}
+          value={`${field.type}${METADATA_SEPARATOR}${field.columnName}`}
           width={'100%'}
           onChange={onChangeColumnName}
         />
