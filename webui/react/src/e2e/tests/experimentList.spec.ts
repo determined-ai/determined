@@ -586,7 +586,7 @@ test.describe('Experiment List', () => {
           ).split(' ')[2],
         ); // returns in the format "Created experiment <exp_id>"
 
-        if (!Number.isNaN(expId)) throw new Error('No experiment ID was found');
+        if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
 
         experimentId = expId;
       },
