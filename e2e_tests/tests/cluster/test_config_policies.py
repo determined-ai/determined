@@ -68,7 +68,7 @@ def test_set_config_policies() -> None:
             "config-policies",
             "set",
             "experiment",
-            conf.fixtures_path(VALID_EXPERIMENT_YAML),
+            conf.fixtures_path(VALID_EXPERIMENT_JSON),
         ],
     )
 
@@ -87,7 +87,7 @@ def test_set_config_policies() -> None:
             "config-policies",
             "set",
             "tasks",
-            conf.fixtures_path(VALID_NTSC_YAML),
+            conf.fixtures_path(VALID_NTSC_JSON),
         ],
     )
     data = "Set global tasks config policies:\n"
