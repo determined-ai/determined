@@ -13,8 +13,8 @@ def describe_config_policies(args: argparse.Namespace) -> None:
     if args.workload_type.upper() == "TASKS":
         workload_type = "NTSC"
 
-    if args.workspace:
-        wksp = api.workspace_by_name(sess, args.workspace)
+    if args.workspace_name:
+        wksp = api.workspace_by_name(sess, args.workspace_name)
         wksp_resp = bindings.get_GetWorkspaceConfigPolicies(
             sess, workloadType=workload_type, workspaceId=wksp.id
         )
@@ -43,15 +43,15 @@ def set_config_policies(args: argparse.Namespace) -> None:
     if args.workload_type.upper() == "TASKS":
         workload_type = "NTSC"
 
-    if args.workspace:
-        wksp = api.workspace_by_name(sess, args.workspace)
+    if args.workspace_name:
+        wksp = api.workspace_by_name(sess, args.workspace_name)
         wksp_body = bindings.v1PutWorkspaceConfigPoliciesRequest(
             workloadType=workload_type, configPolicies=data, workspaceId=wksp.id
         )
         wksp_resp = bindings.put_PutWorkspaceConfigPolicies(
             sess, workloadType=workload_type, workspaceId=wksp.id, body=wksp_body
         )
-        print(f"Set {args.workload_type} config policies for workspace {args.workspace}:")
+        print(f"Set {args.workload_type} config policies for workspace {args.workspace_name}:")
         print(util.yaml_safe_dump(wksp_resp.configPolicies, default_flow_style=False))
         return
 
@@ -72,15 +72,15 @@ def delete_config_policies(args: argparse.Namespace) -> None:
     if args.workload_type.upper() == "TASKS":
         workload_type = "NTSC"
 
-    if args.workspace:
-        wksp = api.workspace_by_name(sess, args.workspace)
+    if args.workspace_name:
+        wksp = api.workspace_by_name(sess, args.workspace_name)
 
         bindings.delete_DeleteWorkspaceConfigPolicies(
             sess, workloadType=workload_type, workspaceId=wksp.id
         )
         print(
             f"Successfully deleted {workload_type} config policies for workspace "
-            f"{args.workspace}"
+            f"{args.workspace_name}"
         )
         return
 
@@ -107,7 +107,7 @@ args_description: cli.ArgsDescription = [
                     ),
                     cli.Arg(
                         "-w",
-                        "--workspace",
+                        "--workspace-name",
                         type=str,
                         required=False,
                         help="apply config policies to workspace",
@@ -135,7 +135,7 @@ args_description: cli.ArgsDescription = [
                     ),
                     cli.Arg(
                         "-w",
-                        "--workspace",
+                        "--workspace-name",
                         type=str,
                         required=False,
                         help="apply config policies to this workspace",
@@ -155,7 +155,7 @@ args_description: cli.ArgsDescription = [
                     ),
                     cli.Arg(
                         "-w",
-                        "--workspace",
+                        "--workspace-name",
                         type=str,
                         required=False,
                         help="apply config policies to workspace",
