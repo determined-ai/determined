@@ -93,9 +93,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   useEffect(() => {
     settings.searchText?.length && setSearchOn(true);
-    setSearchInput((prev) =>
-      prev === (settings.searchText || '') ? prev : settings.searchText || '',
-    );
+    setSearchInput((prev) => (prev === settings.searchText ? prev : settings.searchText) ?? '');
   }, [settings.searchText]);
 
   const handleFilterChange = useCallback(
@@ -451,6 +449,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     if (logsRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
+  const onSwitchSearch = useCallback(() => {
+    setSearchOn((prev) => !prev);
+    // open log pane when closing the search pane
+    searchOn && setLogViewerOn(true);
+    // sometime the selected log of the log pane would offset when closing the search pane, since the width of the log pane changes
+    searchOn && selectedLog && setScrollToIndex(logs.findIndex((l) => l.id === selectedLog.id));
+  }, [searchOn, selectedLog, logs]);
+
   const rightButtons = (
     <Row>
       <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
@@ -479,15 +485,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
               width={240}
               onChange={onSearchChange}
             />
-            <Button
-              type={searchOn ? 'primary' : 'default'}
-              onClick={() => {
-                setSearchOn((prev) => !prev);
-                searchOn && setLogViewerOn(true);
-                searchOn &&
-                  selectedLog &&
-                  setScrollToIndex(logs.findIndex((l) => l.id === selectedLog.id));
-              }}>
+            <Button type={searchOn ? 'primary' : 'default'} onClick={onSwitchSearch}>
               <Icon name="search" showTooltip title={`${searchOn ? 'Close' : 'Open'} Search`} />
             </Button>
             <Button
