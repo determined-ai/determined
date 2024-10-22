@@ -2230,21 +2230,9 @@ jobs:
             - license-gen
       - attach_workspace:
           at: .
-      - run:
-          name: Check for latest commit file
-          command: |
-            if [ -f latest_commit.env ]; then
-              echo "Latest commit file found."
-              source latest_commit.env
-              echo "LATEST_MAIN_SHA=$LATEST_MAIN_SHA" >> $BASH_ENV
-              git fetch origin $LATEST_MAIN_SHA && git checkout $LATEST_MAIN_SHA
-            else
-              echo "No latest commit file found. Skipping checkout."
-            fi
-
       - restore_cache:
           keys:
-            - det-go-build-${LATEST_MAIN_SHA}-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+            - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -2254,7 +2242,7 @@ jobs:
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
       - save_cache:
-          key: det-go-build-${LATEST_MAIN_SHA}-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+          key: det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
@@ -3205,8 +3193,6 @@ jobs:
                   commit=$(git rev-parse "<<parameters.upgrade-branch>>")
                   echo "Latest commit for <<parameters.upgrade-branch>>: $commit"
                   echo "export HEAD_COMMIT=$commit" >> $BASH_ENV
-            - build-go:
-                ee: true
             - setup-python-venv:
                 determined: True
                 extra-requirements-file: "e2e_tests/tests/requirements.txt"
@@ -3218,6 +3204,9 @@ jobs:
                 target-stage: agent1
             - run: sleep 10
             - stop-devcluster
+            - run: git checkout $CIRCLE_SHA1
+            - run: make -C master build
+            - run: make -C agent build
 
       - setup-python-venv:
           determined: True
@@ -4989,7 +4978,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-upgraded-rbac-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
