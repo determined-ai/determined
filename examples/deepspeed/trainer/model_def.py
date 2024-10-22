@@ -1,7 +1,6 @@
 import logging
 from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
 
-import attrdict
 import data
 import deepspeed
 import torch
@@ -23,7 +22,7 @@ FAKE_LABEL = 0
 
 class DCGANTrial(DeepSpeedTrial):
     def __init__(self, context: DeepSpeedTrialContext,
-                 hparams: attrdict.AttrDict, data_config: attrdict.AttrDict) -> None:
+                 hparams: dict, data_config: dict) -> None:
         self.context = context
         self.hparams = hparams
         self.data_config = data_config
