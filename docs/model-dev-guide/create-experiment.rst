@@ -172,6 +172,31 @@ Use the ``-h`` option to get the latest usage:
 
    python3 -m determined.launch.deepspeed -h
 
+.. _launch-tensorflow:
+
+TensorFlow Launcher
+===================
+
+Format:
+
+``determined.launch.tensorflow [--] SCRIPT...``
+
+This launcher configures a ``TF_CONFIG`` environment variable suitable for whichever level of
+TensorFlow distributed training is appropriate for the available training resources
+(``MultiWorkerMirroredStrategy``, ``MirroredStrategy``, or the default strategy).
+
+Example:
+
+.. code:: bash
+
+   python3 -m determined.launch.tensorflow -- python3 ./my_train.py --my-arg=value
+
+Use the ``-h`` option to get the latest usage:
+
+.. code:: bash
+
+   python3 -m determined.launch.tensorflow -h
+
 Legacy Launcher
 ===============
 
