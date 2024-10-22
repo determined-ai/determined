@@ -4774,7 +4774,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 6
           resource-class: xlarge
           tf2: true
@@ -4788,7 +4788,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 5
           resource-class: large
           tf2: true
@@ -4804,7 +4804,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
@@ -4818,7 +4818,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 4
           resource-class: large
           tf2: true
@@ -4837,7 +4837,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 4
           resource-class: large
           tf2: true
@@ -4854,7 +4854,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
@@ -4871,7 +4871,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_single_k8s
           target-stage: master
@@ -4886,7 +4886,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
@@ -4900,7 +4900,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           resource-class: large
           mark: e2e_cpu_elastic
@@ -4915,7 +4915,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4930,7 +4930,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4945,7 +4945,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
@@ -4958,7 +4958,7 @@ workflows:
       - test-e2e:
           name: test-e2e-agent-connection-loss
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_agent_connection_loss
           devcluster-config: agent-no-connection.devcluster.yaml
@@ -4976,7 +4976,7 @@ workflows:
             - okta
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
