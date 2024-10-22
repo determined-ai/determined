@@ -33,6 +33,7 @@ import { getMetadataValues } from 'services/api';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
+import { formatColumnKey, METADATA_SEPARATOR, removeColumnTypePrefix } from 'utils/flatRun';
 import { alphaNumericSorter } from 'utils/sort';
 
 import css from './FilterField.module.scss';
@@ -40,8 +41,6 @@ import css from './FilterField.module.scss';
 const debounceFunc = debounce(1000, (func: () => void) => {
   func();
 });
-
-export const METADATA_SEPARATOR = '\u241F' as const; // TODO: unify after merging PR 10052
 
 const COLUMN_TYPE = {
   NormalColumnType: 'NormalColumnType',
@@ -224,7 +223,7 @@ const FilterField = ({
   );
 
   const getColDisplayName = (col: V1ProjectColumn) => {
-    const colType = col.type.replace('COLUMN_TYPE_', '');
+    const colType = removeColumnTypePrefix(col.type);
 
     return (
       <>
@@ -248,9 +247,9 @@ const FilterField = ({
           data-test="columnName"
           dropdownMatchSelectWidth={300}
           options={columns.map((col) => ({
-            key: `${col.type}${METADATA_SEPARATOR}${col.column}`,
+            key: formatColumnKey(col, true),
             label: getColDisplayName(col),
-            value: `${col.type}${METADATA_SEPARATOR}${col.column}`,
+            value: formatColumnKey(col, true),
           }))}
           value={`${field.type}${METADATA_SEPARATOR}${field.columnName}`}
           width={'100%'}
