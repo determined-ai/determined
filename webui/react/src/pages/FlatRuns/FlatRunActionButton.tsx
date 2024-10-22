@@ -281,6 +281,7 @@ const FlatRunActionButton = ({
         selectionSize={selectionSize}
         sourceProjectId={projectId}
         sourceWorkspaceId={workspaceId}
+        tableFilters={tableFilterString}
         onSubmit={onSubmitMove}
       />
     </>

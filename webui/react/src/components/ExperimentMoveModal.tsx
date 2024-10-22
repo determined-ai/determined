@@ -14,13 +14,18 @@ import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { moveExperiments } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { moveSearches } from 'services/api';
+import { V1MoveSearchesRequest } from 'services/api-ts-sdk';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
-import { Project } from 'types';
+import { Project, SelectionType, XOR } from 'types';
 import handleError from 'utils/error';
+import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
+import { combine } from 'utils/filterFormSet';
 import { capitalize, pluralizer } from 'utils/string';
+
+import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
+import { FilterFormSet } from './FilterForm/components/type';
 
 const FORM_ID = 'move-experiment-form';
 
@@ -29,19 +34,21 @@ type FormInputs = {
   workspaceId?: number;
 };
 
-interface Props {
-  excludedExperimentIds?: Map<number, unknown>;
-  experimentIds: number[];
-  filters?: V1BulkExperimentFilters;
+interface BaseProps {
   onSubmit?: (successfulIds?: number[]) => void;
+  selectionSize: number;
   sourceProjectId: number;
   sourceWorkspaceId?: number;
 }
 
+type Props = BaseProps &
+  XOR<{ experimentIds: number[] }, { selection: SelectionType; tableFilters: string }>;
+
 const ExperimentMoveModalComponent: React.FC<Props> = ({
-  excludedExperimentIds,
   experimentIds,
-  filters,
+  selection,
+  selectionSize,
+  tableFilters,
   onSubmit,
   sourceProjectId,
   sourceWorkspaceId,
@@ -84,16 +91,24 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    if (excludedExperimentIds?.size) {
-      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds.keys()) };
+    const moveSearchesArgs: V1MoveSearchesRequest = {
+      destinationProjectId: projId,
+      sourceProjectId,
+    };
+
+    if (tableFilters !== undefined) {
+      const filters = JSON.parse(tableFilters) as FilterFormSet;
+      const filterFormSet = INIT_FORMSET;
+      const filter = getExperimentIdsFilter(filterFormSet, selection);
+      if (selection.type === 'ALL_EXCEPT') {
+        filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
+      }
+      moveSearchesArgs.filter = JSON.stringify(filter);
+    } else {
+      moveSearchesArgs.searchIds = experimentIds;
     }
 
-    const results = await moveExperiments({
-      destinationProjectId: projId,
-      experimentIds,
-      filters,
-      projectId: sourceProjectId,
-    });
+    const results = await moveSearches(moveSearchesArgs);
 
     onSubmit?.(results.successful);
 
@@ -143,12 +158,11 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   }, [form, sourceProjectId, sourceWorkspaceId]);
 
   // use plurals for indeterminate case
-  const entityCount = filters !== undefined ? 2 : experimentIds.length;
   const pluralizerArgs = f_flat_runs
     ? (['search', 'searches'] as const)
     : (['experiment'] as const);
   // we use apply instead of a direct call here because typescript errors when you spread a tuple into arguments
-  const plural = pluralizer.apply(null, [entityCount, ...pluralizerArgs]);
+  const plural = pluralizer.apply(null, [selectionSize, ...pluralizerArgs]);
   const actionCopy = `Move ${capitalize(plural)}`;
 
   return (

@@ -11,6 +11,7 @@ import { useObservable } from 'micro-observables';
 import React, { Ref, useCallback, useEffect, useId, useRef } from 'react';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormSet } from 'components/FilterForm/components/type';
 import RunFilterInterstitialModalComponent, {
   ControlledModalRef,
 } from 'components/RunFilterInterstitialModalComponent';
@@ -20,10 +21,12 @@ import RunMoveWarningModalComponent, {
 import usePermissions from 'hooks/usePermissions';
 import { formStore } from 'pages/FlatRuns/FlatRuns';
 import { moveRuns } from 'services/api';
+import { V1MoveRunsRequest } from 'services/api-ts-sdk';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
-import { BulkActionResult, Project, SelectionType } from 'types';
+import { BulkActionResult, Project, SelectionType, XOR } from 'types';
 import handleError from 'utils/error';
+import { combine } from 'utils/filterFormSet';
 import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 import { pluralizer } from 'utils/string';
 
@@ -34,15 +37,19 @@ type FormInputs = {
   destinationWorkspaceId?: number;
 };
 
-interface Props {
-  selection: SelectionType;
+interface BaseProps {
   selectionSize: number;
   sourceProjectId: number;
   sourceWorkspaceId?: number;
   onSubmit?: (results: BulkActionResult, destinationProjectId: number) => void | Promise<void>;
 }
 
+type Props = BaseProps &
+  XOR<{ runIds: number[] }, { selection: SelectionType; tableFilters: string }>;
+
 const FlatRunMoveModalComponent: React.FC<Props> = ({
+  runIds,
+  tableFilters,
   selection,
   selectionSize,
   sourceProjectId,
@@ -101,14 +108,24 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
           return;
       }
 
-      const filterFormSet = INIT_FORMSET;
-      const filter = JSON.stringify(getRunIdsFilter(filterFormSet, selection));
-
-      const results = await moveRuns({
+      const moveRunsArgs: V1MoveRunsRequest = {
         destinationProjectId: projId,
-        filter,
         sourceProjectId,
-      });
+      };
+
+      if (tableFilters !== undefined) {
+        const filters = JSON.parse(tableFilters) as FilterFormSet;
+        const filterFormSet = INIT_FORMSET;
+        const filter = getRunIdsFilter(filterFormSet, selection);
+        if (selection.type === 'ALL_EXCEPT') {
+          filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
+        }
+        moveRunsArgs.filter = JSON.stringify(filter);
+      } else {
+        moveRunsArgs.runIds = runIds;
+      }
+
+      const results = await moveRuns(moveRunsArgs);
       await onSubmit?.(results, projId);
       form.resetFields();
     } catch (e) {
@@ -120,8 +137,10 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
     sourceWorkspaceId,
     sourceProjectId,
     openToast,
-    selection,
+    tableFilters,
     onSubmit,
+    selection,
+    runIds,
   ]);
 
   return (
@@ -203,7 +222,7 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
       <RunFilterInterstitialModalComponent
         filterFormSet={filterFormSetWithoutId}
         ref={controlledModalRef}
-        selection={selection}
+        selection={selection ?? { selections: runIds, type: 'ONLY_IN' }}
       />
     </>
   );

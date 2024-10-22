@@ -500,13 +500,11 @@ const TableActionBar: React.FC<Props> = ({
         />
       )}
       <ExperimentMoveModal.Component
-        experimentIds={selectedExperimentIds.filter(
-          (id) =>
-            canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
-            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
-        )}
+        selection={selection}
+        selectionSize={selectionSize}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
+        tableFilters={tableFilterString}
         onSubmit={handleSubmitMove}
       />
       <ExperimentRetainLogsModal.Component
