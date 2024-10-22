@@ -111,7 +111,7 @@ entries:
     version: 1.3.0-dev6
   - apiVersion: v2
     appVersion: dev
-    created: "2024-10-17T07:50:57.4137937Z"
+    created: "2024-10-22T23:14:50.12237638Z"
     dependencies:
     - condition: oidc.enabled
       name: dex
@@ -5523,4 +5523,4 @@ entries:
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.2/determined-helm-chart_0.18.2.tgz
     version: 0.18.2
-generated: "2024-10-22T16:25:43.869925804Z"
+generated: "2024-10-22T23:14:50.098516131Z"
