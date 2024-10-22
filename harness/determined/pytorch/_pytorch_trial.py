@@ -478,16 +478,16 @@ class _PyTorchTrialController:
                         unit=self.max_length,
                     ),
                     pytorch.TrainBoundary(
-                        step_type=pytorch.TrainBoundaryType.VALIDATE,
-                        unit=self.validation_period
+                        step_type=pytorch.TrainBoundaryType.VALIDATE, unit=self.validation_period
                     ),
                     pytorch.TrainBoundary(
                         step_type=pytorch.TrainBoundaryType.CHECKPOINT,
                         unit=self.checkpoint_period,
                     ),
                     # Scheduling unit is always configured in batches
-                    pytorch.TrainBoundary(step_type=pytorch.TrainBoundaryType.REPORT,
-                                          unit=self.reporting_period),
+                    pytorch.TrainBoundary(
+                        step_type=pytorch.TrainBoundaryType.REPORT, unit=self.reporting_period
+                    ),
                 ],
             )
         except ShouldExit as e:
