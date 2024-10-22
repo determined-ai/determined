@@ -60,7 +60,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const [searchOn, setSearchOn] = useState<boolean>(false);
   const [logViewerOn, setLogViewerOn] = useState<boolean>(true);
-  const [searchInput, setSearchInput] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string | undefined>(undefined);
   const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
   const [selectedLog, setSelectedLog] = useState<ViewerLog>();
   const [searchWidth, setSearchWidth] = useState(INITIAL_SEARCH_WIDTH);
@@ -93,7 +93,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   useEffect(() => {
     settings.searchText?.length && setSearchOn(true);
-    setSearchInput((prev) => (prev === settings.searchText ? prev : settings.searchText) ?? '');
   }, [settings.searchText]);
 
   const handleFilterChange = useCallback(
@@ -481,7 +480,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
             <Input
               allowClear
               placeholder="Search Logs..."
-              value={searchInput}
+              value={searchInput ?? settings.searchText}
               width={240}
               onChange={onSearchChange}
             />
