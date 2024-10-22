@@ -1111,9 +1111,12 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 		); err != nil {
 		return nil, err
 	}
-	// temp
-	query.Group(req.Group)
-	query.ColumnExpr(fmt.Sprintf("%s AS group_name", req.Group))
+	group_name, err := runColumnNameToSQL(req.Group)
+	if err != nil {
+		return nil, err
+	}
+	query.Group(group_name)
+	query.ColumnExpr(fmt.Sprintf("%s AS group_name", group_name))
 	err = query.Scan(ctx)
 	if err != nil {
 		return nil, err
