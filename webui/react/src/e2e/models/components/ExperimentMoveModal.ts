@@ -7,10 +7,10 @@ import { Select } from 'e2e/models/common/hew/Select';
 export default class ExperimentMoveModal extends Modal {
   readonly destinationWorkspace = new Select({
     parent: this,
-    selector: 'input[id="workspace"]',
+    selector: '[data-test="workspace"]',
   });
   readonly destinationProject = new Select({
     parent: this,
-    selector: 'input[id="projectId"]',
+    selector: '[data-test="project"]',
   });
 }
