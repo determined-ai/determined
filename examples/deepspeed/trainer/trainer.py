@@ -23,8 +23,8 @@ def main(config_file: str, local: bool=True):
         latest_checkpoint = None
     else:
         print("Cluster training")
-        hparams = AttrDict(info.trial.hparams)
-        data_config = AttrDict(info.trial._config['data'])
+        hparams = info.trial.hparams
+        data_config = info.trial._config['data']
         max_length = None  # On-cluster training trains for the searcher's configured length.
         latest_checkpoint = (
             info.latest_checkpoint
