@@ -3165,7 +3165,7 @@ jobs:
         default: "1.29.5"
       upgrade-branch:
         type: string
-        default: $CIRCLE_SHA1
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3200,9 +3200,12 @@ jobs:
                 determined-SHA: $HEAD_COMMIT
                 executor: <<pipeline.parameters.machine-image>>
             - install-devcluster
-            - start-devcluster:
-                devcluster-config: <<parameters.devcluster-config>>
-                target-stage: agent1
+            - unless:
+                condition: <<parameters.managed-devcluster>>
+                steps:
+                  - start-devcluster:
+                      devcluster-config: <<parameters.devcluster-config>>
+                      target-stage: <<parameters.target-stage>>
             - run: sleep 10
             - stop-devcluster
             - run: git checkout $CIRCLE_SHA1
