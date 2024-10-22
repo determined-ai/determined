@@ -120,7 +120,7 @@ Get familiar with Determined by exploring the 30+ examples in the [examples fold
   - [PyTorch API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/api-pytorch-ug.html)
   - [Keras API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/api-keras-ug.html)
   - [DeepSpeed API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/deepspeed/overview.html)
-- [Ask Determined Guru](https://gurubase.io/g/determined) - it is an Determined-focused AI to answer your questions.
+- [Ask Determined Guru](https://gurubase.io/g/determined) - it is a Determined-focused AI to answer your questions.
 
 # Community
 
