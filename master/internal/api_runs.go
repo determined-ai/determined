@@ -1111,6 +1111,22 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 		); err != nil {
 		return nil, err
 	}
+	if req.Filter != nil {
+		query, err = filterRunQuery(query, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Sort != nil {
+		err = sortRuns(req.Sort, query)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		query.OrderExpr("id ASC")
+	}
+
 	group_name, err := runColumnNameToSQL(req.Group)
 	if err != nil {
 		return nil, err
