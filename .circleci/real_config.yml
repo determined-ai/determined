@@ -4748,7 +4748,7 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-upgrade:
-    when: << pipeline.parameters.do_upgrade_tests >>
+    #when: << pipeline.parameters.do_upgrade_tests >>
     jobs:
       - build-proto
       - build-helm
