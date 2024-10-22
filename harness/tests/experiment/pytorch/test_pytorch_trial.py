@@ -82,8 +82,8 @@ class TestPyTorchTrial:
         train_steps, metrics = trial_controller._train_with_boundaries(
             training_enumerator=enumerate(trial_controller.training_iterator),
             train_boundaries=[
-                pytorch._TrainBoundary(
-                    step_type=pytorch._TrainBoundaryType.TRAIN, unit=pytorch.Batch(100)
+                pytorch.TrainBoundary(
+                    step_type=pytorch.TrainBoundaryType.TRAIN, unit=pytorch.Batch(100)
                 )
             ],
         )
@@ -114,8 +114,8 @@ class TestPyTorchTrial:
         train_steps, metrics = trial_controller._train_with_boundaries(
             training_enumerator=enumerate(trial_controller.training_iterator),
             train_boundaries=[
-                pytorch._TrainBoundary(
-                    step_type=pytorch._TrainBoundaryType.TRAIN, unit=pytorch.Batch(100)
+                pytorch.TrainBoundary(
+                    step_type=pytorch.TrainBoundaryType.TRAIN, unit=pytorch.Batch(100)
                 )
             ],
         )
@@ -542,8 +542,8 @@ class TestPyTorchTrial:
             train_steps, metrics = controller._train_with_boundaries(
                 training_enumerator=enumerate(controller.training_iterator),
                 train_boundaries=[
-                    pytorch._TrainBoundary(
-                        step_type=pytorch._TrainBoundaryType.TRAIN, unit=pytorch.Batch(num_batches)
+                    pytorch.TrainBoundary(
+                        step_type=pytorch.TrainBoundaryType.TRAIN, unit=pytorch.Batch(num_batches)
                     )
                 ],
             )
