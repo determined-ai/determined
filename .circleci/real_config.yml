@@ -55,6 +55,9 @@ parameters:
   do_nightly_tests:
     type: boolean
     default: false
+  do_upgrade_tests:
+    type: boolean
+    default: false
   ee:
     type: boolean
     default: false
@@ -4785,20 +4788,19 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-upgrade:
-    triggers:
-      - schedule:
-          cron: "* * * * *"  # Runs at midnight (UTC) every Monday "0 0 * * 1"
-          filters: *release-upgrade  # Only runs on the release branches  
+    when: << pipeline.parameters.do_upgrade_tests >>
     jobs:
       - build-proto
       - build-helm
       - build-react:
           dev-mode: true
+          filters: *release-upgrade
       - test-e2e-react:
           name: test-e2e-react-ee
           ee: true
           requires:
             - build-go-ee
+          filters: *release-upgrade
           context:
             - playwright
             - github-read
@@ -4807,9 +4809,11 @@ workflows:
           requires:
             - build-helm
             - build-proto
+          filters: *release-upgrade
       - build-go:
           name: build-go-ee
           context: github-read
+          filters: *release-upgrade
 
       - start-stop-devcluster:
           context:
@@ -4818,11 +4822,13 @@ workflows:
           requires:
             - build-go-ee
           name: start-stop-devcluster
+          filters: *release-upgrade
       - build-go: 
           name: build-upgraded-go
           context: github-read
           requires:
-            - start-stop-devcluster          
+            - start-stop-devcluster
+          filters: *release-upgrade          
 
       - start-stop-devcluster:
           context:
@@ -4831,11 +4837,13 @@ workflows:
           requires:
             - build-go-ee
           name: start-stop-rbac-devcluster
+          filters: *release-upgrade
       - build-go: 
           name: build-upgraded-rbac-go
           context: github-read
           requires:
-            - start-stop-devcluster          
+            - start-stop-devcluster 
+          filters: *release-upgrade        
 
       - test-e2e:
           name: test-e2e-cpu
@@ -4847,6 +4855,7 @@ workflows:
           resource-class: xlarge
           tf2: true
           mark: e2e_cpu
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4860,6 +4869,7 @@ workflows:
           mark: e2e_cpu_2a
           target-stage: agent2
           devcluster-config: double-priority.devcluster.yaml
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4871,6 +4881,7 @@ workflows:
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
           target-stage: agent1
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4887,6 +4898,7 @@ workflows:
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4901,6 +4913,7 @@ workflows:
           managed-devcluster: true
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4915,6 +4928,7 @@ workflows:
           devcluster-config: multi-k8s.devcluster.yaml
           run-minikubes: true
           multi-k8s: true
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4927,6 +4941,7 @@ workflows:
           target-stage: master
           devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4938,6 +4953,7 @@ workflows:
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -4950,6 +4966,7 @@ workflows:
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -4962,6 +4979,7 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "10"
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -4974,6 +4992,7 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: "14"
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -4988,6 +5007,7 @@ workflows:
           matrix:
             parameters:
               agent-version: ["0.17.10"]
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
@@ -5000,6 +5020,7 @@ workflows:
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-saml
@@ -5011,6 +5032,7 @@ workflows:
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
+          filters: *release-upgrade
       
       - test-e2e:
           name: test-e2e-rbac
@@ -5021,6 +5043,7 @@ workflows:
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
+          filters: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -5032,6 +5055,7 @@ workflows:
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
           target-stage: agent1
+          filters: *release-upgrade
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger

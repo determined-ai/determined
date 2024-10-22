@@ -86,6 +86,26 @@ jobs:
               jq '. += {"do_nightly_tests": true}' < "<<pipeline.parameters.params_basename>>" > tmpfile
               mv -v tmpfile "<<pipeline.parameters.params_basename>>"
             fi
+      - run:
+          name: Check for scheduled upgrade run.
+          command: |
+            if [[ "scheduled_pipeline" == "<<pipeline.trigger_source>>"
+               && "upgrade_tests" == "<<pipeline.schedule.name>>"
+            ]]
+            then
+              # add the parameter(s) to the temp file
+              jq '. += {"do_upgrade_tests": true}' < "<<pipeline.parameters.params_basename>>" > tmpfile
+              mv -v tmpfile "<<pipeline.parameters.params_basename>>"
+            fi
+      - run:
+          name: Check for labeled upgrade run.
+          command: |
+            if gh pr view --json labels --jq ".labels[].name" \
+               | grep -w "ci-run-upgrade-tests"
+            then
+              jq '. += {"do_upgrade_tests": true}' < "<<pipeline.parameters.params_basename>>" > tmpfile
+              mv -v tmpfile "<<pipeline.parameters.params_basename>>"
+            fi
 
       - run:
           name: Set det-version parameter.
