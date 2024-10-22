@@ -116,7 +116,7 @@ func (a *apiServer) SearchRuns(
 	}
 
 	if req.Sort != nil {
-		err = sortRuns(req.Sort, query)
+		err = sortRuns(req.Sort, query, true)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +178,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
 }
 
-func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
+func sortRuns(sortString *string, runQuery *bun.SelectQuery, useId bool) error {
 	if sortString == nil {
 		return nil
 	}
@@ -262,7 +262,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
 	}
-	if !hasIDSort {
+	if !hasIDSort && useId {
 		runQuery.OrderExpr("id ASC")
 	}
 	return nil
@@ -1119,12 +1119,12 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 	}
 
 	if req.Sort != nil {
-		err = sortRuns(req.Sort, query)
+		err = sortRuns(req.Sort, query, false)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		query.OrderExpr("id ASC")
+		query.OrderExpr("group_name ASC")
 	}
 
 	group_name, err := runColumnNameToSQL(req.Group)
@@ -1153,6 +1153,7 @@ func getRunsGroupsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("json_agg(distinct e.config->'resources'->>'resource_pool') as resource_pools").
 		ColumnExpr("json_agg(distinct e.config->'searcher'->>'name') as searcher_types").
 		ColumnExpr("json_agg(distinct e.config->'searcher'->>'metric') as searcher_metrics").
+		ColumnExpr("COUNT(*) AS run_count").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").

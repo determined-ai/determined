@@ -271,4 +271,6 @@ message RunGroup {
   repeated string searcher_metrics = 10;
   // The resource pool the experiment was created in.
   repeated string resource_pools = 11;
+  // The number of runs in the group.
+  int32 run_count = 12;
 }
