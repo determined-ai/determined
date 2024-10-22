@@ -741,26 +741,22 @@ test.describe('Experiment List', () => {
       const menuMove = await newExperimentRow.experimentActionDropdown.open();
 
       await menuMove.menuItem('Move').pwLocator.click();
-      await menuMove.moveModal.destinationWorkspace.pwLocator.fill(workspace.name);
       await menuMove.moveModal.destinationWorkspace.selectMenuOption(workspace.name);
       await menuMove.moveModal.destinationProject.pwLocator.waitFor({ state: 'visible' });
-      await menuMove.moveModal.destinationProject.pwLocator.fill(destinationProject.name);
-      await menuMove.moveModal.destinationWorkspace.selectMenuOption(destinationProject.name);
+      await menuMove.moveModal.destinationProject.selectMenuOption(destinationProject.name);
       await menuMove.moveModal.footer.submit.pwLocator.click();
       await menuMove.moveModal.pwLocator.waitFor({ state: 'hidden' });
 
       await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
 
       await projectDetailsPage.gotoProject(destinationProject.id);
-      await waitTableStable();
-      await expect(
-        (
-          await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
-            'ID',
-            experimentId.toString(),
-          )
-        ).pwLocator,
-      ).toBeVisible();
+      const grid = projectDetailsPage.f_experimentList.dataGrid;
+      await grid.setColumnHeight();
+      await grid.headRow.setColumnDefs();
+      const newProjectRows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(() =>
+        Promise.resolve(true),
+      );
+      await expect(newProjectRows.length).toBe(1);
     });
   });
 });
