@@ -3209,6 +3209,7 @@ jobs:
                 determined: True
                 extra-requirements-file: "e2e_tests/tests/requirements.txt"
                 determined-SHA: $HEAD_COMMIT
+                executor: <<pipeline.parameters.machine-image>>
             - install-devcluster
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
