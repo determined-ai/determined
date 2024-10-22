@@ -3184,8 +3184,7 @@ jobs:
       
       - when:
           condition: <<parameters.upgrade-branch>>
-          # Only run this on the main branch when the tests are scheduled.
-          #condition: <<pipeline.parameters.do_upgrade_tests>>
+          # Only run this when an upgrade branch parameter is given.
           steps:
             # Upgrade test portion: downgrade to specified version, start/stop devcluster
             - run: 
@@ -4748,7 +4747,7 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-upgrade:
-    #when: << pipeline.parameters.do_upgrade_tests >>
+    when: << pipeline.parameters.do_upgrade_tests >>
     jobs:
       - build-proto
       - build-helm
@@ -4774,7 +4773,7 @@ workflows:
           mark: e2e_cpu
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4790,7 +4789,7 @@ workflows:
           devcluster-config: double-priority.devcluster.yaml
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4804,7 +4803,7 @@ workflows:
           target-stage: agent1
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -4823,7 +4822,7 @@ workflows:
           collect-det-job-logs: false
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-managed-devcluster-resource-pools
@@ -4840,7 +4839,7 @@ workflows:
           collect-det-job-logs: false
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4857,7 +4856,7 @@ workflows:
           multi-k8s: true
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4872,7 +4871,7 @@ workflows:
           run-minikubes: true
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4886,7 +4885,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -4901,7 +4900,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -4916,7 +4915,7 @@ workflows:
           postgres-version: "10"
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -4931,7 +4930,7 @@ workflows:
           postgres-version: "14"
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -4945,7 +4944,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
               agent-version: ["0.17.10"]
 
       - test-e2e:
@@ -4961,7 +4960,7 @@ workflows:
           collect-det-job-logs: false
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-saml
@@ -4975,7 +4974,7 @@ workflows:
           mark: e2e_saml
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
       
       - test-e2e:
           name: test-e2e-rbac
@@ -4988,7 +4987,7 @@ workflows:
           devcluster-config: single-rbac.devcluster.yaml
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -5002,7 +5001,7 @@ workflows:
           target-stage: agent1
           matrix:
             parameters:
-              upgrade-branch: ["carolinac/upgradetests", "release-0.32.0", "release-0.35.0"]
+              upgrade-branch: ["carolinac/upgrade-tests", "release-0.32.0", "release-0.35.0"]
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
