@@ -19,6 +19,10 @@
    <https://github.com/determined-ai/determined>`_ (e.g.,
    ``b13461ed06f2fad339e179af8028d4575db71a81``). Users are encouraged to use a released version.
 
+   -  The version specified in the ``detVersion`` field of your ``values.yaml`` overrides the
+      version specified in ``appVersion``. For more information, see ``detVersion`` in the
+      :ref:`values.yaml config reference <values-yaml-settings>`.
+
 .. note::
 
    If using a non-release branch of the Determined repository, ``appVersion`` is going to be set to
@@ -26,9 +30,21 @@
    ``ImagePullBackOff`` error. Users should remove ``.dev0`` to get the latest released version, or
    they can specify a specific commit hash instead.
 
+.. _values-yaml-settings:
+
 **************************
  ``values.yaml`` Settings
 **************************
+
+-  ``detVersion``: The Determined version to install. This can be a release version (e.g.,
+   ``0.13.0``) or a commit hash from the `upstream Determined repo
+   <https://github.com/determined-ai/determined>`_. Release versions are encouraged.
+
+   -  **NOTE:** This version overrides the version specified in ``appVersion`` of your
+      ``Chart.yaml`` *and* any version specified in your ``helm install`` or ``helm upgrade``
+      command. So, for example, if you install Determined with ``helm install <release_name>
+      <helm_repo> --version <X.Y.Z>`` but set ``detVersion: A.B.C``, the Determined version
+      ``A.B.C`` is installed.
 
 -  ``masterPort``: The port at which the Determined master listens for connections on. (*Required*)
 
