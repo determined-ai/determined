@@ -210,80 +210,40 @@ func (a *apiServer) MoveSearches(
 	return &apiv1.MoveSearchesResponse{Results: results}, nil
 }
 
-func (a *apiServer) KillSearches(ctx context.Context, req *apiv1.KillSearchesRequest,
-) (*apiv1.KillSearchesResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+func (a *apiServer) CancelSearches(ctx context.Context, req *apiv1.CancelSearchesRequest,
+) (*apiv1.CancelSearchesResponse, error) {
+	results, validIDs, err := validateBulkSearchActionCandidates(ctx, req.ProjectId, req.SearchIds, req.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	type killSearchOKResult struct {
-		ID         int32
-		RequestID  *string
-		IsTerminal bool
-	}
-
-	var killCandidatees []killSearchOKResult
-	getQ := getSelectSearchesQueryTables().
-		Model(&killCandidatees).
-		Column("e.id").
-		ColumnExpr("t.request_id").
-		ColumnExpr("e.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
-		Where("e.project_id = ?", req.ProjectId)
-
-	if req.Filter == nil {
-		getQ = getQ.Where("e.id IN (?)", bun.In(req.SearchIds))
-	} else {
-		getQ, err = filterSearchQuery(getQ, req.Filter)
+	for _, searchID := range validIDs {
+		// Could use a.CancelExperiments instead, but would still need to
+		// iterate over results to build out response structure
+		_, err = a.CancelExperiment(ctx, &apiv1.CancelExperimentRequest{
+			Id: searchID,
+		})
 		if err != nil {
-			return nil, err
-		}
-	}
-
-	if getQ, err = experiment.AuthZProvider.Get().
-		FilterExperimentsQuery(ctx, *curUser, nil, getQ,
-			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
-		return nil, err
-	}
-
-	err = getQ.Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var results []*apiv1.SearchActionResult
-	visibleIDs := set.New[int32]()
-	var validIDs []int32
-	for _, cand := range killCandidatees {
-		visibleIDs.Insert(cand.ID)
-		switch {
-		case cand.IsTerminal:
+			results = append(results, &apiv1.SearchActionResult{
+				Error: fmt.Sprintf("Failed to kill search: %s", err),
+				Id:    searchID,
+			})
+		} else {
 			results = append(results, &apiv1.SearchActionResult{
 				Error: "",
-				Id:    cand.ID,
+				Id:    searchID,
 			})
-		// This should be impossible in the current system but we will leave this check here
-		// to cover a possible error in integration tests
-		case cand.RequestID == nil:
-			results = append(results, &apiv1.SearchActionResult{
-				Error: "Search has no associated request id.",
-				Id:    cand.ID,
-			})
-		default:
-			validIDs = append(validIDs, cand.ID)
 		}
 	}
-	if req.Filter == nil {
-		for _, originalID := range req.SearchIds {
-			if !visibleIDs.Contains(originalID) {
-				results = append(results, &apiv1.SearchActionResult{
-					Error: fmt.Sprintf("Search with id '%d' not found", originalID),
-					Id:    originalID,
-				})
-			}
-		}
-	}
+	return &apiv1.CancelSearchesResponse{Results: results}, nil
+}
 
+func (a *apiServer) KillSearches(ctx context.Context, req *apiv1.KillSearchesRequest,
+) (*apiv1.KillSearchesResponse, error) {
+	results, validIDs, err := validateBulkSearchActionCandidates(ctx, req.ProjectId, req.SearchIds, req.Filter)
+	if err != nil {
+		return nil, err
+	}
 	for _, searchID := range validIDs {
 		_, err = a.KillExperiment(ctx, &apiv1.KillExperimentRequest{
 			Id: searchID,
@@ -670,4 +630,75 @@ func pauseResumeSearchAction(ctx context.Context, isPause bool, projectID int32,
 		}
 	}
 	return results, nil
+}
+
+func validateBulkSearchActionCandidates(
+	ctx context.Context, projectID int32, searchIds []int32, filter *string,
+) ([]*apiv1.SearchActionResult, []int32, error) {
+	if len(searchIds) > 0 && filter != nil {
+		return nil, nil, fmt.Errorf("if filter is provided search id list must be empty")
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	type searchResult struct {
+		ID         int32
+		IsTerminal bool
+	}
+
+	var candidates []searchResult
+	getQ := getSelectSearchesQueryTables().
+		Model(&candidates).
+		Column("e.id").
+		ColumnExpr("e.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Where("e.project_id = ?", projectID)
+
+	if filter == nil {
+		getQ = getQ.Where("e.id IN (?)", bun.In(searchIds))
+	} else {
+		getQ, err = filterSearchQuery(getQ, filter)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
+		return nil, nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var results []*apiv1.SearchActionResult
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	for _, cand := range candidates {
+		visibleIDs.Insert(cand.ID)
+		switch {
+		case cand.IsTerminal:
+			results = append(results, &apiv1.SearchActionResult{
+				Error: "",
+				Id:    cand.ID,
+			})
+		default:
+			validIDs = append(validIDs, cand.ID)
+		}
+	}
+	if filter == nil {
+		for _, originalID := range searchIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.SearchActionResult{
+					Error: fmt.Sprintf("Search with id '%d' not found", originalID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	return results, validIDs, nil
 }

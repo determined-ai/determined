@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 // nolint: exhaustruct
@@ -365,6 +366,357 @@ func TestDeleteSearchesFilter(t *testing.T) {
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
 	require.Len(t, searchResp.Runs, 1)
+}
+
+func TestCancelSearchesNonTerminal(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
+
+	searchIDs := []int32{int32(exp.ID)}
+	req := &apiv1.CancelSearchesRequest{
+		SearchIds: searchIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.CancelSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Empty(t, res.Results[0].Error)
+	require.Equal(t, res.Results[0].Id, searchIDs[0])
+
+	searchReq = &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err = api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
+}
+
+func TestCancelSearchesIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, _, _, expID := setUpMultiTrialExperiments(ctx, t, api, curUser) //nolint:dogsled
+
+	expIDs := []int32{expID}
+	req := &apiv1.CancelSearchesRequest{
+		SearchIds: expIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.CancelSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.GetRuns(), 2)
+	for _, run := range searchResp.GetRuns() {
+		require.Equal(t, trialv1.State_STATE_COMPLETED, run.State)
+	}
+}
+
+func TestCancelSearchesIdsNonExistent(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// cancel runs
+	searchIDs := []int32{-1}
+	req := &apiv1.CancelSearchesRequest{
+		SearchIds: searchIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.CancelSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, fmt.Sprintf("Search with id '%d' not found", -1),
+		res.Results[0].Error)
+}
+
+func TestCancelSearchesFilter(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1, "test3": map[string]any{"test4": 1}}
+	exp1 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters1)
+	hyperparameters2 := map[string]any{"test3": map[string]any{"test4": 5}}
+	exp2 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters2)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	projHparam := getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test3.test4"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
+
+	require.NoError(t, completeExp(ctx, int32(exp1.ID)))
+	require.NoError(t, completeExp(ctx, int32(exp2.ID)))
+
+	filter := `{
+		"filterGroup": {
+		  "children": [
+			{
+			  "columnName": "hp.test3.test4",
+			  "kind": "field",
+			  "location": "LOCATION_TYPE_HYPERPARAMETERS",
+			  "operator": "<=",
+			  "type": "COLUMN_TYPE_NUMBER",
+			  "value": 1
+			}
+		  ],
+		  "conjunction": "and",
+		  "kind": "group"
+		},
+		"showArchived": true
+	  }`
+	req := &apiv1.CancelSearchesRequest{
+		Filter:    &filter,
+		ProjectId: projectID,
+	}
+	res, err := api.CancelSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.Contains(t, projHparam, "test3.test4")
+	require.Contains(t, projHparam, "global_batch_size")
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.GetRuns(), 2)
+}
+
+func TestKillSearchesNonTerminal(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.GetRuns(), 2)
+
+	searchIDs := []int32{int32(exp.ID)}
+	req := &apiv1.KillSearchesRequest{
+		SearchIds: searchIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.KillSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Empty(t, res.Results[0].Error)
+	require.Equal(t, res.Results[0].Id, searchIDs[0])
+
+	searchReq = &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err = api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
+}
+
+func TestKillSearchesIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, _, _, expID := setUpMultiTrialExperiments(ctx, t, api, curUser) //nolint:dogsled
+
+	expIDs := []int32{expID}
+	req := &apiv1.KillSearchesRequest{
+		SearchIds: expIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.KillSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.GetRuns(), 2)
+	for _, run := range searchResp.GetRuns() {
+		require.Equal(t, trialv1.State_STATE_COMPLETED, run.State)
+	}
+}
+
+func TestKillSearchesIdsNonExistent(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// delete runs
+	searchIDs := []int32{-1}
+	req := &apiv1.KillSearchesRequest{
+		SearchIds: searchIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.KillSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, fmt.Sprintf("Search with id '%d' not found", -1),
+		res.Results[0].Error)
+}
+
+func TestKillSearchesFilter(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1, "test5": map[string]any{"test6": 1}}
+	exp1 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters1)
+	hyperparameters2 := map[string]any{"test5": map[string]any{"test6": 5}}
+	exp2 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters2)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	projHparam := getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.Contains(t, projHparam, "test5.test6")
+	require.Contains(t, projHparam, "global_batch_size")
+
+	filter := `{
+		"filterGroup": {
+		  "children": [
+			{
+			  "columnName": "hp.test5.test6",
+			  "kind": "field",
+			  "location": "LOCATION_TYPE_HYPERPARAMETERS",
+			  "operator": "<=",
+			  "type": "COLUMN_TYPE_NUMBER",
+			  "value": 1
+			}
+		  ],
+		  "conjunction": "and",
+		  "kind": "group"
+		},
+		"showArchived": true
+	  }`
+	req := &apiv1.KillSearchesRequest{
+		Filter:    &filter,
+		ProjectId: projectID,
+	}
+	res, err := api.KillSearches(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.Contains(t, projHparam, "test5.test6")
+	require.Contains(t, projHparam, "global_batch_size")
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.GetRuns(), 2)
 }
 
 func TestArchiveUnarchiveSearchIds(t *testing.T) {

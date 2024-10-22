@@ -1855,6 +1855,44 @@ export interface V1CancelExperimentsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
+ * Cancel searches.
+ * @export
+ * @interface V1CancelSearchesRequest
+ */
+export interface V1CancelSearchesRequest {
+    /**
+     * The ids of the searches being canceled. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1CancelSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * Project id of the searches being canceled.
+     * @type {number}
+     * @memberof V1CancelSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1CancelSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to CancelSearchesRequest.
+ * @export
+ * @interface V1CancelSearchesResponse
+ */
+export interface V1CancelSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1CancelSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * Checkpoint a collection of files saved by a task.
  * @export
  * @interface V1Checkpoint
@@ -2824,7 +2862,7 @@ export interface V1DeleteSearchesRequest {
     filter?: string;
 }
 /**
- * Response to DeleteSearchesResponse.
+ * Response to DeleteSearchesRequest.
  * @export
  * @interface V1DeleteSearchesResponse
  */
@@ -5994,7 +6032,7 @@ export interface V1KillSearchesRequest {
     filter?: string;
 }
 /**
- * Response to KillSearchesResponse.
+ * Response to KillSearchesRequest.
  * @export
  * @interface V1KillSearchesResponse
  */
@@ -20882,6 +20920,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Cancel searches.
+         * @param {V1CancelSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelSearches(body: V1CancelSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling cancelSearches.');
+            }
+            const localVarPath = `/api/v1/searches/cancel`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Cleanup task logs according to the retention policy.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -24454,6 +24530,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Cancel searches.
+         * @param {V1CancelSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelSearches(body: V1CancelSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).cancelSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Cleanup task logs according to the retention policy.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26169,6 +26264,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Cancel searches.
+         * @param {V1CancelSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelSearches(body: V1CancelSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).cancelSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Cleanup task logs according to the retention policy.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -27183,6 +27288,18 @@ export class InternalApi extends BaseAPI {
      */
     public bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any) {
         return InternalApiFp(this.configuration).bindRPToWorkspace(resourcePoolName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Cancel searches.
+     * @param {V1CancelSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public cancelSearches(body: V1CancelSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).cancelSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**

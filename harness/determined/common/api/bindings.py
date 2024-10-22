@@ -2147,6 +2147,68 @@ class v1CancelExperimentsResponse(Printable):
         }
         return out
 
+class v1CancelSearchesRequest(Printable):
+    """Cancel searches."""
+    filter: "typing.Optional[str]" = None
+    searchIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(searchIds, Unset):
+            self.searchIds = searchIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CancelSearchesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "searchIds" in obj:
+            kwargs["searchIds"] = obj["searchIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "searchIds" in vars(self):
+            out["searchIds"] = self.searchIds
+        return out
+
+class v1CancelSearchesResponse(Printable):
+    """Response to CancelSearchesRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1SearchActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CancelSearchesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1Checkpoint(Printable):
     """Checkpoint a collection of files saved by a task."""
     allocationId: "typing.Optional[str]" = None
@@ -3508,7 +3570,7 @@ class v1DeleteSearchesRequest(Printable):
         return out
 
 class v1DeleteSearchesResponse(Printable):
-    """Response to DeleteSearchesResponse."""
+    """Response to DeleteSearchesRequest."""
 
     def __init__(
         self,
@@ -8217,7 +8279,7 @@ class v1KillSearchesRequest(Printable):
         return out
 
 class v1KillSearchesResponse(Printable):
-    """Response to KillSearchesResponse."""
+    """Response to KillSearchesRequest."""
 
     def __init__(
         self,
@@ -18944,6 +19006,27 @@ def post_CancelExperiments(
     if _resp.status_code == 200:
         return v1CancelExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_CancelExperiments", _resp)
+
+def post_CancelSearches(
+    session: "api.BaseSession",
+    *,
+    body: "v1CancelSearchesRequest",
+) -> "v1CancelSearchesResponse":
+    """Cancel searches."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/searches/cancel",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CancelSearchesResponse.from_json(_resp.json())
+    raise APIHttpError("post_CancelSearches", _resp)
 
 def post_CheckpointsRemoveFiles(
     session: "api.BaseSession",

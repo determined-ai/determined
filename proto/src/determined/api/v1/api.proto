@@ -2900,6 +2900,17 @@ service Determined {
     };
   }
 
+  // Cancel searches.
+  rpc CancelSearches(CancelSearchesRequest) returns (CancelSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/cancel"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Kill searches.
   rpc KillSearches(KillSearchesRequest) returns (KillSearchesResponse) {
     option (google.api.http) = {
