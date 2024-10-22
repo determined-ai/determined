@@ -1133,10 +1133,11 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 	}
 	query.Group(group_name)
 	query.ColumnExpr(fmt.Sprintf("%s AS group_name", group_name))
-	err = query.Scan(ctx)
+	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
+	resp.Pagination = pagination
 	resp.Groups = groups
 	return resp, nil
 }
