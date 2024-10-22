@@ -88,14 +88,19 @@ const FlatRunActionButton = ({
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
       const params: RunBulkActionParams = { projectId };
-      if (selection.type === 'ONLY_IN') {
-        const validRunIds = selectedRuns
-          .filter((run) => canActionFlatRun(action, run))
-          .map((run) => run.id);
-        params.runIds = validRunIds;
-      } else if (selection.type === 'ALL_EXCEPT') {
-        const filters = JSON.parse(tableFilterString);
-        params.filter = JSON.stringify(getIdsFilter(filters, selection));
+      switch (selection.type) {
+        case 'ONLY_IN': {
+          const validRunIds = selectedRuns
+            .filter((run) => canActionFlatRun(action, run))
+            .map((run) => run.id);
+          params.runIds = validRunIds;
+          break;
+        }
+        case 'ALL_EXCEPT': {
+          const filters = JSON.parse(tableFilterString);
+          params.filter = JSON.stringify(getIdsFilter(filters, selection));
+          break;
+        }
       }
       switch (action) {
         case ExperimentAction.Move:
@@ -185,12 +190,12 @@ const FlatRunActionButton = ({
   );
 
   const availableBatchActions = useMemo(() => {
-    if (selection.type === 'ONLY_IN') {
-      return getActionsForFlatRunsUnion(selectedRuns, [...BATCH_ACTIONS], permissions);
-    } else if (selection.type === 'ALL_EXCEPT') {
-      return BATCH_ACTIONS;
+    switch (selection.type) {
+      case 'ONLY_IN':
+        return getActionsForFlatRunsUnion(selectedRuns, [...BATCH_ACTIONS], permissions);
+      case 'ALL_EXCEPT':
+        return BATCH_ACTIONS;
     }
-    return [];
   }, [selection.type, selectedRuns, permissions]);
 
   const editMenuItems = useMemo(() => {

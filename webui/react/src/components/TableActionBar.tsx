@@ -216,29 +216,35 @@ const TableActionBar: React.FC<Props> = ({
   );
 
   const availableBatchActions = useMemo(() => {
-    if (selection.type === 'ONLY_IN') {
-      const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
-      return getActionsForExperimentsUnion(experiments, [...batchActions], permissions); // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-    } else if (selection.type === 'ALL_EXCEPT') {
-      return batchActions.filter(
-        (action) =>
-          action !== ExperimentAction.OpenTensorBoard && action !== ExperimentAction.Cancel,
-      );
+    switch (selection.type) {
+      case 'ONLY_IN': {
+        const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
+        return getActionsForExperimentsUnion(experiments, [...batchActions], permissions); // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
+      }
+      case 'ALL_EXCEPT':
+        return batchActions.filter(
+          (action) =>
+            action !== ExperimentAction.OpenTensorBoard && action !== ExperimentAction.Cancel,
+        );
     }
-    return []; // should never be reached
   }, [selection.type, selectedExperimentIds, permissions, experimentMap]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
       const params: SearchBulkActionParams = { projectId: project.id };
-      if (selection.type === 'ONLY_IN') {
-        const validSearchIds = selectedExperiments
-          .filter((exp) => !exp.unmanaged && canActionExperiment(action, exp))
-          .map((exp) => exp.id);
-        params.searchIds = validSearchIds;
-      } else if (selection.type === 'ALL_EXCEPT') {
-        const filters = JSON.parse(tableFilterString);
-        params.filter = JSON.stringify(getIdsFilter(filters, selection));
+      switch (selection.type) {
+        case 'ONLY_IN': {
+          const validSearchIds = selectedExperiments
+            .filter((exp) => !exp.unmanaged && canActionExperiment(action, exp))
+            .map((exp) => exp.id);
+          params.searchIds = validSearchIds;
+          break;
+        }
+        case 'ALL_EXCEPT': {
+          const filters = JSON.parse(tableFilterString);
+          params.filter = JSON.stringify(getIdsFilter(filters, selection));
+          break;
+        }
       }
 
       switch (action) {

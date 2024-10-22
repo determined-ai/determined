@@ -174,12 +174,14 @@ const Searches: React.FC<Props> = ({ project }) => {
   const isMobile = useMobile();
   const { openToast } = useToast();
 
-  const { selectionSize, dataGridSelection, handleSelectionChange, rowRangeToIds } = useSelection({
-    records: experiments.map((loadable) => loadable.map((exp) => exp.experiment)),
-    selection: settings.selection,
-    total,
-    updateSettings,
-  });
+  const { selectionSize, dataGridSelection, handleSelectionChange, isRangeSelected } = useSelection(
+    {
+      records: experiments.map((loadable) => loadable.map((exp) => exp.experiment)),
+      selection: settings.selection,
+      total,
+      updateSettings,
+    },
+  );
 
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
@@ -641,20 +643,6 @@ const Searches: React.FC<Props> = ({ project }) => {
   const handleActualSelectAll = useCallback(() => {
     handleSelectionChange?.('add-all');
   }, [handleSelectionChange]);
-
-  const isRangeSelected = useCallback(
-    (range: [number, number]): boolean => {
-      if (settings.selection.type === 'ONLY_IN') {
-        const includedSet = new Set(settings.selection.selections);
-        return rowRangeToIds(range).every((id) => includedSet.has(id));
-      } else if (settings.selection.type === 'ALL_EXCEPT') {
-        const excludedSet = new Set(settings.selection.exclusions);
-        return rowRangeToIds(range).every((id) => !excludedSet.has(id));
-      }
-      return false; // should never be reached
-    },
-    [rowRangeToIds, settings.selection],
-  );
 
   const handleHeaderClick = useCallback(
     (columnId: string): void => {

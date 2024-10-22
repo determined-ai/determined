@@ -192,8 +192,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     selectionSize,
     dataGridSelection,
     handleSelectionChange,
-    rowRangeToIds,
     loadedSelectedRecords: loadedSelectedRuns,
+    isRangeSelected,
   } = useSelection({
     records: runs,
     selection: settings.selection,
@@ -786,20 +786,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const handleClearSelect = useCallback(() => {
     handleSelectionChange?.('remove-all');
   }, [handleSelectionChange]);
-
-  const isRangeSelected = useCallback(
-    (range: [number, number]): boolean => {
-      if (settings.selection.type === 'ONLY_IN') {
-        const includedSet = new Set(settings.selection.selections);
-        return rowRangeToIds(range).every((id) => includedSet.has(id));
-      } else if (settings.selection.type === 'ALL_EXCEPT') {
-        const excludedSet = new Set(settings.selection.exclusions);
-        return rowRangeToIds(range).every((id) => !excludedSet.has(id));
-      }
-      return false; // should never be reached
-    },
-    [rowRangeToIds, settings.selection],
-  );
 
   const handleHeaderClick = useCallback(
     (columnId: string): void => {

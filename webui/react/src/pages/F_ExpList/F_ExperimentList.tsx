@@ -255,10 +255,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  // const allSelectedExperimentIds = useMemo(() => {
-  //   return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
-  // }, [settings.selection]);
-
   const colorMap = useGlasbey(loadedSelectedExperimentIds);
   const { width: containerWidth } = useResize(contentRef);
 

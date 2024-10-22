@@ -49,36 +49,40 @@ const useSelection = <T extends HasId>(config: SelectionConfig<T>): UseSelection
   }, [config.records]);
 
   const selectedRecordIdSet = useMemo(() => {
-    if (config.selection.type === 'ONLY_IN') {
-      return new Set(config.selection.selections);
-    } else if (config.selection.type === 'ALL_EXCEPT') {
-      const excludedSet = new Set(config.selection.exclusions);
-      return new Set(
-        Loadable.filterNotLoaded(config.records, (record) => !excludedSet.has(record.id)).map(
-          (record) => record.id,
-        ),
-      );
+    switch (config.selection.type) {
+      case 'ONLY_IN':
+        return new Set(config.selection.selections);
+      case 'ALL_EXCEPT': {
+        const excludedSet = new Set(config.selection.exclusions);
+        return new Set(
+          Loadable.filterNotLoaded(config.records, (record) => !excludedSet.has(record.id)).map(
+            (record) => record.id,
+          ),
+        );
+      }
     }
-    return new Set<number>(); // should never be reached
   }, [config.records, config.selection]);
 
   const dataGridSelection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    if (config.selection.type === 'ONLY_IN') {
-      config.selection.selections.forEach((id) => {
-        const incIndex = loadedRecordIdMap.get(id)?.index;
-        if (incIndex !== undefined) {
-          rows = rows.add(incIndex);
-        }
-      });
-    } else if (config.selection.type === 'ALL_EXCEPT') {
-      rows = rows.add([0, config.total.getOrElse(1) - 1]);
-      config.selection.exclusions.forEach((exc) => {
-        const excIndex = loadedRecordIdMap.get(exc)?.index;
-        if (excIndex !== undefined) {
-          rows = rows.remove(excIndex);
-        }
-      });
+    switch (config.selection.type) {
+      case 'ONLY_IN':
+        config.selection.selections.forEach((id) => {
+          const incIndex = loadedRecordIdMap.get(id)?.index;
+          if (incIndex !== undefined) {
+            rows = rows.add(incIndex);
+          }
+        });
+        break;
+      case 'ALL_EXCEPT':
+        rows = rows.add([0, config.total.getOrElse(1) - 1]);
+        config.selection.exclusions.forEach((exc) => {
+          const excIndex = loadedRecordIdMap.get(exc)?.index;
+          if (excIndex !== undefined) {
+            rows = rows.remove(excIndex);
+          }
+        });
+        break;
     }
     return {
       columns: CompactSelection.empty(),
@@ -95,12 +99,12 @@ const useSelection = <T extends HasId>(config: SelectionConfig<T>): UseSelection
   }, [loadedSelectedRecords]);
 
   const selectionSize = useMemo(() => {
-    if (config.selection.type === 'ONLY_IN') {
-      return config.selection.selections.length;
-    } else if (config.selection.type === 'ALL_EXCEPT') {
-      return config.total.getOrElse(0) - config.selection.exclusions.length;
+    switch (config.selection.type) {
+      case 'ONLY_IN':
+        return config.selection.selections.length;
+      case 'ALL_EXCEPT':
+        return config.total.getOrElse(0) - config.selection.exclusions.length;
     }
-    return 0;
   }, [config.selection, config.total]);
 
   const rowRangeToIds = useCallback(
@@ -169,14 +173,16 @@ const useSelection = <T extends HasId>(config: SelectionConfig<T>): UseSelection
 
   const isRangeSelected = useCallback(
     (range: [number, number]): boolean => {
-      if (config.selection.type === 'ONLY_IN') {
-        const includedSet = new Set(config.selection.selections);
-        return rowRangeToIds(range).every((id) => includedSet.has(id));
-      } else if (config.selection.type === 'ALL_EXCEPT') {
-        const excludedSet = new Set(config.selection.exclusions);
-        return rowRangeToIds(range).every((id) => !excludedSet.has(id));
+      switch (config.selection.type) {
+        case 'ONLY_IN': {
+          const includedSet = new Set(config.selection.selections);
+          return rowRangeToIds(range).every((id) => includedSet.has(id));
+        }
+        case 'ALL_EXCEPT': {
+          const excludedSet = new Set(config.selection.exclusions);
+          return rowRangeToIds(range).every((id) => !excludedSet.has(id));
+        }
       }
-      return false; // should never be reached
     },
     [rowRangeToIds, config.selection],
   );
