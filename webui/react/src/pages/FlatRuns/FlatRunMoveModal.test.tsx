@@ -6,7 +6,7 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { V1MoveRunsRequest } from 'services/api-ts-sdk';
-import { BulkActionResult, SelectionType } from 'types';
+import { BulkActionResult } from 'types';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 
@@ -30,16 +30,14 @@ const Container = ({
 }: {
   onSubmit?: (results: BulkActionResult, destinationProjectId: number) => void;
 }): JSX.Element => {
-  const SELECTION: SelectionType = { selections: [1, 2, 3], type: 'ONLY_IN' };
-
   const flatRunMoveModal = useModal(FlatRunMoveModalComponent);
 
   return (
     <div>
       <Button onClick={flatRunMoveModal.open}>{OPEN_MODAL_TEXT}</Button>
       <flatRunMoveModal.Component
-        selection={SELECTION}
-        selectionSize={SELECTION.selections.length}
+        runIds={[1]}
+        selectionSize={1}
         sourceProjectId={1}
         onSubmit={onSubmit}
       />
