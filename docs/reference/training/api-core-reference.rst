@@ -99,10 +99,3 @@
 *************************************
 
 .. autoclass:: determined.core.TensorboardMode
-
-**************************
- ``determined.TrialInfo``
-**************************
-
-.. autoclass:: determined.TrialInfo
-   :members:

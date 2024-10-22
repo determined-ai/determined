@@ -122,30 +122,31 @@ field is empty.
 Arbitrary Script
 ----------------
 
-Required. An arbitrary entrypoint script name.
+Required. An arbitrary entrypoint script with args.
 
 Example:
 
 .. code:: yaml
 
-   entrypoint: ./hello.sh
+   entrypoint: ./hello.sh args...
 
 Preconfigured Launch Module with Script
 ---------------------------------------
 
-Required. The name of a preconfigured launch module and script name.
+Required. The name of a preconfigured launch module and script with args.
 
 Example:
 
 .. code:: yaml
 
-   entrypoint: python3 -m (LAUNCH_MODULE) train.py
+   entrypoint: python3 -m (LAUNCH_MODULE) train.py args...
 
 ``LAUNCH_MODULE`` options:
 
 -  Horovod (determined.launch.horovod)
 -  PyTorch (determined.launch.torch_distributed)
 -  Deepspeed (determined.launch.deepspeed)
+-  TensorFlow (determined.launch.tensorflow)
 
 Preconfigured Launch Module with Legacy Trial Definition
 --------------------------------------------------------
