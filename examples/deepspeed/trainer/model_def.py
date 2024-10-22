@@ -27,17 +27,17 @@ class DCGANTrial(DeepSpeedTrial):
         self.hparams = hparams
         self.data_config = data_config
         self.logger = self.context.get_tensorboard_writer()
-        num_channels = data.CHANNELS_BY_DATASET[self.data_config.dataset]
+        num_channels = data.CHANNELS_BY_DATASET[self.data_config["dataset"]]
         gen_net = Generator(
-            self.hparams.generator_width_base, num_channels, self.hparams.noise_length
+            self.hparams["generator_width_base"], num_channels, self.hparams["noise_length"]
         )
         gen_net.apply(weights_init)
-        disc_net = Discriminator(self.hparams.discriminator_width_base, num_channels)
+        disc_net = Discriminator(self.hparams["discriminator_width_base"], num_channels)
         disc_net.apply(weights_init)
         gen_parameters = filter(lambda p: p.requires_grad, gen_net.parameters())
         disc_parameters = filter(lambda p: p.requires_grad, disc_net.parameters())
         ds_config = overwrite_deepspeed_config(
-            self.hparams.deepspeed_config, self.hparams.get("overwrite_deepspeed_args", {})
+            self.hparams["deepspeed_config"], self.hparams.get("overwrite_deepspeed_args", {})
         )
         generator, _, _, _ = deepspeed.initialize(
             model=gen_net, model_parameters=gen_parameters, config=ds_config
@@ -50,7 +50,7 @@ class DCGANTrial(DeepSpeedTrial):
         self.discriminator = self.context.wrap_model_engine(discriminator)
         self.fixed_noise = self.context.to_device(
             torch.randn(
-                self.context.train_micro_batch_size_per_gpu, self.hparams.noise_length, 1, 1
+                self.context.train_micro_batch_size_per_gpu, self.hparams["noise_length"], 1, 1
             )
         )
         self.criterion = nn.BCELoss()
@@ -68,7 +68,7 @@ class DCGANTrial(DeepSpeedTrial):
             self.context.to_device(
                 torch.randn(
                     self.context.train_micro_batch_size_per_gpu,
-                    self.hparams.noise_length,
+                    self.hparams["noise_length"],
                     1,
                     1,
                     dtype=dtype,
@@ -195,7 +195,7 @@ class DCGANTrial(DeepSpeedTrial):
             dataset,
             batch_size=self.context.train_micro_batch_size_per_gpu,
             shuffle=True,
-            num_workers=int(self.hparams.data_workers),
+            num_workers=int(self.hparams["data_workers"]),
         )
 
     def build_validation_data_loader(self) -> Any:
