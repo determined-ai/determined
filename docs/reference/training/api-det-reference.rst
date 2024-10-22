@@ -13,6 +13,13 @@
 .. autoclass:: determined.ClusterInfo
    :members:
 
+**************************
+ ``determined.TrialInfo``
+**************************
+
+.. autoclass:: determined.TrialInfo
+   :members:
+
 *********************************
  ``determined.import_from_path``
 *********************************

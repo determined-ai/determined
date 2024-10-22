@@ -82,9 +82,9 @@ training code. Identifying inefficiencies in individual training operations or s
 fine-grained context than generic system metrics can provide. For this level of profiling,
 Determined supports integration with training profilers that are native to their frameworks:
 
--  PyTorch Profiler (:ref:`PyTorch API <pytorch_profiler>`)
--  DeepSpeed Profiler (:ref:`DeepSpeed API <deepspeed-profiler>`)
--  TensorFlow Keras Profiler (:ref:`Keras API <keras-profiler>`)
+-  :ref:`PyTorch Profiler <pytorch_profiler>`
+-  :ref:`DeepSpeed Profiler <deepspeed-profiler>`
+-  :class:`Keras TensorBoard callback <determined.keras.TensorBoard>`
 
 Please see your framework's profiler documentation and the Determined Training API guide for usage
 details.
