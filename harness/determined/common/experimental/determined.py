@@ -13,6 +13,7 @@ from determined.common.experimental import (
     metrics,
     model,
     oauth2_scim_client,
+    token,
     trial,
     user,
     workspace,
@@ -582,3 +583,48 @@ class Determined:
             stacklevel=2,
         )
         return trial._stream_validation_metrics(self._session, trial_ids)
+
+    def describe_token(self, token_id: int) -> token.AccessToken:
+        """
+        Get the :class:`~determined.experimental.Token` representing the
+        token info with the provided token ID.
+        """
+        resp = bindings.get_GetAccessTokens(
+            session=self._session, tokenIds=[token_id], showInactive=True
+        )
+        return token.AccessToken._from_bindings(resp.tokenInfo, self._session)
+
+    def describe_tokens(self, token_ids: List[int]) -> token.AccessToken:
+        """
+        Get the :class:`~determined.experimental.Token` representing list of
+        token info with the provided token IDs.
+        """
+        resp = bindings.get_GetAccessTokens(
+            session=self._session, tokenIds=token_ids, showInactive=False
+        )
+        return token.AccessToken._from_bindings(resp.tokenInfo, self._session)
+
+    def list_tokens(
+        self, username: Optional[str] = None, show_inactive: Optional[bool] = None
+    ) -> token.AccessToken:
+        """
+        Get the :class:`~determined.experimental.Token` representing list of
+        token info with the provided username.
+        """
+        resp = bindings.get_GetAccessTokens(
+            session=self._session, username=username, showInactive=show_inactive
+        )
+        return token.AccessToken._from_bindings(resp.tokenInfo, self._session)
+
+    def create_token(
+        self, user_id: int, lifespan: Optional[str] = None, description: Optional[str] = None
+    ) -> bindings.v1PostAccessTokenResponse:
+        """
+        Get the :`bindings.v1PostAccessTokenResponse` representing the
+        token and token ID with the provided user ID.
+        """
+        post_create_token = bindings.v1PostAccessTokenRequest(
+            userId=user_id, description=description, lifespan=lifespan
+        )
+        resp = bindings.post_PostAccessToken(session=self._session, body=post_create_token)
+        return resp
