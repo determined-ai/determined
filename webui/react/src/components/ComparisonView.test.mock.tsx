@@ -1,14 +1,11 @@
-import { useObservable } from 'micro-observables';
 import React from 'react';
 
 import { useGlasbey } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
-import { V1LocationType } from 'services/api-ts-sdk';
 import { ExperimentWithTrial, Scale } from 'types';
 import { generateTestRunData } from 'utils/tests/generateTestData';
 
 import ComparisonView from './ComparisonView';
-import { FilterFormStore } from './FilterForm/components/FilterFormStore';
 
 export const METRIC_DATA: RunMetricData = {
   data: {
@@ -248,7 +245,6 @@ export const ExperimentComparisonViewWithMocks: React.FC<Props> = ({
   onWidthChange,
   open,
 }: Props): JSX.Element => {
-  const tableFilters = useObservable(new FilterFormStore(V1LocationType.EXPERIMENT).asJsonString);
   const colorMap = useGlasbey(SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id));
   return (
     <ComparisonView
@@ -262,7 +258,6 @@ export const ExperimentComparisonViewWithMocks: React.FC<Props> = ({
       initialWidth={200}
       open={open}
       projectId={1}
-      tableFilters={tableFilters}
       onWidthChange={onWidthChange}>
       {children}
     </ComparisonView>
@@ -275,7 +270,6 @@ export const RunComparisonViewWithMocks: React.FC<Props> = ({
   onWidthChange,
   open,
 }: Props): JSX.Element => {
-  const tableFilters = useObservable(new FilterFormStore(V1LocationType.RUN).asJsonString);
   const colorMap = useGlasbey(SELECTED_RUNS.map((run) => run.id));
   return (
     <ComparisonView
@@ -289,7 +283,6 @@ export const RunComparisonViewWithMocks: React.FC<Props> = ({
           ? { selections: [], type: 'ONLY_IN' }
           : { selections: SELECTED_RUNS.map((run) => run.id), type: 'ONLY_IN' }
       }
-      tableFilters={tableFilters}
       onWidthChange={onWidthChange}>
       {children}
     </ComparisonView>

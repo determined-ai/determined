@@ -1085,7 +1085,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             projectId={projectId}
             runSelection={settings.selection}
             searchId={searchId}
-            tableFilters={filtersString}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}

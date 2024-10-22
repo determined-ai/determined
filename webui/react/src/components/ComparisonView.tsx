@@ -24,7 +24,7 @@ import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 
 import CompareMetrics from './CompareMetrics';
 import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
-import { FilterFormSet, Operator } from './FilterForm/components/type';
+import { Operator } from './FilterForm/components/type';
 
 export const EMPTY_MESSAGE = 'No items selected.';
 
@@ -37,7 +37,6 @@ interface BaseProps {
   fixedColumnsCount: number;
   projectId: number;
   searchId?: number;
-  tableFilters: string;
 }
 
 type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: SelectionType }> &
@@ -138,7 +137,6 @@ const ComparisonView: React.FC<Props> = ({
   experimentSelection,
   runSelection,
   searchId,
-  tableFilters,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
@@ -155,12 +153,8 @@ const ComparisonView: React.FC<Props> = ({
       return NotLoaded;
     }
     try {
-      const filters = JSON.parse(tableFilters) as FilterFormSet;
       const filterFormSet = INIT_FORMSET;
       const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
-      if (experimentSelection.type === 'ALL_EXCEPT') {
-        filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
-      }
       const response = await searchExperiments({
         filter: JSON.stringify(filter),
         limit: SELECTION_LIMIT,
@@ -173,7 +167,7 @@ const ComparisonView: React.FC<Props> = ({
       handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
       return NotLoaded;
     }
-  }, [experimentSelection, open, tableFilters]);
+  }, [experimentSelection, open]);
 
   const loadableSelectedRuns = useAsync(async () => {
     if (
@@ -185,7 +179,6 @@ const ComparisonView: React.FC<Props> = ({
     }
     const filterFormSet = INIT_FORMSET;
     try {
-      const filters = JSON.parse(tableFilters) as FilterFormSet;
       const filter = getRunIdsFilter(filterFormSet, runSelection);
       if (searchId) {
         // only display trials for search
@@ -198,9 +191,6 @@ const ComparisonView: React.FC<Props> = ({
           value: searchId,
         };
         filter.filterGroup = combine(filter.filterGroup, 'and', searchFilter);
-      }
-      if (runSelection.type === 'ALL_EXCEPT') {
-        filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
       }
       const response = await searchRuns({
         filter: JSON.stringify(filter),
@@ -215,7 +205,7 @@ const ComparisonView: React.FC<Props> = ({
       handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
       return NotLoaded;
     }
-  }, [open, projectId, runSelection, searchId, tableFilters]);
+  }, [open, projectId, runSelection, searchId]);
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
@@ -228,27 +218,17 @@ const ComparisonView: React.FC<Props> = ({
       children
     );
 
-  const getRightPaneContent = () => {
-    if (experimentSelection) {
-      if (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length === 0) {
-        return (
-          <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
-        );
-      }
-      if (loadableSelectedExperiments.isNotLoaded) {
-        return <Spinner spinning />;
-      }
+  const rightPane = useMemo(() => {
+    const selection = experimentSelection ?? runSelection;
+    if (selection.type === 'ONLY_IN' && selection.selections.length === 0) {
+      return (
+        <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
+      );
     }
-    if (runSelection) {
-      if (runSelection.type === 'ONLY_IN' && runSelection.selections.length === 0) {
-        return (
-          <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
-        );
-      }
-      if (loadableSelectedRuns.isNotLoaded) {
-        return <Spinner spinning />;
-      }
+    if (loadableSelectedExperiments.isNotLoaded && loadableSelectedRuns.isNotLoaded) {
+      return <Spinner spinning />;
     }
+
     return (
       <>
         {isSelectionLimitReached && (
@@ -262,7 +242,15 @@ const ComparisonView: React.FC<Props> = ({
         />
       </>
     );
-  };
+  }, [
+    colorMap,
+    experimentSelection,
+    isSelectionLimitReached,
+    loadableSelectedExperiments,
+    loadableSelectedRuns,
+    projectId,
+    runSelection,
+  ]);
 
   return (
     <SplitPane
@@ -270,7 +258,7 @@ const ComparisonView: React.FC<Props> = ({
       initialWidth={initialWidth}
       leftPane={leftPane}
       minimumWidths={{ left: minWidths[0], right: minWidths[1] }}
-      rightPane={getRightPaneContent()}
+      rightPane={rightPane}
       onChange={onWidthChange}
     />
   );
