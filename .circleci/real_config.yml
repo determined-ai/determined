@@ -3183,6 +3183,7 @@ jobs:
           at: .
       
       - when:
+          condition: <<parameters.upgrade-branch>>
           # Only run this on the main branch when the tests are scheduled.
           #condition: <<pipeline.parameters.do_upgrade_tests>>
           steps:
