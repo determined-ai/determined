@@ -974,7 +974,7 @@ func TestFilterUserByRoleId(t *testing.T) {
 		RoleIdAssignedDirectlyToUser: []int32{int32(testRole.ID)},
 	})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.Users))
+	require.Len(t, resp.Users, 1)
 	require.Equal(t, int32(user0.ID), resp.Users[0].Id)
 
 	_, err = db.Bun().NewDelete().Table("roles").Where("id = ?", testRole.ID).Exec(ctx)
