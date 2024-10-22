@@ -1,8 +1,6 @@
 import logging
 import yaml
 
-from attrdict import AttrDict
-
 import determined as det
 from determined import pytorch
 from determined.pytorch import deepspeed as det_ds
@@ -19,8 +17,8 @@ def main(config_file: str, local: bool=True):
         # For convenience, use hparams from const.yaml for local mode.
         with open(config_file, "r") as f:
             experiment_config = yaml.load(f, Loader=yaml.SafeLoader)
-        hparams = AttrDict(experiment_config["hyperparameters"])
-        data_config = AttrDict(experiment_config["data"])
+        hparams = experiment_config["hyperparameters"]
+        data_config = experiment_config["data"]
         max_length = pytorch.Batch(100)  # Train for 100 batches.
         latest_checkpoint = None
     else:
