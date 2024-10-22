@@ -4,14 +4,13 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
-import { V1Project, V1Workspace } from 'services/api-ts-sdk';
+import { V1Project } from 'services/api-ts-sdk';
 import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
-  const waitTableStable = async (timeout?: number) =>
-    await projectDetailsPage._page.waitForTimeout(timeout ?? 2_000);
+  const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
@@ -564,21 +563,16 @@ test.describe('Experiment List', () => {
 
   test.describe('Row Actions', () => {
     let destinationProject: V1Project;
-    let destinationWorkspace: V1Workspace;
     let experimentId: number;
 
     // create a new project, workspace and experiment
     test.beforeAll(
       async ({
         backgroundApiProject,
-        backgroundApiWorkspace,
         newProject: {
           response: { project },
         },
       }) => {
-        destinationWorkspace = (
-          await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
-        ).workspace;
         destinationProject = (
           await backgroundApiProject.createProject(
             project.workspaceId,
@@ -592,19 +586,20 @@ test.describe('Experiment List', () => {
           ).split(' ')[2],
         ); // returns in the format "Created experiment <exp_id>"
 
-        if (!Number.isNaN(expId)) experimentId = expId;
+        if (!Number.isNaN(expId)) throw new Error('No experiment ID was found');
+
+        experimentId = expId;
       },
     );
 
     // cleanup
-    test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+    test.afterAll(async ({ backgroundApiProject }) => {
       if (experimentId !== undefined) {
         detExecSync(`experiment kill ${experimentId}`);
         detExecSync(`experiment delete ${experimentId} --y`);
       }
 
       await backgroundApiProject.deleteProject(destinationProject.id);
-      await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
     });
 
     test('move experiment', async ({
@@ -612,7 +607,7 @@ test.describe('Experiment List', () => {
         response: { workspace },
       },
     }) => {
-      if (experimentId === undefined) return;
+      if (experimentId === undefined) throw new Error('No experiment ID was found');
 
       const newExperimentRow =
         await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
@@ -620,14 +615,20 @@ test.describe('Experiment List', () => {
           experimentId.toString(),
         );
 
-      const menuMove = await newExperimentRow.experimentActionDropdown.open();
+      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
 
-      await menuMove.menuItem('Move').pwLocator.click();
-      await menuMove.moveModal.destinationWorkspace.selectMenuOption(workspace.name);
-      await menuMove.moveModal.destinationProject.pwLocator.waitFor({ state: 'visible' });
-      await menuMove.moveModal.destinationProject.selectMenuOption(destinationProject.name);
-      await menuMove.moveModal.footer.submit.pwLocator.click();
-      await menuMove.moveModal.pwLocator.waitFor({ state: 'hidden' });
+      await experimentActionDropdown.menuItem('Move').pwLocator.click();
+      await experimentActionDropdown.moveModal.destinationWorkspace.selectMenuOption(
+        workspace.name,
+      );
+      await experimentActionDropdown.moveModal.destinationProject.pwLocator.waitFor({
+        state: 'visible',
+      });
+      await experimentActionDropdown.moveModal.destinationProject.selectMenuOption(
+        destinationProject.name,
+      );
+      await experimentActionDropdown.moveModal.footer.submit.pwLocator.click();
+      await experimentActionDropdown.moveModal.pwLocator.waitFor({ state: 'hidden' });
 
       await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
 
