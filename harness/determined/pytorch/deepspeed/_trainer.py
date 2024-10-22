@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import os
 import random
 import sys
 from typing import Any, Dict, Iterator, Optional
@@ -17,63 +18,28 @@ logger = logging.getLogger("determined.pytorch.deepspeed")
 
 class Trainer:
     """
-    ``pytorch.Trainer`` is an abstraction on top of a vanilla PyTorch training loop that handles
-    many training details under-the-hood, and exposes APIs for configuring training-related features
-    such as automatic checkpointing, validation, profiling, metrics reporting, etc.
+    ``pytorch.deepspeed.Trainer`` is an abstraction on top of a  DeepSpeed training loop
+    that handles many training details under-the-hood, and exposes APIs for configuring
+    training-related features such as automatic checkpointing, validation, profiling,
+    metrics reporting, etc.
 
-    ``Trainer`` must be initialized and called from within a ``pytorch.PyTorchTrialContext``.
+    ``Trainer`` must be initialized and called from within a
+    ``pytorch.deepspeed.DeepSpeedTrialContext``.
     """
 
     def __init__(self, trial: det_ds.DeepSpeedTrial, context: det_ds.DeepSpeedTrialContext):
         self._trial = trial
         self._context = context
         self._core = self._context._core
-        self._distributed_backend = det._DistributedBackend()
         self._info = det.get_cluster_info()
         self._local_training = self._info is None or self._info.task_type != "TRIAL"
 
-    def configure_profiler(
-        self,
-        sync_timings: bool = True,
-        enabled: bool = False,
-        begin_on_batch: int = 0,
-        end_after_batch: Optional[int] = None,
-    ) -> None:
-        """
-        @deprecated: Configure `fit(..., profiling_enabled=True) instead`.
-
-        Configures the Determined profiler. This functionality is only supported for on-cluster
-        training. For local training mode, this method is a no-op.
-
-        This method should only be called before .fit(), and only once within the scope of init().
-        If called multiple times, the last call's configuration will be used.
-
-        Arguments:
-            sync_timings: (Optional) Specifies whether Determined should wait for all GPU kernel
-                streams before considering a timing as ended. Defaults to true. Applies only for
-                frameworks that collect timing metrics (currently just PyTorch).
-            enabled: (Optional) Defines whether profiles should be collected or not. Defaults to
-                false.
-            begin_on_batch: (Optional) Specifies the batch on which profiling should begin.
-                Defaults to 0.
-            end_after_batch: (Optional) Specifies the batch after which profiling should end.
-
-        .. note::
-
-           Profiles are collected for a maximum of 5 minutes, regardless of the settings above.
-
-        """
-        logger.error(
-            "`trainer.configure_profiler` has been replaced with "
-            "`fit(..., profiling_enabled=True)` and will be removed in a future release."
-        )
-
     def fit(
         self,
-        checkpoint_period: Optional[pytorch.TrainUnit] = None,
-        validation_period: Optional[pytorch.TrainUnit] = None,
-        max_length: Optional[pytorch.TrainUnit] = None,
-        reporting_period: pytorch.TrainUnit = pytorch.Batch(100),  # noqa: B008
+        checkpoint_period: Optional[pytorch._TrainUnit] = None,
+        validation_period: Optional[pytorch._TrainUnit] = None,
+        max_length: Optional[pytorch._TrainUnit] = None,
+        reporting_period: pytorch._TrainUnit = pytorch.Batch(100),  # noqa: B008
         checkpoint_policy: str = "best",
         latest_checkpoint: Optional[str] = None,
         step_zero_validation: bool = False,
@@ -206,8 +172,17 @@ class Trainer:
 
 def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
     info = det.get_cluster_info()
+    distributed_backend = det._DistributedBackend()
 
-    if torch.cuda.is_available():
+    # We use an environment variable to allow users to enable custom initialization routine for
+    # distributed training since the pre_execute_hook runs before trial initialization.
+    manual_dist_init = os.environ.get("DET_MANUAL_INIT_DISTRIBUTED")
+    if not manual_dist_init:
+        # DeepSpeed's init_distributed handles situations in which only 1 gpu is used and
+        # also handles multiple calls to init in one process.
+        deepspeed.init_distributed(auto_mpi_discovery=False)
+        return core.DistributedContext.from_deepspeed()
+    elif distributed_backend.use_deepspeed():
         deepspeed.init_distributed()
         return core.DistributedContext.from_deepspeed()
     elif info and (len(info.container_addrs) > 1 or len(info.slot_ids) > 1):
@@ -238,9 +213,9 @@ def init(
     enable_tensorboard_logging: bool = True,
 ) -> Iterator[det_ds.DeepSpeedTrialContext]:
     """
-    Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within
-    the scope of this context because there are resources started in __enter__ that must be
-    cleaned up in __exit__.
+    Creates a DeepSpeedTrialContext for use with a DeepSpeedTrial. All trainer.* calls
+    must be within the scope of this context because there are resources started in
+    __enter__ that must be cleaned up in __exit__.
 
     Arguments:
         hparams: (Optional) instance of hyperparameters for the trial
