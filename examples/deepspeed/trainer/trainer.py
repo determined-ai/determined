@@ -1,4 +1,3 @@
-import argparse
 import logging
 import yaml
 
@@ -11,14 +10,6 @@ from determined.pytorch import deepspeed as det_ds
 from model_def import DCGANTrial
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--config_file",
-                        type=str,
-                        default="mnist_trainer.yaml",
-                        help="path to experiment config")
-    return parser.parse_args()
 
 def main(config_file: str, local: bool=True):
 
@@ -47,8 +38,7 @@ def main(config_file: str, local: bool=True):
         trainer.fit(max_length=max_length, latest_checkpoint=latest_checkpoint)
 
 if __name__ == "__main__":
-    args = parse_args()
     local = det.get_cluster_info() is None
     # Configure logging
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
-    main(config_file=args.config_file, local=local)
+    main(config_file="mnist_trainer.yaml", local=local)
