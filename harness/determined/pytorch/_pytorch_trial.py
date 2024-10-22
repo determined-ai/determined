@@ -361,9 +361,9 @@ class _PyTorchTrialController:
         assert self.state
         assert isinstance(self.max_length.value, int)
 
-        if isinstance(self.max_length, Batch):
+        if isinstance(self.max_length, pytorch.Batch):
             progress = self.state.batches_trained / self.max_length.value
-        elif isinstance(self.max_length, Epoch):
+        elif isinstance(self.max_length, pytorch.Epoch):
             progress = self.state.epochs_trained / self.max_length.value
         else:
             raise ValueError(f"unexpected train unit type {type(self.max_length)}")
@@ -490,7 +490,7 @@ class _PyTorchTrialController:
                     ),
                 ],
             )
-        except ShouldExit as e:
+        except pytorch.ShouldExit as e:
             # Checkpoint unsaved work and exit.
             if not e.skip_exit_checkpoint and not self._checkpoint_is_current():
                 self._checkpoint(already_exiting=True)
@@ -556,7 +556,7 @@ class _PyTorchTrialController:
         # True epoch end
         return train_boundaries, training_metrics
 
-    def _train(self, length: TrainUnit, train_boundaries: List[_TrainBoundary]) -> None:
+    def _train(self, length: pytorch.TrainUnit, train_boundaries: List[pytorch.TrainBoundary]) -> None:
         while self._steps_until_complete(length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
