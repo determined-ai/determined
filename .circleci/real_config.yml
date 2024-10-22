@@ -4995,7 +4995,7 @@ workflows:
           context:
             - dev-ci-cluster-default-user-credentials
           requires:
-            - build-upgraded-rbac-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
