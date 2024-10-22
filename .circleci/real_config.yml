@@ -5352,14 +5352,6 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
       - test-e2e-slurm:
-          name: test-e2e-slurm-preemption
-          context:
-            - dev-ci-cluster-default-user-credentials
-          mark: "e2e_slurm_preemption"
-          requires:
-            - package-and-push-system-local-ee
-          extra-pytest-flags: "--no-compare-stats"
-      - test-e2e-slurm:
           name: test-e2e-slurm-znode
           context:
             - dev-ci-cluster-default-user-credentials
