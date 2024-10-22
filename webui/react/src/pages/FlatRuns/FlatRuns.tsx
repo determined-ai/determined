@@ -35,7 +35,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import ColumnPickerMenu from 'components/ColumnPickerMenu';
+import ColumnPickerMenu, { formatColumnKey, METADATA_SEPARATOR } from 'components/ColumnPickerMenu';
 import ComparisonView from 'components/ComparisonView';
 import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -320,14 +320,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce((acc, col) => {
-          const colType = col.type.replace('COLUMN_TYPE_', '');
-
-          if (col.column.includes('metadata'))
-            return { ...acc, [col.column.concat(`_${colType}`)]: col };
-
-          return { ...acc, [col.column]: col };
-        }, {});
+        return columns.reduce((acc, col) => ({ ...acc, [`${col.type}${METADATA_SEPARATOR}${col.column}`]: col }), {});
       },
     );
     const columnDefs = getColumnDefs({
@@ -365,6 +358,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           };
 
         let dataPath: string | undefined = undefined;
+        const columnDefKey = formatColumnKey(currentColumn);
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -405,7 +399,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               settings.heatmapOn &&
               !settings.heatmapSkipped.includes(currentColumn.column)
             ) {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
+              columnDefs[columnDefKey] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
@@ -418,7 +412,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 },
               );
             } else {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
+              columnDefs[columnDefKey] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
@@ -431,7 +425,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             break;
           }
           case V1ColumnType.DATE:
-            columnDefs[currentColumn.column] = defaultDateColumn(
+            columnDefs[columnDefKey] = defaultDateColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -441,7 +435,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             );
             break;
           case V1ColumnType.ARRAY:
-            columnDefs[currentColumn.column] = defaultArrayColumn(
+            columnDefs[columnDefKey] = defaultArrayColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -453,7 +447,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           case V1ColumnType.TEXT:
           case V1ColumnType.UNSPECIFIED:
           default:
-            columnDefs[currentColumn.column] = defaultTextColumn(
+            columnDefs[columnDefKey] = defaultTextColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -467,7 +461,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             .getOrElse([])
             .find((h) => h.metricsName === currentColumn.column);
 
-          columnDefs[currentColumn.column] = searcherMetricsValColumn(
+          columnDefs[columnDefKey] = searcherMetricsValColumn(
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
@@ -477,7 +471,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               : undefined,
           );
         }
-        return columnDefs[currentColumn.column];
+        return columnDefs[columnDefKey];
       })
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;

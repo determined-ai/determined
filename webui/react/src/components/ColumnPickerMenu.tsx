@@ -8,7 +8,7 @@ import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { V1LocationType } from 'services/api-ts-sdk';
@@ -21,6 +21,8 @@ const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));
+
+export const METADATA_SEPARATOR = '\u241F' as const;
 
 export const LOCATION_LABEL_MAP: Record<V1LocationType, string> = {
   [V1LocationType.EXPERIMENT]: 'General',
@@ -64,6 +66,11 @@ interface ColumnTabProps {
   onHeatmapSelectionRemove?: (id: string) => void;
 }
 
+export const formatColumnKey = (col: ProjectColumn): string => {
+  if (col.location === 'LOCATION_TYPE_RUN_METADATA') return `${col.type}${METADATA_SEPARATOR}${col.column}`;
+  return col.column;
+};
+
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
   compare,
@@ -96,27 +103,12 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns.every((col) => {
-      const colType = col.type.replace('COLUMN_TYPE_', '');
-
-      if (col.column.includes('metadata'))
-        return columnState.includes(col.column.concat(`_${colType}`));
-      return columnState.includes(col.column);
-    });
+    return filteredColumns.every((col) => columnState.includes(formatColumnKey(col)));
   }, [columnState, filteredColumns]);
-  const [metadataColumns, setMetadataColumns] = useState(() => new Map<string, number[]>()); // a map of metadata columns and found indexes
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => {
-      const colType = col.type.replace('COLUMN_TYPE_', '');
-
-      if (col.column.includes('metadata'))
-        return {
-          ...acc,
-          [col.column.concat(`_${colType}`)]: columnState.includes(
-            col.column.concat(`_${colType}`),
-          ),
-        };
+      if (col.column.includes('metadata')) return { ...acc, [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)) };
 
       return { ...acc, [col.column]: columnState.includes(col.column) };
     }, {});
@@ -127,9 +119,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           ...new Set([
             ...columnState,
             ...filteredColumns.map((col) => {
-              const colType = col.type.replace('COLUMN_TYPE_', '');
-
-              if (col.column.includes('metadata')) return col.column.concat(`_${colType}`);
+              if (col.column.includes('metadata')) formatColumnKey(col);
               return col.column;
             }),
           ]),
@@ -154,8 +144,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
       if (id === undefined) return;
 
-      const [col] = id.split('_');
-      const targetCol = col.includes('metadata') ? id : col;
+      const targetCol = id;
 
       if (compare) {
         // pin or unpin column
@@ -199,60 +188,42 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       const col = filteredColumns[index];
       const colType = col.type.replace('COLUMN_TYPE_', '');
       const getColDisplayName = (col: ProjectColumn) => {
-        const metCol = metadataColumns.get(col.column);
-
-        if (metCol !== undefined && metCol.length > 1) {
-          return (
-            <>
-              {col.column} <Badge text={colType} />
-            </>
-          );
-        }
-
         return (
           <>
             {col.displayName || col.column} <Badge text={colType} />
           </>
         );
       };
+      const getId = () => {
+        if (col.column.includes('metadata')) return formatColumnKey(col);
+
+        return col.column;
+      };
       const getChecked = () => {
-        if (col.column.includes('metadata'))
-          return checkedColumnNames.has(`${col.column}_${colType}`);
+        if (col.column.includes('metadata')) return checkedColumnNames.has(formatColumnKey(col));
+
         return checkedColumnNames.has(col.column);
       };
+
       return (
         <div
           className={css.rows}
           data-test="row"
-          data-test-id={`${col.column}_${colType}`}
-          key={`${col.column}_${colType}`}
+          data-test-id={getId()}
+          key={getId()}
           style={style}>
           <Checkbox
             checked={getChecked()}
             data-test="checkbox"
-            id={`${col.column}_${colType}`}
+            id={getId()}
             onChange={handleColumnChange}>
             {getColDisplayName(col)}
           </Checkbox>
         </div>
       );
     },
-    [filteredColumns, checkedColumnNames, metadataColumns, handleColumnChange],
+    [filteredColumns, checkedColumnNames, handleColumnChange],
   );
-
-  useEffect(() => {
-    for (const [index, { column }] of totalColumns.entries()) {
-      if (column.includes('metadata')) {
-        const columnEntry = metadataColumns.get(column) ?? [];
-        if (!columnEntry.includes(index)) {
-          setMetadataColumns((prev) => {
-            prev.set(column, [...columnEntry, index]);
-            return prev;
-          });
-        }
-      }
-    }
-  }, [totalColumns, metadataColumns]);
 
   return (
     <div data-test-component="columnPickerTab" data-testid="column-picker-tab">
