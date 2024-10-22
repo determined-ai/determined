@@ -7,6 +7,7 @@ import pickle
 import random
 import sys
 import time
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import h5py
@@ -179,6 +180,14 @@ class TFKerasTrialController(det.TrialController):
         env: det.EnvContext,
         distributed_backend: det._DistributedBackend,
     ) -> None:
+        # TFKerasTrial's __init__ method may not be called by user-defined subclasses, so we fire
+        # the warning here.  Also, this will show up before some of the worst tf log vomit, I hope.
+        warnings.warn(
+            "TFKerasTrial has been deprecated in Determined XXYYZZ and will be removed in a future "
+            "version.  Please use the new det.keras.DeterminedCallback for training.",
+            FutureWarning,
+            stacklevel=2,
+        )
         # Initialize the correct horovod.
         if distributed_backend.use_horovod():
             hvd = horovod.hvd
@@ -992,6 +1001,11 @@ class TFKerasTrial(det.LegacyTrial):
     ``tf.compat.v1.disable_eager_execution`` after your import statements.
     If you are using TensorFlow 1.x in eager mode, please add
     ``experimental_run_tf_function=False`` to your model compile function.
+
+    .. warning::
+
+        TFKerasTrial has been deprecated in Determined XXYYZZ and will be removed in a future
+        version.  Please use the new :class:`~determined.keras.DeterminedCallback` for training.
     """
 
     trial_controller_class = TFKerasTrialController

@@ -25,8 +25,8 @@ the the following capabilities:
 -  hyperparameter search
 -  distributing work across multiple GPUs and/or nodes
 
-These are the same features provided by the higher-level PyTorchTrial, DeepSpeedTrial, and
-TFKerasTrial APIs: those APIs are implemented using the Core API.
+These features are also available in the higher-level PyTorchTrial and DeepSpeedTrial APIs, both of
+which are built on top of the Core API.
 
 This user guide shows you how to get started using the Core API.
 
