@@ -6,6 +6,7 @@ import { useState } from 'react';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { refreshPage } from 'utils/browser';
+import { isBoolean } from 'utils/data';
 
 interface Props {
   version: string;
@@ -16,8 +17,8 @@ const VersionChecker: React.FC<Props> = ({ version }: Props) => {
     themeSettings: { className: themeClass },
   } = useTheme();
   const [closed, setClosed] = useState(false);
-  // vi.stubEnv uses string type to set process.env.IS_DEV:
-  const isDev = JSON.parse(process.env.IS_DEV ?? 'false');
+  // process.env.IS_DEV must be string type for vi.stubEnv, otherwise is boolean:
+  const isDev = isBoolean(process.env.IS_DEV) ? process.env.IS_DEV : process.env.IS_DEV === 'true';
 
   /*
    * Check to make sure the WebUI version matches the platform version.
