@@ -3184,7 +3184,7 @@ jobs:
       
       - when:
           # Only run this on the main branch when the tests are scheduled.
-          condition: <<pipeline.parameters.do_upgrade_tests>>
+          #condition: <<pipeline.parameters.do_upgrade_tests>>
           steps:
             # Upgrade test portion: downgrade to specified version, start/stop devcluster
             - run: 
