@@ -43,12 +43,12 @@ const (
 )
 
 const (
-	// RSACryptoSystem uses RSA.
-	RSACryptoSystem = "RSA"
-	// ECDSACryptoSystem uses ECDSA.
-	ECDSACryptoSystem = "ECDSA"
-	// ED25519CryptoSystem uses ED25519.
-	ED25519CryptoSystem = "ED25519"
+	// RSAKeyType uses RSA.
+	RSAKeyType = "RSA"
+	// ECDSAKeyType uses ECDSA.
+	ECDSAKeyType = "ECDSA"
+	// ED25519KeyType uses ED25519.
+	ED25519KeyType = "ED25519"
 )
 
 type (
@@ -117,7 +117,7 @@ func DefaultConfig() *Config {
 				Group: "root",
 			},
 			SSH: SSHConfig{
-				KeyType: ED25519CryptoSystem,
+				KeyType: ED25519KeyType,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 		},
@@ -485,10 +485,10 @@ func (t *TLSConfig) Validate() []error {
 // Validate implements the check.Validatable interface.
 func (t *SSHConfig) Validate() []error {
 	var errs []error
-	if t.KeyType != RSACryptoSystem && t.KeyType != ECDSACryptoSystem && t.KeyType != ED25519CryptoSystem {
+	if t.KeyType != RSAKeyType && t.KeyType != ECDSAKeyType && t.KeyType != ED25519KeyType {
 		errs = append(errs, errors.New("Crypto system must be one of 'RSA', 'ECDSA' or 'ED25519'"))
 	}
-	if t.KeyType != RSACryptoSystem {
+	if t.KeyType != RSAKeyType {
 		return errs
 	}
 	if t.RsaKeySize < 1 {

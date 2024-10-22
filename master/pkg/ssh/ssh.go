@@ -30,11 +30,11 @@ type PrivateAndPublicKeys struct {
 func GenerateKey(conf config.SSHConfig) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
 	switch conf.KeyType {
-	case config.RSACryptoSystem:
+	case config.RSAKeyType:
 		return generateRSAKey(conf.RsaKeySize)
-	case config.ECDSACryptoSystem:
+	case config.ECDSAKeyType:
 		return generateECDSAKey()
-	case config.ED25519CryptoSystem:
+	case config.ED25519KeyType:
 		return generateED25519Key()
 	default:
 		return generatedKeys, errors.New("Invalid crypto system")
