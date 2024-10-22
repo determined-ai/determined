@@ -20,6 +20,8 @@ You must have a running Determined cluster with the CLI installed.
 -  To set up a remote cluster, visit the :ref:`Installation Guide <installation-guide>` where you'll
    find options for On Prem, AWS, GCP, Kubernetes, and Slurm.
 
+.. _qs-webui-concepts:
+
 **********
  Concepts
 **********
