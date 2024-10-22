@@ -49,7 +49,7 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 
 	userSession := &model.UserSession{
 		UserID:    user.ID,
-		Expiry:    now.Add(SessionDuration),
+		Expiry:    null.TimeFrom(now.Add(SessionDuration)),
 		CreatedAt: now,
 		TokenType: model.TokenTypeUserSession,
 		RevokedAt: null.Time{},
@@ -417,7 +417,8 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		return nil, nil, err
 	}
 
-	if session.Expiry.Before(time.Now().UTC()) {
+	// check if the session can expire (not null) and if it is expired.
+	if session.Expiry.Valid && session.Expiry.Time.Before(time.Now().UTC()) {
 		var isRemote bool
 		if err := db.Bun().NewSelect().
 			Model(&model.User{}).

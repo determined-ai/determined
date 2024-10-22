@@ -35,11 +35,20 @@ var (
 	masterConfig *Config
 )
 
-// KubernetesDefaultPriority is the default K8 resource manager priority.
 const (
+	// KubernetesDefaultPriority is the default K8 resource manager priority.
 	KubernetesDefaultPriority = 50
 	sslModeDisable            = "disable"
 	preemptionScheduler       = "preemption"
+	// InfiniteTokenLifespan is the value to set the token lifespan to infinite.
+	InfiniteTokenLifespan = -1
+	// InfiniteTokenLifespanString is the string representation of InfiniteTokenLifespan.
+	InfiniteTokenLifespanString = "-1"
+	// DefaultTokenLifespan is the default token lifespan in days.
+	DefaultTokenLifespan = 30
+	// DefaultTokenMaxLifespanDays is the default max lifespan for tokens.
+	// This is the maximum number of days a go duration can represent.
+	DefaultTokenMaxLifespanDays = 106751
 )
 
 type (
@@ -111,6 +120,10 @@ func DefaultConfig() *Config {
 				RsaKeySize: 1024,
 			},
 			AuthZ: *DefaultAuthZConfig(),
+			Token: TokenConfig{
+				MaxLifespanDays:     DefaultTokenMaxLifespanDays,
+				DefaultLifespanDays: DefaultTokenLifespan,
+			},
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port: 0,
@@ -446,8 +459,15 @@ type SecurityConfig struct {
 	TLS         TLSConfig            `json:"tls"`
 	SSH         SSHConfig            `json:"ssh"`
 	AuthZ       AuthZConfig          `json:"authz"`
+	Token       TokenConfig          `json:"token"`
 
 	InitialUserPassword string `json:"initial_user_password"`
+}
+
+// TokenConfig is the configuration setting for tokens.
+type TokenConfig struct {
+	MaxLifespanDays     int `json:"max_lifespan_days"`
+	DefaultLifespanDays int `json:"default_lifespan_days"`
 }
 
 // SSHConfig is the configuration setting for SSH.
@@ -459,6 +479,28 @@ type SSHConfig struct {
 type TLSConfig struct {
 	Cert string `json:"cert"`
 	Key  string `json:"key"`
+}
+
+// Validate implements the check.Validatable interface for the TokenConfig.
+func (t *TokenConfig) Validate() []error {
+	var errs []error
+	if t.MaxLifespanDays < 1 && t.MaxLifespanDays != InfiniteTokenLifespan {
+		errs = append(
+			errs,
+			errors.New("Max Token Lifespan must be greater than 0 days, unless set to -1 for infinite lifespan"),
+		)
+	}
+	if t.DefaultLifespanDays < 1 && t.DefaultLifespanDays != InfiniteTokenLifespan {
+		errs = append(
+			errs,
+			errors.New("Default Token Lifespan must be greater than 0 days, unless set to -1 for infinite lifespan"),
+		)
+	}
+
+	if t.DefaultLifespanDays < t.MaxLifespanDays {
+		errs = append(errs, errors.New("Default Token Lifespan must be greater than Max Token Lifespan"))
+	}
+	return errs
 }
 
 // Validate implements the check.Validatable interface.

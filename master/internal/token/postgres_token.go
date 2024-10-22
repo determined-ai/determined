@@ -13,22 +13,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-const (
-	// DefaultTokenLifespan is how long a newly created access token is valid.
-	DefaultTokenLifespan = 30 * 24 * time.Hour
-)
-
 // AccessTokenOption modifies a model.UserSession to apply optional settings to the AccessToken
 // object.
 type AccessTokenOption func(f *model.UserSession)
-
-// WithTokenExpiry adds specified expiresAt (if any) to the access token table.
-func WithTokenExpiry(expiry *time.Duration) AccessTokenOption {
-	return func(s *model.UserSession) {
-		now := time.Now().UTC()
-		s.Expiry = now.Add(*expiry)
-	}
-}
 
 // WithTokenDescription function will add specified description (if any) to the access token table.
 func WithTokenDescription(description string) AccessTokenOption {
@@ -43,14 +30,16 @@ func WithTokenDescription(description string) AccessTokenOption {
 // CreateAccessToken creates a new access token and store in
 // user_sessions db.
 func CreateAccessToken(
-	ctx context.Context, userID model.UserID, opts ...AccessTokenOption,
+	ctx context.Context,
+	userID model.UserID,
+	lifespan *time.Duration,
+	opts ...AccessTokenOption,
 ) (string, model.TokenID, error) {
 	now := time.Now().UTC()
 	// Populate the default values in the model.
 	accessToken := &model.UserSession{
 		UserID:      userID,
 		CreatedAt:   now,
-		Expiry:      now.Add(DefaultTokenLifespan),
 		TokenType:   model.TokenTypeAccessToken,
 		Description: null.StringFromPtr(nil),
 		RevokedAt:   null.Time{},
@@ -59,6 +48,10 @@ func CreateAccessToken(
 	// Update the optional ExpiresAt field (if passed)
 	for _, opt := range opts {
 		opt(accessToken)
+	}
+
+	if lifespan != nil {
+		accessToken.Expiry = null.TimeFrom(now.Add(*lifespan))
 	}
 
 	var token string
@@ -113,7 +106,7 @@ func UpdateAccessToken(
 			return err
 		}
 
-		if !tokenInfo.RevokedAt.IsZero() || tokenInfo.Expiry.Before(time.Now().UTC()) {
+		if !tokenInfo.RevokedAt.IsZero() || (!tokenInfo.Expiry.IsZero() && tokenInfo.Expiry.Time.Before(time.Now().UTC())) {
 			return fmt.Errorf("unable to update inactive token with ID %v", tokenID)
 		}
 

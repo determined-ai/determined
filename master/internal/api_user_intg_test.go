@@ -117,6 +117,12 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 				},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
 				ResourceConfig:        *config.DefaultResourceConfig(),
+				Security: config.SecurityConfig{
+					Token: config.TokenConfig{
+						MaxLifespanDays:     config.DefaultTokenMaxLifespanDays,
+						DefaultLifespanDays: config.DefaultTokenLifespan,
+					},
+				},
 			},
 			taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},
 			allRms:   map[string]rm.ResourceManager{config.DefaultClusterName: mockRM},
