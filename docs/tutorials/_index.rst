@@ -46,7 +46,6 @@ Examples let you build off of an existing model that already runs on Determined.
    :hidden:
 
    Quickstart for Model Developers <quickstart-mdldev>
-   Logging Arbitrary Metadata <metadata-logging>
    Porting Your PyTorch Model to Determined <pytorch-mnist-tutorial>
    Get Started with Detached Mode <detached-mode/_index>
    Viewing Epoch-Based Metrics in the WebUI <viewing-epoch-based-metrics>

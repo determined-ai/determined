@@ -1,0 +1,39 @@
+name: dcgan_deepspeed_mnist_grad_accum
+data:
+  dataroot: /data
+  dataset: mnist
+  image_size: 64
+hyperparameters:
+  deepspeed_config: ds_config.json
+  noise_length: 100
+  generator_width_base: 64
+  discriminator_width_base: 64
+  data_workers: 16
+  overwrite_deepspeed_args:
+    gradient_accumulation_steps: 4
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+bind_mounts:
+  - host_path: /tmp
+    container_path: /data
+resources:
+  slots_per_trial: 2
+searcher:
+  name: single
+  metric: no_validation_metric
+  max_length:
+    batches: 100000
+min_validation_period:
+  batches: 0
+entrypoint:
+  - python3
+  - -m
+  - determined.launch.deepspeed
+  - --trial
+  - model_def:DCGANTrial
+max_restarts: 0

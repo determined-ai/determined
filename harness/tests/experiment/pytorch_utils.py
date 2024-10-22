@@ -114,7 +114,7 @@ def create_trial_and_trial_controller(
     )
 
     trial_controller._set_data_loaders()
-    trial_controller.state = pytorch._TrialState()
+    trial_controller.state = pytorch.TrialState()
 
     trial_controller.training_iterator = iter(trial_controller.training_loader)
     return trial_inst, trial_controller

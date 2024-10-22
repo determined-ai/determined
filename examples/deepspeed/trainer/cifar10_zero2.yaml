@@ -1,0 +1,41 @@
+name: dcgan_deepspeed_cifar10
+data:
+  dataroot: /data
+  dataset: cifar10
+  image_size: 64
+hyperparameters:
+  deepspeed_config: ds_config.json
+  noise_length: 100
+  generator_width_base: 64
+  discriminator_width_base: 64
+  data_workers: 16
+  overwrite_deepspeed_args:
+    zero_optimization.stage: 2
+    fp16.enabled: true
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+    - https_proxy=http://proxy.houston.hpecorp.net:8080/
+    - http_proxy=http://proxy.houston.hpecorp.net:8080/
+    - NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,10.43.255.24
+  image: mikhailkardashhpe/rocm_test:cb1af7f
+bind_mounts:
+  - host_path: /tmp
+    container_path: /data
+resources:
+  slots_per_trial: 2
+searcher:
+  name: single
+  metric: no_validation_metric
+  max_length:
+    batches: 100000
+min_validation_period:
+  batches: 0
+entrypoint:
+  - python3
+  - -m
+  - determined.launch.deepspeed
+  - --trial
+  - model_def:DCGANTrial
+max_restarts: 0
