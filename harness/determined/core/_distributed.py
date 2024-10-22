@@ -1,12 +1,16 @@
+import json
 import logging
 import os
 import socket
 import tempfile
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, TypeVar
 
 from determined import constants, ipc, util
 
 logger = logging.getLogger("determined.core")
+
+if TYPE_CHECKING:
+    import tensorflow
 
 
 class DistributedContext:
@@ -231,6 +235,63 @@ class DistributedContext:
             cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
         )
+
+    @classmethod
+    def from_tf_config(cls) -> Tuple["DistributedContext", "tensorflow.distribute.Strategy"]:
+        """
+        Create a DistributedContext and a tf.distribute.Strategy based on the TF_CONFIG environment
+        variable.
+
+        Note that the ``determined.launch.tensorflow`` launcher will automatically create a
+        TF_CONFIG environment variable for on-cluster training, so you may not need to configure it
+        yourself.
+
+        Presently, the only supported configurations are:
+           -  MultiMirroredWorkerStrategy, when there are multiple nodes participating in training.
+           -  Mirrored strategy, when there is one node but multiple GPUs for training.
+           -  The default strategy otherwise.
+        """
+        import tensorflow as tf
+
+        if "TF_CONFIG" in os.environ:
+            tf_config = json.loads(os.environ["TF_CONFIG"])
+            # We only support worker tasks
+            task_type = tf_config["task"]["type"]
+            if task_type != "worker":
+                raise RuntimeError(
+                    "DistributedContext.from_tf_config() only supports the default strategy, "
+                    "MirroredStrategy or MultiWorkerMirroredStrategy, but found unexpected "
+                    f'task_type="{task_type}" in TF_CONFIG ({os.environ["TF_CONFIG"]})'
+                )
+            assert tf_config["task"]["type"] == "worker", tf_config["task"]["type"]
+            num_workers = len(tf_config["cluster"]["worker"])
+            if num_workers > 1:
+                # Multiple workers means MultiWorkerMirroredStrategy.
+                index = tf_config["task"]["index"]
+                chief_ip = tf_config["cluster"]["worker"][0].split(":")[0]
+                dist = cls(
+                    rank=index,
+                    size=num_workers,
+                    local_rank=0,
+                    local_size=1,
+                    cross_rank=index,
+                    cross_size=num_workers,
+                    chief_ip=chief_ip,
+                )
+                return dist, tf.distribute.MultiWorkerMirroredStrategy()
+        # Either no TF_CONFIG or there's only one worker.
+        dist = cls(
+            rank=0,
+            size=1,
+            local_rank=0,
+            local_size=1,
+            cross_rank=0,
+            cross_size=1,
+        )
+        # Use a MirroredStrategy if we have multiple GPUs.
+        ngpus = len(tf.config.list_physical_devices("GPU"))
+        strategy = tf.distribute.MirroredStrategy() if ngpus > 1 else tf.distribute.get_strategy()
+        return dist, strategy
 
     def close(self) -> None:
         # if statements in close() mirror the if statements of _init_ipc().

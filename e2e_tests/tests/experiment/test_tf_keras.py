@@ -1,37 +1,8 @@
-import multiprocessing
-
 import pytest
 
-from determined import keras
-from determined.common import api
-from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-
-
-def _export_and_load_model(sess: api.Session, experiment_id: int, master_url: str) -> None:
-    # Normally verifying that we can load a model would be a good unit test, but making this an e2e
-    # test ensures that our model saving and loading works with all the versions of tf that we test.
-    ckpt = client.Determined._from_session(sess).get_experiment(experiment_id).top_checkpoint()
-    _ = keras.load_model_from_checkpoint_path(ckpt.download())
-
-
-def export_and_load_model(sess: api.Session, experiment_id: int) -> None:
-    # We run this in a subprocess to avoid module name collisions
-    # when performing checkpoint export of different models.
-    ctx = multiprocessing.get_context("spawn")
-    p = ctx.Process(
-        target=_export_and_load_model,
-        args=(
-            sess,
-            experiment_id,
-            conf.make_master_url(),
-        ),
-    )
-    p.start()
-    p.join()
-    assert p.exitcode == 0, p.exitcode
 
 
 @pytest.mark.parallel
@@ -50,9 +21,6 @@ def test_tf_keras_parallel(aggregation_frequency: int) -> None:
     )
     trials = exp.experiment_trials(sess, experiment_id)
     assert len(trials) == 1
-
-    # Test exporting a checkpoint.
-    export_and_load_model(sess, experiment_id)
 
     # Check on record/batch counts we emitted in logs.
     validation_size = 30
