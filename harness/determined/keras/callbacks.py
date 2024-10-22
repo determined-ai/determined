@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import time
+import warnings
 from typing import Any, Dict, List, Optional
 
 import tensorflow as tf
@@ -35,12 +36,19 @@ class Callback(tf.keras.callbacks.Callback):  # type: ignore
            * The tf.keras version of ``EarlyStopping`` will not work right in Determined.  You
              should use you should use :class:`determined.keras.callbacks.EarlyStopping` instead.
            * The tf.keras version of ``ReduceLROnPlateau`` will not work right in Determined.  You
-             should use you should use :class:`determined.keras.callbacks.ReduceLRScheduler`
+             should use you should use :class:`determined.keras.callbacks.ReduceLROnPlateau`
              instead.
 
           The Determined versions are based around ``on_test_end`` rather than ``on_epoch_end``,
           which can be influenced by setting ``min_validation_period`` in the experiment
           configuration.
+
+    .. warning::
+
+        det.keras.callbacks.Callback has been deprecated in Determined XXYYZZ and will be removed
+        in a future version.  This Callback class is designed to work with TFKerasTrial, which is
+        also deprecated.  Please use the new :class:`~determined.keras.DeterminedCallback` for
+        training, and use normal keras Callabacks with it.
     """
 
     def on_train_workload_begin(
@@ -539,6 +547,14 @@ class EarlyStopping(tf.keras.callbacks.EarlyStopping, Callback):  # type: ignore
     In Determined, ``on_test_end`` may be called slightly more often than ``min_validation_period``
     during some types of hyperparameter searches, but it is unlikely for that to occur often enough
     have a meaningful impact on this callback's operation.
+
+    .. warning::
+
+        EarlyStopping has been deprecated in Determined XXYYZZ and will be removed in a future
+        version.  Determined's EarlyStopping is a customization of keras' EarlyStopping callback
+        that is specific to TFKerasTrial, which is also deprecated.  Please use the new
+        :class:`~determined.keras.DeterminedCallback` for training, and use keras' EarlyStopping
+        with it.
     """
 
     _savable_attributes = {
@@ -576,6 +592,16 @@ class EarlyStopping(tf.keras.callbacks.EarlyStopping, Callback):  # type: ignore
         tf.keras.callbacks.EarlyStopping.__init__(self, *arg, **kwarg)
         self.test_end_count = 0
 
+        warnings.warn(
+            "EarlyStopping has been deprecated in Determined XXYYZZ and will be removed in a "
+            "future version.  Determined's EarlyStopping is a customization of keras' "
+            "EarlyStopping callback that is specific to TFKerasTrial, which is also deprecated. "
+            "Please use the new det.keras.DeterminedCallback for training, and use keras' "
+            "EarlyStopping with it.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
     def on_epoch_end(self, epoch: int, logs: Optional[Dict]) -> None:
         # Ignore on_epoch_end calls, which never contain metrics in Determined.
         pass
@@ -605,6 +631,14 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
     In Determined, ``on_test_end`` may be called slightly more often than ``min_validation_period``
     during some types of hyperparameter searches, but it is unlikely for that to occur often
     enough have a meaningful impact on this callback's operation.
+
+    .. warning::
+
+        ReduceLROnPlateau has been deprecated in Determined XXYYZZ and will be removed in a future
+        version.  Determined's ReduceLROnPlateau is a customization of keras' ReduceLROnPlateau
+        callback that is specific to TFKerasTrial, which is also deprecated.  Please use the new
+        :class:`~determined.keras.DeterminedCallback` for training, and use keras'
+        ReduceLROnPlateau with it.
     """
 
     _savable_attributes = {
@@ -643,6 +677,16 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
         tf.keras.callbacks.ReduceLROnPlateau.__init__(self, *arg, **kwarg)
         self.test_end_count = 0
 
+        warnings.warn(
+            "ReduceLROnPlateau has been deprecated in Determined XXYYZZ and will be removed in a "
+            "future version.  Determined's ReduceLROnPlateau is a customization of keras' "
+            "ReduceLROnPlateau callback that is specific to TFKerasTrial, which is also "
+            "deprecated.  Please use the new det.keras.DeterminedCallback for training, and use "
+            "keras' ReduceLROnPlateau with it.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
     def on_epoch_end(self, epoch: int, logs: Optional[Dict]) -> None:
         # Ignore on_epoch_end calls, which never contain metrics in Determined.
         pass
@@ -667,6 +711,14 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
     <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`__.
 
     Note that if a ``log_dir`` argument is passed to the constructor, it will be ignored.
+
+    .. warning::
+
+        det.keras.callbacks.TensorBoard has been deprecated in Determined XXYYZZ and will be removed
+        in a future version.  This version of keras' TensorBoard callback is designed to work with
+        TFKerasTrial, which is also deprecated.  Please use the new
+        :class:`~determined.keras.DeterminedCallback` for training, and use the new
+        :class:`det.keras.TensorBoard <determined.keras.TensorBoard>` with it.
     """
 
     # TensorBoard uses on_epoch_end but we manually take care of that.
@@ -681,6 +733,16 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
             )
         log_dir = str(tensorboard.get_base_path({}).resolve())
         tf.keras.callbacks.TensorBoard.__init__(self, log_dir=log_dir, *args, **kwargs)
+
+        warnings.warn(
+            "det.keras.callbacks.TensorBoard has been deprecated in Determined XXYYZZ and will be "
+            "removed in a future version.  This version of keras' TensorBoard callback is designed "
+            "to work with TFKerasTrial, which is also deprecated.  Please use the new "
+            "det.keras.DeterminedCallback for training, and use the new det.keras.TensorBoard with "
+            "it.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
     def _write_logs(self, *args: Any) -> None:
         """

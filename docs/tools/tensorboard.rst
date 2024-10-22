@@ -138,20 +138,8 @@ To configure TensorBoard for a specific framework, follow the examples below:
 TensorFlow Keras
 ================
 
-For models using :class:`~determined.keras.TFKerasTrial`, add a
-:class:`determined.keras.callabacks.TensorBoard` callback to your trial class:
-
-.. code:: python
-
-   from determined.keras import TFKerasTrial
-   from determined.keras.callbacks import TensorBoard
-
-
-   class MyModel(TFKerasTrial):
-       ...
-
-       def keras_callbacks(self):
-           return [TensorBoard()]
+For models using :class:`~determined.keras.DeterminedCallback`, include a
+:class:`determined.keras.TensorBoard` callback in your ``model.fit()`` call.:
 
 PyTorch
 =======
@@ -196,10 +184,9 @@ Any additional TFEvent files that are written to the appropriate path during tra
 to TensorBoard. The appropriate path varies by worker rank and can be obtained by one of the
 following functions:
 
--  For CoreAPI users: :func:`~determined.core.TrainContext.get_tensorboard_path`
+-  For CoreAPI and Keras users: :func:`~determined.core.TrainContext.get_tensorboard_path`
 -  For PyTorchTrial users: :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_path`
 -  For DeepSpeedTrial users:
    :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
--  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
 
 For more details and examples, refer to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
