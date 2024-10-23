@@ -10,7 +10,7 @@
                 "string",
                 "null"
             ],
-            "$comment": "Comment can be found in type LogPolicyV0",
+            "$comment": "Legacy log policy doesn't have a name. Legacy log policy will be deprecated.",
             "default": null
         },
         "pattern": {
@@ -18,7 +18,7 @@
                 "string",
                 "null"
             ],
-            "$comment": "Comment can be found in type LogPolicyV0",
+            "$comment": "Pattern can be null. So user can override it to disable the default log polices.",
             "default": null
         },
         "action": {
@@ -29,6 +29,25 @@
             ],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/log-action.json",
             "default": null
+        }
+    },
+    "checks": {
+        "\"name\" must be set, and \"pattern\" is also required unless you intend to disable an existing policy": {
+            "anyOf": [
+                {
+                    "required": [
+                        "name"
+                    ],
+                    "$comment": "modern policy requirement"
+                },
+                {
+                    "required": [
+                        "pattern",
+                        "action"
+                    ],
+                    "$comment": "legacy policy requirements"
+                }
+            ]
         }
     }
 }

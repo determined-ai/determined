@@ -62,6 +62,12 @@
     name: policy name
     pattern: a
 
+- name: invalid log policy
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/log-policy.json:
+      - "\"name\" must be set"
+  case: {}
+
 # Log Policies Tests
 - name: valid log policies
   sane_as:
@@ -79,13 +85,13 @@
     - name: policy name
       pattern: a
       action: cancel_retries
-    - pattern: different policy name
+    - name: different policy name
       pattern: a
   merged:
     - name: policy name
       pattern: a
       action: cancel_retries
-    - pattern: different policy name
+    - name: different policy name
       pattern: a
 
 - name: merge policies

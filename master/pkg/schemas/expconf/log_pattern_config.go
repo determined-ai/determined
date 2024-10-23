@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -57,11 +55,10 @@ func (b LogPoliciesConfigV0) Merge(
 	unnamedPolicies := set.New[string]()
 	for _, lp := range b {
 		if lp.RawName == nil {
-			json, err := json.Marshal(lp)
-			if err != nil {
-				log.Errorf("marshaling error %+v %v", lp, err)
-			}
-			unnamedPolicies.Insert(string(json))
+			// Not checking nil because we've enforced action and pattern must be set for the legacy policy
+			// in the json schema.
+			s := fmt.Sprintf("%v:%v", *lp.RawAction, *lp.RawPattern)
+			unnamedPolicies.Insert(s)
 		} else {
 			names.Insert(*lp.RawName)
 		}
@@ -70,13 +67,10 @@ func (b LogPoliciesConfigV0) Merge(
 	// Add policies in src that don't exist in b.
 	for _, lp := range src {
 		if lp.RawName == nil {
-			json, err := json.Marshal(lp)
-			if err != nil {
-				log.Errorf("marshaling error %+v %v", lp, err)
-			}
-			if !unnamedPolicies.Contains(string(json)) {
+			s := fmt.Sprintf("%v:%v", *lp.RawAction, *lp.RawPattern)
+			if !unnamedPolicies.Contains(s) {
 				out = append(out, lp)
-				unnamedPolicies.Insert(string(json))
+				unnamedPolicies.Insert(s)
 			}
 		} else if !names.Contains(*lp.RawName) {
 			out = append(out, lp)

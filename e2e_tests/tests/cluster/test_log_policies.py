@@ -2,7 +2,7 @@ import pytest
 
 from determined.common.api import bindings
 from determined.experimental import client
-from tests import api_utils, detproc
+from tests import api_utils
 from tests import experiment as exp
 from tests.cluster import utils
 from tests.experiment import noop

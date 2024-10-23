@@ -470,11 +470,6 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		}
-	  ],
-	  "log_policies": [
-		{
-		  "pattern": "nonrepeat"
-		}
 	  ]
 }`
 

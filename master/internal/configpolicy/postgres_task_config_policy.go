@@ -19,12 +19,7 @@ const (
 	// DefaultInvariantConfigStr is the default invariant config val used for tests.
 	DefaultInvariantConfigStr = `{
 	"description": "random description", 
-	"resources": {"slots": 4, "max_slots": 8},
-	"log_policies": [
-		{
-		  "pattern": "nonrepeat"
-		}
-	]
+	"resources": {"slots": 4, "max_slots": 8}
 	}`
 	// DefaultConstraintsStr is the default constraints val used for tests.
 	DefaultConstraintsStr = `{"priority_limit": 10, "resources": {"max_slots": 8}}`
