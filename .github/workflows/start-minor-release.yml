@@ -48,8 +48,7 @@ jobs:
           git push -u origin release-${{ github.event.inputs.version }}
 
       - name: "Switch back to main"
-        run: |
-          git checkout main
+        run: "git checkout main"
 
       - name: "Publish changes to main"
         run: |
