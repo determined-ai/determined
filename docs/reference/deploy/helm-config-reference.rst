@@ -42,9 +42,11 @@
 
    -  **NOTE:** This version overrides the version specified in ``appVersion`` of your
       ``Chart.yaml`` *and* any version specified in your ``helm install`` or ``helm upgrade``
-      command. So, for example, if you install Determined with ``helm install <release_name>
-      <helm_repo> --version <X.Y.Z>`` but set ``detVersion: A.B.C``, the Determined version
-      ``A.B.C`` is installed.
+      command. 
+
+      -  For example, if you install Determined with 
+         ``helm install <release_name> ... --version <X.Y.Z>`` but set ``detVersion: A.B.C``, the 
+         Determined version ``A.B.C`` is installed.
 
 -  ``masterPort``: The port at which the Determined master listens for connections on. (*Required*)
 
