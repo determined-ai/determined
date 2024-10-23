@@ -103,8 +103,6 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
         # Track which types we have issued warnings for in to_device().
         self._to_device_warned_types = set()  # type: Set[Type]
 
-        self._is_pre_trainer = False
-
         # DeepSpeed supports mixed precision through Nvidia Apex AMP.  ZeRO optimizer requires
         # Apex AMP and cannot be used with more complex AMP modes.
         apex_available = importutil.find_spec("apex") is not None
@@ -259,9 +257,6 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
         else:
             self.device = torch.device("cuda", 0)
         assert self.device is not None, "Error setting torch device."
-
-    def _set_is_pre_trainer(self) -> None:
-        self._is_pre_trainer = True
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map data to the device allocated by the Determined cluster.
