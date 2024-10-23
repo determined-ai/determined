@@ -1032,9 +1032,20 @@ class DeepSpeedTrialController:
                 )
 
         save_path = load_path.joinpath("trial_state.pkl")
+
+        try:
+            assert self.state
+        except AssertionError as e:
+
         if save_path.exists():
             with save_path.open("rb") as f:
                 self._load_state(pickle.load(f))
+        else:
+            # Support legacy save states.
+            wlsq_path = load_path.joinpath("workload_sequencer.pkl")
+            if wlsq_path.exists():
+                with wlsq_path.open("rb") as f:
+                    self._load_wlsq_state(pickle.load(f))
 
     def _load_state(self, state: Any) -> None:
         # Load our state from the checkpoint if we are continuing training after a pause or restart.
@@ -1052,6 +1063,26 @@ class DeepSpeedTrialController:
         # checkpoint state.  If the validation was before the last checkpoint, the checkpoint state
         # is already correct, while any validations after the last checkpoint aren't valid anymore
         # and can be safely ignored.
+        if self.state.batches_trained == self.val_from_previous_run:
+            self.state.last_val = self.state.batches_trained
+
+    def _load_wlsq_state(self, state: Any) -> None:
+        if state.get("trial_id") != self.trial_id:
+            self.state = pytorch._TrialState(trial_id=self.trial_id)
+            return
+
+        self.state = pytorch._TrialState(
+            trial_id=state.get("trial_id"),
+            last_ckpt=state.get("last_ckpt"),
+            last_val=state.get("last_val"),
+            step_id=state.get("step_id"),
+            # steps_completed is a legacy field kept to support loading from older checkpoints.
+            # checkpoints should only persist batches_trained and epochs_trained
+            batches_trained=state.get("steps_completed"),
+            epochs_trained=self._get_epoch_idx(state.get("steps_completed")),
+        )
+
+        assert self.state
         if self.state.batches_trained == self.val_from_previous_run:
             self.state.last_val = self.state.batches_trained
 
