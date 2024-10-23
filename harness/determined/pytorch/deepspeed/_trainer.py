@@ -236,7 +236,6 @@ def init(
     if local_training:
         trial_seed = None
         steps_completed = 0
-        debug_enabled = False
         num_gpus = len(gpu.get_gpu_uuids())
     else:
         assert cluster_info, "Unable to detect cluster info"
@@ -245,7 +244,6 @@ def init(
         exp_conf = cluster_info.trial._config
         steps_completed = cluster_info.trial._steps_completed
         num_gpus = len(cluster_info.gpu_uuids)
-        debug_enabled = cluster_info.trial._debug
 
         _set_random_seeds(trial_seed)
 
@@ -262,7 +260,6 @@ def init(
             num_gpus=num_gpus,
             exp_conf=exp_conf,
             steps_completed=steps_completed,
-            debug_enabled=debug_enabled,
             enable_tensorboard_logging=enable_tensorboard_logging,
         )
 
