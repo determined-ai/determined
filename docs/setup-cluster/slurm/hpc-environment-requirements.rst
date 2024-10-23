@@ -109,7 +109,7 @@ The following software components are required:
 Database Requirements
 =====================
 
-The solution requires PostgreSQL 10 or newer, which will be installed on the admin node. The
+The solution requires PostgreSQL 14 or later, which will be installed on the admin node. The
 required disk space for the database is estimated as follows:
 
 -  200 GB on small systems (less than 15 workers) or big systems if the experiment logs are sent to

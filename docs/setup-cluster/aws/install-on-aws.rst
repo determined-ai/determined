@@ -23,12 +23,18 @@ CloudFormation <https://aws.amazon.com/cloudformation/>`__ to automatically depl
 Determined cluster. CloudFormation builds the necessary components for Determined into a single
 CloudFormation stack.
 
+.. important::
+
+   **Amazon Aurora V1 is no longer supported**. We recommend migrating to **Amazon RDS for
+   PostgreSQL 14**. Deployments using ``det deploy aws`` will default to the ``simple-rds``
+   deployment type, which uses Amazon RDS.
+
 Requirements
 ============
 
--  Either AWS credentials or an IAM role with permissions to access AWS CloudFormation APIs. See the
-   `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
-   for information on how to use AWS credentials.
+-  AWS credentials or an IAM role with permissions to access AWS CloudFormation APIs. See the `AWS
+   Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__ for
+   information on how to use AWS credentials.
 
 -  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
 

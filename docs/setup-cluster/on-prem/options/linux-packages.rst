@@ -34,7 +34,7 @@ Docker container or your Linux distribution's package and service.
 Run PostgreSQL in Docker
 ------------------------
 
-#. Pull the official Docker image for PostgreSQL. PostgreSQL version 10 and later is supported.
+#. Pull the official Docker image for PostgreSQL 14 or later.
 
    .. code::
 
@@ -65,7 +65,7 @@ Run PostgreSQL in Docker
 Install PostgreSQL using ``apt`` or ``yum``
 -------------------------------------------
 
-#. Install PostgreSQL. Version 10 and later is supported.
+#. Install PostgreSQL 14 or later.
 
    **Debian Distributions**
 

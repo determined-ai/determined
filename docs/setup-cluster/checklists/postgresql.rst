@@ -22,7 +22,7 @@ Determined uses a PostgreSQL database to store experiment and trial metadata.
    GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
    one is working as expected.
 
-#. Pull the official Docker image for PostgreSQL. PostgreSQL version 10 and later is supported.
+#. Pull the official Docker image for PostgreSQL 14 or later.
 
    .. code::
 
@@ -75,7 +75,7 @@ Determined uses a PostgreSQL database to store experiment and trial metadata.
 Install PostgreSQL using ``apt`` or ``yum``
 ===========================================
 
-#. Install PostgreSQL 10 or greater.
+#. Install PostgreSQL 14 or later.
 
    **Debian Distributions**
 
@@ -83,13 +83,13 @@ Install PostgreSQL using ``apt`` or ``yum``
 
    .. code::
 
-      sudo apt install postgresql-10
+      sudo apt install postgresql-14
 
    **Red Hat Distributions**
 
    On Red Hat distributions, you'll need to configure the PostgreSQL yum repository as described in
    the `Red Hat Linux documentation <https://www.postgresql.org/download/linux/redhat>`_. Then,
-   install version 10:
+   install PostgreSQL 14:
 
    .. code::
 

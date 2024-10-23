@@ -14,7 +14,7 @@ This user guide provides step-by-step instructions for installing Determined usi
    GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
    one is working as expected.
 
-#. Pull the official Docker image for PostgreSQL. PostgreSQL version 10 and later is supported.
+#. Pull the official Docker image for PostgreSQL 14 or later.
 
    .. code::
 
