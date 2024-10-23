@@ -3245,7 +3245,6 @@ jobs:
                   - start-devcluster:
                       devcluster-config: <<parameters.devcluster-config>>
                       target-stage: <<parameters.target-stage>>
-            - run: sleep 10
             - stop-devcluster
             - checkout
             - run: make -C master build
