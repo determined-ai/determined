@@ -18,6 +18,12 @@ jobs:
         run: |
           grep -E -o '[0-9]+\.[0-9]+\.0' <(printf "%s" '${{ github.event.inputs.version }}') && true
 
+      - name: Configure git username and e-mail"
+        run: |
+          git config user.name  github-actions
+          git config user.email \
+            41898282+github-actions[bot]@users.noreply.github.com
+
       - name: "Setup Go"
         uses: actions/setup-go@v5
         with:
@@ -37,12 +43,6 @@ jobs:
       - name: "Switch back to main"
         run: |
           git checkout main
-
-      - name: "git config"
-        run: |
-          git config user.name  github-actions
-          git config user.email \
-            41898282+github-actions[bot]@users.noreply.github.com
 
       - name: "Publish changes to main"
         run: |
