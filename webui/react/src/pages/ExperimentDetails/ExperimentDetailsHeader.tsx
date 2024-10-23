@@ -732,7 +732,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 )}
               </Spinner>
             </Column>
-            <span>Experiment {experiment.id}</span>
+            <span>{capitalize(copyMap.experiment)} {experiment.id}</span>
             <span role="experimentName">
               {experiment.name}
             </span>

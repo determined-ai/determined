@@ -31,7 +31,9 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
       <Icon decorative name="arrow-right" size="tiny" />
       <div className={css.trial}>
         <ExperimentIcons state={trial.state} />
-        <div>Trial {trial.id}</div>
+        <div>
+          {f_flat_runs ? 'Run' : 'Trial'} {trial.id}
+        </div>
         {trial.logSignal &&
           (trial.logSignal.length < labelMaxLength ? (
             <Badge backgroundColor={hex2hsl(labelColor)} text={trial.logSignal} />
