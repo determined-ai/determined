@@ -471,11 +471,11 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		  "propagation": "cluster-wide"
 		}
 	  ],
-	   "log_policies": [
-			{
-			  "pattern": "nonrepeat"
-			}
-	   ]
+	  "log_policies": [
+		{
+		  "pattern": "nonrepeat"
+		}
+	  ]
 }`
 
 	var defaultInvariantConfig expconf.ExperimentConfigV0

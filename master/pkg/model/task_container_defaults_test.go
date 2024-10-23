@@ -471,7 +471,7 @@ func TestLogPatternUnmarshal(t *testing.T) {
 		        {"name": "policy name", "pattern": "b", "action": "exclude_node"}
 		    ]
 		}`)), &tcd)
-	require.ErrorContains(t, err, "log_policies have duplicated names \"policy name\" but different patterns")
+	require.ErrorContains(t, err, "log_policies have duplicated names \"policy name\"")
 }
 
 func TestPodSpecsDefaultMerging(t *testing.T) {

@@ -3,7 +3,6 @@ package expconf
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	log "github.com/sirupsen/logrus"
 
@@ -47,66 +46,52 @@ func (b LogPoliciesConfigV0) WithDefaults() LogPoliciesConfigV0 {
 func (b LogPoliciesConfigV0) Merge(
 	src LogPoliciesConfigV0,
 ) LogPoliciesConfigV0 {
-	// src is nil and b is an empty slice.
-	if src == nil && b != nil && len(b) == 0 {
-		return make(LogPoliciesConfigV0, 0)
+	if src == nil && b == nil {
+		return nil
 	}
-	var out LogPoliciesConfigV0
-	var policiesWoName LogPoliciesConfigV0
-	seenPolicies := set.New[string]()
-	nameToLp := make(map[string]LogPolicyV0)
 
+	// Keep everything in b unconditionally.
+	out := append(LogPoliciesConfigV0{}, b...)
+
+	names := set.New[string]()
+	unnamedPolicies := set.New[string]()
+	for _, lp := range b {
+		if lp.RawName == nil {
+			json, err := json.Marshal(lp)
+			if err != nil {
+				log.Errorf("marshaling error %+v %v", lp, err)
+			}
+			unnamedPolicies.Insert(string(json))
+		} else {
+			names.Insert(*lp.RawName)
+		}
+	}
+
+	// Add policies in src that don't exist in b.
 	for _, lp := range src {
 		if lp.RawName == nil {
-			policiesWoName.appendLegacyPolicies(lp, seenPolicies)
-			continue
-		}
-		nameToLp[*lp.RawName] = lp
-	}
-
-	for _, otherLp := range b {
-		if otherLp.RawName == nil {
-			policiesWoName.appendLegacyPolicies(otherLp, seenPolicies)
-			continue
-		}
-		name := *otherLp.RawName
-		if srcLp, ok := nameToLp[name]; ok {
-			// Merge two LogPolicies if they have the same name.
-			nameToLp[name] = schemas.Merge(otherLp, srcLp)
-		} else {
-			nameToLp[name] = otherLp
+			json, err := json.Marshal(lp)
+			if err != nil {
+				log.Errorf("marshaling error %+v %v", lp, err)
+			}
+			if !unnamedPolicies.Contains(string(json)) {
+				out = append(out, lp)
+				unnamedPolicies.Insert(string(json))
+			}
+		} else if !names.Contains(*lp.RawName) {
+			out = append(out, lp)
+			names.Insert(*lp.RawName)
 		}
 	}
 
-	for _, lp := range nameToLp {
-		out = append(out, lp)
-	}
-	out = append(out, policiesWoName...)
-	out.sort()
 	return out
-}
-
-// Only keep unique legacy policies.
-func (b *LogPoliciesConfigV0) appendLegacyPolicies(policy LogPolicyV0, seenPolicies set.Set[string]) {
-	// policy without name is legacy policy.
-	if policy.RawName == nil {
-		json, err := json.Marshal(policy)
-		if err != nil {
-			log.Errorf("marshaling error %+v %v", policy, err)
-		}
-		if seenPolicies.Contains(string(json)) {
-			return
-		}
-		seenPolicies.Insert(string(json))
-		*b = append(*b, policy)
-	}
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 // Special cases:
 // 1. User may submit policies that have different names but same patterns. We keep both of them, but which name
 // will be shown in the UI is undefined.
-// 2. User can't submit policies that have the same names but different patterns.
+// 2. User can't submit policies that have the same names.
 func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 	type DefaultParser LogPoliciesConfigV0
 	var jsonItems DefaultParser
@@ -123,59 +108,13 @@ func (b *LogPoliciesConfigV0) UnmarshalJSON(data []byte) error {
 		}
 
 		if names.Contains(*n) {
-			return fmt.Errorf("log_policies have duplicated names %q but different patterns", *n)
+			return fmt.Errorf("log_policies have duplicated names %q", *n)
 		}
 		names.Insert(*n)
 	}
 
-	out := LogPoliciesConfig(jsonItems)
-	out.sort()
-	*b = out
-
+	*b = LogPoliciesConfig(jsonItems)
 	return nil
-}
-
-// Sort LogPoliciesConfigV0 so the output is in deterministic state. Testing will be easier.
-func (b LogPoliciesConfigV0) sort() {
-	sort.Slice(b, func(i, j int) bool {
-		// Sort policies by name first.
-		var iName string
-		var jName string
-		if b[i].RawName != nil {
-			iName = *b[i].RawName
-		}
-		if b[j].RawName != nil {
-			jName = *b[j].RawName
-		}
-
-		// Sort policies by pattern if their names are the same.
-		if iName == jName {
-			var iPattern string
-			var jPattern string
-			if b[i].RawPattern != nil {
-				iPattern = *b[i].RawPattern
-			}
-			if b[j].RawPattern != nil {
-				jPattern = *b[j].RawPattern
-			}
-			// Sort by action if patterns and names are the same.
-			if iPattern == jPattern {
-				var iAction string
-				var jAction string
-				if b[i].RawAction != nil {
-					iAction = string(b[i].RawAction.Type)
-				}
-				if b[j].RawAction != nil {
-					jAction = string(b[j].RawAction.Type)
-				}
-				return iAction < jAction
-			}
-
-			return iPattern < jPattern
-		}
-
-		return iName < jName
-	})
 }
 
 // LogPolicyV0 is an action to take if we match against trial logs.
@@ -187,17 +126,6 @@ type LogPolicyV0 struct {
 	// Pattern can be nil. So user can override it to disable the default log polices.
 	RawPattern *string      `json:"pattern,omitempty"`
 	RawAction  *LogActionV0 `json:"action,omitempty"`
-}
-
-// Merge LogPolicyV0.
-func (l LogPolicyV0) Merge(src LogPolicyV0) LogPolicyV0 {
-	// Merging only applies to the LogActionV0 with the same name.
-	if src.RawName == nil || l.RawName == nil || *src.RawName != *l.RawName {
-		log.Errorf("the names of %+v and %+v are not the same", l, src)
-		return src
-	}
-
-	return l
 }
 
 // LogActionType is the type of an action.

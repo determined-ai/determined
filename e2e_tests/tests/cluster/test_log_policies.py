@@ -166,7 +166,6 @@ def test_log_policy_matched(should_match: bool) -> None:
     expected_policy = "Test"
     config = {
         "log_policies": [{"name": expected_policy, "pattern": regex}],
-        "max_restarts": 1,
     }
 
     exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)

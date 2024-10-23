@@ -441,7 +441,7 @@ export const getColumnDefs = ({
       data: {
         appTheme,
         kind: STATE_CELL,
-        label: record.logSignal,
+        label: record.logPolicyMatched,
         state: getCellStateFromExperimentState(record.state),
       },
       kind: GridCellKind.Custom,

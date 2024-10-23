@@ -3,7 +3,7 @@
     "$id": "http://determined.ai/schemas/expconf/v0/log-action.json",
     "title": "LogAction",
     "union": {
-        "defaultMessage": "expect one of the followings: cancel_retries, exclude_node, or an legacy object where object[\"type\"] is one of 'cancel_retries' or 'exclude_node'",
+        "defaultMessage": "must be one of \"cancel_retries\" or \"exclude_node\"",
         "items": [
             {
                 "unionKey": "never",
