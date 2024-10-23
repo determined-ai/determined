@@ -1778,3 +1778,49 @@ func TestArchiveUnarchiveWithArchivedParent(t *testing.T) {
 	require.Equal(t, errMsg, unarchRes.Results[0].Error)
 	require.Equal(t, errMsg, unarchRes.Results[1].Error)
 }
+
+func TestGetRunGroups(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	req := &apiv1.GetRunGroupsRequest{
+		ProjectId: &projectID,
+		Group:     "state",
+	}
+
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters,
+	}, task.TaskID))
+
+	resp, err := api.GetRunGroups(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Groups, 1)
+
+	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
+
+	// Add second experiment
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CanceledState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	resp, err := api.GetRunGroups(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Groups, 2)
+}
