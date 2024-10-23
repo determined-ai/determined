@@ -214,10 +214,6 @@ def _run_deepspeed_trial(
         hparams=info.trial.hparams,
         exp_conf=info.trial._config,
     ) as train_context:
-        average_aggregated_gradients = bool(
-            info.trial._config["optimizations"]["average_aggregated_gradients"]
-        )
-
         trial_inst = trial_class(train_context)
 
         if train_context.distributed.size > 1 and not train_context.distributed.rank == 0:
@@ -231,9 +227,7 @@ def _run_deepspeed_trial(
         trainer = det_ds.Trainer(trial_inst, train_context)
 
         if "global_batch_size" in info.trial.hparams:
-            global_batch_size = int(
-                info.trial.hparams["global_batch_size"]
-            )  # type: Optional[int]
+            global_batch_size = int(info.trial.hparams["global_batch_size"])  # type: Optional[int]
         else:
             global_batch_size = None
 

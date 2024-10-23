@@ -1124,7 +1124,6 @@ class DeepSpeedTrialController:
         # the save method provided by DeepSpeed.
         self.trial.save(self.context, path)
 
-        trial_cls = type(self.trial)
         with open(path.joinpath("load_data.json"), "w") as f2:
             try:
                 exp_conf = self.context.get_experiment_config()  # type: Optional[Dict[str, Any]]
