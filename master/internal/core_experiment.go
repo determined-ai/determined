@@ -352,7 +352,6 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	// Apply the scheduler's default priority if priority is not set in an invariant config or		// constraint.
 	// constraint.
 	if config.Resources().Priority() == nil {
-		// Returns an error if RM does not implement priority.
 		enforcedPriority, _, err := configpolicy.FindAllowedPriority(
 			&workspaceID,
 			model.ExperimentType,

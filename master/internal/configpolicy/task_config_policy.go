@@ -11,7 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -253,7 +252,7 @@ func FindAllowedPriority(scope *int, workloadType string) (limit *int, constrain
 			}
 			if configs.Resources.Priority != nil {
 				adminPriority := *configs.Resources.Priority
-				return ptrs.Ptr(adminPriority), false,
+				return &adminPriority, false,
 					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		case model.ExperimentType:
