@@ -8752,6 +8752,7 @@ class v1LaunchTensorboardSearchesRequest(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     filter: "typing.Optional[str]" = None
+    searchIds: "typing.Optional[typing.Sequence[int]]" = None
     templateName: "typing.Optional[str]" = None
     workspaceId: "typing.Optional[int]" = None
 
@@ -8761,6 +8762,7 @@ class v1LaunchTensorboardSearchesRequest(Printable):
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         filter: "typing.Union[str, None, Unset]" = _unset,
+        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
@@ -8770,6 +8772,8 @@ class v1LaunchTensorboardSearchesRequest(Printable):
             self.files = files
         if not isinstance(filter, Unset):
             self.filter = filter
+        if not isinstance(searchIds, Unset):
+            self.searchIds = searchIds
         if not isinstance(templateName, Unset):
             self.templateName = templateName
         if not isinstance(workspaceId, Unset):
@@ -8785,6 +8789,8 @@ class v1LaunchTensorboardSearchesRequest(Printable):
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
+        if "searchIds" in obj:
+            kwargs["searchIds"] = obj["searchIds"]
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
         if "workspaceId" in obj:
@@ -8800,6 +8806,8 @@ class v1LaunchTensorboardSearchesRequest(Printable):
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
+        if not omit_unset or "searchIds" in vars(self):
+            out["searchIds"] = self.searchIds
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
         if not omit_unset or "workspaceId" in vars(self):

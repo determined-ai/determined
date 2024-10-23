@@ -6344,7 +6344,7 @@ export interface V1LaunchTensorboardResponse {
  */
 export interface V1LaunchTensorboardSearchesRequest {
     /**
-     * Targets all searches matching filter expression.
+     * Targets all searches matching filter expression. Leave empty if using IDs.
      * @type {string}
      * @memberof V1LaunchTensorboardSearchesRequest
      */
@@ -6373,6 +6373,12 @@ export interface V1LaunchTensorboardSearchesRequest {
      * @memberof V1LaunchTensorboardSearchesRequest
      */
     workspaceId?: number;
+    /**
+     * Target search IDs. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    searchIds?: Array<number>;
 }
 /**
  * Response to LaunchTensorboardSearchesRequest.

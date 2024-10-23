@@ -710,30 +710,36 @@ func (a *apiServer) LaunchTensorboardSearches(ctx context.Context, req *apiv1.La
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	type searchResult struct {
-		ID int32
-	}
+	var expIds []int32
 
-	var targets []searchResult
-	getQ := getSelectSearchesQueryTables().
-		Model(&targets).
-		Column("e.id").
-		Where("w.id = ?", req.GetWorkspaceId()).
-		Where("e.state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
+	if req.Filter != nil {
+		type searchResult struct {
+			ID int32
+		}
 
-	getQ, err = filterSearchQuery(getQ, &req.Filter)
-	if err != nil {
-		return nil, err
-	}
+		var targets []searchResult
+		getQ := getSelectSearchesQueryTables().
+			Model(&targets).
+			Column("e.id").
+			Where("w.id = ?", req.GetWorkspaceId()).
+			Where("e.state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 
-	err = getQ.Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
+		getQ, err = filterSearchQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
 
-	expIds := make([]int32, len(targets))
-	for i := range expIds {
-		expIds[i] = targets[i].ID
+		err = getQ.Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		expIds = make([]int32, len(targets))
+		for i := range expIds {
+			expIds[i] = targets[i].ID
+		}
+	} else {
+		expIds = req.SearchIds
 	}
 
 	launchResp, err := a.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{

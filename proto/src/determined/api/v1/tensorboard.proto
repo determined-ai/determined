@@ -130,8 +130,8 @@ message LaunchTensorboardResponse {
 
 // Request to launch a tensorboard using searches matching a filter.
 message LaunchTensorboardSearchesRequest {
-  // Targets all searches matching filter expression.
-  string filter = 1;
+  // Targets all searches matching filter expression. Leave empty if using IDs.
+  optional string filter = 1;
   // Tensorboard config (JSON).
   google.protobuf.Struct config = 2;
   // Tensorboard template name.
@@ -140,6 +140,8 @@ message LaunchTensorboardSearchesRequest {
   repeated determined.util.v1.File files = 4;
   // Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
   int32 workspace_id = 5;
+  // Target search IDs. Leave empty if using filter.
+  repeated int32 search_ids = 6;
 }
 // Response to LaunchTensorboardSearchesRequest.
 message LaunchTensorboardSearchesResponse {
