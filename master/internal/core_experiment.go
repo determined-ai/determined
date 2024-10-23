@@ -349,10 +349,24 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		config.RawCheckpointStorage, &m.config.CheckpointStorage,
 	)
 
-	// Apply the scheduler's default priority.
+	// Apply the scheduler's default priority if priority is not set in an invariant config or		// constraint.
+	// constraint.
 	if config.Resources().Priority() == nil {
-		prio := masterConfig.DefaultPriorityForPool(poolName.String())
-		config.RawResources.RawPriority = &prio
+		// Returns an error if RM does not implement priority.
+		enforcedPriority, _, err := configpolicy.FindAllowedPriority(
+			&workspaceID,
+			model.ExperimentType,
+		)
+		if err != nil {
+			return nil, nil, config, nil, nil, err
+		}
+		if enforcedPriority == nil {
+			prio := masterConfig.DefaultPriorityForPool(poolName.String())
+			config.RawResources.RawPriority = &prio
+		} else {
+			config.RawResources.RawPriority = enforcedPriority
+		}
+
 	}
 
 	// Lastly, apply any json-schema-defined defaults.
