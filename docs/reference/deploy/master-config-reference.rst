@@ -268,6 +268,8 @@ The resource manager used to acquire resources. Defaults to ``agent``.
 For Kubernetes installations, if you define additional resource managers, the resource manager
 specified under the primary resource_manager key here is considered the default.
 
+.. _master-config-rm-cluster-name:
+
 ``cluster_name``
 ================
 
@@ -385,6 +387,8 @@ on using Determined with Kubernetes, see the :ref:`documentation <determined-on-
 -------------
 
 This field is no longer supported, use ``default_namespace`` instead.
+
+.. _master-config-default-namespace:
 
 ``default_namespace``
 ---------------------

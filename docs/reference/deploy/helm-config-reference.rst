@@ -318,4 +318,17 @@
    -  ``schedule``: Specifies the schedule for cleaning up logs. Can be provided as a cron
       expression or a duration string.
 
+-  ``resourceManager``: Specifies some configuration options for the (default) Determined resource
+   manager. A default configuration is provided in the ``values.yaml`` file.
+
+   -  ``defaultNamespace``: The namespace to which a workspace's workloads get sent by default if
+      the workload does not have an explicit :ref:`workspace-namespace binding <k8s-resource-caps>`.
+      Maps to :ref:`resource_manager.default_namespace <master-config-default-namespace>` in the
+      master configuration. If left unspecified, ``resource_manager.default_namespace`` defaults to
+      the Kubernetes ``default`` namespace.
+
+   -  ``clusterName``: The name associated with the (default) resource manager/cluster. (*Required
+      when using multiple resource managers*). Maps to :ref:`resource_manager.cluster_name
+      <master-config-rm-cluster-name>` in the master configuration.
+
 .. include:: ../../_shared/note-dtrain-learn-more.txt
