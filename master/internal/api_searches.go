@@ -95,6 +95,7 @@ func (a *apiServer) MoveSearches(
 		Model(&searchChecks).
 		Column("e.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("e.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("e.project_id = ?", req.SourceProjectId)
@@ -225,7 +226,7 @@ func (a *apiServer) CancelSearches(ctx context.Context, req *apiv1.CancelSearche
 		})
 		if err != nil {
 			results = append(results, &apiv1.SearchActionResult{
-				Error: fmt.Sprintf("Failed to kill search: %s", err),
+				Error: fmt.Sprintf("Failed to cancel search: %s", err),
 				Id:    searchID,
 			})
 		} else {
@@ -561,6 +562,7 @@ func pauseResumeSearchAction(ctx context.Context, isPause bool, projectID int32,
 		Model(&searchCandidates).
 		Column("e.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("e.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("e.project_id = ?", projectID)
