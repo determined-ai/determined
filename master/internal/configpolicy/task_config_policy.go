@@ -232,10 +232,11 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 }
 
 // FindAllowedPriority finds the optionally set priority limit in scope's invariant config
-// policies. Returns the invariant config priority if that's set, and otherwise returns the
+// policies. Returns the invariant config priority if that's set, and otherwise returns
 // the priority_limit constraint. If neither of the two is set, returns nil limit.
 func FindAllowedPriority(scope *int, workloadType string) (limit *int, constraintExists bool,
-	err error) {
+	err error,
+) {
 	configPolicies, err := GetTaskConfigPolicies(context.TODO(), scope, workloadType)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to fetch task config policies: %w", err)

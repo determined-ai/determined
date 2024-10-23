@@ -349,7 +349,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		config.RawCheckpointStorage, &m.config.CheckpointStorage,
 	)
 
-	// Apply the scheduler's default priority if priority is not set in an invariant config or		// constraint.
+	// Apply the scheduler's default priority if priority is not set in an invariant config or
 	// constraint.
 	if config.Resources().Priority() == nil {
 		enforcedPriority, _, err := configpolicy.FindAllowedPriority(
@@ -365,7 +365,6 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		} else {
 			config.RawResources.RawPriority = enforcedPriority
 		}
-
 	}
 
 	// Lastly, apply any json-schema-defined defaults.

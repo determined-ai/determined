@@ -25,7 +25,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 
 	// No priority limit to find.
-	_, exists, err := findAllowedPriority(nil, model.ExperimentType)
+	_, exists, err := FindAllowedPriority(nil, model.ExperimentType)
 	require.NoError(t, err)
 	require.False(t, exists)
 
@@ -33,7 +33,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	globalLimit := 10
 	user := db.RequireMockUser(t, pgDB)
 	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit), model.ExperimentType)
-	limit, exists, err := findAllowedPriority(nil, model.ExperimentType)
+	limit, exists, err := FindAllowedPriority(nil, model.ExperimentType)
 	require.Equal(t, globalLimit, limit)
 	require.True(t, exists)
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	configPriority := 15
 	invariantConfig := fmt.Sprintf(`{"resources": {"priority": %d}}`, configPriority)
 	addConfig(t, user, nil, invariantConfig, model.NTSCType)
-	limit, _, err = findAllowedPriority(nil, model.NTSCType)
+	limit, _, err = FindAllowedPriority(nil, model.NTSCType)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	require.Equal(t, configPriority, limit)
 
@@ -50,7 +50,7 @@ func TestFindAllowedPriority(t *testing.T) {
 	configPriority = 7
 	invariantConfig = fmt.Sprintf(`{"resources": {"priority": %d}}`, configPriority)
 	addConfig(t, user, nil, invariantConfig, model.ExperimentType)
-	limit, _, err = findAllowedPriority(nil, model.ExperimentType)
+	limit, _, err = FindAllowedPriority(nil, model.ExperimentType)
 	require.ErrorIs(t, err, errPriorityImmutable)
 	require.Equal(t, configPriority, limit)
 }
