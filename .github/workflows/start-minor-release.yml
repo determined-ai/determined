@@ -22,6 +22,7 @@ jobs:
           if [[ $ret != 0 ]]; then
             echo 'Version string must match <[0-9]+\.[0-9]+\.0>. Got: <${{ github.event.inputs.version }}>';
             exit $ret
+          fi
 
       - name: Configure git username and e-mail"
         run: |
