@@ -3235,12 +3235,13 @@ jobs:
                   - start-devcluster:
                       devcluster-config: <<parameters.devcluster-config>>
                       target-stage: <<parameters.target-stage>>
-                  - run: sleep 10
-                  - stop-devcluster
+            - run: sleep 10
+            - stop-devcluster
             - checkout
-            - restore_cache:
-                keys:
-                  - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+            - setup-python-venv:
+                determined: True
+                extra-requirements-file: "e2e_tests/tests/requirements.txt"
+                executor: <<pipeline.parameters.machine-image>>
 
       - install-devcluster
       - unless:
