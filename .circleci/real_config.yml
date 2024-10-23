@@ -2235,8 +2235,6 @@ jobs:
           condition: << parameters.ee >>
           steps:
             - license-gen
-      - attach_workspace:
-          at: .
       - restore_cache:
           keys:
             - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
@@ -3199,6 +3197,8 @@ jobs:
                   commit=$(git rev-parse "<<parameters.upgrade-branch>>")
                   echo "Latest commit for <<parameters.upgrade-branch>>: $commit"
                   echo "export HEAD_COMMIT=$commit" >> $BASH_ENV
+            - run: make -C master build
+            - run: make -C agent build
 
       - setup-python-venv:
           determined: True
@@ -3238,8 +3238,9 @@ jobs:
                   - run: sleep 10
                   - stop-devcluster
             - checkout
-            - run: make -C master build
-            - run: make -C agent build
+            - restore_cache:
+                keys:
+                  - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
 
       - install-devcluster
       - unless:
