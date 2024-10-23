@@ -31,6 +31,9 @@ jobs:
           echo 'Creating branch: release-${{ github.event.inputs.version }}'
           git checkout -b release-${{ github.event.inputs.version }}
 
+          echo 'Pushing release branch'
+          git push -u origin release-${{ github.event.inputs.version }}
+
       - name: "Switch back to main"
         run: |
           git checkout main
