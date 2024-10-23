@@ -380,7 +380,7 @@ class DeepSpeedTrialController:
                     ]
                 )
             else:
-                ops = self.core_context.searcher.operations()
+                ops = self.core_context.searcher.operations()  # type: ignore
 
             for op in ops:
                 if self.local_training:
@@ -425,7 +425,7 @@ class DeepSpeedTrialController:
 
         return
 
-    def get_epoch_idx(self, batch_id: int) -> int:
+    def _get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // cast(int, self.context._epoch_len)
 
     def _train_for_op(
