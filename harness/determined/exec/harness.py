@@ -214,7 +214,6 @@ def _run_deepspeed_trial(
         with det_ds.init(
             hparams=info.trial.hparams,
             exp_conf=info.trial._config,
-            aggregation_frequency=int(info.trial._config["optimizations"]["aggregation_frequency"]),
         ) as train_context:
             fp16_compression = bool(info.trial._config["optimizations"]["gradient_compression"])
             average_aggregated_gradients = bool(

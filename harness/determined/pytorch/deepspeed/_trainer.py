@@ -209,7 +209,6 @@ def init(
     hparams: Optional[Dict] = None,
     exp_conf: Optional[Dict[str, Any]] = None,
     distributed: Optional[core.DistributedContext] = None,
-    aggregation_frequency: int = 1,
     enable_tensorboard_logging: bool = True,
 ) -> Iterator[det_ds.DeepSpeedTrialContext]:
     """
@@ -222,8 +221,6 @@ def init(
         exp_conf: (Optional) for local-training mode. If unset, calling
             context.get_experiment_config() will fail.
         distributed: (Optional) custom distributed training configuration
-        aggregation_frequency: number of batches before gradients are exchanged in distributed
-            training. This value is configured here because it is used in context.wrap_optimizer.
         enable_tensorboard_logging: Configures if upload to tensorboard is enabled
     """
     cluster_info = det.get_cluster_info()
@@ -264,7 +261,6 @@ def init(
             slots_per_trial=core_context.distributed.get_size(),
             num_gpus=num_gpus,
             exp_conf=exp_conf,
-            aggregation_frequency=aggregation_frequency,
             steps_completed=steps_completed,
             debug_enabled=debug_enabled,
             enable_tensorboard_logging=enable_tensorboard_logging,
