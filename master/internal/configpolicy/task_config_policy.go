@@ -264,7 +264,7 @@ func FindAllowedPriority(scope *int, workloadType string) (limit *int, constrain
 			}
 			if configs.RawResources != nil && configs.RawResources.RawPriority != nil {
 				adminPriority := *configs.RawResources.RawPriority
-				return ptrs.Ptr(adminPriority), false,
+				return &adminPriority, false,
 					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}
 		default:
