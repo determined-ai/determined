@@ -101,7 +101,7 @@ class DeepSpeedTrialController:
         self.latest_checkpoint = latest_checkpoint
         self.test_mode = test_mode
         self.searcher_metric_name = searcher_metric_name
-        self.ckpt_policy = checkpoint_policy
+        self.checkpoint_policy = checkpoint_policy
         self.smaller_is_better = smaller_is_better
         self.global_batch_size = global_batch_size
         self.profiling_enabled = profiling_enabled
@@ -921,9 +921,9 @@ class DeepSpeedTrialController:
         # Checkpoint according to policy.
         if self.is_chief:
             if not self._checkpoint_is_current():
-                if self.ckpt_policy == "all":
+                if self.checkpoint_policy == "all":
                     should_checkpoint = True
-                elif self.ckpt_policy == "best":
+                elif self.checkpoint_policy == "best":
                     assert (
                         self.searcher_metric_name
                     ), "checkpoint policy 'best' but searcher metric name not defined"
