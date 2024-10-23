@@ -30,7 +30,7 @@ def get_neox_args(context):
             "checkpoint_factor": exp_config["min_validation_period"]["batches"],
             "eval_interval": exp_config["min_validation_period"]["batches"],
             "hostfile": os.environ.get("DET_DEEPSPEED_HOSTFILE_PATH"),
-            "seed": context.env.trial_seed,
+            "seed": context.get_trial_seed(),
         }
     )
     for k, v in overwrite_values.items():
