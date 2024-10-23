@@ -19,15 +19,21 @@ func verifyKeys(t *testing.T, keys PrivateAndPublicKeys) {
 }
 
 func TestSSHKeyGenerate(t *testing.T) {
-	keys, err := GenerateKey(config.SSHConfig{KeyType: config.RSAKeyType, RsaKeySize: 512})
-	assert.NilError(t, err)
-	verifyKeys(t, keys)
+	t.Run("generate RSA key", func(t *testing.T) {
+		keys, err := GenerateKey(config.SSHConfig{KeyType: config.KeyTypeRSA, RsaKeySize: 512})
+		assert.NilError(t, err)
+		verifyKeys(t, keys)
+	})
 
-	keys, err = GenerateKey(config.SSHConfig{KeyType: config.ECDSAKeyType})
-	assert.NilError(t, err)
-	verifyKeys(t, keys)
+	t.Run("generate ECDSA key", func(t *testing.T) {
+		keys, err := GenerateKey(config.SSHConfig{KeyType: config.KeyTypeECDSA})
+		assert.NilError(t, err)
+		verifyKeys(t, keys)
+	})
 
-	keys, err = GenerateKey(config.SSHConfig{KeyType: config.ED25519KeyType})
-	assert.NilError(t, err)
-	verifyKeys(t, keys)
+	t.Run("generate ED25519 key", func(t *testing.T) {
+		keys, err := GenerateKey(config.SSHConfig{KeyType: config.KeyTypeED25519})
+		assert.NilError(t, err)
+		verifyKeys(t, keys)
+	})
 }

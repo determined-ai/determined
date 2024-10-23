@@ -30,11 +30,11 @@ type PrivateAndPublicKeys struct {
 func GenerateKey(conf config.SSHConfig) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
 	switch conf.KeyType {
-	case config.RSAKeyType:
+	case config.KeyTypeRSA:
 		return generateRSAKey(conf.RsaKeySize)
-	case config.ECDSAKeyType:
+	case config.KeyTypeECDSA:
 		return generateECDSAKey()
-	case config.ED25519KeyType:
+	case config.KeyTypeED25519:
 		return generateED25519Key()
 	default:
 		return generatedKeys, errors.New("Invalid crypto system")
@@ -42,14 +42,13 @@ func GenerateKey(conf config.SSHConfig) (PrivateAndPublicKeys, error) {
 }
 
 func generateRSAKey(rsaKeySize int) (PrivateAndPublicKeys, error) {
-	var generatedKeys PrivateAndPublicKeys
 	privateKey, err := rsa.GenerateKey(rand.Reader, rsaKeySize)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate RSA private key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate RSA private key")
 	}
 
 	if err = privateKey.Validate(); err != nil {
-		return generatedKeys, err
+		return PrivateAndPublicKeys{}, err
 	}
 
 	block := &pem.Block{
@@ -59,28 +58,25 @@ func generateRSAKey(rsaKeySize int) (PrivateAndPublicKeys, error) {
 
 	publicKey, err := sshlib.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate RSA public key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate RSA public key")
 	}
 
-	generatedKeys = PrivateAndPublicKeys{
+	return PrivateAndPublicKeys{
 		PrivateKey: pem.EncodeToMemory(block),
 		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
-	}
-
-	return generatedKeys, nil
+	}, nil
 }
 
 func generateECDSAKey() (PrivateAndPublicKeys, error) {
-	var generatedKeys PrivateAndPublicKeys
 	// Curve size currently not configurable, using the NIST recommendation.
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ECDSA private key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ECDSA private key")
 	}
 
 	privateKeyBytes, err := x509.MarshalECPrivateKey(privateKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to marshal ECDSA private key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to marshal ECDSA private key")
 	}
 
 	block := &pem.Block{
@@ -90,40 +86,36 @@ func generateECDSAKey() (PrivateAndPublicKeys, error) {
 
 	publicKey, err := sshlib.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ECDSA public key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ECDSA public key")
 	}
 
-	generatedKeys = PrivateAndPublicKeys{
+	return PrivateAndPublicKeys{
 		PrivateKey: pem.EncodeToMemory(block),
 		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
-	}
-
-	return generatedKeys, nil
+	}, nil
 }
 
 func generateED25519Key() (PrivateAndPublicKeys, error) {
-	var generatedKeys PrivateAndPublicKeys
 
 	ed25519PublicKey, privateKey, err := ed25519.GenerateKey(nil)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ED25519 private key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ED25519 private key")
 	}
 
 	// Before OpenSSH 9.6, for ED25519 keys, only the OpenSSH private key format was supported.
 	block, err := sshlib.MarshalPrivateKey(privateKey, "")
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to marshal ED25519 private key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to marshal ED25519 private key")
 	}
 
 	publicKey, err := sshlib.NewPublicKey(ed25519PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate ED25519 public key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ED25519 public key")
 	}
 
-	generatedKeys = PrivateAndPublicKeys{
+	return PrivateAndPublicKeys{
 		PrivateKey: pem.EncodeToMemory(block),
 		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
-	}
+	}, nil
 
-	return generatedKeys, nil
 }

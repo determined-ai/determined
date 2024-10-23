@@ -43,12 +43,12 @@ const (
 )
 
 const (
-	// RSAKeyType uses RSA.
-	RSAKeyType = "RSA"
-	// ECDSAKeyType uses ECDSA.
-	ECDSAKeyType = "ECDSA"
-	// ED25519KeyType uses ED25519.
-	ED25519KeyType = "ED25519"
+	// KeyTypeRSA uses RSA.
+	KeyTypeRSA = "RSA"
+	// KeyTypeECDSA uses ECDSA.
+	KeyTypeECDSA = "ECDSA"
+	// KeyTypeED25519 uses ED25519.
+	KeyTypeED25519 = "ED25519"
 )
 
 type (
@@ -117,7 +117,7 @@ func DefaultConfig() *Config {
 				Group: "root",
 			},
 			SSH: SSHConfig{
-				KeyType: ED25519KeyType,
+				KeyType: KeyTypeED25519,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 		},
@@ -485,16 +485,15 @@ func (t *TLSConfig) Validate() []error {
 // Validate implements the check.Validatable interface.
 func (t *SSHConfig) Validate() []error {
 	var errs []error
-	if t.KeyType != RSAKeyType && t.KeyType != ECDSAKeyType && t.KeyType != ED25519KeyType {
+	if t.KeyType != KeyTypeRSA && t.KeyType != KeyTypeECDSA && t.KeyType != KeyTypeED25519 {
 		errs = append(errs, errors.New("Crypto system must be one of 'RSA', 'ECDSA' or 'ED25519'"))
 	}
-	if t.KeyType != RSAKeyType {
-		return errs
-	}
-	if t.RsaKeySize < 1 {
-		errs = append(errs, errors.New("RSA Key size must be greater than 0"))
-	} else if t.RsaKeySize > 16384 {
-		errs = append(errs, errors.New("RSA Key size must be less than 16,384"))
+	if t.KeyType == KeyTypeRSA {
+		if t.RsaKeySize < 1 {
+			errs = append(errs, errors.New("RSA Key size must be greater than 0"))
+		} else if t.RsaKeySize > 16384 {
+			errs = append(errs, errors.New("RSA Key size must be less than 16,384"))
+		}
 	}
 	return errs
 }
