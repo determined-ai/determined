@@ -385,6 +385,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'id',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
         key: 'id',
+        onCell: () => ({ 'data-testid': 'taskID' }),
         render: taskIdRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
         title: 'Short ID',

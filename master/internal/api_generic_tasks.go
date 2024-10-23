@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
+	masterConfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -130,6 +131,12 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	rawResourcePool := poolName.String()
 	taskConfig.Resources.RawResourcePool = &rawResourcePool
 	taskConfig.Resources.RawSlots = &resources.Slots
+
+	// Apply the scheduler's default priority.
+	if taskConfig.Resources.Priority() == nil {
+		prio := masterConfig.DefaultPriorityForPool(poolName.String())
+		taskConfig.Resources.RawPriority = &prio
+	}
 
 	var contextDirectoryBytes []byte
 	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(

@@ -194,7 +194,9 @@ func TestUserStartSession(t *testing.T) {
 	require.NotNil(t, token)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", user.ID).Exists(context.TODO())
+		Where("user_id = ?", user.ID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.True(t, exists)
 	require.NoError(t, err)
 }
@@ -216,7 +218,9 @@ func TestUserStartSessionTokenHasClaims(t *testing.T) {
 	require.Equal(t, restoredSession.InheritedClaims, claims)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", user.ID).Exists(context.TODO())
+		Where("user_id = ?", user.ID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.True(t, exists)
 	require.NoError(t, err)
 }
@@ -229,7 +233,9 @@ func TestDeleteSessionByToken(t *testing.T) {
 	require.NoError(t, err)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Exists(context.TODO())
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.False(t, exists)
 	require.NoError(t, err)
 }
@@ -242,7 +248,9 @@ func TestDeleteSessionByID(t *testing.T) {
 	require.NoError(t, err)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Exists(context.TODO())
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.False(t, exists)
 	require.NoError(t, err)
 }
@@ -418,7 +426,9 @@ func addTestSession() (model.UserID, model.SessionID, string, error) {
 	}
 
 	if err = db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", user.ID).Scan(context.TODO(), &session); err != nil {
+		Where("user_id = ?", user.ID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Scan(context.TODO(), &session); err != nil {
 		return 0, 0, "", fmt.Errorf("couldn't create new session: %w", err)
 	}
 	return user.ID, session.ID, token, nil

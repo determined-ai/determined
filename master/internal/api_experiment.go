@@ -494,15 +494,16 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return err
 			}
-			if len(checkpoints) > 0 {
-				if err := runCheckpointGCForCheckpoints(
-					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
-					&taskSpec, exp.ID, exp.Config, checkpoints,
-					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
-				); err != nil {
-					log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-					return err
-				}
+
+			// Unfortunately we can't be clever and not run if there aren't checkpoints since we can't
+			// know if there are tensorboards to GC or not.
+			if err := runCheckpointGCForCheckpoints(
+				a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+				&taskSpec, exp.ID, exp.Config, checkpoints,
+				[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+			); err != nil {
+				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+				return err
 			}
 
 			// delete jobs per experiment
@@ -1468,6 +1469,27 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 		return nil, false, status.Errorf(codes.InvalidArgument,
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
+
+	// Determine which workspace the experiment is in.
+	wkspName := activeConfig.Workspace()
+	if wkspName == "" {
+		wkspName = model.DefaultWorkspaceName
+	}
+	ctx := context.TODO()
+	w, err := workspace.WorkspaceByName(ctx, wkspName)
+	if err != nil {
+		return nil, false, status.Errorf(codes.Internal,
+			fmt.Sprintf("failed to get workspace %s", activeConfig.Workspace()))
+	}
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+		w.ID, mergedConfig)
+	if err != nil {
+		return nil, false,
+			fmt.Errorf("failed to merge invariant experiment configs: %w", err)
+	}
+	mergedConfig = *configWithInvariantDefaults
 
 	bytes, err := mergedConfig.Value()
 	if err != nil {

@@ -2222,3 +2222,43 @@ export const updateWorkspaceConfigPolicies: DetApi<
       options,
     ),
 };
+
+export const getGlobalConfigPolicies: DetApi<
+  Service.GetGlobalConfigPolicies,
+  Api.V1GetGlobalConfigPoliciesResponse,
+  Api.V1GetGlobalConfigPoliciesResponse
+> = {
+  name: 'getGlobalConfigPolicies',
+  postProcess: identity,
+  request: (params: Service.GetGlobalConfigPolicies, options) =>
+    detApi.Alpha.getGlobalConfigPolicies(params.workloadType, options),
+};
+
+export const deleteGlobalConfigPolicies: DetApi<
+  Service.DeleteGlobalConfigPolicies,
+  Api.V1DeleteGlobalConfigPoliciesResponse,
+  Api.V1DeleteGlobalConfigPoliciesResponse
+> = {
+  name: 'deleteGlobalConfigPolicies',
+  postProcess: identity,
+  request: (params: Service.DeleteGlobalConfigPolicies, options) =>
+    detApi.Alpha.deleteGlobalConfigPolicies(params.workloadType, options),
+};
+
+export const updateGlobalConfigPolicies: DetApi<
+  Service.UpdateGlobalConfigPolicies,
+  Api.V1PutGlobalConfigPoliciesResponse,
+  Api.V1PutGlobalConfigPoliciesResponse
+> = {
+  name: 'updateGlobalConfigPolicies',
+  postProcess: identity,
+  request: (params: Service.UpdateGlobalConfigPolicies, options) =>
+    detApi.Alpha.putGlobalConfigPolicies(
+      params.workloadType,
+      {
+        configPolicies: params.configPolicies,
+        workloadType: params.workloadType,
+      },
+      options,
+    ),
+};

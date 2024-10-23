@@ -7,11 +7,9 @@ import torch
 
 from determined.common import api
 from determined.common.api import bindings
-from determined.experimental import client
 from tests import api_utils, command
 from tests import config as conf
 from tests import experiment as exp
-from tests.experiment import noop
 
 
 def run_failure_test_multiple(
@@ -172,25 +170,6 @@ def test_docker_login() -> None:
     )
 
 
-# A devcluster needs to be run with the master host entered incorrectly
-# (with an unreachable master_host name).
-@pytest.mark.e2e_slurm_misconfigured
-@api_utils.skipif_not_slurm()
-def test_master_host() -> None:
-    sess = api_utils.user_session()
-    # Creates an experiment normally, should error if the back communication channel is broken
-    exp_ref = noop.create_experiment(sess)
-    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
-    msg = (
-        "Unable to reach the master at DET_MASTER=http://junkmaster:8080.  "
-        "This may be due to an address "
-        "resolution problem, a certificate problem, a firewall problem, "
-        "a proxy problem, or some other networking error."
-    )
-    trial = exp_ref.get_trials()[0]
-    assert exp.check_if_string_present_in_trial_logs(sess, trial.id, msg)
-
-
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
@@ -203,62 +182,6 @@ def test_mnist_pytorch_distributed() -> None:
     config["max_restarts"] = 0
 
     exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
-
-
-# Test to ensure that determined is able to handle preemption gracefully when using dispatcher RM.
-# Preemption:
-# When users launch a set of experiments requesting different levels of priorities
-# and resources, and when there are a limited set of resources, high priority experiments can
-# cancel or requeue low priority experiments.
-# Preemption is dependent upon the underlying HPC system and the WLM (SLURM/PBS) setup.
-# Nodes in an HPC systems are typically divided into multiple partitions (logical grouping of
-# nodes into possibly overlapping sets) used for different purposes. Using WLMs sysadmins
-# typically assign varying levels of priority for each partition. Also, users can request the
-# WLM to provide specific partition and priority level for their jobs.
-# In the following test case we test an example preemption scenario. We launch the two experiments
-# iris_tf_keras_cancellable and iris_tf_keras_high_priority in order. Ensure that the
-# iris_tf_keras_cancellable experiment is requeued, iris_tf_keras_high_priority experiment
-# runs to completion. After that, iris_tf_keras_cancellable experiment is resumed and it runs
-# to completion.
-# NB: The clusters casablanca-login and znode have one node (8-GPUs) being used in two partitions:
-#   1. defq_GPU_cancellable - partition for low priority and jobs are requeued if necessary
-#   2. defq_GPU_hipri - partition for high priority non-cancellable jobs
-@pytest.mark.e2e_slurm_preemption
-@api_utils.skipif_not_slurm()
-def test_slurm_preemption() -> None:
-    sess = api_utils.user_session()
-    # Launch the iris_tf_keras_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
-    # partition
-    cancelable_exp_id = exp.create_experiment(
-        sess,
-        conf.cv_examples_path("iris_tf_keras/iris_tf_keras_cancelable.yaml"),
-        conf.cv_examples_path("iris_tf_keras"),
-        None,
-    )
-    # Wait for the first cancellable experiment to enter RUNNING state.
-    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.RUNNING)
-    # Wait for the first cancellable experiment to complete at least one checkpoint.
-    exp.wait_for_at_least_one_checkpoint(sess, cancelable_exp_id, 300)
-    # Launch the iris_tf_keras_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
-    # partition
-    high_priority_exp_id = exp.create_experiment(
-        sess,
-        conf.cv_examples_path("iris_tf_keras/iris_tf_keras_high_priority.yaml"),
-        conf.cv_examples_path("iris_tf_keras"),
-        None,
-    )
-    # In this scenario, iris_tf_keras_high_priority experiment will cause the
-    # iris_tf_keras_cancelable experiment to get requeued. The experiment
-    # iris_tf_keras_high_priority will execute to completion.
-    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.QUEUED)
-    exp.wait_for_experiment_state(sess, high_priority_exp_id, bindings.experimentv1State.RUNNING)
-    exp.wait_for_experiment_state(sess, high_priority_exp_id, bindings.experimentv1State.COMPLETED)
-    # Now, the experiment iris_tf_keras_cancelable will resume as soon as the requested
-    # resources are available.
-    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.RUNNING)
-    # Finally, the experiment iris_tf_keras_cancelable will complete if there are no other
-    # interruptions.
-    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_slurm

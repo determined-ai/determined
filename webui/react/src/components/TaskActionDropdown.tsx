@@ -2,6 +2,7 @@ import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths, serverAddress } from 'routes/utils';
 import { killTask } from 'services/api';
 import { TaskAction as Action, CommandState, CommandTask, CommandType, DetailedUser } from 'types';
+import { copyToClipboard } from 'utils/dom';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { isTaskKillable } from 'utils/task';
@@ -26,6 +28,7 @@ interface Props {
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Props) => {
   const { canModifyWorkspaceNSC } = usePermissions();
+  const { openToast } = useToast();
   const TaskConnectModal = useModal(TaskConnectModalComponent);
 
   const isConnectable = (task: CommandTask): boolean => {
@@ -62,6 +65,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
         key: Action.ViewLogs,
         label: 'View Logs',
       },
+      {
+        key: Action.CopyTaskID,
+        label: 'Copy Task ID',
+      },
     ];
     if (isTaskKillable(task, canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }))) {
       items.push({ key: Action.Kill, label: 'Kill' });
@@ -74,7 +81,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
 
   const navigate = useNavigate();
 
-  const handleDropdown = (key: string) => {
+  const handleDropdown = async (key: string) => {
     try {
       switch (key) {
         case Action.Connect:
@@ -96,6 +103,13 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
         case Action.ViewLogs:
           onComplete?.(key);
           navigate(paths.taskLogs(task));
+          break;
+        case Action.CopyTaskID:
+          await copyToClipboard(task.id);
+          openToast({
+            severity: 'Confirm',
+            title: 'Task ID has been copied to clipboard.',
+          });
           break;
       }
     } catch (e) {

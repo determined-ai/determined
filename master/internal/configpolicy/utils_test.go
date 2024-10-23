@@ -7,6 +7,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -93,14 +94,14 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 		{"just constraints", yamlConstraints, true, &justConstraints},
 		{"extra fields", yamlExperiment + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlExperiment + "  debug true\n", false, nil},
-		{"empty input", "", false, nil},
+		{"empty input", "", true, &ExperimentConfigPolicies{}},
 		{"null/empty fields", yamlExperiment + "  debug:\n", true, &justConfig},
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalExperimentConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](tt.input, InvalidExperimentConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
@@ -157,14 +158,14 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 		{"just constraints", yamlConstraints, true, &justConstraints},
 		{"extra fields", yamlNTSC + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlNTSC + "  debug true\n", false, nil},
-		{"empty input", "", false, nil},
+		{"empty input", "", true, &NTSCConfigPolicies{}},
 		{"null/empty fields", yamlNTSC + "  debug:\n", true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalNTSCConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[NTSCConfigPolicies](tt.input, InvalidNTSCConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
@@ -248,14 +249,14 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
-		{"empty input", "", false, nil},
+		{"empty input", "", true, &ExperimentConfigPolicies{}},
 		{"null/empty fields", jsonEmptyField, true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalExperimentConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](tt.input, InvalidExperimentConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
@@ -294,18 +295,318 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
-		{"empty input", "", false, nil},
+		{"empty input", "", true, &NTSCConfigPolicies{}},
 		{"null/empty fields", jsonEmptyField, true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := UnmarshalNTSCConfigPolicy(tt.input)
+			config, err := UnmarshalConfigPolicy[NTSCConfigPolicies](tt.input, InvalidNTSCConfigPolicyErr)
 			require.Equal(t, tt.noErr, err == nil)
 			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
 			}
 		})
 	}
+}
+
+func TestCheckConstraintsConflicts(t *testing.T) {
+	constraints := &model.Constraints{
+		ResourceConstraints: &model.ResourceConstraints{
+			MaxSlots: ptrs.Ptr(10),
+		},
+		PriorityLimit: ptrs.Ptr(50),
+	}
+	t.Run("max_slots differs to high", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(11), ptrs.Ptr(5), nil)
+		require.Error(t, err)
+	})
+	t.Run("max_slots differs to low", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(9), ptrs.Ptr(5), nil)
+		require.Error(t, err)
+	})
+
+	t.Run("slots_per_trial too high", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(5), ptrs.Ptr(11), nil)
+		require.Error(t, err)
+	})
+
+	t.Run("slots_per_trial within range", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(10), ptrs.Ptr(8), nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("priority differs too high", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, nil, nil, ptrs.Ptr(100))
+		require.Error(t, err)
+	})
+
+	t.Run("priority differs too low", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, nil, nil, ptrs.Ptr(10))
+		require.Error(t, err)
+	})
+
+	t.Run("all comply", func(t *testing.T) {
+		err := checkConstraintConflicts(constraints, ptrs.Ptr(10), ptrs.Ptr(10), ptrs.Ptr(50))
+		require.NoError(t, err)
+	})
+}
+
+func TestValidateConfigs(t *testing.T) {
+	t.Run("exp global config conflicts with global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 3
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("ntsc global config conflicts with global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 3
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("exp global config complies with constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 10
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc global config complies with constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(nil,
+			`
+invariant_config:
+  resources:
+    max_slots: 10
+
+constraints:
+  resources:
+    max_slots: 10
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+
+	t.Run("exp workspace config complies with global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc workspace config complies with global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+max_slots: 15
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+
+	t.Run("exp workspace config complies with workspace and global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 15
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc workspace config complies with workspace and global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 15
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
+
+	// Workspace invariant config complies with workspace constraints, violates global constraints
+	t.Run("exp workspace config violates global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 8
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("ntsc workspace config violates global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 8
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	// Workspace constraints conflicts with global constraints
+	t.Run("exp workspace constraints conflict with global constraints", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("ntsc workspace constraints conflict with global constraints", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			Constraints: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 15
+
+constraints:
+  resources:
+    max_slots: 8
+`, nil,
+		)
+		require.Error(t, err)
+	})
+
+	t.Run("exp workspace invariant config different from global", func(t *testing.T) {
+		err := ValidateExperimentConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.ExperimentType,
+			InvariantConfig: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 12
+`, nil,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("ntsc workspace invariant config different from global", func(t *testing.T) {
+		err := ValidateNTSCConfig(&model.TaskConfigPolicies{
+			WorkloadType: model.NTSCType,
+			InvariantConfig: ptrs.Ptr(`
+resources:
+  max_slots: 15
+`),
+		},
+			`
+invariant_config:
+  resources:
+    max_slots: 12
+`, nil,
+		)
+		require.Error(t, err) // stub CM-493
+	})
 }

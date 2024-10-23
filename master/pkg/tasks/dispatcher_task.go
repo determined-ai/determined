@@ -263,14 +263,10 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	launchParameters.SetCustom(customParams)
 
-	// Prepend the entrypoint like: `ship-logs.sh "$@"`.
-	shipLogsShell := filepath.Join(RunDir, taskShipLogsShell)
-	shipLogsPython := filepath.Join(RunDir, taskShipLogsPython)
-
 	// Add entrypoint command as argument
 	wrappedEntryPoint := append(
-		[]string{determinedLocalFs + "/" + dispatcherEntrypointScriptResource, shipLogsShell, shipLogsPython},
-		t.Entrypoint...)
+		[]string{determinedLocalFs + "/" + dispatcherEntrypointScriptResource},
+		t.LogShipperWrappedEntrypoint()...)
 	launchParameters.SetArguments(wrappedEntryPoint)
 
 	// We just pass through the image reference here.  It may be any scheme that

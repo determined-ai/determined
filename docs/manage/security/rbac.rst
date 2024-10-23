@@ -499,6 +499,8 @@ ability to create or update projects. More specifically:
 The ``Editor`` role supersedes the ``EditorRestricted`` role and includes permissions to create or
 update NTSC tasks within its scope.
 
+.. _rbac-workspaceadmin:
+
 ``WorkspaceAdmin``
 ==================
 
@@ -507,6 +509,10 @@ delete workspaces, and modify role assignments within its scope.
 
 Users who take this role on a particular workspace can assign roles to other users on this
 workspace, that is, add other members (viewers, editors, or workspace admins) to the workspace.
+
+In addition, WorkspaceAdmin users can create, modify, and delete :ref:`Config Policies
+<config-policies>` for their workspace, allowing them to set resource limits and default
+configurations for workloads within their workspace.
 
 ``WorkspaceCreator``
 ====================
@@ -532,11 +538,23 @@ assigned globally.
    where ``ROLE_ID`` is the integer role identifier, as listed in ``det rbac list-roles``. To
    disable the assignment of any roles to the newly created workspace, set ``enabled: false``.
 
+``TokenCreator``
+================
+
+The ``TokenCreator`` grants users the ability to create, view, and revoke their own access tokens.
+It can only be assigned globally.
+
+.. _rbac-clusteradmin:
+
 ``ClusterAdmin``
 ================
 
-``ClusterAdmin`` is the highest role intended for cluster administrators or superusers. It includes
-all permissions, and can only be assigned globally.
+The ``ClusterAdmin`` role includes all permissions of the ``WorkspaceAdmin`` role across all
+workspaces, as well as additional cluster-wide permissions. This includes the ability to:
+
+-  Create, modify, and delete global :ref:`Config Policies <config-policies>` that apply to the
+   entire cluster.
+-  Override workspace-level Config Policies when necessary.
 
 .. _rbac-migrate-existing:
 
@@ -582,3 +600,18 @@ all permissions, and can only be assigned globally.
    role assigned for their workspaces.
 
    Users will have no default access otherwise.
+
+Config Policies and RBAC
+========================
+
+Config Policies work in conjunction with RBAC to provide fine-grained control over resource usage
+and workload configurations. While RBAC controls who can access what resources, Config Policies
+define how those resources can be used.
+
+-  Only users with the ClusterAdmin role can create, modify, or delete global Config Policies.
+-  Users with the WorkspaceAdmin role can create, modify, or delete Config Policies for their
+   respective workspaces.
+-  Config Policies set at the cluster level take precedence over workspace-level policies.
+
+For more information on setting up and managing Config Policies, refer to the :ref:`Config Policies
+Guide <config-policies>`.

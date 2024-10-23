@@ -39,6 +39,7 @@ from determined.cli import (
     task,
     template,
     tensorboard,
+    token,
     top_arg_descriptions,
     trial,
     user,
@@ -165,6 +166,7 @@ all_args_description: cli.ArgsDescription = (
     + oauth.args_description
     + dev.args_description
     + config_policies.args_description
+    + token.args_description
 )
 
 

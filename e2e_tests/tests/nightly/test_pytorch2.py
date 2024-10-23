@@ -7,14 +7,13 @@ from tests import experiment as exp
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.e2e_slurm_gpu
 def test_pytorch2_hf_language_modeling_distributed() -> None:
     sess = api_utils.user_session()
     test_dir = "hf_language_modeling"
 
     config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))
     config = conf.set_pt2_image(config)
-    config = conf.set_slots_per_trial(config, 4)
+    config = conf.set_slots_per_trial(config, 8)
 
     # Our hardware GPUs have only 16gb memory, lower memory use with smaller batches.
     config = conf.set_entrypoint(

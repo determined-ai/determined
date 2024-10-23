@@ -944,6 +944,7 @@ export interface CommandTask extends Task {
 
 export const TaskAction = {
   Connect: 'Connect',
+  CopyTaskID: 'Copy Task ID',
   Kill: 'Kill',
   ViewLogs: 'View Logs',
 } as const;
@@ -1040,6 +1041,7 @@ export interface TrialLog {
   level?: LogLevel;
   message: string;
   time: string;
+  log?: string;
 }
 
 export interface Template {

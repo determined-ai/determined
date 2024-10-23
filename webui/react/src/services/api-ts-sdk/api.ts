@@ -1549,11 +1549,11 @@ export interface V1ArchiveProjectResponse {
  */
 export interface V1ArchiveRunsRequest {
     /**
-     * The ids of the runs being archived.
+     * The ids of the runs being archived. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1ArchiveRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -1579,6 +1579,44 @@ export interface V1ArchiveRunsResponse {
      * @memberof V1ArchiveRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1ArchiveSearchesRequest
+ */
+export interface V1ArchiveSearchesRequest {
+    /**
+     * The ids of the searches being archived. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1ArchiveSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1ArchiveSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ArchiveSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ArchiveSearchesRequest.
+ * @export
+ * @interface V1ArchiveSearchesResponse
+ */
+export interface V1ArchiveSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1ArchiveSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Response to ArchiveWorkspaceRequest.
@@ -2729,17 +2767,17 @@ export interface V1DeleteProjectResponse {
  */
 export interface V1DeleteRunsRequest {
     /**
-     * The ids of the runs being deleted.
+     * The ids of the runs being deleted. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1DeleteRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * Project id of the runs being deleted.
      * @type {number}
      * @memberof V1DeleteRunsRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * Filter expression
      * @type {string}
@@ -2759,6 +2797,44 @@ export interface V1DeleteRunsResponse {
      * @memberof V1DeleteRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * Delete searches.
+ * @export
+ * @interface V1DeleteSearchesRequest
+ */
+export interface V1DeleteSearchesRequest {
+    /**
+     * The ids of the searches being deleted. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1DeleteSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * Project id of the searches being deleted.
+     * @type {number}
+     * @memberof V1DeleteSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1DeleteSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to DeleteSearchesResponse.
+ * @export
+ * @interface V1DeleteSearchesResponse
+ */
+export interface V1DeleteSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1DeleteSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Response to DeleteTemplateRequest.
@@ -3733,6 +3809,40 @@ export const V1GenericTaskState = {
     STOPPINGERROR: 'GENERIC_TASK_STATE_STOPPING_ERROR',
 } as const
 export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
+/**
+ * Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+ * @export
+ * @enum {string}
+ */
+export const V1GetAccessTokensRequestSortBy = {
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    USERID: 'SORT_BY_USER_ID',
+    EXPIRY: 'SORT_BY_EXPIRY',
+    CREATEDAT: 'SORT_BY_CREATED_AT',
+    TOKENTYPE: 'SORT_BY_TOKEN_TYPE',
+    REVOKED: 'SORT_BY_REVOKED',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+} as const
+export type V1GetAccessTokensRequestSortBy = ValueOf<typeof V1GetAccessTokensRequestSortBy>
+/**
+ * Response to GetAccessTokensRequest.
+ * @export
+ * @interface V1GetAccessTokensResponse
+ */
+export interface V1GetAccessTokensResponse {
+    /**
+     * List of token information.
+     * @type {Array<V1TokenInfo>}
+     * @memberof V1GetAccessTokensResponse
+     */
+    tokenInfo: Array<V1TokenInfo>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetAccessTokensResponse
+     */
+    pagination?: V1Pagination;
+}
 /**
  * Response to GetActiveTasksCountRequest.
  * @export
@@ -5827,11 +5937,11 @@ export interface V1KillNotebookResponse {
  */
 export interface V1KillRunsRequest {
     /**
-     * The ids of the runs being killed.
+     * The ids of the runs being killed. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1KillRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * Project id of the runs being killed.
      * @type {number}
@@ -5857,6 +5967,44 @@ export interface V1KillRunsResponse {
      * @memberof V1KillRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * Kill searches.
+ * @export
+ * @interface V1KillSearchesRequest
+ */
+export interface V1KillSearchesRequest {
+    /**
+     * The ids of the searches being killed. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1KillSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * Project id of the searches being killed.
+     * @type {number}
+     * @memberof V1KillSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1KillSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to KillSearchesResponse.
+ * @export
+ * @interface V1KillSearchesResponse
+ */
+export interface V1KillSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1KillSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Response to KillShellRequest.
@@ -6968,11 +7116,11 @@ export interface V1MoveProjectResponse {
  */
 export interface V1MoveRunsRequest {
     /**
-     * The ids of the runs being moved.
+     * The ids of the runs being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1MoveRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -7010,6 +7158,50 @@ export interface V1MoveRunsResponse {
      * @memberof V1MoveRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * Request to move the search to a different project.
+ * @export
+ * @interface V1MoveSearchesRequest
+ */
+export interface V1MoveSearchesRequest {
+    /**
+     * The ids of the searches being moved. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1MoveSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1MoveSearchesRequest
+     */
+    sourceProjectId: number;
+    /**
+     * The id of the new parent project.
+     * @type {number}
+     * @memberof V1MoveSearchesRequest
+     */
+    destinationProjectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1MoveSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to MoveSearchesRequest.
+ * @export
+ * @interface V1MoveSearchesResponse
+ */
+export interface V1MoveSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1MoveSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Note is a user comment connected to a project.
@@ -7250,6 +7442,44 @@ export interface V1Pagination {
      * @memberof V1Pagination
      */
     total?: number;
+}
+/**
+ * Patch user's access token info.
+ * @export
+ * @interface V1PatchAccessTokenRequest
+ */
+export interface V1PatchAccessTokenRequest {
+    /**
+     * The id of the token.
+     * @type {number}
+     * @memberof V1PatchAccessTokenRequest
+     */
+    tokenId: number;
+    /**
+     * The requested updated token description.
+     * @type {string}
+     * @memberof V1PatchAccessTokenRequest
+     */
+    description?: string;
+    /**
+     * The requested updated token revoke status.
+     * @type {boolean}
+     * @memberof V1PatchAccessTokenRequest
+     */
+    setRevoked?: boolean;
+}
+/**
+ * Response to PatchAccessTokenRequest.
+ * @export
+ * @interface V1PatchAccessTokenResponse
+ */
+export interface V1PatchAccessTokenResponse {
+    /**
+     * The updated token information.
+     * @type {V1TokenInfo}
+     * @memberof V1PatchAccessTokenResponse
+     */
+    tokenInfo?: V1TokenInfo;
 }
 /**
  * Request to change checkpoint database information.
@@ -7870,11 +8100,11 @@ export interface V1PauseGenericTaskResponse {
  */
 export interface V1PauseRunsRequest {
     /**
-     * The ids of the runs being moved.
+     * The ids of the runs being paused. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1PauseRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the project of the runs being paused.
      * @type {number}
@@ -7902,6 +8132,44 @@ export interface V1PauseRunsResponse {
     results: Array<V1RunActionResult>;
 }
 /**
+ * Request to pause the experiment associated witha search.
+ * @export
+ * @interface V1PauseSearchesRequest
+ */
+export interface V1PauseSearchesRequest {
+    /**
+     * The ids of the searches being moved. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1PauseSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * The id of the project of the searches being paused.
+     * @type {number}
+     * @memberof V1PauseSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1PauseSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to PauseSearchesRequest.
+ * @export
+ * @interface V1PauseSearchesResponse
+ */
+export interface V1PauseSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1PauseSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * 
  * @export
  * @interface V1Permission
@@ -7927,7 +8195,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.  - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.  - PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: Ability to modify global config policies.  - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.  - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.  - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.  - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.  - PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: Ability to modify global config policies.  - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.  - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.  - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.  - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.  - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.  - PERMISSION_TYPE_CREATE_TOKEN: Ability to create one's own token  - PERMISSION_TYPE_CREATE_OTHER_TOKEN: Ability to create another user's token  - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token  - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
  * @export
  * @enum {string}
  */
@@ -7987,6 +8255,12 @@ export const V1PermissionType = {
     MODIFYWORKSPACECONFIGPOLICIES: 'PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES',
     VIEWGLOBALCONFIGPOLICIES: 'PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES',
     VIEWWORKSPACECONFIGPOLICIES: 'PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES',
+    ADMINISTRATETOKEN: 'PERMISSION_TYPE_ADMINISTRATE_TOKEN',
+    UPDATETOKEN: 'PERMISSION_TYPE_UPDATE_TOKEN',
+    CREATETOKEN: 'PERMISSION_TYPE_CREATE_TOKEN',
+    CREATEOTHERTOKEN: 'PERMISSION_TYPE_CREATE_OTHER_TOKEN',
+    VIEWOTHERTOKEN: 'PERMISSION_TYPE_VIEW_OTHER_TOKEN',
+    VIEWTOKEN: 'PERMISSION_TYPE_VIEW_TOKEN',
 } as const
 export type V1PermissionType = ValueOf<typeof V1PermissionType>
 /**
@@ -8026,6 +8300,50 @@ export interface V1PolymorphicFilter {
      * @memberof V1PolymorphicFilter
      */
     timeRange?: V1TimestampFieldFilter;
+}
+/**
+ * Create the requested user's accessToken.
+ * @export
+ * @interface V1PostAccessTokenRequest
+ */
+export interface V1PostAccessTokenRequest {
+    /**
+     * The id of the user.
+     * @type {number}
+     * @memberof V1PostAccessTokenRequest
+     */
+    userId: number;
+    /**
+     * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
+     * @type {string}
+     * @memberof V1PostAccessTokenRequest
+     */
+    lifespan?: string;
+    /**
+     * Description of the token.
+     * @type {string}
+     * @memberof V1PostAccessTokenRequest
+     */
+    description?: string;
+}
+/**
+ * Response to PostAccessTokenRequest.
+ * @export
+ * @interface V1PostAccessTokenResponse
+ */
+export interface V1PostAccessTokenResponse {
+    /**
+     * token value string.
+     * @type {string}
+     * @memberof V1PostAccessTokenResponse
+     */
+    token?: string;
+    /**
+     * token id.
+     * @type {number}
+     * @memberof V1PostAccessTokenResponse
+     */
+    tokenId?: number;
 }
 /**
  * Set the accelerator data for some allocation.
@@ -10099,11 +10417,11 @@ export interface V1ResourcesSummary {
  */
 export interface V1ResumeRunsRequest {
     /**
-     * The ids of the runs being moved.
+     * The ids of the runs being moved. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1ResumeRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the project of the runs being unpaused.
      * @type {number}
@@ -10129,6 +10447,44 @@ export interface V1ResumeRunsResponse {
      * @memberof V1ResumeRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * Request to unpause the experiment associated witha search.
+ * @export
+ * @interface V1ResumeSearchesRequest
+ */
+export interface V1ResumeSearchesRequest {
+    /**
+     * The ids of the searches being moved. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1ResumeSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * The id of the project of the searches being unpaused.
+     * @type {number}
+     * @memberof V1ResumeSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ResumeSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ResumeSearchesRequest.
+ * @export
+ * @interface V1ResumeSearchesResponse
+ */
+export interface V1ResumeSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1ResumeSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * 
@@ -10375,6 +10731,25 @@ export interface V1ScopeTypeMask {
      * @memberof V1ScopeTypeMask
      */
     workspace?: boolean;
+}
+/**
+ * Message for results of individual searches in a multi-search action.
+ * @export
+ * @interface V1SearchActionResult
+ */
+export interface V1SearchActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1SearchActionResult
+     */
+    error: string;
+    /**
+     * search ID.
+     * @type {number}
+     * @memberof V1SearchActionResult
+     */
+    id: number;
 }
 /**
  * SearcherEvent is a message from master to a client-driven custom searcher informing it of relevant changes in the state of an experiment.
@@ -11602,6 +11977,66 @@ export interface V1TimestampFieldFilter {
     gte?: Date | DateString;
 }
 /**
+ * TokenInfo represents a token entry in the database.
+ * @export
+ * @interface V1TokenInfo
+ */
+export interface V1TokenInfo {
+    /**
+     * The token ID.
+     * @type {number}
+     * @memberof V1TokenInfo
+     */
+    id: number;
+    /**
+     * The id of the user the token belongs to.
+     * @type {number}
+     * @memberof V1TokenInfo
+     */
+    userId: number;
+    /**
+     * Timestamp of when the token expires.
+     * @type {Date | DateString}
+     * @memberof V1TokenInfo
+     */
+    expiry?: Date | DateString;
+    /**
+     * Tiemstamp of when the token was created.
+     * @type {Date | DateString}
+     * @memberof V1TokenInfo
+     */
+    createdAt?: Date | DateString;
+    /**
+     * Type of token this entry represents.
+     * @type {V1TokenType}
+     * @memberof V1TokenInfo
+     */
+    tokenType?: V1TokenType;
+    /**
+     * Flag denoting if this token is revoked.
+     * @type {boolean}
+     * @memberof V1TokenInfo
+     */
+    revoked?: boolean;
+    /**
+     * Description of the token.
+     * @type {string}
+     * @memberof V1TokenInfo
+     */
+    description?: string;
+}
+/**
+ * Token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_ACCESS_TOKEN: Access token.
+ * @export
+ * @enum {string}
+ */
+export const V1TokenType = {
+    UNSPECIFIED: 'TOKEN_TYPE_UNSPECIFIED',
+    USERSESSION: 'TOKEN_TYPE_USER_SESSION',
+    ACCESSTOKEN: 'TOKEN_TYPE_ACCESS_TOKEN',
+} as const
+export type V1TokenType = ValueOf<typeof V1TokenType>
+/**
  * TrialClosed is a searcher event triggered when a trial has successfully finished.
  * @export
  * @interface V1TrialClosed
@@ -12213,11 +12648,11 @@ export interface V1UnarchiveProjectResponse {
  */
 export interface V1UnarchiveRunsRequest {
     /**
-     * The ids of the runs being unarchived.
+     * The ids of the runs being unarchived. Leave empty if using filter.
      * @type {Array<number>}
      * @memberof V1UnarchiveRunsRequest
      */
-    runIds: Array<number>;
+    runIds?: Array<number>;
     /**
      * The id of the current parent project.
      * @type {number}
@@ -12243,6 +12678,44 @@ export interface V1UnarchiveRunsResponse {
      * @memberof V1UnarchiveRunsResponse
      */
     results: Array<V1RunActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1UnarchiveSearchesRequest
+ */
+export interface V1UnarchiveSearchesRequest {
+    /**
+     * The ids of the searches being unarchived. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1UnarchiveSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1UnarchiveSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1UnarchiveSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to UnarchiveSearchesRequest.
+ * @export
+ * @interface V1UnarchiveSearchesResponse
+ */
+export interface V1UnarchiveSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1UnarchiveSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
 }
 /**
  * Response to UnarchiveWorkspaceRequest.
@@ -20289,6 +20762,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Archive searches.
+         * @param {V1ArchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveSearches(body: V1ArchiveSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling archiveSearches.');
+            }
+            const localVarPath = `/api/v1/searches/archive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -20671,7 +21182,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Delete a list of runs.
+         * @summary Delete runs.
          * @param {V1DeleteRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20682,6 +21193,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling deleteRuns.');
             }
             const localVarPath = `/api/v1/runs/delete`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete searches.
+         * @param {V1DeleteSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSearches(body: V1DeleteSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteSearches.');
+            }
+            const localVarPath = `/api/v1/searches/delete`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -21749,7 +22298,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -21760,6 +22309,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling killRuns.');
             }
             const localVarPath = `/api/v1/runs/kill`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Kill searches.
+         * @param {V1KillSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killSearches(body: V1KillSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killSearches.');
+            }
+            const localVarPath = `/api/v1/searches/kill`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22000,6 +22587,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling moveRuns.');
             }
             const localVarPath = `/api/v1/runs/move`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Move searches.
+         * @param {V1MoveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveSearches(body: V1MoveSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveSearches.');
+            }
+            const localVarPath = `/api/v1/searches/move`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22282,6 +22907,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling pauseRuns.');
             }
             const localVarPath = `/api/v1/runs/pause`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Pause experiment associated with provided searches.
+         * @param {V1PauseSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseSearches(body: V1PauseSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling pauseSearches.');
+            }
+            const localVarPath = `/api/v1/searches/pause`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22977,6 +23640,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided searches.
+         * @param {V1ResumeSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeSearches(body: V1ResumeSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling resumeSearches.');
+            }
+            const localVarPath = `/api/v1/searches/resume`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -23300,6 +24001,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveRuns.');
             }
             const localVarPath = `/api/v1/runs/unarchive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Unarchive searches.
+         * @param {V1UnarchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveSearches(body: V1UnarchiveSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveSearches.');
+            }
+            const localVarPath = `/api/v1/searches/unarchive`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -23657,6 +24396,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Archive searches.
+         * @param {V1ArchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveSearches(body: V1ArchiveSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).archiveSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -23848,13 +24606,32 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Delete a list of runs.
+         * @summary Delete runs.
          * @param {V1DeleteRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         deleteRuns(body: V1DeleteRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete searches.
+         * @param {V1DeleteSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSearches(body: V1DeleteSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24370,13 +25147,32 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         killRuns(body: V1KillRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Kill searches.
+         * @param {V1KillSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killSearches(body: V1KillSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24482,6 +25278,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         moveRuns(body: V1MoveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Move searches.
+         * @param {V1MoveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveSearches(body: V1MoveSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24618,6 +25433,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         pauseRuns(body: V1PauseRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Pause experiment associated with provided searches.
+         * @param {V1PauseSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseSearches(body: V1PauseSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24944,6 +25778,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided searches.
+         * @param {V1ResumeSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeSearches(body: V1ResumeSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResumeSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).resumeSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -25080,6 +25933,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveRunsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unarchiveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Unarchive searches.
+         * @param {V1UnarchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveSearches(body: V1UnarchiveSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unarchiveSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25266,6 +26138,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Archive searches.
+         * @param {V1ArchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveSearches(body: V1ArchiveSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).archiveSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -25367,13 +26249,23 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Delete a list of runs.
+         * @summary Delete runs.
          * @param {V1DeleteRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         deleteRuns(body: V1DeleteRunsRequest, options?: any) {
             return InternalApiFp(configuration).deleteRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete searches.
+         * @param {V1DeleteSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSearches(body: V1DeleteSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).deleteSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25655,13 +26547,23 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         killRuns(body: V1KillRunsRequest, options?: any) {
             return InternalApiFp(configuration).killRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Kill searches.
+         * @param {V1KillSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killSearches(body: V1KillSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).killSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25722,6 +26624,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         moveRuns(body: V1MoveRunsRequest, options?: any) {
             return InternalApiFp(configuration).moveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Move searches.
+         * @param {V1MoveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveSearches(body: V1MoveSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).moveSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25795,6 +26707,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         pauseRuns(body: V1PauseRunsRequest, options?: any) {
             return InternalApiFp(configuration).pauseRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Pause experiment associated with provided searches.
+         * @param {V1PauseSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseSearches(body: V1PauseSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).pauseSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25968,6 +26890,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided searches.
+         * @param {V1ResumeSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeSearches(body: V1ResumeSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).resumeSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -26050,6 +26982,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
             return InternalApiFp(configuration).unarchiveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unarchive searches.
+         * @param {V1UnarchiveSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveSearches(body: V1UnarchiveSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).unarchiveSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26208,6 +27150,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Archive searches.
+     * @param {V1ArchiveSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public archiveSearches(body: V1ArchiveSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).archiveSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Assign multiple users to multiple groups.
      * @param {V1AssignMultipleGroupsRequest} body
      * @param {*} [options] Override http request option.
@@ -26329,7 +27283,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Delete a list of runs.
+     * @summary Delete runs.
      * @param {V1DeleteRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -26337,6 +27291,18 @@ export class InternalApi extends BaseAPI {
      */
     public deleteRuns(body: V1DeleteRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).deleteRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete searches.
+     * @param {V1DeleteSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteSearches(body: V1DeleteSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).deleteSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26669,7 +27635,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get a list of runs.
+     * @summary Kill runs.
      * @param {V1KillRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -26677,6 +27643,18 @@ export class InternalApi extends BaseAPI {
      */
     public killRuns(body: V1KillRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).killRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Kill searches.
+     * @param {V1KillSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killSearches(body: V1KillSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).killSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26747,6 +27725,18 @@ export class InternalApi extends BaseAPI {
      */
     public moveRuns(body: V1MoveRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).moveRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Move searches.
+     * @param {V1MoveSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public moveSearches(body: V1MoveSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).moveSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26834,6 +27824,18 @@ export class InternalApi extends BaseAPI {
      */
     public pauseRuns(body: V1PauseRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).pauseRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Pause experiment associated with provided searches.
+     * @param {V1PauseSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public pauseSearches(body: V1PauseSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).pauseSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27040,6 +28042,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Unpause experiment associated with provided searches.
+     * @param {V1ResumeSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public resumeSearches(body: V1ResumeSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).resumeSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
      * @param {V1RunPrepareForReportingRequest} body
      * @param {*} [options] Override http request option.
@@ -27135,6 +28149,18 @@ export class InternalApi extends BaseAPI {
      */
     public unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
         return InternalApiFp(this.configuration).unarchiveRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unarchive searches.
+     * @param {V1UnarchiveSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unarchiveSearches(body: V1UnarchiveSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).unarchiveSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -33575,6 +34601,333 @@ export class TensorboardsApi extends BaseAPI {
      */
     public setTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
         return TensorboardsApiFp(this.configuration).setTensorboardPriority(tensorboardId, body, options)(this.fetch, this.basePath)
+    }
+    
+}
+
+/**
+ * TokensApi - fetch parameter creator
+ * @export
+ */
+export const TokensApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get a list of all access token records.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {Array<number>} [tokenIds] Filter on token_ids.
+         * @param {string} [username] Filter by username.
+         * @param {boolean} [showInactive] Filter by active status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/tokens`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (tokenIds) {
+                localVarQueryParameter['tokenIds'] = tokenIds
+            }
+            
+            if (username !== undefined) {
+                localVarQueryParameter['username'] = username
+            }
+            
+            if (showInactive !== undefined) {
+                localVarQueryParameter['showInactive'] = showInactive
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Patch an access token's mutable fields.
+         * @param {number} tokenId The id of the token.
+         * @param {V1PatchAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'tokenId' is not null or undefined
+            if (tokenId === null || tokenId === undefined) {
+                throw new RequiredError('tokenId','Required parameter tokenId was null or undefined when calling patchAccessToken.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchAccessToken.');
+            }
+            const localVarPath = `/api/v1/tokens/{tokenId}`
+                .replace(`{${"tokenId"}}`, encodeURIComponent(String(tokenId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create and get a user's access token
+         * @param {V1PostAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAccessToken(body: V1PostAccessTokenRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAccessToken.');
+            }
+            const localVarPath = `/api/v1/tokens`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * TokensApi - functional programming interface
+ * @export
+ */
+export const TokensApiFp = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get a list of all access token records.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {Array<number>} [tokenIds] Filter on token_ids.
+         * @param {string} [username] Filter by username.
+         * @param {boolean} [showInactive] Filter by active status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokensResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).getAccessTokens(sortBy, orderBy, offset, limit, tokenIds, username, showInactive, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Patch an access token's mutable fields.
+         * @param {number} tokenId The id of the token.
+         * @param {V1PatchAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchAccessTokenResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).patchAccessToken(tokenId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create and get a user's access token
+         * @param {V1PostAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAccessToken(body: V1PostAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAccessTokenResponse> {
+            const localVarFetchArgs = TokensApiFetchParamCreator(configuration).postAccessToken(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * TokensApi - factory interface
+ * @export
+ */
+export const TokensApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Get a list of all access token records.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {Array<number>} [tokenIds] Filter on token_ids.
+         * @param {string} [username] Filter by username.
+         * @param {boolean} [showInactive] Filter by active status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options?: any) {
+            return TokensApiFp(configuration).getAccessTokens(sortBy, orderBy, offset, limit, tokenIds, username, showInactive, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch an access token's mutable fields.
+         * @param {number} tokenId The id of the token.
+         * @param {V1PatchAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any) {
+            return TokensApiFp(configuration).patchAccessToken(tokenId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create and get a user's access token
+         * @param {V1PostAccessTokenRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAccessToken(body: V1PostAccessTokenRequest, options?: any) {
+            return TokensApiFp(configuration).postAccessToken(body, options)(fetch, basePath);
+        },
+    }
+};
+
+/**
+ * TokensApi - object-oriented interface
+ * @export
+ * @class
+ * @extends {BaseAPI}
+ */
+export class TokensApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get a list of all access token records.
+     * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+     * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+     * @param {Array<number>} [tokenIds] Filter on token_ids.
+     * @param {string} [username] Filter by username.
+     * @param {boolean} [showInactive] Filter by active status.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TokensApi
+     */
+    public getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, tokenIds?: Array<number>, username?: string, showInactive?: boolean, options?: any) {
+        return TokensApiFp(this.configuration).getAccessTokens(sortBy, orderBy, offset, limit, tokenIds, username, showInactive, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch an access token's mutable fields.
+     * @param {number} tokenId The id of the token.
+     * @param {V1PatchAccessTokenRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TokensApi
+     */
+    public patchAccessToken(tokenId: number, body: V1PatchAccessTokenRequest, options?: any) {
+        return TokensApiFp(this.configuration).patchAccessToken(tokenId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Create and get a user's access token
+     * @param {V1PostAccessTokenRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TokensApi
+     */
+    public postAccessToken(body: V1PostAccessTokenRequest, options?: any) {
+        return TokensApiFp(this.configuration).postAccessToken(body, options)(this.fetch, this.basePath)
     }
     
 }

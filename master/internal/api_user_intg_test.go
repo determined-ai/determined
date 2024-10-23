@@ -72,6 +72,10 @@ func MockRM() *mocks.ResourceManager {
 	mockRM.On("Allocate", mock.Anything).Return(func(msg sproto.AllocateRequest) *sproto.ResourcesSubscription {
 		return rmevents.Subscribe(msg.AllocationID)
 	}, nil)
+
+	mockRM.On("SmallerValueIsHigherPriority").Return(true, nil)
+	mockRM.On("SetGroupPriority", mock.Anything).Return(nil)
+
 	return &mockRM
 }
 

@@ -261,10 +261,10 @@ args_description = [
         ]),
         cli.Cmd("activate", activate_user, "activate user", [
             cli.Arg("username", help="name of user to activate")
-        ], deprecation_message="Please use 'det user edit <target_user> --activate'"),
+        ], deprecation_message="Please use 'det user edit <target_user> --active true'"),
         cli.Cmd("deactivate", deactivate_user, "deactivate user", [
             cli.Arg("username", help="name of user to deactivate")
-        ], deprecation_message="Please use 'det user edit <target_user> --deactivate'"),
+        ], deprecation_message="Please use 'det user edit <target_user> --active false'"),
         cli.Cmd("create", create_user, "create user", [
             cli.Arg("username", help="name of new user"),
             cli.Arg("--admin", action="store_true", help="give new user admin rights"),

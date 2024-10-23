@@ -94,7 +94,11 @@ func (a *apiServer) Logout(
 			"cannot manually logout of an allocation session")
 	}
 
-	err = user.DeleteSessionByID(ctx, userSession.ID)
+	// Do not want the AccessTokens to be deleted if the user logs out from session.
+	// User can log back in using the same AccessToken: det u login <username> --token <token>
+	if userSession.TokenType != model.TokenTypeAccessToken {
+		err = user.DeleteSessionByID(ctx, userSession.ID)
+	}
 	return &apiv1.LogoutResponse{}, err
 }
 

@@ -21,7 +21,7 @@ class _LogShipper:
         session: api.Session,
         trial_id: int,
         task_id: str,
-        distributed: Optional[core.DistributedContext] = None
+        distributed: Optional[core.DistributedContext] = None,
     ) -> None:
         self._session = session
         self._trial_id = trial_id
