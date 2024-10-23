@@ -1820,7 +1820,7 @@ func TestGetRunGroups(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
-	resp, err := api.GetRunGroups(ctx, req)
+	resp, err = api.GetRunGroups(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Groups, 2)
 }
