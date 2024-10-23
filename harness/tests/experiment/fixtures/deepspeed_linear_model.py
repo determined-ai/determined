@@ -12,6 +12,43 @@ import tests.experiment.fixtures.pytorch_counter_callback as counter
 from determined import pytorch
 
 
+class MetricsCallbacks(pytorch.PyTorchCallback):
+    def __init__(self, trial) -> None:
+        self.trial = trial
+        super().__init__()
+
+    def on_validation_end(self, metrics: Dict) -> None:
+        assert "loss" in metrics.keys()
+
+    def on_checkpoint_upload_end(self, uuid: str) -> None:
+        self.trial.checkpoint_uuid = uuid
+
+    def on_checkpoint_load_start(self, checkpoint: Optional[Dict]):
+        self.trial.checkpoint_found = checkpoint is not None
+
+
+class ReproducibilityCallbacks(pytorch.PyTorchCallback):
+    def __init__(self, trial) -> None:
+        self.trial = trial
+        super().__init__()
+
+    def on_validation_end(self, metrics: Dict) -> None:
+        self.trial.val_metrics.append(metrics)
+
+    def on_training_workload_end(self, avg_metrics, batch_metrics):
+        self.trial.avg_metrics.append(avg_metrics)
+        self.trial.batch_metrics.append(batch_metrics)
+
+
+class TwoEngineMetricsCallbacks(pytorch.PyTorchCallback):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def on_validation_end(self, metrics: Dict) -> None:
+        assert "loss1" in metrics.keys()
+        assert "loss2" in metrics.keys()
+
+
 class LinearDataset(torch.utils.data.Dataset):
     def __init__(self, a: int, b: int, num_samples: int):
         self.a = a
@@ -31,9 +68,11 @@ class LinearDataset(torch.utils.data.Dataset):
 class LinearDeepSpeedTrial(det_ds.DeepSpeedTrial):
     _searcher_metric = "loss"
 
-    def __init__(self, context: det_ds.DeepSpeedTrialContext):
+    def __init__(self, context: det_ds.DeepSpeedTrialContext, hparams: Dict):
         self.context = context
-        self.hparams = attrdict.AttrDict(context.get_hparams())
+        self.hparams = attrdict.AttrDict(hparams)
+        self.checkpoint_uuid = None
+        self.checkpoint_found = None
         if (
             self.hparams.test_manual_init_distributed
             or self.hparams.test_fail_manual_init_distributed
@@ -63,6 +102,9 @@ class LinearDeepSpeedTrial(det_ds.DeepSpeedTrial):
         self.reducer = None
         if self.hparams.test_custom_reducer:
             self.reducer = self.context.wrap_reducer(lambda x: np.mean(x) * 2, name="loss_2x")
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"my_callbacks": MetricsCallbacks(trial=self)}
 
     def build_training_data_loader(self) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
         dataset = LinearDataset(1, 1, self.ds_config.train_batch_size * 2)
@@ -158,8 +200,8 @@ class DifferingValidMetricKeyTrial(LinearDeepSpeedTrial):
 
 
 class LinearCallbackTrial(LinearDeepSpeedTrial):
-    def __init__(self, context: det_ds.DeepSpeedTrialContext):
-        super().__init__(context)
+    def __init__(self, context: det_ds.DeepSpeedTrialContext, hparams: Dict):
+        super().__init__(context, hparams)
         self.counter = counter.Counter()
 
     def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
@@ -167,9 +209,9 @@ class LinearCallbackTrial(LinearDeepSpeedTrial):
 
 
 class LinearTwoEngineTrial(LinearDeepSpeedTrial):
-    def __init__(self, context: det_ds.DeepSpeedTrialContext):
+    def __init__(self, context: det_ds.DeepSpeedTrialContext, hparams: Dict):
         self.context = context
-        self.hparams = attrdict.AttrDict(context.get_hparams())
+        self.hparams = attrdict.AttrDict(hparams)
         self.ds_config = attrdict.AttrDict(self.hparams.deepspeed_config)
         model1 = torch.nn.Linear(1, 1)
         model2 = torch.nn.Linear(1, 1)
@@ -182,6 +224,9 @@ class LinearTwoEngineTrial(LinearDeepSpeedTrial):
         )
         self.model1 = self.context.wrap_model_engine(self.model1)
         self.model2 = self.context.wrap_model_engine(self.model2)
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"my_callbacks": TwoEngineMetricsCallbacks()}
 
     def train_batch(
         self,
@@ -214,10 +259,13 @@ class LinearTwoEngineTrial(LinearDeepSpeedTrial):
 
 
 class LinearPipelineEngineTrial(LinearDeepSpeedTrial):
-    def __init__(self, context: det_ds.DeepSpeedTrialContext):
+    def __init__(self, context: det_ds.DeepSpeedTrialContext, hparams: Dict):
         self.context = context
-        self.hparams = attrdict.AttrDict(context.get_hparams())
+        self.hparams = attrdict.AttrDict(hparams)
         self.ds_config = attrdict.AttrDict(self.hparams.deepspeed_config)
+        self.avg_metrics = []
+        self.batch_metrics = []
+        self.val_metrics = []
         model = torch.nn.Linear(1, 1)
         model = deepspeed.PipelineModule(
             layers=[model],
@@ -231,6 +279,9 @@ class LinearPipelineEngineTrial(LinearDeepSpeedTrial):
         )
         self.model = self.context.wrap_model_engine(self.model)
         self.context.set_mpu(det_ds.make_deepspeed_mpu(self.model.mpu))
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"my_callbacks": ReproducibilityCallbacks(trial=self)}
 
     def train_batch(
         self,
