@@ -35,6 +35,12 @@ jobs:
         run: |
           git checkout main
 
+      - name: "git config"
+        run: |
+          git config user.name  github-actions
+          git config user.email \
+            41898282+github-actions[bot]@users.noreply.github.com
+
       - name: "Publish changes to main"
         run: |
           ./tools/scripts/lock-api-state.sh
