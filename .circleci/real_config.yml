@@ -3198,27 +3198,11 @@ jobs:
                   commit=$(git rev-parse "<<parameters.upgrade-branch>>")
                   echo "Latest commit for <<parameters.upgrade-branch>>: $commit"
                   echo "export HEAD_COMMIT=$commit" >> $BASH_ENV
-            - setup-python-venv:
-                determined: True
-                extra-requirements-file: "e2e_tests/tests/requirements.txt"
-                determined-SHA: $HEAD_COMMIT
-                executor: <<pipeline.parameters.machine-image>>
-            - install-devcluster
-            - unless:
-                condition: <<parameters.managed-devcluster>>
-                steps:
-                  - start-devcluster:
-                      devcluster-config: <<parameters.devcluster-config>>
-                      target-stage: <<parameters.target-stage>>
-            - run: sleep 10
-            - stop-devcluster
-            - checkout
-            - run: make -C master build
-            - run: make -C agent build
 
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          determined-SHA: $HEAD_COMMIT
           executor: <<pipeline.parameters.machine-image>>
 
       - when:
@@ -3240,6 +3224,22 @@ jobs:
                   - run:
                       name: Start additionalrm minikube
                       command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
+      - when:
+          condition: <<parameters.upgrade-branch>>
+          steps:
+            - install-devcluster
+            - unless:
+                condition: <<parameters.managed-devcluster>>
+                steps:
+                  - start-devcluster:
+                      devcluster-config: <<parameters.devcluster-config>>
+                      target-stage: <<parameters.target-stage>>
+                  - run: sleep 10
+                  - stop-devcluster
+            - checkout
+            - run: make -C master build
+            - run: make -C agent build
+
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
