@@ -402,14 +402,7 @@ commands:
         type: string
       package-location:
         type: string
-      package-commit: 
-        type: string
-        default: ""
     steps:
-      - when:
-          condition: <<parameters.package-commit>>
-          steps: 
-            run: git checkout <<parameters.package-commit>>
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
@@ -438,9 +431,6 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
-      determined-SHA:
-        type: string
-        default: ""
     steps:
       - run:
           name: Write cache key
@@ -526,7 +516,6 @@ commands:
             - install-wheel:
                 package-name: determined
                 package-location: ./harness
-                package-commit: <<parameters.determined-SHA>>
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -3211,6 +3200,11 @@ jobs:
       - skip-if-only-webui
       - attach_workspace:
           at: .
+
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.machine-image>>
       
       - when:
           condition: <<parameters.upgrade-branch>>
@@ -3219,17 +3213,8 @@ jobs:
                 name: Get Determined version branch commits.
                 command: |
                   git fetch origin <<parameters.upgrade-branch>> && git checkout --track origin/<<parameters.upgrade-branch>>
-                  commit=$(git rev-parse "<<parameters.upgrade-branch>>")
-                  echo "Latest commit for <<parameters.upgrade-branch>>: $commit"
-                  echo "export HEAD_COMMIT=$commit" >> $BASH_ENV
             - run: make -C master build
             - run: make -C agent build
-
-      - setup-python-venv:
-          determined: True
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          determined-SHA: $HEAD_COMMIT
-          executor: <<pipeline.parameters.machine-image>>
 
       - when:
           condition: <<parameters.run-minikubes>>
@@ -3263,10 +3248,8 @@ jobs:
             - run: sleep 10
             - stop-devcluster
             - checkout
-            - setup-python-venv:
-                determined: True
-                extra-requirements-file: "e2e_tests/tests/requirements.txt"
-                executor: <<pipeline.parameters.machine-image>>
+            - run: make -C master build
+            - run: make -C agent build
 
       - install-devcluster
       - unless:
