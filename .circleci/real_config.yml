@@ -102,7 +102,7 @@ release-dryrun: &release-dryrun
       - /v\d+\.\d+\.\d+\+dryrun/
 
 release-upgrade: &release-upgrade
-  - "release-0.36.0"
+  - "release-0.34.0"
   - "release-0.35.0"
 
 upstream-feature-branch: &upstream-feature-branch
@@ -404,9 +404,12 @@ commands:
         type: string
       package-commit: 
         type: string
-        default: $CIRCLE_SHA1
+        default: ""
     steps:
-      - run: git checkout <<parameters.package-commit>>
+      - when:
+          condition: <<parameters.package-commit>>
+          steps: 
+            run: git checkout <<parameters.package-commit>>
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
@@ -437,7 +440,7 @@ commands:
         default: "3.8.18"
       determined-SHA:
         type: string
-        default: $CIRCLE_SHA1
+        default: ""
     steps:
       - run:
           name: Write cache key
@@ -3188,9 +3191,7 @@ jobs:
       
       - when:
           condition: <<parameters.upgrade-branch>>
-          # Only run this when an upgrade branch parameter is given.
           steps:
-            # Upgrade test portion: downgrade to specified version, start/stop devcluster
             - run: 
                 name: Get Determined version branch commits.
                 command: |
