@@ -119,8 +119,8 @@ message FlatRun {
   bool archived = 21;
   // Project level local id of run.
   string local_id = 22;
-  // Log signal.
-  optional string log_signal = 23;
+  // Log policy matched.
+  optional string log_policy_matched = 23;
 }
 
 // Flat run respresentation.

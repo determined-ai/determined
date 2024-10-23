@@ -1,147 +1,180 @@
+# Log Action Tests
+- name: valid log action
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-action.json
+  case:
+    cancel_retries
+
+- name: invalid log action
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/log-action.json:
+      - "expect one of the followings: cancel_retries, exclude_node, or an legacy object where object.*"
+  case:
+    invalid_action
+
+- name: legacy log action cancel_retries
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json
+  case:
+    type: cancel_retries
+
+- name: legacy log action exclude_node
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json
+  case:
+    type: exclude_node
+
+- name: invalid legacy log action
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/log-action.json:
+      - "expect one of the followings: cancel_retries, exclude_node, or an legacy object where object.*"
+  case:
+    type: invalid_action
+
+# Log Policy Tests
 - name: valid log policy
   sane_as:
     - http://determined.ai/schemas/expconf/v0/log-policy.json
   case:
+    name: policy name
     pattern: a
-    actions:
-      - signal: sig
-      - cancel_retries
-      - exclude_node
+    action: cancel_retries
 
-- name: log policy is invalid with both action and actions
-  sanity_errors:
-    http://determined.ai/schemas/expconf/v0/log-policy.json:
-      - "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field"
+- name: valid legacy log policy
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policy.json
   case:
     pattern: a
-    actions:
-      - signal: sig
     action:
       type: cancel_retries
 
-- name: invalid log policy 1
-  sanity_errors:
-    http://determined.ai/schemas/expconf/v0/log-policy.json:
-      - "expect one of the followings: cancel_retries, exclude_node, or an object with a single \"signal\" field"
+- name: valid log policy (after shim applied to a legacy policy)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policy.json
   case:
     pattern: a
-    actions:
-      - notallowedstring
+    action: cancel_retries
 
-- name: invalid log policy 2
-  sanity_errors:
-    http://determined.ai/schemas/expconf/v0/log-policy.json:
-      - "expect one of the followings: cancel_retries, exclude_node, or an object with a single \"signal\" field"
+- name: valid log policy (user wants to override default log policy)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policy.json
   case:
+    name: policy name
     pattern: a
-    actions:
-      - notallowedstring
 
-- name: invalid log policy 3
-  sanity_errors:
-    http://determined.ai/schemas/expconf/v0/log-policy.json:
-      - "expect one of the followings: cancel_retries, exclude_node, or an object with a single \"signal\" field"
+# Log Policies Tests
+- name: valid log policies
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policies.json
   case:
-    pattern: a
-    actions:
-      - 3
+    - name: policy name
+      pattern: a
+      action: exclude_node
 
-- name: unique actions when merged
+- name: policies with different names but same patterns are valid
+  merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
+  case: []
+  # Use CheckMerged() to test LogPolicies unmarshal
+  merge_src:
+    - name: policy name
+      pattern: a
+      action: cancel_retries
+    - pattern: different policy name
+      pattern: a
+  merged:
+    - pattern: different policy name
+      pattern: a
+    - name: policy name
+      pattern: a
+      action: cancel_retries
+
+- name: merge policies
   merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
   case:
-    - pattern: a
-      actions:
-        - cancel_retries
+    - name: policy 1
+      pattern: a
+      action: exclude_node
+    - name: policy 2
+      pattern: b
+      action: cancel_retries
+    - name: policy 3
+      pattern: c
+      action: exclude_node
   merge_src:
-    - pattern: a
-      actions:
-        - exclude_node
+    - name: policy 1
+      pattern: aa
+      action: exclude_node
+    - name: policy 4
+      pattern: b
+      action: cancel_retries
+    - name: policy 3
+      pattern: c
+      action: cancel_retries
   merged:
-    - pattern: a
-      actions:
-        - cancel_retries
-        - exclude_node
+    - name: policy 1
+      pattern: a
+      action: exclude_node
+    - name: policy 2
+      pattern: b
+      action: cancel_retries
+    - name: policy 3
+      pattern: c
+      action: exclude_node
+    - name: policy 4
+      pattern: b
+      action: cancel_retries
 
-- name: no duplicated actions when merged
+
+- name: merge policies with different names but same patterns, and policies without names
   merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
   case:
-    - pattern: a
-      actions:
-        - cancel_retries
-        - exclude_node
+    - name: policy 1
+      pattern: a
+      action: exclude_node
+    - pattern: b
+      action: exclude_node
   merge_src:
-    - pattern: a
-      actions:
-        - exclude_node
+    - name: policy 2
+      pattern: a
+      action: cancel_retries
+    - pattern: b
+      action: cancel_retries
   merged:
-    - pattern: a
-      actions:
-        - cancel_retries
-        - exclude_node
+    - pattern: b
+      action: cancel_retries
+    - pattern: b
+      action: exclude_node
+    - name: policy 1
+      pattern: a
+      action: exclude_node
+    - name: policy 2
+      pattern: a
+      action: cancel_retries
 
-- name: no duplicated actions when merged 2
-  merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
-  case:
-    - pattern: a
-      actions:
-        - exclude_node
-        - signal: sig1
-  merge_src:
-    - pattern: a
-      actions:
-        - cancel_retries
-        - exclude_node
-        - signal: sig2
-  merged:
-    - pattern: a
-      actions:
-        - cancel_retries
-        - exclude_node
-        - signal: sig1
+- name: default values
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policies.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/log-policies.json
+  case: []
+  defaulted:
+    - name: CUDA OOM
+      pattern: ".*CUDA out of memory.*"
+    - name: ECC Error
+      pattern: ".*uncorrectable ECC error encountered.*"
 
 - name: user can override default values
   sane_as:
     - http://determined.ai/schemas/expconf/v0/log-policies.json
   default_as:
     http://determined.ai/schemas/expconf/v0/log-policies.json
-  case: []
-  defaulted: []
-
-
-- name: log action cancel_retries
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json
   case:
-    type: cancel_retries
+    - name: CUDA OOM
+    - name: ECC Error
 
-- name: log action exclude_node
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json
-  case:
-    type: exclude_node
-
-- name: recognize action field for backward compatibility
-  merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
-  case: []
-  # merge_src is legacy log policies, merged is modern log policies
-  merge_src:
-    - pattern: a
-      action:
-        type: cancel_retries
-    - pattern: a
-      action:
-        type: exclude_node
-    - pattern: b
-      action:
-        type: exclude_node
-  merged:
-    - pattern: a
-      actions:
-        - cancel_retries
-        - exclude_node
-    - pattern: b
-      actions:
-        - exclude_node
+  defaulted:
+    - name: CUDA OOM
+    - name: ECC Error
 
 - name: legacy log policies merging
   merge_as: http://determined.ai/schemas/expconf/v0/log-policies.json
@@ -164,12 +197,11 @@
         type: exclude_node
   merged:
     - pattern: a
-      actions:
-        - cancel_retries
+      action: cancel_retries
     - pattern: b
-      actions:
-        - cancel_retries
-        - exclude_node
+      action: cancel_retries
+    - pattern: b
+      action: exclude_node
     - pattern: c
-      actions:
-        - exclude_node
+      action: exclude_node
+

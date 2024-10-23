@@ -157,15 +157,15 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("should_match", [True, False])
-def test_log_signal(should_match: bool) -> None:
+def test_log_policy_matched(should_match: bool) -> None:
     sess = api_utils.user_session()
     regex = r"executing.*action.*exit.*code.*7"
     if not should_match:
         regex = r"(.*) this should not match (.*)"
 
-    expected_signal = "Test Signal"
+    expected_policy = "Test"
     config = {
-        "log_policies": [{"pattern": regex, "actions": [{"signal": expected_signal}]}],
+        "log_policies": [{"name": expected_policy, "pattern": regex}],
         "max_restarts": 1,
     }
 
@@ -173,59 +173,14 @@ def test_log_signal(should_match: bool) -> None:
     assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
     searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
-    runSignal = searchRes.runs[0].logSignal
+    runPolicyMatched = searchRes.runs[0].logPolicyMatched
 
     trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
-    trialSignal = trialRes.trial.logSignal
+    trialPolicyMatched = trialRes.trial.logPolicyMatched
 
     if should_match:
-        assert runSignal == expected_signal
-        assert trialSignal == expected_signal
+        assert runPolicyMatched == expected_policy
+        assert trialPolicyMatched == expected_policy
     else:
-        assert runSignal is None
-        assert trialSignal is None
-
-
-@pytest.mark.e2e_cpu
-def test_signal_clear_after_exp_continue() -> None:
-    sess = api_utils.user_session()
-    regex = r"executing.*action.*exit.*code.*7"
-
-    expected_signal = "Test Signal"
-    config = {
-        "log_policies": [{"pattern": regex, "actions": [{"signal": expected_signal}]}],
-        "max_restarts": 0,
-    }
-
-    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
-    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
-
-    searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
-    runSignal = searchRes.runs[0].logSignal
-
-    trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
-    trialSignal = trialRes.trial.logSignal
-
-    assert runSignal == expected_signal
-    assert trialSignal == expected_signal
-
-    detproc.check_call(
-        sess,
-        [
-            "det",
-            "e",
-            "continue",
-            str(exp_ref.id),
-            *noop.cli_config_overrides([noop.Exit(0)]),
-        ],
-    )
-    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.COMPLETED)
-
-    searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
-    runSignal = searchRes.runs[0].logSignal
-
-    trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
-    trialSignal = trialRes.trial.logSignal
-
-    assert runSignal is None
-    assert trialSignal is None
+        assert runPolicyMatched is None
+        assert trialPolicyMatched is None

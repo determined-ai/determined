@@ -5,49 +5,30 @@
     "additionalProperties": false,
     "type": "object",
     "properties": {
-        "pattern": {
-            "$comment": "default doesn't apply here because pattern is a required field",
+        "name": {
             "type": [
                 "string",
                 "null"
             ],
+            "$comment": "Comment can be found in type LogPolicyV0",
             "default": null
         },
-        "actions": {
+        "pattern": {
             "type": [
-                "array",
+                "string",
                 "null"
             ],
-            "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
-            },
+            "$comment": "Comment can be found in type LogPolicyV0",
             "default": null
         },
         "action": {
             "type": [
+                "string",
                 "object",
                 "null"
             ],
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-action.json",
             "default": null
-        }
-    },
-    "checks": {
-        "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field": {
-            "oneOf": [
-                {
-                    "required": [
-                        "pattern",
-                        "actions"
-                    ]
-                },
-                {
-                    "required": [
-                        "pattern",
-                        "action"
-                    ]
-                }
-            ]
         }
     }
 }

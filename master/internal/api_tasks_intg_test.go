@@ -220,12 +220,12 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 	require.NoError(t, err)
 	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
 		expconf.LogPolicy{
-			RawPattern: "sub",
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries}},
+			RawPattern: ptrs.Ptr("sub"),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries},
 		},
 		expconf.LogPolicy{
-			RawPattern: `\d{5}$`,
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode}},
+			RawPattern: ptrs.Ptr(`\d{5}$`),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode},
 		},
 	}
 
@@ -453,11 +453,10 @@ func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
 	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
 	require.NoError(t, err)
 
-	signal := "sub"
 	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
 		expconf.LogPolicy{
-			RawPattern: "sub",
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeSignal, Signal: &signal}},
+			RawName:    ptrs.Ptr("test"),
+			RawPattern: ptrs.Ptr("sub"),
 		},
 	}
 
@@ -490,8 +489,8 @@ func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
 	require.NoError(t, err)
 
 	runsOut := struct {
-		bun.BaseModel `bun:"table:runs"`
-		LogSignal     *string `db:"log_signal"`
+		bun.BaseModel    `bun:"table:runs"`
+		LogPolicyMatched *string `db:"log_policy_matched"`
 	}{}
 
 	err = db.Bun().NewSelect().Model(&runsOut).
@@ -499,13 +498,13 @@ func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
 		Scan(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, runsOut)
-	require.NotNil(t, runsOut.LogSignal)
+	require.NotNil(t, runsOut.LogPolicyMatched)
 
-	require.Equal(t, "sub", *runsOut.LogSignal)
+	require.Equal(t, "test", *runsOut.LogPolicyMatched)
 
 	tasksOut := struct {
-		bun.BaseModel `bun:"table:tasks"`
-		LogSignal     *string `db:"log_signal"`
+		bun.BaseModel    `bun:"table:tasks"`
+		LogPolicyMatched *string `db:"log_policy_matched"`
 	}{}
 	err = db.Bun().NewSelect().Model(&tasksOut).
 		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
@@ -513,7 +512,7 @@ func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
 		Scan(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, tasksOut)
-	require.NotNil(t, tasksOut.LogSignal)
+	require.NotNil(t, tasksOut.LogPolicyMatched)
 
-	require.Equal(t, "sub", *tasksOut.LogSignal)
+	require.Equal(t, "test", *tasksOut.LogPolicyMatched)
 }

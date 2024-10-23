@@ -149,8 +149,8 @@ message Trial {
   // metadata associated with the trial (based off the metadata stored in the
   // run).
   optional google.protobuf.Struct metadata = 23;
-  // The log signals.
-  optional string log_signal = 24;
+  // Log Policy Matched.
+  optional string log_policy_matched = 24;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

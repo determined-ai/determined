@@ -436,16 +436,14 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	policies, err := ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, policies)
-	eccErrorSignal := "ECC Error"
-	cudaOOMSignal := "CUDA OOM"
 	expected := expconf.LogPoliciesConfig{
 		expconf.LogPolicy{
-			RawPattern: ".*CUDA out of memory.*",
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeSignal, Signal: &cudaOOMSignal}},
+			RawName:    ptrs.Ptr(expconf.CUDAOOM),
+			RawPattern: ptrs.Ptr(expconf.CUDAOOMPattern),
 		},
 		expconf.LogPolicy{
-			RawPattern: ".*uncorrectable ECC error encountered.*",
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeSignal, Signal: &eccErrorSignal}},
+			RawName:    ptrs.Ptr(expconf.ECCError),
+			RawPattern: ptrs.Ptr(expconf.ECCErrorPattern),
 		},
 	}
 
@@ -455,12 +453,12 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	require.NoError(t, err)
 	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
 		expconf.LogPolicy{
-			RawPattern: `\d{5}$`,
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode}},
+			RawPattern: ptrs.Ptr(`\d{5}$`),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode},
 		},
 		expconf.LogPolicy{
-			RawPattern: "sub",
-			RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries}},
+			RawPattern: ptrs.Ptr("sub"),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries},
 		},
 	}
 

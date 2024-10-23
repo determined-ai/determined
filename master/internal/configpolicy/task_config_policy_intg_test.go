@@ -472,23 +472,10 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		}
 	  ],
 	   "log_policies": [
-		{
-			"pattern": ".*CUDA out of memory.*",
-			"actions": [
-				{
-					"signal": "CUDA OOM"
-				}
-			]
-		},
-		{
-			"pattern": ".*uncorrectable ECC error encountered.*",
-			"actions": [
-				{
-					"signal": "ECC Error"
-				}
-			]
-		}
-	  ]
+			{
+			  "pattern": "nonrepeat"
+			}
+	   ]
 }`
 
 	var defaultInvariantConfig expconf.ExperimentConfigV0

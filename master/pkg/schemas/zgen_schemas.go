@@ -848,24 +848,8 @@ var (
                 "array",
                 "null"
             ],
-            "default": [
-                {
-                    "pattern": ".*CUDA out of memory.*",
-                    "actions": [
-                        {
-                            "signal": "CUDA OOM"
-                        }
-                    ]
-                },
-                {
-                    "pattern": ".*uncorrectable ECC error encountered.*",
-                    "actions": [
-                        {
-                            "signal": "ECC Error"
-                        }
-                    ]
-                }
-            ],
+            "$comment": "setting default to [] lets the actual default always comes from WithDefaults()",
+            "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/log-policies.json"
         },
         "retention_policy": {
@@ -1516,18 +1500,8 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/log-action.json",
     "title": "LogAction",
     "union": {
-        "defaultMessage": "expect one of the followings: cancel_retries, exclude_node, or an object with a single \"signal\" field",
+        "defaultMessage": "expect one of the followings: cancel_retries, exclude_node, or an legacy object where object[\"type\"] is one of 'cancel_retries' or 'exclude_node'",
         "items": [
-            {
-                "unionKey": "singleproperty:signal",
-                "properties": {
-                    "signal": {
-                        "type": "string"
-                    }
-                },
-                "type": "object",
-                "additionalProperties": false
-            },
             {
                 "unionKey": "never",
                 "const": "cancel_retries"
@@ -1535,6 +1509,14 @@ var (
             {
                 "unionKey": "never",
                 "const": "exclude_node"
+            },
+            {
+                "unionKey": "const:type=cancel_retries",
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json"
+            },
+            {
+                "unionKey": "const:type=exclude_node",
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json"
             }
         ]
     }
@@ -1574,39 +1556,6 @@ var (
     }
 }
 `)
-	textLogLegacyActionV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
-    "title": "LogLegacyAction",
-    "if": {
-        "required": [
-            "type"
-        ]
-    },
-    "then": {
-        "union": {
-            "defaultMessage": "is not an object where object[\"type\"] is one of 'cancel_retries' or 'exclude_node'",
-            "items": [
-                {
-                    "unionKey": "const:type=cancel_retries",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/log-legacy-action-cancel-retries.json"
-                },
-                {
-                    "unionKey": "const:type=exclude_node",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json"
-                }
-            ]
-        }
-    },
-    "additionalProperties": false,
-    "eventuallyRequired": [
-        "type"
-    ],
-    "properties": {
-        "type": true
-    }
-}
-`)
 	textLogPoliciesConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/log-policies.json",
@@ -1624,49 +1573,30 @@ var (
     "additionalProperties": false,
     "type": "object",
     "properties": {
-        "pattern": {
-            "$comment": "default doesn't apply here because pattern is a required field",
+        "name": {
             "type": [
                 "string",
                 "null"
             ],
+            "$comment": "Comment can be found in type LogPolicyV0",
             "default": null
         },
-        "actions": {
+        "pattern": {
             "type": [
-                "array",
+                "string",
                 "null"
             ],
-            "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
-            },
+            "$comment": "Comment can be found in type LogPolicyV0",
             "default": null
         },
         "action": {
             "type": [
+                "string",
                 "object",
                 "null"
             ],
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-legacy-action.json",
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-action.json",
             "default": null
-        }
-    },
-    "checks": {
-        "require either \"pattern\" with the depreated \"action\" field or \"pattern\" with the newer \"actions\" field": {
-            "oneOf": [
-                {
-                    "required": [
-                        "pattern",
-                        "actions"
-                    ]
-                },
-                {
-                    "required": [
-                        "pattern",
-                        "action"
-                    ]
-                }
-            ]
         }
     }
 }
@@ -3542,8 +3472,6 @@ var (
 
 	schemaLogLegacyActionExcludeNodeV0 interface{}
 
-	schemaLogLegacyActionV0 interface{}
-
 	schemaLogPoliciesConfigV0 interface{}
 
 	schemaLogPolicyV0 interface{}
@@ -4239,26 +4167,6 @@ func ParsedLogLegacyActionExcludeNodeV0() interface{} {
 		panic("invalid embedded json for LogLegacyActionExcludeNodeV0")
 	}
 	return schemaLogLegacyActionExcludeNodeV0
-}
-
-func ParsedLogLegacyActionV0() interface{} {
-	cacheLock.RLock()
-	if schemaLogLegacyActionV0 != nil {
-		cacheLock.RUnlock()
-		return schemaLogLegacyActionV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaLogLegacyActionV0 != nil {
-		return schemaLogLegacyActionV0
-	}
-	err := json.Unmarshal(textLogLegacyActionV0, &schemaLogLegacyActionV0)
-	if err != nil {
-		panic("invalid embedded json for LogLegacyActionV0")
-	}
-	return schemaLogLegacyActionV0
 }
 
 func ParsedLogPoliciesConfigV0() interface{} {
@@ -5038,8 +4946,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textLogLegacyActionCancelRetriesV0
 	url = "http://determined.ai/schemas/expconf/v0/log-legacy-action-exclude-node.json"
 	cachedSchemaBytesMap[url] = textLogLegacyActionExcludeNodeV0
-	url = "http://determined.ai/schemas/expconf/v0/log-legacy-action.json"
-	cachedSchemaBytesMap[url] = textLogLegacyActionV0
 	url = "http://determined.ai/schemas/expconf/v0/log-policies.json"
 	cachedSchemaBytesMap[url] = textLogPoliciesConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/log-policy.json"

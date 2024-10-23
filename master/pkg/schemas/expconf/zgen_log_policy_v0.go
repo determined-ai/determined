@@ -8,20 +8,28 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (l LogPolicyV0) Pattern() string {
+func (l LogPolicyV0) Name() *string {
+	return l.RawName
+}
+
+func (l *LogPolicyV0) SetName(val *string) {
+	l.RawName = val
+}
+
+func (l LogPolicyV0) Pattern() *string {
 	return l.RawPattern
 }
 
-func (l *LogPolicyV0) SetPattern(val string) {
+func (l *LogPolicyV0) SetPattern(val *string) {
 	l.RawPattern = val
 }
 
-func (l LogPolicyV0) Actions() LogActionsV0 {
-	return l.RawActions
+func (l LogPolicyV0) Action() *LogActionV0 {
+	return l.RawAction
 }
 
-func (l *LogPolicyV0) SetActions(val LogActionsV0) {
-	l.RawActions = val
+func (l *LogPolicyV0) SetAction(val *LogActionV0) {
+	l.RawAction = val
 }
 
 func (l LogPolicyV0) ParsedSchema() interface{} {

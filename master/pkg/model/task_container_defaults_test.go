@@ -436,12 +436,12 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 	}
 }
 
-func TestLogPatternUnmarshal(t *testing.T) {
+func TestLegacyLogPatternUnmarshal(t *testing.T) {
 	var tcd TaskContainerDefaultsConfig
 	require.NoError(t, json.Unmarshal([]byte(string(`{
 		    "log_policies": [
-		        {"pattern": "test", "actions": ["exclude_node"]},
-		        {"pattern": "test2", "actions": ["cancel_retries"]}
+		        {"pattern": "test", "action": {"type": "exclude_node"}},
+		        {"pattern": "test2", "action": {"type": "cancel_retries"}}
 		    ]
 		}`)), &tcd))
 
@@ -451,16 +451,27 @@ func TestLogPatternUnmarshal(t *testing.T) {
 		PreemptionTimeout: DefaultPreemptionTimeout,
 		LogPolicies: expconf.LogPoliciesConfig{
 			expconf.LogPolicy{
-				RawPattern: "test",
-				RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode}},
+				RawPattern: ptrs.Ptr("test"),
+				RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode},
 			},
 			expconf.LogPolicy{
-				RawPattern: "test2",
-				RawActions: expconf.LogActionsV0{expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries}},
+				RawPattern: ptrs.Ptr("test2"),
+				RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries},
 			},
 		},
 	}
 	require.Equal(t, expected, tcd)
+}
+
+func TestLogPatternUnmarshal(t *testing.T) {
+	var tcd TaskContainerDefaultsConfig
+	err := json.Unmarshal([]byte(string(`{
+		    "log_policies": [
+		        {"name": "policy name", "pattern": "a", "action": "exclude_node"},
+		        {"name": "policy name", "pattern": "b", "action": "exclude_node"}
+		    ]
+		}`)), &tcd)
+	require.ErrorContains(t, err, "log_policies have duplicated names \"policy name\" but different patterns")
 }
 
 func TestPodSpecsDefaultMerging(t *testing.T) {
