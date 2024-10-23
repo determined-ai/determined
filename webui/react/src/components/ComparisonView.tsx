@@ -155,12 +155,11 @@ const ComparisonView: React.FC<Props> = ({
       return NotLoaded;
     }
     try {
-      const filters = JSON.parse(tableFilters) as FilterFormSet;
-      const filterFormSet = INIT_FORMSET;
+      const filterFormSet =
+        experimentSelection.type === 'ALL_EXCEPT'
+          ? (JSON.parse(tableFilters) as FilterFormSet)
+          : INIT_FORMSET;
       const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
-      if (experimentSelection.type === 'ALL_EXCEPT') {
-        filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
-      }
       const response = await searchExperiments({
         filter: JSON.stringify(filter),
         limit: SELECTION_LIMIT,
@@ -183,9 +182,11 @@ const ComparisonView: React.FC<Props> = ({
     ) {
       return NotLoaded;
     }
-    const filterFormSet = INIT_FORMSET;
+    const filterFormSet =
+      runSelection.type === 'ALL_EXCEPT'
+        ? (JSON.parse(tableFilters) as FilterFormSet)
+        : INIT_FORMSET;
     try {
-      const filters = JSON.parse(tableFilters) as FilterFormSet;
       const filter = getRunIdsFilter(filterFormSet, runSelection);
       if (searchId) {
         // only display trials for search
@@ -198,9 +199,6 @@ const ComparisonView: React.FC<Props> = ({
           value: searchId,
         };
         filter.filterGroup = combine(filter.filterGroup, 'and', searchFilter);
-      }
-      if (runSelection.type === 'ALL_EXCEPT') {
-        filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
       }
       const response = await searchRuns({
         filter: JSON.stringify(filter),

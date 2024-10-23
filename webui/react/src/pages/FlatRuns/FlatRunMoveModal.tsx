@@ -26,7 +26,6 @@ import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { BulkActionResult, Project, SelectionType, XOR } from 'types';
 import handleError from 'utils/error';
-import { combine } from 'utils/filterFormSet';
 import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 import { pluralizer } from 'utils/string';
 
@@ -114,12 +113,11 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
       };
 
       if (tableFilters !== undefined) {
-        const filters = JSON.parse(tableFilters) as FilterFormSet;
-        const filterFormSet = INIT_FORMSET;
+        const filterFormSet =
+          selection.type === 'ALL_EXCEPT'
+            ? (JSON.parse(tableFilters) as FilterFormSet)
+            : INIT_FORMSET;
         const filter = getRunIdsFilter(filterFormSet, selection);
-        if (selection.type === 'ALL_EXCEPT') {
-          filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
-        }
         moveRunsArgs.filter = JSON.stringify(filter);
       } else {
         moveRunsArgs.runIds = runIds;

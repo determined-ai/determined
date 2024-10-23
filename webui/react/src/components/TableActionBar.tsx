@@ -16,7 +16,7 @@ import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormStore, INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
@@ -56,6 +56,7 @@ import {
 import { capitalizeWord } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
+import { FilterFormSet } from './FilterForm/components/type';
 import LoadableCount from './LoadableCount';
 import css from './TableActionBar.module.scss';
 
@@ -241,8 +242,11 @@ const TableActionBar: React.FC<Props> = ({
           break;
         }
         case 'ALL_EXCEPT': {
-          const filters = JSON.parse(tableFilterString);
-          params.filter = JSON.stringify(getIdsFilter(filters, selection));
+          const filterFormSet =
+            selection.type === 'ALL_EXCEPT'
+              ? (JSON.parse(tableFilterString) as FilterFormSet)
+              : INIT_FORMSET;
+          params.filter = JSON.stringify(getIdsFilter(filterFormSet, selection));
           break;
         }
       }

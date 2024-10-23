@@ -21,7 +21,6 @@ import workspaceStore from 'stores/workspaces';
 import { Project, SelectionType, XOR } from 'types';
 import handleError from 'utils/error';
 import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
-import { combine } from 'utils/filterFormSet';
 import { capitalize, pluralizer } from 'utils/string';
 
 import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
@@ -97,12 +96,11 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     };
 
     if (tableFilters !== undefined) {
-      const filters = JSON.parse(tableFilters) as FilterFormSet;
-      const filterFormSet = INIT_FORMSET;
+      const filterFormSet =
+        selection.type === 'ALL_EXCEPT'
+          ? (JSON.parse(tableFilters) as FilterFormSet)
+          : INIT_FORMSET;
       const filter = getExperimentIdsFilter(filterFormSet, selection);
-      if (selection.type === 'ALL_EXCEPT') {
-        filter.filterGroup = combine(filter.filterGroup, 'and', filters.filterGroup);
-      }
       moveSearchesArgs.filter = JSON.stringify(filter);
     } else {
       moveSearchesArgs.searchIds = experimentIds;

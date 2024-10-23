@@ -69,6 +69,7 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
 import handleError from 'utils/error';
+import { combine } from 'utils/filterFormSet';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
@@ -515,22 +516,18 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
       const filters = JSON.parse(filtersString);
+      const filterFormSet = JSON.parse(filtersString);
       if (searchId) {
         // only display trials for search
-        const existingFilterGroup = { ...filters.filterGroup };
         const searchFilter = {
           columnName: 'experimentId',
-          kind: 'field',
-          location: 'LOCATION_TYPE_RUN',
-          operator: '=',
-          type: 'COLUMN_TYPE_NUMBER',
+          kind: 'field' as const,
+          location: V1LocationType.RUN,
+          operator: Operator.Eq,
+          type: V1ColumnType.NUMBER,
           value: searchId,
         };
-        filters.filterGroup = {
-          children: [existingFilterGroup, searchFilter],
-          conjunction: 'and',
-          kind: 'group',
-        };
+        combine(filterFormSet.filterGroup, 'and', searchFilter);
       }
       const offset = page * settings.pageLimit;
       const response = await searchRuns(
