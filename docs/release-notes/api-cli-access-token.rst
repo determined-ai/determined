@@ -2,11 +2,11 @@
 
 **New Features**
 
--  API/CLI: Add support for access tokens. Add the ability create and administer access tokens for
-   users to authenticate in automated workflows. Users can define the lifespan of these tokens,
-   making it easier to securely authenticate and run processes. This feature enhances automation
-   while maintaining strong security protocols by allowing tighter control over token usage and
-   expiration.
+-  API/CLI: Add support for :ref:`access tokens <access-tokens>`. Add the ability create and
+   administer access tokens for users to authenticate in automated workflows. Users can define the
+   lifespan of these tokens, making it easier to securely authenticate and run processes. This
+   feature enhances automation while maintaining strong security protocols by allowing tighter
+   control over token usage and expiration.
 
    -  CLI:
 
