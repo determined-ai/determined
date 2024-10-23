@@ -323,9 +323,9 @@
 
    -  ``defaultNamespace``: The namespace to which a workspace's workloads get sent by default if
       the workload does not have an explicit :ref:`workspace-namespace binding <k8s-resource-caps>`.
-      If left unspecified, ``resource_manager.default_namespace`` defaults to the Kubernetes
-      ``default`` namespace. Maps to :ref:`resource_manager.default_namespace
-      <master-config-default-namespace>` in the master configuration.
+      Maps to :ref:`resource_manager.default_namespace <master-config-default-namespace>` in the
+      master configuration. If left unspecified, ``resource_manager.default_namespace`` defaults to
+      the Kubernetes ``default`` namespace.
 
    -  ``clusterName``: The name associated with the (default) resource manager/cluster. (*Required
       when using multiple resource managers*). Maps to :ref:`resource_manager.cluster_name

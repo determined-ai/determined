@@ -37,8 +37,11 @@ bindings and resource quotas using either the WebUI or the CLI.
    Where ``workload_namespace`` as specified above can be the release namespace or can be any
    namespace in which you wish to launch workloads for the given resource manager.
 
-When using multiple resource managers, this defaultNamespace field can be configured in the
-additional_resource_manager config by specifying additional_resource_manager.default_namespace
+   When using multiple resource managers, this corresponding ``defaultNamespace`` field in the
+   additional resource managers can be configured in the :ref:`additional_resource_managers
+   <master-config-additional-resource-managers>` config by specifying
+   ``additional_resource_manager.default_namespace``. An example configuration is provided in the
+   ``values.yaml`` file.
 
 #. Toggle the "Auto Create Namespace" option on or off. When enabled, the system automatically
    creates a namespace in the cluster, allowing you to edit the resource quota directly in
