@@ -3196,7 +3196,7 @@ jobs:
             - run: 
                 name: Get Determined version branch commits.
                 command: |
-                  git fetch origin <<parameters.upgrade-branch>> && git checkout --track origin/<<parameters.upgrade-branch>>
+                  git fetch origin <<parameters.upgrade-branch>> && git checkout <<parameters.upgrade-branch>>
                   commit=$(git rev-parse "<<parameters.upgrade-branch>>")
                   echo "Latest commit for <<parameters.upgrade-branch>>: $commit"
                   echo "export HEAD_COMMIT=$commit" >> $BASH_ENV
@@ -3214,7 +3214,7 @@ jobs:
                       target-stage: <<parameters.target-stage>>
             - run: sleep 10
             - stop-devcluster
-            - run: git checkout $CIRCLE_SHA1
+            - checkout
             - run: make -C master build
             - run: make -C agent build
 
