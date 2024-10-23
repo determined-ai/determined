@@ -9,7 +9,6 @@ import model
 
 
 def main(config_file: str, local: bool=True):
-
     info = det.get_cluster_info()
 
     if local:
