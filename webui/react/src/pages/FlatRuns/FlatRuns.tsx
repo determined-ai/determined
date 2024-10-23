@@ -400,10 +400,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               !settings.heatmapSkipped.includes(currentColumn.column)
             ) {
               columnDefs[columnDefKey] = defaultNumberColumn(
-                currentColumn.column,
+                columnDefKey,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                settings.columnWidths[columnDefKey] ??
+                  defaultColumnWidths[columnDefKey as RunColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
                 {
@@ -413,10 +413,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               );
             } else {
               columnDefs[columnDefKey] = defaultNumberColumn(
-                currentColumn.column,
+                columnDefKey,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                settings.columnWidths[columnDefKey] ??
+                  defaultColumnWidths[columnDefKey as RunColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
                 undefined,
@@ -426,20 +426,20 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           }
           case V1ColumnType.DATE:
             columnDefs[columnDefKey] = defaultDateColumn(
-              currentColumn.column,
+              columnDefKey,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
+              settings.columnWidths[columnDefKey] ??
+                defaultColumnWidths[columnDefKey as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
           case V1ColumnType.ARRAY:
             columnDefs[columnDefKey] = defaultArrayColumn(
-              currentColumn.column,
+              columnDefKey,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
+              settings.columnWidths[columnDefKey] ??
+                defaultColumnWidths[columnDefKey as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
             );
@@ -448,10 +448,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           case V1ColumnType.UNSPECIFIED:
           default:
             columnDefs[columnDefKey] = defaultTextColumn(
-              currentColumn.column,
+              columnDefKey,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
+              settings.columnWidths[columnDefKey] ??
+                defaultColumnWidths[columnDefKey as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
             );
