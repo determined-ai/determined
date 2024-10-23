@@ -43,9 +43,9 @@ class _PyTorchTrialController:
         self,
         trial_inst: det.LegacyTrial,
         context: pytorch.PyTorchTrialContext,
-        checkpoint_period: pytorch._TrainUnit,
-        validation_period: pytorch._TrainUnit,
-        reporting_period: pytorch._TrainUnit,
+        checkpoint_period: pytorch.TrainUnit,
+        validation_period: pytorch.TrainUnit,
+        reporting_period: pytorch.TrainUnit,
         smaller_is_better: bool,
         steps_completed: int,
         latest_checkpoint: Optional[str],
@@ -54,7 +54,7 @@ class _PyTorchTrialController:
         searcher_metric_name: Optional[str],
         checkpoint_policy: str,
         step_zero_validation: bool,
-        max_length: pytorch._TrainUnit,
+        max_length: pytorch.TrainUnit,
         global_batch_size: Optional[int],
         profiling_enabled: Optional[bool],
     ) -> None:
@@ -380,7 +380,7 @@ class _PyTorchTrialController:
         # State persists validation step in batches
         return self.state.last_val == self.state.batches_trained
 
-    def _steps_until_complete(self, train_unit: pytorch._TrainUnit) -> int:
+    def _steps_until_complete(self, train_unit: pytorch.TrainUnit) -> int:
         assert isinstance(train_unit.value, int), "invalid length type"
         assert self.state
         if isinstance(train_unit, pytorch.Batch):
@@ -557,7 +557,7 @@ class _PyTorchTrialController:
         return train_boundaries, training_metrics
 
     def _train(
-        self, length: pytorch._TrainUnit, train_boundaries: List[pytorch._TrainBoundary]
+        self, length: pytorch.TrainUnit, train_boundaries: List[pytorch._TrainBoundary]
     ) -> None:
         while self._steps_until_complete(length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(

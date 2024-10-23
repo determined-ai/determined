@@ -10,18 +10,14 @@ import torchvision
 from gan_model import Discriminator, Generator, weights_init
 
 from determined.pytorch import DataLoader, TorchData
-from determined.pytorch.deepspeed import (
-    DeepSpeedTrial,
-    DeepSpeedTrialContext,
-    overwrite_deepspeed_config,
-)
+from determined.pytorch import deepspeed as det_ds
 
 REAL_LABEL = 1
 FAKE_LABEL = 0
 
 
-class DCGANTrial(DeepSpeedTrial):
-    def __init__(self, context: DeepSpeedTrialContext,
+class DCGANTrial(det_ds.DeepSpeedTrial):
+    def __init__(self, context: det_ds.DeepSpeedTrialContext,
                  hparams: dict, data_config: dict) -> None:
         self.context = context
         self.hparams = hparams
@@ -36,7 +32,7 @@ class DCGANTrial(DeepSpeedTrial):
         disc_net.apply(weights_init)
         gen_parameters = filter(lambda p: p.requires_grad, gen_net.parameters())
         disc_parameters = filter(lambda p: p.requires_grad, disc_net.parameters())
-        ds_config = overwrite_deepspeed_config(
+        ds_config = det_ds.overwrite_deepspeed_config(
             self.hparams["deepspeed_config"], self.hparams.get("overwrite_deepspeed_args", {})
         )
         generator, _, _, _ = deepspeed.initialize(
@@ -54,7 +50,6 @@ class DCGANTrial(DeepSpeedTrial):
             )
         )
         self.criterion = nn.BCELoss()
-        # TODO: Test fp16
         self.fp16 = generator.fp16_enabled()
         self.gradient_accumulation_steps = generator.gradient_accumulation_steps()
         # Manually perform gradient accumulation.

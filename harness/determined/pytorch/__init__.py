@@ -30,7 +30,7 @@ from determined.pytorch._util import (
     _ShouldExit,
     _TrainBoundary,
     _TrainBoundaryType,
-    _TrainUnit,
+    TrainUnit,
     _TrialState,
 )
 from determined.pytorch._experimental import PyTorchExperimentalContext

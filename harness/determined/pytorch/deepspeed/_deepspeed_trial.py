@@ -51,9 +51,9 @@ class DeepSpeedTrialController:
         self,
         trial_inst: det.LegacyTrial,
         context: det_ds.DeepSpeedTrialContext,
-        checkpoint_period: pytorch._TrainUnit,
-        validation_period: pytorch._TrainUnit,
-        reporting_period: pytorch._TrainUnit,
+        checkpoint_period: pytorch.TrainUnit,
+        validation_period: pytorch.TrainUnit,
+        reporting_period: pytorch.TrainUnit,
         smaller_is_better: bool,
         steps_completed: int,
         latest_checkpoint: Optional[str],
@@ -62,7 +62,7 @@ class DeepSpeedTrialController:
         searcher_metric_name: Optional[str],
         checkpoint_policy: str,
         step_zero_validation: bool,
-        max_length: Optional[pytorch._TrainUnit],
+        max_length: Optional[pytorch.TrainUnit],
         global_batch_size: Optional[int],
         profiling_enabled: Optional[bool],
     ) -> None:
@@ -386,7 +386,7 @@ class DeepSpeedTrialController:
                 if self.local_training:
                     train_unit = self.max_length
                 else:
-                    train_unit = pytorch._TrainUnit._from_searcher_unit(
+                    train_unit = pytorch.TrainUnit._from_searcher_unit(
                         op.length, self.searcher_unit, self.global_batch_size
                     )
                 assert train_unit
@@ -436,7 +436,7 @@ class DeepSpeedTrialController:
         elif self.local_training:
             train_length = self.max_length  # type: ignore
         else:
-            train_length = pytorch._TrainUnit._from_searcher_unit(
+            train_length = pytorch.TrainUnit._from_searcher_unit(
                 op.length, self.searcher_unit, self.global_batch_size
             )  # type: ignore
         assert train_length
@@ -752,7 +752,7 @@ class DeepSpeedTrialController:
         # State persists validation step in batches
         return self.state.last_val == self.state.batches_trained
 
-    def _steps_until_complete(self, train_unit: pytorch._TrainUnit) -> int:
+    def _steps_until_complete(self, train_unit: pytorch.TrainUnit) -> int:
         assert isinstance(train_unit.value, int), "invalid length type"
         assert self.state
         if isinstance(train_unit, pytorch.Batch):
@@ -907,7 +907,7 @@ class DeepSpeedTrialController:
             if self.local_training:
                 searcher_length = self.max_length
             else:
-                searcher_length = pytorch._TrainUnit._from_searcher_unit(
+                searcher_length = pytorch.TrainUnit._from_searcher_unit(
                     searcher_op.length, self.searcher_unit, self.global_batch_size
                 )
             if self.searcher_metric_name:

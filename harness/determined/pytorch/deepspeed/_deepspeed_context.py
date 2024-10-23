@@ -74,9 +74,7 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
         slots_per_trial: int,
         num_gpus: int,
         exp_conf: Optional[Dict[str, Any]],
-        aggregation_frequency: int,
         steps_completed: int,
-        debug_enabled: bool,
         enable_tensorboard_logging: bool = True,
     ) -> None:
         self._core = core_context
@@ -88,14 +86,13 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
             util.calculate_batch_sizes(
                 hparams=hparams,
                 slots_per_trial=slots_per_trial,
-                trialname="PyTorchTrial",
+                trialname="DeepSpeedTrial",
             )
             if hparams and hparams.get("global_batch_size", None)
             else (None, None)
         )
         self._hparams = hparams
         self._num_gpus = num_gpus
-        self._debug_enabled = debug_enabled
         self._exp_conf = exp_conf
 
         self._trial_seed = trial_seed
@@ -106,15 +103,6 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
         # Track which types we have issued warnings for in to_device().
         self._to_device_warned_types = set()  # type: Set[Type]
 
-        if aggregation_frequency > 1:
-            raise det.errors.InvalidExperimentException(
-                "Gradient aggregation is specified through the deepspeed config instead of the "
-                "Determined experiment config.",
-            )
-        self._aggregation_frequency = aggregation_frequency
-
-        self._fp16_compression_default = False
-        self._average_aggregated_gradients_default = True
         self._is_pre_trainer = False
 
         # DeepSpeed supports mixed precision through Nvidia Apex AMP.  ZeRO optimizer requires
@@ -271,12 +259,6 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
         else:
             self.device = torch.device("cuda", 0)
         assert self.device is not None, "Error setting torch device."
-
-    def _set_default_gradient_compression(self, gradient_compression: bool) -> None:
-        self._fp16_compression_default = gradient_compression
-
-    def _set_default_average_aggregated_gradients(self, average_aggregated_gradients: bool) -> None:
-        self._average_aggregated_gradients_default = average_aggregated_gradients
 
     def _set_is_pre_trainer(self) -> None:
         self._is_pre_trainer = True

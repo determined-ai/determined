@@ -6,7 +6,7 @@ from typing import Optional, Union
 from determined import core
 
 
-class _TrainUnit:
+class TrainUnit:
     """
     TrainUnit is the base class for the supported training units (Batch, Epoch) containing
     the value of unit, where the value can be an int or an implementable collections.abc.Container.
@@ -24,7 +24,7 @@ class _TrainUnit:
     @staticmethod
     def _from_searcher_unit(
         length: int, unit: Optional[core.Unit], global_batch_size: Optional[int] = None
-    ) -> "_TrainUnit":
+    ) -> "TrainUnit":
         if unit == core.Unit.EPOCHS:
             return Epoch(length)
         elif unit == core.Unit.RECORDS:
@@ -47,7 +47,7 @@ class _TrainUnit:
         records: Optional[int] = None,
         epochs: Optional[int] = None,
         global_batch_size: Optional[int] = None,
-    ) -> "_TrainUnit":
+    ) -> "TrainUnit":
         if sum((batches is not None, records is not None, epochs is not None)) != 1:
             raise ValueError(f"invalid config: batches={batches} records={records} epochs={epochs}")
         if batches is not None:
@@ -85,7 +85,7 @@ class _TrainUnit:
         return steps % self.value == 0
 
 
-class Epoch(_TrainUnit):
+class Epoch(TrainUnit):
     """
     Epoch step type (e.g. Epoch(1) defines 1 epoch)
     """
@@ -93,7 +93,7 @@ class Epoch(_TrainUnit):
     pass
 
 
-class Batch(_TrainUnit):
+class Batch(TrainUnit):
     """
     Batch step type (e.g. Batch(1) defines 1 batch)
     """
@@ -139,7 +139,7 @@ class _TrainBoundaryType(enum.Enum):
 
 
 class _TrainBoundary:
-    def __init__(self, step_type: _TrainBoundaryType, unit: _TrainUnit):
+    def __init__(self, step_type: _TrainBoundaryType, unit: TrainUnit):
         self.step_type = step_type
         self.unit = unit
         self.limit_reached = False

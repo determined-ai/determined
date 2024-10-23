@@ -70,10 +70,10 @@ class Trainer:
 
     def fit(
         self,
-        checkpoint_period: Optional[pytorch._TrainUnit] = None,
-        validation_period: Optional[pytorch._TrainUnit] = None,
-        max_length: Optional[pytorch._TrainUnit] = None,
-        reporting_period: pytorch._TrainUnit = pytorch.Batch(100),  # noqa: B008
+        checkpoint_period: Optional[pytorch.TrainUnit] = None,
+        validation_period: Optional[pytorch.TrainUnit] = None,
+        max_length: Optional[pytorch.TrainUnit] = None,
+        reporting_period: pytorch.TrainUnit = pytorch.Batch(100),  # noqa: B008
         checkpoint_policy: str = "best",
         latest_checkpoint: Optional[str] = None,
         step_zero_validation: bool = False,
@@ -201,7 +201,7 @@ class Trainer:
                         stacklevel=2,
                     )
                     max_length_unit = core._parse_searcher_units(self._info.trial._config)
-                    max_length = pytorch._TrainUnit._from_searcher_unit(
+                    max_length = pytorch.TrainUnit._from_searcher_unit(
                         max_length_val, max_length_unit, global_batch_size
                     )
 
@@ -244,7 +244,7 @@ class Trainer:
 
 def _check_searcher_length(
     exp_conf: Dict[str, Any],
-    max_length: pytorch._TrainUnit,
+    max_length: pytorch.TrainUnit,
 ) -> None:
     """
     Certain searchers (ASHA and Adaptive ASHA) require configuring the maximum training length in

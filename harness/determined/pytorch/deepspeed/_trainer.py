@@ -36,10 +36,10 @@ class Trainer:
 
     def fit(
         self,
-        checkpoint_period: Optional[pytorch._TrainUnit] = None,
-        validation_period: Optional[pytorch._TrainUnit] = None,
-        max_length: Optional[pytorch._TrainUnit] = None,
-        reporting_period: pytorch._TrainUnit = pytorch.Batch(100),  # noqa: B008
+        checkpoint_period: Optional[pytorch.TrainUnit] = None,
+        validation_period: Optional[pytorch.TrainUnit] = None,
+        max_length: Optional[pytorch.TrainUnit] = None,
+        reporting_period: pytorch.TrainUnit = pytorch.Batch(100),  # noqa: B008
         checkpoint_policy: str = "best",
         latest_checkpoint: Optional[str] = None,
         step_zero_validation: bool = False,
@@ -47,7 +47,7 @@ class Trainer:
         profiling_enabled: bool = False,
     ) -> None:
         """
-        ``fit()`` trains a ``PyTorchTrial`` configured from the ``Trainer`` and handles
+        ``fit()`` trains a ``DeepSpeedTrial`` configured from the ``Trainer`` and handles
         checkpointing and validation steps, and metrics reporting.
 
         Arguments:
