@@ -1172,8 +1172,8 @@ class DeepSpeedTrial(det.LegacyTrial):
 
     """
 
-    trial_controller_class = DeepSpeedTrialController
-    trial_context_class = det_ds.DeepSpeedTrialContext
+    trial_controller_class = DeepSpeedTrialController  # type: ignore
+    trial_context_class = det_ds.DeepSpeedTrialContext  # type: ignore
 
     @abc.abstractmethod
     def __init__(self, context: det_ds.DeepSpeedTrialContext) -> None:
