@@ -17,7 +17,7 @@ jobs:
       - name: "Validate version"
         shell: bash {0}
         run: |
-          grep -E -o '[0-9]+\.[0-9]+\.0' <(printf "%s" '${{ github.event.inputs.version }}')
+          grep -E -o '[0-9]+\.[0-9]+\.0' <<<'${{ github.event.inputs.version }}'
 
           ret=$?
           if [[ $ret != 0 ]]; then
