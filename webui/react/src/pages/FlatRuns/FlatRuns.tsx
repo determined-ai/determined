@@ -33,6 +33,7 @@ import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/Filte
 import {
   AvailableOperators,
   FilterFormSet,
+  FilterFormSetWithoutId,
   FormField,
   FormGroup,
   FormKind,
@@ -516,7 +517,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
       const filters = JSON.parse(filtersString);
-      const filterFormSet = JSON.parse(filtersString);
+      const filterFormSet = JSON.parse(filtersString) as FilterFormSetWithoutId;
       if (searchId) {
         // only display trials for search
         const searchFilter = {
@@ -527,7 +528,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           type: V1ColumnType.NUMBER,
           value: searchId,
         };
-        combine(filterFormSet.filterGroup, 'and', searchFilter);
+        filterFormSet.filterGroup = combine(filterFormSet.filterGroup, 'and', searchFilter);
       }
       const offset = page * settings.pageLimit;
       const response = await searchRuns(

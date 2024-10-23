@@ -9,8 +9,7 @@ import { useObservable } from 'micro-observables';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
-import { FilterFormSet, Operator } from 'components/FilterForm/components/type';
+import { FilterFormSetWithoutId, Operator } from 'components/FilterForm/components/type';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
@@ -103,10 +102,7 @@ const FlatRunActionButton = ({
           break;
         }
         case 'ALL_EXCEPT': {
-          const filterFormSet =
-            selection.type === 'ALL_EXCEPT'
-              ? (JSON.parse(tableFilterString) as FilterFormSet)
-              : INIT_FORMSET;
+          const filterFormSet = JSON.parse(tableFilterString) as FilterFormSetWithoutId;
           if (searchId) {
             // only display trials for search
             const searchFilter = {
@@ -117,7 +113,7 @@ const FlatRunActionButton = ({
               type: V1ColumnType.NUMBER,
               value: searchId,
             };
-            combine(filterFormSet.filterGroup, 'and', searchFilter);
+            filterFormSet.filterGroup = combine(filterFormSet.filterGroup, 'and', searchFilter);
           }
           params.filter = JSON.stringify(getIdsFilter(filterFormSet, selection));
           break;
