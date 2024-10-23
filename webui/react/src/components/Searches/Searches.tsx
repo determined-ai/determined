@@ -641,6 +641,10 @@ const Searches: React.FC<Props> = ({ project }) => {
     handleSelectionChange?.('add-all');
   }, [handleSelectionChange]);
 
+  const handleClearSelect = useCallback(() => {
+    handleSelectionChange?.('remove-all');
+  }, [handleSelectionChange]);
+
   const handleHeaderClick = useCallback(
     (columnId: string): void => {
       if (columnId === MULTISELECT) {
@@ -800,6 +804,7 @@ const Searches: React.FC<Props> = ({ project }) => {
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
         onActualSelectAll={handleActualSelectAll}
+        onClearSelect={handleClearSelect}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}

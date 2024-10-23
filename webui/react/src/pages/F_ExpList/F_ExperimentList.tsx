@@ -487,6 +487,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [handleSelectionChange, openToast],
   );
 
+  const handleActualSelectAll = useCallback(() => {
+    handleSelectionChange?.('add-all');
+  }, [handleSelectionChange]);
+
+  const handleClearSelect = useCallback(() => {
+    handleSelectionChange?.('remove-all');
+  }, [handleSelectionChange]);
+
   const handleContextMenuComplete = useCallback(
     (action: ExperimentAction, id: number, data?: Partial<BulkExperimentItem>) =>
       handleActionSuccess(action, [id], data),
@@ -997,6 +1005,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
+        onActualSelectAll={handleActualSelectAll}
+        onClearSelect={handleClearSelect}
         onComparisonViewToggle={handleToggleComparisonView}
         onHeatmapSelectionRemove={(id) => {
           const newSelection = settings.heatmapSkipped.filter((s) => s !== id);
