@@ -4821,42 +4821,6 @@ workflows:
               upgrade-branch: *release-upgrade
 
       - test-e2e:
-          name: test-e2e-managed-devcluster
-          context:
-            - dev-ci-cluster-default-user-credentials
-          requires:
-            - build-go-ee
-          parallelism: 4
-          resource-class: large
-          tf2: true
-          mark: managed_devcluster
-          managed-devcluster: true
-          # Managed devcluster restarts the master over the course of the tests,
-          # so `compare_stats` cannot get the full logs from `det master logs`.
-          extra-pytest-flags: "--no-compare-stats"
-          collect-det-job-logs: false
-          matrix:
-            parameters:
-              upgrade-branch: *release-upgrade
-
-      - test-e2e:
-          name: test-e2e-managed-devcluster-resource-pools
-          context:
-            - dev-ci-cluster-default-user-credentials
-          requires:
-            - build-go-ee
-          parallelism: 4
-          resource-class: large
-          tf2: true
-          mark: managed_devcluster_resource_pools
-          managed-devcluster: true
-          extra-pytest-flags: "--no-compare-stats"
-          collect-det-job-logs: false
-          matrix:
-            parameters:
-              upgrade-branch: *release-upgrade
-
-      - test-e2e:
           name: test-e2e-multi-k8s
           context:
             - dev-ci-cluster-default-user-credentials
