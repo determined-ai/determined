@@ -35,7 +35,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import ColumnPickerMenu, { formatColumnKey, METADATA_SEPARATOR } from 'components/ColumnPickerMenu';
+import ColumnPickerMenu, { formatColumnKey } from 'components/ColumnPickerMenu';
 import ComparisonView from 'components/ComparisonView';
 import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -320,10 +320,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce(
-          (acc, col) => ({ ...acc, [`${col.type}${METADATA_SEPARATOR}${col.column}`]: col }),
-          {},
-        );
+        return columns.reduce((acc, col) => ({ ...acc, [formatColumnKey(col)]: col }), {});
       },
     );
     const columnDefs = getColumnDefs({

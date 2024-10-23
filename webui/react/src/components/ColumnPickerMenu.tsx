@@ -67,7 +67,7 @@ interface ColumnTabProps {
 }
 
 export const formatColumnKey = (col: ProjectColumn): string => {
-  if (col.location === 'LOCATION_TYPE_RUN_METADATA')
+  if (col.location === V1LocationType.RUNMETADATA)
     return `${col.type}${METADATA_SEPARATOR}${col.column}`;
   return col.column;
 };
@@ -109,7 +109,8 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => {
-      if (col.column.includes('metadata')) return { ...acc, [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)) };
+      if (col.location === V1LocationType.RUNMETADATA)
+        return { ...acc, [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)) };
 
       return { ...acc, [col.column]: columnState.includes(col.column) };
     }, {});
@@ -120,7 +121,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           ...new Set([
             ...columnState,
             ...filteredColumns.map((col) => {
-              if (col.column.includes('metadata')) formatColumnKey(col);
+              if (col.location === V1LocationType.RUNMETADATA) return formatColumnKey(col);
               return col.column;
             }),
           ]),
@@ -196,12 +197,13 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         );
       };
       const getId = () => {
-        if (col.column.includes('metadata')) return formatColumnKey(col);
+        if (col.location === V1LocationType.RUNMETADATA) return formatColumnKey(col);
 
         return col.column;
       };
       const getChecked = () => {
-        if (col.column.includes('metadata')) return checkedColumnNames.has(formatColumnKey(col));
+        if (col.location === V1LocationType.RUNMETADATA)
+          return checkedColumnNames.has(formatColumnKey(col));
 
         return checkedColumnNames.has(col.column);
       };

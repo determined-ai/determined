@@ -837,7 +837,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                   defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
-                undefined,
               );
             }
             break;
