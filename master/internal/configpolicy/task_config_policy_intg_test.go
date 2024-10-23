@@ -667,6 +667,7 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		}
 	  ]
@@ -706,6 +707,7 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"
 		}
 	  ]
@@ -773,9 +775,11 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		},
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"    
 		}
 	  ]
@@ -815,6 +819,7 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "global repeat policy",
 		  "pattern": "gloablrepeat"
 		}
 	  ]
@@ -898,12 +903,15 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		},
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"    
 		},
 		{
+		  "name": "global repeat policy",
 		  "pattern": "gloablrepeat"
 		}
 	  ]
