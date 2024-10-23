@@ -1178,3 +1178,38 @@ func TestUnarchiveSearchAlreadyUnarchived(t *testing.T) {
 	require.Len(t, unarchRes.Results, 1)
 	require.Equal(t, "", unarchRes.Results[0].Error)
 }
+
+func TestGetSearchIdsFromFilter(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	workspaceID, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 6, "test7": map[string]any{"test8": 9}}
+	exp1 := createTestSearchWithHParams(t, api, curUser, projectID, hyperparameters1)
+	hyperparameters2 := map[string]any{"global_batch_size": 10, "test7": map[string]any{"test8": 11}}
+	exp2 := createTestSearchWithHParams(t, api, curUser, projectID, hyperparameters2)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	filter := `{"filterGroup":{"children":[{"columnName":"hp.test7.test8","kind":"field",` +
+		`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":10}],` +
+		`"conjunction":"and","kind":"group"},"showArchived":true}`
+	searchIds, err := getSearchIdsFromFilter(ctx, int32(workspaceID), &filter)
+	require.NoError(t, err)
+	require.ElementsMatch(t, searchIds, []int32{int32(exp1.ID)})
+}

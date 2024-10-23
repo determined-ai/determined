@@ -715,30 +715,9 @@ func (a *apiServer) LaunchTensorboardSearches(ctx context.Context, req *apiv1.La
 	var expIds []int32
 
 	if req.Filter != nil {
-		type searchResult struct {
-			ID int32
-		}
-
-		var targets []searchResult
-		getQ := getSelectSearchesQueryTables().
-			Model(&targets).
-			Column("e.id").
-			Where("w.id = ?", req.GetWorkspaceId()).
-			Where("e.state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
-
-		getQ, err = filterSearchQuery(getQ, req.Filter)
+		expIds, err = getSearchIdsFromFilter(ctx, req.WorkspaceId, req.Filter)
 		if err != nil {
-			return nil, err
-		}
-
-		err = getQ.Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		expIds = make([]int32, len(targets))
-		for i := range expIds {
-			expIds[i] = targets[i].ID
+			return nil, status.Errorf(codes.Internal, "failed to build search id list from filter: %s", err)
 		}
 	} else {
 		expIds = req.SearchIds
@@ -757,4 +736,33 @@ func (a *apiServer) LaunchTensorboardSearches(ctx context.Context, req *apiv1.La
 		Config:      launchResp.GetConfig(),
 		Warnings:    launchResp.GetWarnings(),
 	}, err
+}
+
+func getSearchIdsFromFilter(ctx context.Context, workspaceID int32, filter *string) ([]int32, error) {
+	type searchResult struct {
+		ID int32
+	}
+
+	var targets []searchResult
+	getQ := getSelectSearchesQueryTables().
+		Model(&targets).
+		Column("e.id").
+		Where("w.id = ?", workspaceID).
+		Where("e.state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
+
+	getQ, err := filterSearchQuery(getQ, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	expIds := make([]int32, len(targets))
+	for i := range expIds {
+		expIds[i] = targets[i].ID
+	}
+	return expIds, nil
 }
