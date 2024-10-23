@@ -1033,10 +1033,6 @@ class DeepSpeedTrialController:
 
         save_path = load_path.joinpath("trial_state.pkl")
 
-        try:
-            assert self.state
-        except AssertionError as e:
-
         if save_path.exists():
             with save_path.open("rb") as f:
                 self._load_state(pickle.load(f))
