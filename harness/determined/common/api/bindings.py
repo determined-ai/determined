@@ -8747,6 +8747,100 @@ class v1LaunchTensorboardResponse(Printable):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
+class v1LaunchTensorboardSearchesRequest(Printable):
+    """Request to launch a tensorboard using searches matching a filter."""
+    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    files: "typing.Optional[typing.Sequence[v1File]]" = None
+    filter: "typing.Optional[str]" = None
+    templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(config, Unset):
+            self.config = config
+        if not isinstance(files, Unset):
+            self.files = files
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(templateName, Unset):
+            self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LaunchTensorboardSearchesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "config" in obj:
+            kwargs["config"] = obj["config"]
+        if "files" in obj:
+            kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "templateName" in obj:
+            kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = self.config
+        if not omit_unset or "files" in vars(self):
+            out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "templateName" in vars(self):
+            out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        return out
+
+class v1LaunchTensorboardSearchesResponse(Printable):
+    """Response to LaunchTensorboardSearchesRequest."""
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Dict[str, typing.Any]",
+        tensorboard: "v1Tensorboard",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
+    ):
+        self.config = config
+        self.tensorboard = tensorboard
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LaunchTensorboardSearchesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
+        }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "tensorboard": self.tensorboard.to_json(omit_unset),
+        }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
+        return out
+
 class v1LaunchWarning(DetEnum):
     """Enum values for warnings when launching commands.
     - LAUNCH_WARNING_UNSPECIFIED: Default value
@@ -23279,6 +23373,27 @@ def post_LaunchTensorboard(
     if _resp.status_code == 200:
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
+
+def post_LaunchTensorboardSearches(
+    session: "api.BaseSession",
+    *,
+    body: "v1LaunchTensorboardSearchesRequest",
+) -> "v1LaunchTensorboardSearchesResponse":
+    """Launch a tensorboard for one or more searches using bulk search filters."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/searches/tensorboards",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1LaunchTensorboardSearchesResponse.from_json(_resp.json())
+    raise APIHttpError("post_LaunchTensorboardSearches", _resp)
 
 def get_ListRPsBoundToWorkspace(
     session: "api.BaseSession",

@@ -6338,6 +6338,68 @@ export interface V1LaunchTensorboardResponse {
     warnings?: Array<V1LaunchWarning>;
 }
 /**
+ * Request to launch a tensorboard using searches matching a filter.
+ * @export
+ * @interface V1LaunchTensorboardSearchesRequest
+ */
+export interface V1LaunchTensorboardSearchesRequest {
+    /**
+     * Targets all searches matching filter expression.
+     * @type {string}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    filter?: string;
+    /**
+     * Tensorboard config (JSON).
+     * @type {any}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    config?: any;
+    /**
+     * Tensorboard template name.
+     * @type {string}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    templateName?: string;
+    /**
+     * The files to run with the command.
+     * @type {Array<V1File>}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    files?: Array<V1File>;
+    /**
+     * Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
+     * @type {number}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    workspaceId?: number;
+}
+/**
+ * Response to LaunchTensorboardSearchesRequest.
+ * @export
+ * @interface V1LaunchTensorboardSearchesResponse
+ */
+export interface V1LaunchTensorboardSearchesResponse {
+    /**
+     * The requested tensorboard.
+     * @type {V1Tensorboard}
+     * @memberof V1LaunchTensorboardSearchesResponse
+     */
+    tensorboard: V1Tensorboard;
+    /**
+     * The config;
+     * @type {any}
+     * @memberof V1LaunchTensorboardSearchesResponse
+     */
+    config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchTensorboardSearchesResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+/**
  * Enum values for warnings when launching commands.   - LAUNCH_WARNING_UNSPECIFIED: Default value  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
  * @export
  * @enum {string}
@@ -22450,6 +22512,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Launch a tensorboard for one or more searches using bulk search filters.
+         * @param {V1LaunchTensorboardSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling launchTensorboardSearches.');
+            }
+            const localVarPath = `/api/v1/searches/tensorboards`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -25280,6 +25380,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Launch a tensorboard for one or more searches using bulk search filters.
+         * @param {V1LaunchTensorboardSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).launchTensorboardSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -26672,6 +26791,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Launch a tensorboard for one or more searches using bulk search filters.
+         * @param {V1LaunchTensorboardSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).launchTensorboardSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -27772,6 +27901,18 @@ export class InternalApi extends BaseAPI {
      */
     public killSearches(body: V1KillSearchesRequest, options?: any) {
         return InternalApiFp(this.configuration).killSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Launch a tensorboard for one or more searches using bulk search filters.
+     * @param {V1LaunchTensorboardSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).launchTensorboardSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**

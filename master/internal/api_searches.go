@@ -702,3 +702,51 @@ func validateBulkSearchActionCandidates(
 	}
 	return results, validIDs, nil
 }
+
+func (a *apiServer) LaunchTensorboardSearches(ctx context.Context, req *apiv1.LaunchTensorboardSearchesRequest,
+) (*apiv1.LaunchTensorboardSearchesResponse, error) {
+	_, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	type searchResult struct {
+		ID int32
+	}
+
+	var targets []searchResult
+	getQ := getSelectSearchesQueryTables().
+		Model(&targets).
+		Column("e.id").
+		Where("w.id = ?", req.GetWorkspaceId()).
+		Where("e.state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
+
+	getQ, err = filterSearchQuery(getQ, &req.Filter)
+	if err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	expIds := make([]int32, len(targets))
+	for i := range expIds {
+		expIds[i] = targets[i].ID
+	}
+
+	launchResp, err := a.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
+		ExperimentIds: expIds,
+		Config:        req.GetConfig(),
+		TemplateName:  req.GetTemplateName(),
+		Files:         req.GetFiles(),
+		WorkspaceId:   req.GetWorkspaceId(),
+	})
+
+	return &apiv1.LaunchTensorboardSearchesResponse{
+		Tensorboard: launchResp.GetTensorboard(),
+		Config:      launchResp.GetConfig(),
+		Warnings:    launchResp.GetWarnings(),
+	}, err
+}

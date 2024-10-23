@@ -1640,6 +1640,17 @@ service Determined {
       tags: "Tensorboards"
     };
   }
+  // Launch a tensorboard for one or more searches using bulk search filters.
+  rpc LaunchTensorboardSearches(LaunchTensorboardSearchesRequest)
+      returns (LaunchTensorboardSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/tensorboards"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Delete tensorboard files.
   rpc DeleteTensorboardFiles(DeleteTensorboardFilesRequest)
       returns (DeleteTensorboardFilesResponse) {
