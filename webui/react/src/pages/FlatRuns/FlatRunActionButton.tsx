@@ -62,6 +62,7 @@ interface Props {
   onActionComplete?: () => void | Promise<void>;
   selection: SelectionType;
   selectionSize: number;
+  searchId?: number;
 }
 
 const FlatRunActionButton = ({
@@ -72,6 +73,7 @@ const FlatRunActionButton = ({
   selection,
   selectionSize,
   workspaceId,
+  searchId,
   onActionSuccess,
   onActionComplete,
 }: Props): JSX.Element => {
@@ -98,6 +100,23 @@ const FlatRunActionButton = ({
         }
         case 'ALL_EXCEPT': {
           const filters = JSON.parse(tableFilterString);
+          if (searchId) {
+            // only display trials for search
+            const existingFilterGroup = { ...filters.filterGroup };
+            const searchFilter = {
+              columnName: 'experimentId',
+              kind: 'field',
+              location: 'LOCATION_TYPE_RUN',
+              operator: '=',
+              type: 'COLUMN_TYPE_NUMBER',
+              value: searchId,
+            };
+            filters.filterGroup = {
+              children: [existingFilterGroup, searchFilter],
+              conjunction: 'and',
+              kind: 'group',
+            };
+          }
           params.filter = JSON.stringify(getIdsFilter(filters, selection));
           break;
         }
@@ -120,7 +139,7 @@ const FlatRunActionButton = ({
           return await resumeRuns(params);
       }
     },
-    [flatRunMoveModalOpen, projectId, selectedRuns, selection, tableFilterString],
+    [flatRunMoveModalOpen, projectId, searchId, selectedRuns, selection, tableFilterString],
   );
 
   const submitBatchAction = useCallback(

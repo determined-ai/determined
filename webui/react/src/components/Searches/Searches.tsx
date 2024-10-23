@@ -88,8 +88,6 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
-
 const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
@@ -248,23 +246,22 @@ const Searches: React.FC<Props> = ({ project }) => {
     return [];
   }, [settings.selection]);
 
-  const loadedSelectedExperimentIds = useMemo(() => {
-    const selectedMap = new Map<number, ExperimentWithIndex>();
+  const loadedExperimentIdMap = useMemo(() => {
+    const experimentMap = new Map<number, { experiment: ExperimentWithTrial; index: number }>();
+
     if (isLoadingSettings) {
-      return selectedMap;
+      return experimentMap;
     }
-    const selectedIdSet = new Set(allSelectedExperimentIds);
+
     experiments.forEach((e, index) => {
-      Loadable.forEach(e, ({ experiment }) => {
-        if (selectedIdSet.has(experiment.id)) {
-          selectedMap.set(experiment.id, { experiment, index });
-        }
+      Loadable.forEach(e, (experiment) => {
+        experimentMap.set(experiment.experiment.id, { experiment, index });
       });
     });
-    return selectedMap;
-  }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
+    return experimentMap;
+  }, [experiments, isLoadingSettings]);
 
-  const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
+  const colorMap = useGlasbey([...loadedExperimentIdMap.keys()]);
 
   const experimentFilters = useMemo(() => {
     const filters: V1BulkExperimentFilters = {

@@ -1021,6 +1021,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             <FlatRunActionButton
               isMobile={isMobile}
               projectId={projectId}
+              searchId={searchId}
               selectedRuns={loadedSelectedRuns}
               selection={settings.selection}
               selectionSize={selectionSize}

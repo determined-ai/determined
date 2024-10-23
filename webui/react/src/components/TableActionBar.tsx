@@ -218,7 +218,7 @@ const TableActionBar: React.FC<Props> = ({
   const availableBatchActions = useMemo(() => {
     switch (selection.type) {
       case 'ONLY_IN': {
-        const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
+        const experiments = selection.selections.map((id) => experimentMap[id]) ?? [];
         return getActionsForExperimentsUnion(experiments, [...batchActions], permissions); // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
       }
       case 'ALL_EXCEPT':
@@ -227,7 +227,7 @@ const TableActionBar: React.FC<Props> = ({
             action !== ExperimentAction.OpenTensorBoard && action !== ExperimentAction.Cancel,
         );
     }
-  }, [selection.type, selectedExperimentIds, permissions, experimentMap]);
+  }, [selection, permissions, experimentMap]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
