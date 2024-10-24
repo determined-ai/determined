@@ -174,7 +174,8 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
       const colType =
-        (runColumns as readonly string[]).includes(col.column) && col.type === V1ColumnType.UNSPECIFIED
+        (runColumns as readonly string[]).includes(col.column) &&
+        col.type === V1ColumnType.UNSPECIFIED
           ? 'BOOLEAN'
           : removeColumnTypePrefix(col.type);
       const getColDisplayName = (col: ProjectColumn) => {
