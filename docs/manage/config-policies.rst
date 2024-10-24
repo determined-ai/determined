@@ -58,9 +58,8 @@ or CLI.
 
 .. note::
 
-   Admins are encouraged to draft and save their config policies for each scope in separate YAML or 
-   JSON files. This allows for consistency between config policies set in the WebUI and CLI and
-   lessens the chance for unintended changes to be made to a given scope's policies.
+   It is recommended that administrators save their configuration policies for each scope in
+   separate YAML or JSON files. This provides an easy way to back up and restore policies if needed.
 
 WebUI
 =====
