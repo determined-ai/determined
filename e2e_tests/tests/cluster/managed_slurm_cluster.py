@@ -40,7 +40,7 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
     def __enter__(self) -> "ManagedSlurmCluster":
         if self.existing_devcluster_pid:
             print(f"DNJ DEBUG killing pid: {self.existing_devcluster_pid}")
-            os.kill(self.existing_devcluster_pid, signal.SIGTERM)
+            # os.kill(self.existing_devcluster_pid, signal.SIGTERM)
         self._start_devcluster()
         return self
 

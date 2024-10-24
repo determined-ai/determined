@@ -707,7 +707,7 @@ commands:
             DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
+            XDG_CONFIG_HOME=/tmp \
             xargs pytest --capture=tee-sys -vv \
             -m '<<parameters.mark>>' \
             --durations=0 \
@@ -2898,6 +2898,8 @@ jobs:
             fi
       - store_test_results:
           path: /tmp/test-results/
+      - store_artifacts:
+          path: devcluster.log
 
   test-e2e-slurm:
     parameters:
