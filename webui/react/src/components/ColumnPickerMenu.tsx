@@ -11,6 +11,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import { runColumns } from 'pages/FlatRuns/columns';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
@@ -64,8 +65,6 @@ interface ColumnTabProps {
   pinnedColumnsCount: number;
   onHeatmapSelectionRemove?: (id: string) => void;
 }
-
-const KNOWN_BOOLEAN_COLUMNS = ['archived', 'isExpMultitrial', 'parentArchived'];
 
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
@@ -175,7 +174,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
       const colType =
-        KNOWN_BOOLEAN_COLUMNS.includes(col.column) && col.type === V1ColumnType.UNSPECIFIED
+        (runColumns as readonly string[]).includes(col.column) && col.type === V1ColumnType.UNSPECIFIED
           ? 'BOOLEAN'
           : removeColumnTypePrefix(col.type);
       const getColDisplayName = (col: ProjectColumn) => {
