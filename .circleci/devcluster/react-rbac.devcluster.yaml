@@ -12,9 +12,6 @@ stages:
           initial_user_password: $INITIAL_USER_PASSWORD
           authz:
             rbac_ui_enabled: true
-            workspace_creator_assign_role:
-              enabled: true
-              role_id: 1
         port: 8082
         db:
           host: localhost
