@@ -785,6 +785,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
         experimentIds={isMovable ? [experiment.id] : []}
+        selectionSize={1}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleModalClose}

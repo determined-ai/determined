@@ -1,4 +1,3 @@
-import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
@@ -11,15 +10,7 @@ import {
   MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
-import DataGrid, {
-  DataGridHandle,
-  HandleSelectionChangeType,
-  RangelessSelectionType,
-  SelectionType,
-  Sort,
-  validSort,
-  ValidSort,
-} from 'hew/DataGrid/DataGrid';
+import DataGrid, { DataGridHandle, Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Link from 'hew/Link';
@@ -56,6 +47,7 @@ import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
+import useSelection from 'hooks/useSelection';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { paths } from 'routes/utils';
@@ -75,7 +67,6 @@ import {
   Project,
   ProjectColumn,
   RunState,
-  SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -96,8 +87,6 @@ import {
 interface Props {
   project: Project;
 }
-
-type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
@@ -183,6 +172,15 @@ const Searches: React.FC<Props> = ({ project }) => {
   const isMobile = useMobile();
   const { openToast } = useToast();
 
+  const { selectionSize, dataGridSelection, handleSelectionChange, isRangeSelected } = useSelection(
+    {
+      records: experiments.map((loadable) => loadable.map((exp) => exp.experiment)),
+      selection: settings.selection,
+      total,
+      updateSettings,
+    },
+  );
+
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
@@ -248,34 +246,22 @@ const Searches: React.FC<Props> = ({ project }) => {
     return [];
   }, [settings.selection]);
 
-  const loadedSelectedExperimentIds = useMemo(() => {
-    const selectedMap = new Map<number, ExperimentWithIndex>();
+  const loadedExperimentIdMap = useMemo(() => {
+    const experimentMap = new Map<number, { experiment: ExperimentWithTrial; index: number }>();
+
     if (isLoadingSettings) {
-      return selectedMap;
+      return experimentMap;
     }
-    const selectedIdSet = new Set(allSelectedExperimentIds);
+
     experiments.forEach((e, index) => {
-      Loadable.forEach(e, ({ experiment }) => {
-        if (selectedIdSet.has(experiment.id)) {
-          selectedMap.set(experiment.id, { experiment, index });
-        }
+      Loadable.forEach(e, (experiment) => {
+        experimentMap.set(experiment.experiment.id, { experiment, index });
       });
     });
-    return selectedMap;
-  }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
+    return experimentMap;
+  }, [experiments, isLoadingSettings]);
 
-  const selection = useMemo<GridSelection>(() => {
-    let rows = CompactSelection.empty();
-    loadedSelectedExperimentIds.forEach((info) => {
-      rows = rows.add(info.index);
-    });
-    return {
-      columns: CompactSelection.empty(),
-      rows,
-    };
-  }, [loadedSelectedExperimentIds]);
-
-  const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
+  const colorMap = useGlasbey([...loadedExperimentIdMap.keys()]);
 
   const experimentFilters = useMemo(() => {
     const filters: V1BulkExperimentFilters = {
@@ -398,71 +384,6 @@ const Searches: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
-
-  const rowRangeToIds = useCallback(
-    (range: [number, number]) => {
-      const slice = experiments.slice(range[0], range[1]);
-      return Loadable.filterNotLoaded(slice).map(({ experiment }) => experiment.id);
-    },
-    [experiments],
-  );
-
-  const handleSelectionChange: HandleSelectionChangeType = useCallback(
-    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
-      let newSettings: SelectionState = { ...settings.selection };
-
-      switch (selectionType) {
-        case 'add':
-          if (!range) return;
-          if (newSettings.type === 'ALL_EXCEPT') {
-            const excludedSet = new Set(newSettings.exclusions);
-            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
-            newSettings.exclusions = Array.from(excludedSet);
-          } else {
-            const includedSet = new Set(newSettings.selections);
-            rowRangeToIds(range).forEach((id) => includedSet.add(id));
-            newSettings.selections = Array.from(includedSet);
-          }
-
-          break;
-        case 'add-all':
-          newSettings = {
-            exclusions: [],
-            type: 'ALL_EXCEPT' as const,
-          };
-
-          break;
-        case 'remove':
-          if (!range) return;
-          if (newSettings.type === 'ALL_EXCEPT') {
-            const excludedSet = new Set(newSettings.exclusions);
-            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
-            newSettings.exclusions = Array.from(excludedSet);
-          } else {
-            const includedSet = new Set(newSettings.selections);
-            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
-            newSettings.selections = Array.from(includedSet);
-          }
-
-          break;
-        case 'remove-all':
-          newSettings = DEFAULT_SELECTION;
-
-          break;
-        case 'set':
-          if (!range) return;
-          newSettings = {
-            ...DEFAULT_SELECTION,
-            selections: Array.from(rowRangeToIds(range)),
-          };
-
-          break;
-      }
-
-      updateSettings({ selection: newSettings });
-    },
-    [rowRangeToIds, settings.selection, updateSettings],
-  );
 
   const handleActionComplete = useCallback(async () => {
     /**
@@ -639,7 +560,7 @@ const Searches: React.FC<Props> = ({ project }) => {
     const gridColumns = [...STATIC_COLUMNS, ...columnsIfLoaded]
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
+          return (columnDefs[columnName] = defaultSelectionColumn(dataGridSelection.rows, false));
         }
 
         if (!Loadable.isLoaded(projectColumnsMap)) {
@@ -712,39 +633,34 @@ const Searches: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     appTheme,
     isDarkMode,
-    selection.rows,
+    dataGridSelection.rows,
     users,
   ]);
 
+  const handleActualSelectAll = useCallback(() => {
+    handleSelectionChange?.('add-all');
+  }, [handleSelectionChange]);
+
+  const handleClearSelect = useCallback(() => {
+    handleSelectionChange?.('remove-all');
+  }, [handleSelectionChange]);
+
+  const handleHeaderClick = useCallback(
+    (columnId: string): void => {
+      if (columnId === MULTISELECT) {
+        if (isRangeSelected([0, settings.pageLimit])) {
+          handleSelectionChange?.('remove', [0, settings.pageLimit]);
+        } else {
+          handleSelectionChange?.('add', [0, settings.pageLimit]);
+        }
+      }
+    },
+    [handleSelectionChange, isRangeSelected, settings.pageLimit],
+  );
+
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
-      const items: MenuItem[] = [
-        settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
-          ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                handleSelectionChange?.('remove-all');
-              },
-            }
-          : null,
-        ...[5, 10, 25].map((n) => ({
-          key: `select-${n}`,
-          label: `Select first ${n}`,
-          onClick: () => {
-            handleSelectionChange?.('set', [0, n]);
-            dataGridRef.current?.scrollToTop();
-          },
-        })),
-        {
-          key: 'select-all',
-          label: 'Select all',
-          onClick: () => {
-            handleSelectionChange?.('add', [0, settings.pageLimit]);
-          },
-        },
-      ];
-      return items;
+      return [];
     }
     const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
     if (!column) {
@@ -875,14 +791,20 @@ const Searches: React.FC<Props> = ({ project }) => {
         isOpenFilter={isOpenFilter}
         labelPlural="searches"
         labelSingular="search"
+        pageSize={settings.pageLimit}
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={allSelectedExperimentIds}
+        selection={settings.selection}
+        selectionSize={selectionSize}
         sorts={sorts}
+        tableFilterString={filtersString}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
+        onActualSelectAll={handleActualSelectAll}
+        onClearSelect={handleClearSelect}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
@@ -938,12 +860,13 @@ const Searches: React.FC<Props> = ({ project }) => {
                 );
               }}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-              selection={selection}
+              selection={dataGridSelection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
+              onHeaderClicked={handleHeaderClick}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />

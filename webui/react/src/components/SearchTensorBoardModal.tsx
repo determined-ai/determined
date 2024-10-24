@@ -1,29 +1,24 @@
 import { Modal } from 'hew/Modal';
 
 import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';
-import { openOrCreateTensorBoard } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { openOrCreateTensorBoardSearches } from 'services/api';
 import { ProjectExperiment } from 'types';
 import handleError from 'utils/error';
 import { openCommandResponse } from 'utils/wait';
 
 interface Props {
-  selectedExperiments: ProjectExperiment[];
-  filters?: V1BulkExperimentFilters;
+  selectedSearches: ProjectExperiment[];
   workspaceId?: number;
 }
 
-const ExperimentTensorBoardModal = ({
-  workspaceId,
-  selectedExperiments,
-  filters,
-}: Props): JSX.Element => {
+const SearchTensorBoardModal = ({ workspaceId, selectedSearches }: Props): JSX.Element => {
   const handleSubmit = async () => {
-    const managedExperimentIds = selectedExperiments
-      .filter((exp) => !exp.unmanaged)
-      .map((exp) => exp.id);
+    const managedSearchIds = selectedSearches.filter((exp) => !exp.unmanaged).map((exp) => exp.id);
     openCommandResponse(
-      await openOrCreateTensorBoard({ experimentIds: managedExperimentIds, filters, workspaceId }),
+      await openOrCreateTensorBoardSearches({
+        searchIds: managedSearchIds,
+        workspaceId,
+      }),
     );
   };
 
@@ -42,4 +37,4 @@ const ExperimentTensorBoardModal = ({
   );
 };
 
-export default ExperimentTensorBoardModal;
+export default SearchTensorBoardModal;
