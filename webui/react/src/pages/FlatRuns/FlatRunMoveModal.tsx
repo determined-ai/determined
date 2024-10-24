@@ -219,6 +219,7 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
       <RunMoveWarningModalComponent ref={runMoveWarningFlowRef} />
       <RunFilterInterstitialModalComponent
         filterFormSet={filterFormSetWithoutId}
+        projectId={sourceProjectId}
         ref={controlledModalRef}
         selection={selection ?? { selections: runIds, type: 'ONLY_IN' }}
       />

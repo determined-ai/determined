@@ -361,7 +361,7 @@ const ExperimentCreateModalComponent = ({
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: type,
+        text: ExperimentActionCopyMap[type],
       }}
       title={titleLabel}
       onClose={handleModalClose}>

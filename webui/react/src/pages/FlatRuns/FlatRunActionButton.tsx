@@ -9,7 +9,7 @@ import { useObservable } from 'micro-observables';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import { FilterFormSetWithoutId, Operator } from 'components/FilterForm/components/type';
+import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
@@ -22,12 +22,10 @@ import {
   resumeRuns,
   unarchiveRuns,
 } from 'services/api';
-import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { RunBulkActionParams } from 'services/types';
 import projectStore from 'stores/projects';
 import { BulkActionResult, ExperimentAction, FlatRun, Project, SelectionType } from 'types';
 import handleError from 'utils/error';
-import { combine } from 'utils/filterFormSet';
 import { canActionFlatRun, getActionsForFlatRunsUnion, getIdsFilter } from 'utils/flatRun';
 import { capitalizeWord, pluralizer } from 'utils/string';
 
@@ -56,7 +54,7 @@ const ACTION_ICONS: Record<BatchAction, IconName> = {
 const LABEL_PLURAL = 'runs';
 
 interface Props {
-  tableFilterString: string;
+  filter: string;
   isMobile: boolean;
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
   projectId: number;
@@ -65,18 +63,16 @@ interface Props {
   onActionComplete?: () => void | Promise<void>;
   selection: SelectionType;
   selectionSize: number;
-  searchId?: number;
 }
 
 const FlatRunActionButton = ({
-  tableFilterString,
+  filter,
   isMobile,
   selectedRuns,
   projectId,
   selection,
   selectionSize,
   workspaceId,
-  searchId,
   onActionSuccess,
   onActionComplete,
 }: Props): JSX.Element => {
@@ -102,19 +98,7 @@ const FlatRunActionButton = ({
           break;
         }
         case 'ALL_EXCEPT': {
-          const filterFormSet = JSON.parse(tableFilterString) as FilterFormSetWithoutId;
-          if (searchId) {
-            // only display trials for search
-            const searchFilter = {
-              columnName: 'experimentId',
-              kind: 'field' as const,
-              location: V1LocationType.RUN,
-              operator: Operator.Eq,
-              type: V1ColumnType.NUMBER,
-              value: searchId,
-            };
-            filterFormSet.filterGroup = combine(filterFormSet.filterGroup, 'and', searchFilter);
-          }
+          const filterFormSet = JSON.parse(filter) as FilterFormSetWithoutId;
           params.filter = JSON.stringify(getIdsFilter(filterFormSet, selection));
           break;
         }
@@ -137,7 +121,7 @@ const FlatRunActionButton = ({
           return await resumeRuns(params);
       }
     },
-    [flatRunMoveModalOpen, projectId, searchId, selectedRuns, selection, tableFilterString],
+    [flatRunMoveModalOpen, projectId, selectedRuns, selection, filter],
   );
 
   const submitBatchAction = useCallback(
@@ -297,7 +281,7 @@ const FlatRunActionButton = ({
         selectionSize={selectionSize}
         sourceProjectId={projectId}
         sourceWorkspaceId={workspaceId}
-        tableFilters={tableFilterString}
+        tableFilters={filter}
         onSubmit={onSubmitMove}
       />
     </>

@@ -60,8 +60,6 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const projectId = Form.useWatch('projectId', form);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
-  const entityName = f_flat_runs ? 'searches' : 'experiments';
-
   useEffect(() => {
     setDisabled(workspaceId !== 1 && !projectId);
   }, [workspaceId, projectId, sourceProjectId, sourceWorkspaceId]);
@@ -81,6 +79,14 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       projectStore.fetch(workspaceId, undefined, true);
     }
   }, [workspaceId]);
+
+  // use plurals for indeterminate case
+  const pluralizerArgs = f_flat_runs
+    ? (['search', 'searches'] as const)
+    : (['experiment'] as const);
+  // we use apply instead of a direct call here because typescript errors when you spread a tuple into arguments
+  const plural = pluralizer.apply(null, [selectionSize, ...pluralizerArgs]);
+  const actionCopy = `Move ${capitalize(plural)}`;
 
   const handleSubmit = async () => {
     if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
@@ -119,19 +125,19 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     if (numSuccesses === 0 && numFailures === 0) {
       openToast({
-        description: `No selected ${entityName} were eligible for moving`,
-        title: `No eligible ${entityName}`,
+        description: `No selected ${plural} were eligible for moving`,
+        title: `No eligible ${plural}`,
       });
     } else if (numFailures === 0) {
       openToast({
         closeable: true,
-        description: `${results.successful.length} ${entityName} moved to project ${destinationProjectName}`,
+        description: `${results.successful.length} ${pluralizer.apply(null, [results.successful.length, ...pluralizerArgs])} moved to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         title: 'Move Success',
       });
     } else if (numSuccesses === 0) {
       openToast({
-        description: `Unable to move ${numFailures} ${entityName}`,
+        description: `Unable to move ${numFailures} ${pluralizer.apply(null, [numFailures, ...pluralizerArgs])}`,
         severity: 'Warning',
         title: 'Move Failure',
       });
@@ -140,7 +146,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         closeable: true,
         description: `${numFailures} out of ${
           numFailures + numSuccesses
-        } eligible ${entityName} failed to move
+        } eligible ${plural} failed to move
       to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         severity: 'Warning',
@@ -154,14 +160,6 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     form.setFieldValue('projectId', sourceProjectId);
     form.setFieldValue('workspaceId', sourceWorkspaceId ?? 1);
   }, [form, sourceProjectId, sourceWorkspaceId]);
-
-  // use plurals for indeterminate case
-  const pluralizerArgs = f_flat_runs
-    ? (['search', 'searches'] as const)
-    : (['experiment'] as const);
-  // we use apply instead of a direct call here because typescript errors when you spread a tuple into arguments
-  const plural = pluralizer.apply(null, [selectionSize, ...pluralizerArgs]);
-  const actionCopy = `Move ${capitalize(plural)}`;
 
   return (
     <Modal

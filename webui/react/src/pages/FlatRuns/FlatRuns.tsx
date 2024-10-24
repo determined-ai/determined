@@ -29,7 +29,11 @@ import { v4 as uuidv4 } from 'uuid';
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import ComparisonView from 'components/ComparisonView';
 import { Error } from 'components/exceptions';
-import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  FilterFormStore,
+  INIT_FORMSET,
+  ROOT_ID,
+} from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
   FilterFormSet,
@@ -179,7 +183,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     _: () => [],
     Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
   });
-  const filtersString = useObservable(formStore.asJsonString);
+  const filtersString = useObservable(formStore.asJsonString) || JSON.stringify(INIT_FORMSET);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -262,17 +266,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const loadedRunIdMap = useMemo(() => {
     const runMap = new Map<number, { run: FlatRun; index: number }>();
 
-    if (isLoadingSettings) {
-      return runMap;
-    }
-
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
         runMap.set(run.id, { index, run });
       });
     });
     return runMap;
-  }, [isLoadingSettings, runs]);
+  }, [runs]);
 
   const colorMap = useGlasbey([...loadedRunIdMap.keys()]);
 
@@ -513,27 +513,30 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     setRuns(INITIAL_LOADING_RUNS);
   }, [setPage]);
 
+  const filterFormSetString = useMemo(() => {
+    const filter = JSON.parse(filtersString) as FilterFormSetWithoutId;
+    if (searchId) {
+      // only display trials for search
+      const searchFilter = {
+        columnName: 'experimentId',
+        kind: 'field' as const,
+        location: V1LocationType.RUN,
+        operator: Operator.Eq,
+        type: V1ColumnType.NUMBER,
+        value: searchId,
+      };
+      filter.filterGroup = combine(filter.filterGroup, 'and', searchFilter);
+    }
+    return JSON.stringify(filter);
+  }, [filtersString, searchId]);
+
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
-      const filters = JSON.parse(filtersString);
-      const filterFormSet = JSON.parse(filtersString) as FilterFormSetWithoutId;
-      if (searchId) {
-        // only display trials for search
-        const searchFilter = {
-          columnName: 'experimentId',
-          kind: 'field' as const,
-          location: V1LocationType.RUN,
-          operator: Operator.Eq,
-          type: V1ColumnType.NUMBER,
-          value: searchId,
-        };
-        filterFormSet.filterGroup = combine(filterFormSet.filterGroup, 'and', searchFilter);
-      }
       const offset = page * settings.pageLimit;
       const response = await searchRuns(
         {
-          filter: JSON.stringify(filters),
+          filter: filterFormSetString,
           limit: settings.pageLimit,
           offset,
           projectId: projectId,
@@ -557,16 +560,15 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       setIsLoading(false);
     }
   }, [
-    canceler.signal,
-    filtersString,
     isLoadingSettings,
     loadableFormset,
     page,
-    projectId,
-    resetPagination,
     settings.pageLimit,
+    filterFormSetString,
+    projectId,
     sortString,
-    searchId,
+    canceler.signal,
+    resetPagination,
   ]);
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
@@ -1017,13 +1019,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onRowHeightChange={onRowHeightChange}
             />
             <FlatRunActionButton
+              filter={filterFormSetString}
               isMobile={isMobile}
               projectId={projectId}
-              searchId={searchId}
               selectedRuns={loadedSelectedRuns}
               selection={settings.selection}
               selectionSize={selectionSize}
-              tableFilterString={filtersString}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
             />

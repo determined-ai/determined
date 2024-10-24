@@ -273,7 +273,6 @@ const TableActionBar: React.FC<Props> = ({
         case ExperimentAction.Archive:
           return await archiveSearches(params);
         case ExperimentAction.Cancel:
-          if (params.searchIds === undefined) break;
           return await cancelSearches(params);
         case ExperimentAction.Kill:
           return await killSearches(params);
