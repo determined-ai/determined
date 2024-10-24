@@ -1044,10 +1044,12 @@ func TestSchemaCompleteAfterMerge(t *testing.T) {
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{RawHostPath: ptrs.Ptr("host_path")},
 		},
-		RawSearcher: &expconf.SearcherConfigV0{RawSingleConfig: &expconf.SingleConfigV0{
-			RawMaxLength: &expconf.LengthV0{Unit: expconf.Batches, Units: 5},
+		RawSearcher: &expconf.SearcherConfigV0{
+			RawSingleConfig: &expconf.SingleConfigV0{
+				RawMaxLength: &expconf.LengthV0{Unit: expconf.Batches, Units: 5},
+			},
+			RawMetric: ptrs.Ptr("training"),
 		},
-			RawMetric: ptrs.Ptr("training")},
 	}
 	policies, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](incompleteConfig,
 		InvalidExperimentConfigPolicyErr)
