@@ -151,7 +151,8 @@ func ValidateExperimentConfig(
 			// Verify the workspace invariant config doesn't conflict with global constraints.
 			if err := checkConstraintConflicts(globalConstraints, cp.InvariantConfig.RawResources.RawMaxSlots,
 				cp.InvariantConfig.RawResources.RawSlotsPerTrial, cp.InvariantConfig.RawResources.RawPriority); err != nil {
-				return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidExperimentConfigPolicyErr+": %s.", err))
+				return status.Errorf(codes.InvalidArgument, fmt.Sprintf(InvalidExperimentConfigPolicyErr+
+					": workspace invariant_config conflicts with global constraints: %s.", err))
 			}
 		}
 	}
