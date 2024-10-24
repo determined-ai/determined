@@ -7607,6 +7607,40 @@ func local_request_Determined_LaunchTensorboard_0(ctx context.Context, marshaler
 
 }
 
+func request_Determined_LaunchTensorboardSearches_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq LaunchTensorboardSearchesRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.LaunchTensorboardSearches(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Determined_LaunchTensorboardSearches_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq LaunchTensorboardSearchesRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.LaunchTensorboardSearches(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_Determined_DeleteTensorboardFiles_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteTensorboardFilesRequest
 	var metadata runtime.ServerMetadata
@@ -13697,6 +13731,40 @@ func local_request_Determined_MoveSearches_0(ctx context.Context, marshaler runt
 
 }
 
+func request_Determined_CancelSearches_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CancelSearchesRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.CancelSearches(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Determined_CancelSearches_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CancelSearchesRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.CancelSearches(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_Determined_KillSearches_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq KillSearchesRequest
 	var metadata runtime.ServerMetadata
@@ -16836,6 +16904,26 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("POST", pattern_Determined_LaunchTensorboardSearches_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Determined_LaunchTensorboardSearches_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_LaunchTensorboardSearches_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("DELETE", pattern_Determined_DeleteTensorboardFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -19101,6 +19189,26 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 		}
 
 		forward_Determined_MoveSearches_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_Determined_CancelSearches_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Determined_CancelSearches_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_CancelSearches_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -22245,6 +22353,26 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("POST", pattern_Determined_LaunchTensorboardSearches_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Determined_LaunchTensorboardSearches_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_LaunchTensorboardSearches_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("DELETE", pattern_Determined_DeleteTensorboardFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -24565,6 +24693,26 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("POST", pattern_Determined_CancelSearches_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Determined_CancelSearches_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_CancelSearches_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_Determined_KillSearches_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -25041,6 +25189,8 @@ var (
 
 	pattern_Determined_LaunchTensorboard_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "tensorboards"}, "", runtime.AssumeColonVerbOpt(true)))
 
+	pattern_Determined_LaunchTensorboardSearches_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "searches", "tensorboards"}, "", runtime.AssumeColonVerbOpt(true)))
+
 	pattern_Determined_DeleteTensorboardFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "experiments", "experiment_id", "tensorboard-files"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_GetActiveTasksCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "tasks", "count"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -25272,6 +25422,8 @@ var (
 	pattern_Determined_DeleteGlobalConfigPolicies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "config-policies", "global", "workload_type"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_MoveSearches_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "searches", "move"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_Determined_CancelSearches_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "searches", "cancel"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_KillSearches_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "searches", "kill"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -25585,6 +25737,8 @@ var (
 
 	forward_Determined_LaunchTensorboard_0 = runtime.ForwardResponseMessage
 
+	forward_Determined_LaunchTensorboardSearches_0 = runtime.ForwardResponseMessage
+
 	forward_Determined_DeleteTensorboardFiles_0 = runtime.ForwardResponseMessage
 
 	forward_Determined_GetActiveTasksCount_0 = runtime.ForwardResponseMessage
@@ -25816,6 +25970,8 @@ var (
 	forward_Determined_DeleteGlobalConfigPolicies_0 = runtime.ForwardResponseMessage
 
 	forward_Determined_MoveSearches_0 = runtime.ForwardResponseMessage
+
+	forward_Determined_CancelSearches_0 = runtime.ForwardResponseMessage
 
 	forward_Determined_KillSearches_0 = runtime.ForwardResponseMessage
 
