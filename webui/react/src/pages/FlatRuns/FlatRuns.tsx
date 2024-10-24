@@ -84,6 +84,7 @@ import {
   SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
+import { formatColumnKey } from 'utils/flatRun';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
@@ -320,7 +321,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
-        return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+        return columns.reduce((acc, col) => ({ ...acc, [formatColumnKey(col)]: col }), {});
       },
     );
     const columnDefs = getColumnDefs({
@@ -358,6 +359,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           };
 
         let dataPath: string | undefined = undefined;
+        const columnDefKey = formatColumnKey(currentColumn);
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -398,11 +400,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               settings.heatmapOn &&
               !settings.heatmapSkipped.includes(currentColumn.column)
             ) {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn.column,
+              columnDefs[columnDefKey] = defaultNumberColumn(
+                columnDefKey,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                settings.columnWidths[columnDefKey] ??
+                  defaultColumnWidths[columnDefKey as RunColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
                 {
@@ -411,33 +413,34 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 },
               );
             } else {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn.column,
+              columnDefs[columnDefKey] = defaultNumberColumn(
+                columnDefKey,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                settings.columnWidths[columnDefKey] ??
+                  defaultColumnWidths[columnDefKey as RunColumn] ??
                   MIN_COLUMN_WIDTH,
                 dataPath,
+                undefined,
               );
             }
             break;
           }
           case V1ColumnType.DATE:
-            columnDefs[currentColumn.column] = defaultDateColumn(
-              currentColumn.column,
+            columnDefs[columnDefKey] = defaultDateColumn(
+              columnDefKey,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
+              settings.columnWidths[columnDefKey] ??
+                defaultColumnWidths[columnDefKey as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
           case V1ColumnType.ARRAY:
-            columnDefs[currentColumn.column] = defaultArrayColumn(
-              currentColumn.column,
+            columnDefs[columnDefKey] = defaultArrayColumn(
+              columnDefKey,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
+              settings.columnWidths[columnDefKey] ??
+                defaultColumnWidths[columnDefKey as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
             );
@@ -445,11 +448,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           case V1ColumnType.TEXT:
           case V1ColumnType.UNSPECIFIED:
           default:
-            columnDefs[currentColumn.column] = defaultTextColumn(
-              currentColumn.column,
+            columnDefs[columnDefKey] = defaultTextColumn(
+              columnDefKey,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
+              settings.columnWidths[columnDefKey] ??
+                defaultColumnWidths[columnDefKey as RunColumn] ??
                 MIN_COLUMN_WIDTH,
               dataPath,
             );
@@ -459,7 +462,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             .getOrElse([])
             .find((h) => h.metricsName === currentColumn.column);
 
-          columnDefs[currentColumn.column] = searcherMetricsValColumn(
+          columnDefs[columnDefKey] = searcherMetricsValColumn(
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
@@ -469,7 +472,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               : undefined,
           );
         }
-        return columnDefs[currentColumn.column];
+        return columnDefs[columnDefKey];
       })
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;

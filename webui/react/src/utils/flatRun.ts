@@ -6,7 +6,8 @@ import {
   terminalRunStates,
 } from 'constants/states';
 import { PermissionsHook } from 'hooks/usePermissions';
-import { FlatRun, FlatRunAction, RunState, SelectionType } from 'types';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { FlatRun, FlatRunAction, ProjectColumn, RunState, SelectionType } from 'types';
 
 import { combine } from './filterFormSet';
 
@@ -115,4 +116,17 @@ export const getIdsFilter = (
     ...filterFormSet,
     filterGroup,
   };
+};
+
+export const removeColumnTypePrefix = (columnName: V1ColumnType): string => {
+  return columnName.replace('COLUMN_TYPE_', '');
+};
+
+/// wanna know why this separator is used? see https://hpe-aiatscale.atlassian.net/browse/ET-785
+export const METADATA_SEPARATOR = '\u241F' as const; // TODO: unify after merging PR 10052
+
+export const formatColumnKey = (col: ProjectColumn, required = false): string => {
+  if (required || col.location === V1LocationType.RUNMETADATA)
+    return `${col.type}${METADATA_SEPARATOR}${col.column}`;
+  return col.column;
 };
