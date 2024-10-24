@@ -51,7 +51,7 @@ const ExperimentEntityCopyMap = {
   trial: 'trial',
 };
 
-const RunActionCopyMap = {
+export const RunActionCopyMap = {
   [CreateExperimentType.ContinueTrial]: 'Continue Run',
   [CreateExperimentType.Fork]: 'Fork',
 };

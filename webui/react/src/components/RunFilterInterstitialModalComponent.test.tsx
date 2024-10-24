@@ -111,7 +111,7 @@ describe('RunFilterInterstitialModalComponent', () => {
 
     // TODO: is there a better way to test these expectations?
     expect(filterFormSet.showArchived).toBeTruthy();
-    const [, , idFilter] = filterFormSet.filterGroup.children;
+    const [, idFilter] = filterFormSet.filterGroup.children;
     for (const child of expectedFilterGroup.children) {
       expect(filterFormSet.filterGroup.children).toContainEqual(child);
     }
@@ -148,7 +148,7 @@ describe('RunFilterInterstitialModalComponent', () => {
     const filterFormSet = JSON.parse(filterFormSetString || '');
 
     expect(filterFormSet.showArchived).toBe(false);
-    const idFilters = filterFormSet.filterGroup.children || [];
+    const idFilters = filterFormSet.filterGroup.children[0].children || [];
     expect(idFilters.every((f: FormField) => f.operator === '=')).toBe(true);
     expect(idFilters.map((f: FormField) => f.value)).toEqual(expectedSelection);
   });
