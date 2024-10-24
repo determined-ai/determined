@@ -150,7 +150,7 @@ func (a *apiServer) PutWorkspaceConfigPolicies(
 		Constraints:     constraints,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, settingPoliciesErr+err.Error())
+		return nil, status.Errorf(codes.Internal, settingPoliciesErr+": "+err.Error())
 	}
 
 	return &apiv1.PutWorkspaceConfigPoliciesResponse{
@@ -193,7 +193,7 @@ func (a *apiServer) PutGlobalConfigPolicies(
 		Constraints:     constraints,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, settingPoliciesErr+err.Error())
+		return nil, status.Errorf(codes.Internal, settingPoliciesErr+": "+err.Error())
 	}
 
 	return &apiv1.PutGlobalConfigPoliciesResponse{
