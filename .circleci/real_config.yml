@@ -3213,6 +3213,7 @@ jobs:
                 name: Get Determined version branch commits.
                 command: |
                   git fetch origin <<parameters.upgrade-branch>> && git checkout --track origin/<<parameters.upgrade-branch>>
+            - license-gen
             - run: make -C master build
             - run: make -C agent build
 
