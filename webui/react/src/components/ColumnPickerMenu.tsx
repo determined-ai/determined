@@ -11,9 +11,10 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { V1LocationType } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
+import { formatColumnKey, removeColumnTypePrefix } from 'utils/flatRun';
 
 import css from './ColumnPickerMenu.module.scss';
 
@@ -21,8 +22,6 @@ const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));
-
-export const METADATA_SEPARATOR = '\u241F' as const;
 
 export const LOCATION_LABEL_MAP: Record<V1LocationType, string> = {
   [V1LocationType.EXPERIMENT]: 'General',
@@ -66,11 +65,7 @@ interface ColumnTabProps {
   onHeatmapSelectionRemove?: (id: string) => void;
 }
 
-export const formatColumnKey = (col: ProjectColumn): string => {
-  if (col.location === V1LocationType.RUNMETADATA)
-    return `${col.type}${METADATA_SEPARATOR}${col.column}`;
-  return col.column;
-};
+const KNOWN_BOOLEAN_COLUMNS = ['archived', 'isExpMultitrial', 'parentArchived'];
 
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
@@ -188,7 +183,10 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const rows = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
-      const colType = col.type.replace('COLUMN_TYPE_', '');
+      const colType =
+        KNOWN_BOOLEAN_COLUMNS.includes(col.column) && col.type === V1ColumnType.UNSPECIFIED
+          ? 'BOOLEAN'
+          : removeColumnTypePrefix(col.type);
       const getColDisplayName = (col: ProjectColumn) => {
         return (
           <>

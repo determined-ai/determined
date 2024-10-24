@@ -35,7 +35,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import ColumnPickerMenu, { formatColumnKey } from 'components/ColumnPickerMenu';
+import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import ComparisonView from 'components/ComparisonView';
 import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -84,6 +84,7 @@ import {
   SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
+import { formatColumnKey } from 'utils/flatRun';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
