@@ -800,6 +800,19 @@ class DeepSpeedTrialController:
                     vld_metrics = self.trial.evaluate_batch(validation_iterator, idx)
                 else:
                     vld_metrics = self.trial.evaluate_batch(validation_iterator)  # type: ignore
+                if self.context._mpu.should_report_metrics:
+                    if not isinstance(vld_metrics, dict):
+                        raise det.errors.InvalidExperimentException(
+                            "evaluate_batch must return a dictionary "
+                            f"mapping string names to Tensor metrics, got {type(vld_metrics)}",
+                        )
+                    for name, metric in vld_metrics.items():
+                        # Convert PyTorch metric values to NumPy, so that
+                        # `det.util.encode_json` handles them properly without
+                        # needing a dependency on PyTorch.
+                        if isinstance(metric, torch.Tensor):
+                            metric = metric.cpu().detach().numpy()
+                        vld_metrics[name] = metric
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
