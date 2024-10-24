@@ -165,6 +165,8 @@ func objectForURL(url string) interface{} {
 		"http://determined.ai/schemas/expconf/v0/test-union-a.json",
 		"http://determined.ai/schemas/expconf/v0/test-union-b.json":
 		return &TestUnionV0{}
+	case "http://determined.ai/schemas/expconf/v0/log-policies.json":
+		return &LogPoliciesConfigV0{}
 	default:
 		panic(fmt.Sprintf("No object to match %v, maybe you need to add one?", url))
 	}
@@ -286,7 +288,6 @@ func (tc SchemaTestCase) CheckMerged(t *testing.T) {
 		assert.NilError(t, err)
 
 		merged := schemas.Merge(obj, src)
-
 		// Compare json-to-json.
 		mergedBytes, err := json.Marshal(merged)
 		assert.NilError(t, err)

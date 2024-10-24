@@ -471,11 +471,6 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		}
-	  ],
-	   "log_policies": [
-		{
-		  "pattern": "nonrepeat"
-		}
 	  ]
 }`
 
@@ -663,6 +658,7 @@ func TestMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		}
 	  ]
@@ -702,6 +698,7 @@ func TestMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"
 		}
 	  ]
@@ -769,9 +766,11 @@ func TestMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		},
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"    
 		}
 	  ]
@@ -811,6 +810,7 @@ func TestMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "global repeat policy",
 		  "pattern": "gloablrepeat"
 		}
 	  ]
@@ -894,12 +894,15 @@ func TestMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		},
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"    
 		},
 		{
+		  "name": "global repeat policy",
 		  "pattern": "gloablrepeat"
 		}
 	  ]
