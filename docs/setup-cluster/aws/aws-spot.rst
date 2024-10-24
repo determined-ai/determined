@@ -4,7 +4,7 @@
  Use Spot Instances
 ####################
 
-This document describes how to use AWS spot instances with Determined. Spot instances can be much
+This guide describes how to use AWS spot instances with Determined. Spot instances can be much
 cheaper than on-demand instances (up to 90% cheaper, but more often 70-80%) but they are unreliable,
 so software that runs on spot instances must be fault tolerant. Unfortunately, deep learning code is
 often not written with fault tolerance in mind, preventing many practitioners from using spot
