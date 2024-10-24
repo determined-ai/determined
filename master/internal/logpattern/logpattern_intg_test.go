@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -53,12 +54,16 @@ func TestRetryOnDifferentNode(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, blocked)
 
-	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "loga"))
-	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n1", "regexa", "logb"))
-	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "logc"))
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "loga", tx))
+		require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n1", "regexa", "logb", tx))
+		require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "logc", tx))
 
-	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "dontappear"))
-	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "dontappear"))
+		require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "dontappear", tx))
+		require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "dontappear", tx))
+		return nil
+	})
+	require.NoError(t, err)
 
 	// Check DB state is as expected.
 	var actual []*retryOnDifferentNode
@@ -105,10 +110,14 @@ func TestShouldRetry(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, resp)
 
-	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "loga"))
-	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexb", "logb"))
-	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "dontappear"))
-	require.NoError(t, addDontRetry(ctx, task.TaskID, "n1", "regexb", "dontappear"))
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "loga", tx))
+		require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexb", "logb", tx))
+		require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "dontappear", tx))
+		require.NoError(t, addDontRetry(ctx, task.TaskID, "n1", "regexb", "dontappear", tx))
+		return nil
+	})
+	require.NoError(t, err)
 
 	resp, err = ShouldRetry(ctx, task.TaskID)
 	require.NoError(t, err)
