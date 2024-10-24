@@ -103,24 +103,16 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
-    const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => {
-      if (col.location === V1LocationType.RUNMETADATA)
-        return { ...acc, [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)) };
-
-      return { ...acc, [col.column]: columnState.includes(col.column) };
-    }, {});
+    const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => ({ ...acc, [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)) }), {});
 
     const newColumns = allFilteredColumnsChecked
       ? columnState.filter((col) => !filteredColumnMap[col])
       : [
           ...new Set([
             ...columnState,
-            ...filteredColumns.map((col) => {
-              if (col.location === V1LocationType.RUNMETADATA) return formatColumnKey(col);
-              return col.column;
-            }),
+            ...filteredColumns.map((col) => formatColumnKey(col)),
           ]),
-        ]; // TODO: check if that needs to be mapped with the metadata
+        ];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
         newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
@@ -137,11 +129,9 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
   const handleColumnChange = useCallback(
     (event: CheckboxChangeEvent) => {
-      const { id, checked } = event.target;
+      const { id: targetCol, checked } = event.target;
 
-      if (id === undefined) return;
-
-      const targetCol = id;
+      if (targetCol === undefined) return;
 
       if (compare) {
         // pin or unpin column
