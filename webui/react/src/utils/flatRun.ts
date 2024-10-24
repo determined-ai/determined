@@ -123,8 +123,7 @@ export const removeColumnTypePrefix = (columnName: V1ColumnType): string => {
 };
 
 /// we want to use special characters as "separators" to prevent user input to match with such when creating the arbitrary metadata
-export const COLUMN_SEPARATOR = '␟';
-export const METADATA_SEPARATOR = '\u241F' as const; // TODO: unify after merging PR 10052
+export const METADATA_SEPARATOR = '\u241F' as const;
 
 export const formatColumnKey = (col: ProjectColumn, required = false): string => {
   if (required || col.location === V1LocationType.RUNMETADATA)
