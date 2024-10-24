@@ -90,7 +90,7 @@ Administrators can set Config Policies at both the cluster and workspace levels.
 CLI
 ===
 
-Use the following command to manage workspace-level Config Policies via CLI:
+Use the following command to manage Config Policies via CLI:
 
 .. code:: bash
 
