@@ -3,12 +3,14 @@ package token
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/o1egl/paseto"
 	"github.com/uptrace/bun"
 	"gopkg.in/guregu/null.v3"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -147,4 +149,17 @@ func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (*model.UserID, er
 		return nil, err
 	}
 	return &userID, nil
+}
+
+// ParseLifespanDays parses a lifespan in days into either a time.Duration or nil if the lifespan is
+// infinite.
+func ParseLifespanDays(dayDuration int) (*time.Duration, error) {
+	if dayDuration == config.InfiniteTokenLifespan {
+		return nil, nil
+	}
+	duration, err := time.ParseDuration(strconv.Itoa(dayDuration*24) + "h")
+	if err != nil {
+		return nil, err
+	}
+	return &duration, nil
 }

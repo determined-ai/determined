@@ -1569,6 +1569,12 @@ Integer identifier of a role to be assigned. Defaults to ``2``, which is the rol
 Initial password for the built-in ``determined`` and ``admin`` users. Applies on first launch when a
 cluster's database is bootstrapped, otherwise it is ignored.
 
+``token``
+=========
+
+Define default ``default_lifespan_days`` & max lifespan ``max_lifespan_days`` master configurations
+for access tokens to set global defaults & limits on how long access tokens can be valid for.
+
 **************
  ``webhooks``
 **************

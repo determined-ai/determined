@@ -497,8 +497,8 @@ func (t *TokenConfig) Validate() []error {
 		)
 	}
 
-	if t.DefaultLifespanDays < t.MaxLifespanDays {
-		errs = append(errs, errors.New("Default Token Lifespan must be greater than Max Token Lifespan"))
+	if t.MaxLifespanDays != InfiniteTokenLifespan && t.DefaultLifespanDays > t.MaxLifespanDays {
+		errs = append(errs, errors.New("Default Token Lifespan must be less than Max Token Lifespan"))
 	}
 	return errs
 }

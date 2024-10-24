@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -38,12 +37,12 @@ func (a *apiServer) PostAccessToken(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	defaultTokenLifespan, err := parseLifespanDays(a.m.config.Security.Token.DefaultLifespanDays)
+	defaultTokenLifespan, err := token.ParseLifespanDays(a.m.config.Security.Token.DefaultLifespanDays)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to parse default lifespan")
 	}
 
-	maxTokenLifespan, err := parseLifespanDays(a.m.config.Security.Token.MaxLifespanDays)
+	maxTokenLifespan, err := token.ParseLifespanDays(a.m.config.Security.Token.MaxLifespanDays)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to parse max lifespan")
 	}
@@ -137,8 +136,12 @@ func (a *apiServer) GetAccessTokens(
 	}
 
 	if !req.ShowInactive {
-		query.Where("us.expiry > ?", time.Now().UTC()).
-			Where("us.revoked_at IS NULL")
+		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			q = q.WhereOr("us.expiry > ?", time.Now().UTC()).
+				WhereOr("us.expiry IS NULL ")
+			return q
+		})
+		query.Where("us.revoked_at IS NULL")
 	}
 
 	// Get only Access token type
@@ -207,17 +210,4 @@ func (a *apiServer) PatchAccessToken(
 		return nil, err
 	}
 	return &apiv1.PatchAccessTokenResponse{TokenInfo: patchedTokenInfo.Proto()}, nil
-}
-
-// parseLifespanDays parses a lifespan in days into either a time.Duration or nil if the lifespan is
-// infinite.
-func parseLifespanDays(dayDuration int) (*time.Duration, error) {
-	if dayDuration == config.InfiniteTokenLifespan {
-		return nil, nil
-	}
-	duration, err := time.ParseDuration(strconv.Itoa(dayDuration*24) + "h")
-	if err != nil {
-		return nil, err
-	}
-	return &duration, nil
 }
