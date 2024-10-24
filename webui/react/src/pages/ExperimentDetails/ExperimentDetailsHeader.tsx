@@ -314,13 +314,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                     : 'Create New Experiment...',
                 },
                 {
-                  key: 'Reactivate Current Trial',
-                  label: `Reactivate Current ${capitalize(copyMap.trial)}...`,
+                  key: 'Resume Current Trial',
+                  label: `Resume Current ${capitalize(copyMap.trial)}...`,
                 },
               ]}
               onClick={(key: string) => {
                 if (key === 'Create New Experiment') ContinueExperimentModal.open();
-                if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
+                if (key === 'Resume Current Trial') ReactivateExperimentModal.open();
               }}>
               <Button disabled={experiment.unmanaged}>Continue {capitalize(copyMap.trial)}</Button>
             </Dropdown>
@@ -337,9 +337,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {
               key: 'reactivate-current-trial',
               label: experiment.unmanaged ? (
-                <Tooltip content={UNMANAGED_MESSAGE}>Reactivate Current {capitalize(copyMap.trial)}</Tooltip>
+                <Tooltip content={UNMANAGED_MESSAGE}>Resume Current {capitalize(copyMap.trial)}</Tooltip>
               ) : (
-                `Reactivate Current ${capitalize(copyMap.trial)}`
+                `Resume Current ${capitalize(copyMap.trial)}`
               ),
               onClick: ReactivateExperimentModal.open,
             },

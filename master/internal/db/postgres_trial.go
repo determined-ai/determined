@@ -276,17 +276,28 @@ func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.RunTaskID
 	return ids, nil
 }
 
-// TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
-func TrialByExperimentAndRequestID(
-	ctx context.Context, experimentID int, requestID model.RequestID,
-) (*model.Trial, error) {
+// TrialIDsByExperimentIDAndRequestIDs looks up trial IDs by experiment ID and request IDs, returning an error if
+// any fail. This is only used to shim legacy experiment snapshots.
+func TrialIDsByExperimentIDAndRequestIDs(
+	ctx context.Context, experimentID int, requestIDs []model.RequestID,
+) (*map[model.RequestID]int, error) {
+	result := []struct {
+		RequestID model.RequestID
+		ID        int
+	}{}
 	t := &model.Trial{}
 	if err := Bun().NewSelect().Model(t).
+		Column("request_id", "id").
 		Where("experiment_id = ?", experimentID).
-		Where("request_id = ?", requestID).Scan(ctx); err != nil {
-		return nil, fmt.Errorf("error querying for trial %s: %w", requestID, err)
+		Where("request_id IN (?)", bun.In(requestIDs)).Scan(ctx, &result); err != nil {
+		return nil, fmt.Errorf("error querying for request IDs %s, exp %d: %w", requestIDs, experimentID, err)
 	}
-	return t, nil
+
+	trialRequestIDs := make(map[model.RequestID]int)
+	for _, v := range result {
+		trialRequestIDs[v.RequestID] = v.ID
+	}
+	return &trialRequestIDs, nil
 }
 
 // TrialByTaskID looks up a trial by taskID, returning an error if none exists.
@@ -665,6 +676,11 @@ func (db *PgDB) addTrialMetrics(
 	case float64, nil:
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
+	switch v := m.Metrics.AvgMetrics.Fields["epochs"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return 0, fmt.Errorf("cannot add metric with non numeric 'epochs' value got %v", v)
 	}
 	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mGroup),
 		func(tx *sqlx.Tx) error {
@@ -1077,4 +1093,17 @@ RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
 	}
 
 	return nil
+}
+
+// TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
+func TrialByExperimentAndRequestID(
+	ctx context.Context, experimentID int, requestID model.RequestID,
+) (*model.Trial, error) {
+	t := &model.Trial{}
+	if err := Bun().NewSelect().Model(t).
+		Where("experiment_id = ?", experimentID).
+		Where("request_id = ?", requestID).Scan(ctx); err != nil {
+		return nil, fmt.Errorf("error querying for trial %s: %w", requestID, err)
+	}
+	return t, nil
 }

@@ -8,15 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (a AdaptiveConfigV0) MaxLength() LengthV0 {
-	if a.RawMaxLength == nil {
-		panic("You must call WithDefaults on AdaptiveConfigV0 before .MaxLength")
-	}
-	return *a.RawMaxLength
+func (a AdaptiveConfigV0) MaxLength() *LengthV0 {
+	return a.RawMaxLength
 }
 
-func (a *AdaptiveConfigV0) SetMaxLength(val LengthV0) {
-	a.RawMaxLength = &val
+func (a *AdaptiveConfigV0) SetMaxLength(val *LengthV0) {
+	a.RawMaxLength = val
 }
 
 func (a AdaptiveConfigV0) Budget() LengthV0 {

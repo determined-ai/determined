@@ -2,7 +2,6 @@ package searcher
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"sync"
 
@@ -19,15 +18,13 @@ type PartialUnits float64
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialsRequested     int                              `json:"trials_requested"`
-		TrialsCreated       map[model.RequestID]bool         `json:"trials_created"`
-		TrialsClosed        map[model.RequestID]bool         `json:"trials_closed"`
-		Exits               map[model.RequestID]bool         `json:"exits"`
-		Cancels             map[model.RequestID]bool         `json:"cancels"`
-		Failures            map[model.RequestID]bool         `json:"failures"`
-		TrialProgress       map[model.RequestID]PartialUnits `json:"trial_progress"`
-		Shutdown            bool                             `json:"shutdown"`
-		CompletedOperations map[string]ValidateAfter         `json:"completed_operations"`
+		TrialsRequested int                         `json:"trials_requested"`
+		TrialsCreated   map[model.RequestID]bool    `json:"trials_created"`
+		TrialsClosed    map[model.RequestID]bool    `json:"trials_closed"`
+		Exits           map[model.RequestID]bool    `json:"exits"`
+		Cancels         map[model.RequestID]bool    `json:"cancels"`
+		Failures        map[model.RequestID]bool    `json:"failures"`
+		TrialProgress   map[model.RequestID]float64 `json:"trial_progress"`
 
 		Rand *nprand.State `json:"rand"`
 
@@ -50,43 +47,37 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 		hparams: hparams,
 		method:  method,
 		state: SearcherState{
-			Rand:                nprand.New(seed),
-			TrialsCreated:       map[model.RequestID]bool{},
-			TrialsClosed:        map[model.RequestID]bool{},
-			Exits:               map[model.RequestID]bool{},
-			Cancels:             map[model.RequestID]bool{},
-			Failures:            map[model.RequestID]bool{},
-			TrialProgress:       map[model.RequestID]PartialUnits{},
-			CompletedOperations: map[string]ValidateAfter{},
+			Rand:          nprand.New(seed),
+			TrialsCreated: map[model.RequestID]bool{},
+			TrialsClosed:  map[model.RequestID]bool{},
+			Exits:         map[model.RequestID]bool{},
+			Cancels:       map[model.RequestID]bool{},
+			Failures:      map[model.RequestID]bool{},
+			TrialProgress: map[model.RequestID]float64{},
 		},
 	}
-}
-
-func unsupportedMethodError(method SearchMethod, unsupportedOp string) error {
-	return fmt.Errorf("%T search method does not support %s", method, unsupportedOp)
 }
 
 func (s *Searcher) context() context {
 	return context{rand: s.state.Rand, hparams: s.hparams}
 }
 
-// InitialOperations return a set of initial operations that the searcher would like to take.
+// InitialTrials returns the initial trials the searcher intends to create at the start of a search.
 // This should be called only once after the searcher has been created.
-func (s *Searcher) InitialOperations() ([]Operation, error) {
+func (s *Searcher) InitialTrials() ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	operations, err := s.method.initialOperations(s.context())
+	creates, err := s.method.initialTrials(s.context())
 	if err != nil {
 		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
 	}
-	s.record(operations)
-	return operations, nil
+	s.record(creates)
+	return creates, nil
 }
 
-// TrialCreated informs the searcher that a trial has been created as a result of a Create
-// operation.
-func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) {
+// TrialCreated informs the searcher that a new trial has been created.
+func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -95,7 +86,7 @@ func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) 
 	operations, err := s.method.trialCreated(s.context(), requestID)
 	if err != nil {
 		return nil, errors.Wrapf(err,
-			"error while handling a trial created event: %s", requestID)
+			"error while handling a trial created event: %d", requestID)
 	}
 	s.record(operations)
 	return operations, nil
@@ -109,10 +100,10 @@ func (s *Searcher) TrialIsCreated(requestID model.RequestID) bool {
 	return s.state.TrialsCreated[requestID]
 }
 
-// TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
+// TrialExitedEarly informs the searcher that a trial has exited early.
 func (s *Searcher) TrialExitedEarly(
 	requestID model.RequestID, exitedReason model.ExitedReason,
-) ([]Operation, error) {
+) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -139,11 +130,9 @@ func (s *Searcher) TrialExitedEarly(
 	s.state.Exits[requestID] = true
 	s.record(operations)
 
-	_, isCustom := s.method.(*customSearch)
-	// For non-custom-search methods, you can assume that trials will be created immediately.
-	if s.state.TrialsRequested == len(s.state.TrialsClosed) && !isCustom {
+	if s.state.TrialsRequested == len(s.state.TrialsClosed) {
 		shutdown := Shutdown{Failure: len(s.state.Failures) >= s.state.TrialsRequested}
-		s.record([]Operation{shutdown})
+		s.record([]Action{shutdown})
 		operations = append(operations, shutdown)
 	}
 
@@ -151,63 +140,53 @@ func (s *Searcher) TrialExitedEarly(
 }
 
 // SetTrialProgress informs the searcher of the progress of a given trial.
-func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialUnits) {
+func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress float64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if sMethod, ok := s.method.(*customSearch); ok {
-		sMethod.trialProgress(s.context(), requestID, progress)
-	}
 	s.state.TrialProgress[requestID] = progress
 }
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	requestID model.RequestID, metric interface{}, op ValidateAfter,
-) ([]Operation, error) {
+	requestID model.RequestID, metrics map[string]interface{},
+) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.state.CompletedOperations[op.String()]; ok {
-		return nil, fmt.Errorf("operation %v was already completed", op)
-	}
-
-	operations, err := s.method.validationCompleted(s.context(), requestID, metric, op)
+	operations, err := s.method.validationCompleted(s.context(), requestID, metrics)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
+		return nil, errors.Wrapf(err, "error while handling a validation completed event: %d", requestID)
 	}
-	s.state.CompletedOperations[op.String()] = op
 	s.record(operations)
 	return operations, nil
 }
 
-// TrialClosed informs the searcher that the trial has been closed as a result of a Close operation.
-func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
+// TrialExited informs the searcher that a trial has exited.
+func (s *Searcher) TrialExited(requestID model.RequestID) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.state.TrialsClosed[requestID] = true
-	operations, err := s.method.trialClosed(s.context(), requestID)
+	actions, err := s.method.trialExited(s.context(), requestID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
+		return nil, errors.Wrapf(err, "error while handling a trial closed event: %d", requestID)
 	}
-	s.record(operations)
+	s.record(actions)
 
-	_, isCustom := s.method.(*customSearch)
-	// For non-custom-search methods, you can assume that trials will be created immediately.
-	if s.state.TrialsRequested == len(s.state.TrialsClosed) && !isCustom {
+	if s.state.TrialsRequested == len(s.state.TrialsClosed) {
 		shutdown := Shutdown{
 			Cancel:  len(s.state.Cancels) >= s.state.TrialsRequested,
 			Failure: len(s.state.Failures) >= s.state.TrialsRequested,
 		}
-		s.record([]Operation{shutdown})
-		operations = append(operations, shutdown)
+		s.record([]Action{shutdown})
+		actions = append(actions, shutdown)
 	}
 
-	return operations, nil
+	return actions, nil
 }
 
-// TrialIsClosed returns true if the close has been recorded with a TrialClosed call.
+// TrialIsClosed returns true if the close has been recorded with a TrialExited call.
 func (s *Searcher) TrialIsClosed(requestID model.RequestID) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -227,45 +206,18 @@ func (s *Searcher) Progress() float64 {
 	return progress
 }
 
-// GetCustomSearcherEventQueue returns the searcher's custom searcher event queue. It returns an
-// error if the search method is not a custom searcher.
-func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if sMethod, ok := s.method.(*customSearch); ok {
-		return sMethod.getSearcherEventQueue(), nil
-	}
-	return nil, unsupportedMethodError(s.method, "GetCustomSearcherEventQueue")
-}
-
-// SetCustomSearcherProgress sets the custom searcher progress.
-func (s *Searcher) SetCustomSearcherProgress(progress float64) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if sMethod, ok := s.method.(*customSearch); ok {
-		sMethod.setCustomSearcherProgress(progress)
-		return nil
-	}
-	return unsupportedMethodError(s.method, "SetCustomSearcherProgress")
-}
-
-// Record records operations that were requested by the searcher for a specific trial.
-func (s *Searcher) Record(ops []Operation) {
+// Record records actions that were requested by the searcher for a specific trial.
+func (s *Searcher) Record(ops []Action) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.record(ops)
 }
 
-func (s *Searcher) record(ops []Operation) {
+func (s *Searcher) record(ops []Action) {
 	for _, op := range ops {
-		switch op.(type) {
-		case Create:
+		if _, ok := op.(Create); ok {
 			s.state.TrialsRequested++
-		case Shutdown:
-			s.state.Shutdown = true
 		}
 	}
 }

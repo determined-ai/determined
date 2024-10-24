@@ -104,10 +104,10 @@ def request_metric_names(experiment_id):  # type: ignore
                 return ("training metric appeared twice", results)
             accumulated_validation.add(validation)
 
-    if accumulated_training != {"loss"}:
-        return ("unexpected set of training metrics", results)
-    if accumulated_validation != {"validation_loss", "accuracy"}:
-        return ("unexpected set of validation metrics", results)
+    if accumulated_training != {"loss", "batches", "epochs"}:
+        return (f"unexpected set of training metrics {accumulated_training}", results)
+    if accumulated_validation != {"validation_loss", "accuracy", "batches", "epochs"}:
+        return (f"unexpected set of validation metrics {accumulated_validation}", results)
     return None
 
 
@@ -158,8 +158,8 @@ def request_valid_metric_batches(experiment_id):  # type: ignore
             if batch in accumulated:
                 return ("batch appears twice", results)
             accumulated.add(batch)
-    if accumulated != {200, 400}:
-        return ("unexpected set of batches", results)
+    if accumulated != {100, 200, 300, 400}:
+        return (f"unexpected set of batches: {accumulated}", results)
     return None
 
 

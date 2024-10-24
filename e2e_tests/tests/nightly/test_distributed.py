@@ -4,7 +4,6 @@ import tempfile
 
 import pytest
 
-from determined.common import util
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -14,7 +13,8 @@ from tests import experiment as exp
 def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
+    assert "--epochs 1" in config["entrypoint"], "update test to match tutorial"
+    config["entrypoint"] = config["entrypoint"].replace("--epochs 1", "--batches 64")
     exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
@@ -39,7 +39,7 @@ def test_hf_trainer_api_integration() -> None:
 def test_gpt_neox_zero1() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero1.yaml"))
-    config = conf.set_max_length(config, {"batches": 100})
+    config["searcher"]["max_length"] = {"batches": 100}
     config = conf.set_min_validation_period(config, {"batches": 100})
     # Changing to satisfy cluter size and gpu mem limitations.
     config = conf.set_slots_per_trial(config, 8)
@@ -79,7 +79,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
             "textual_inversion_stable_diffusion/finetune_const_advanced.yaml"
         )
     )
-    config = conf.set_max_length(config, 10)
+    config["hyperparameters"]["training"]["num_sgd_steps"] = 10
     try:
         config = conf.set_environment_variables(
             config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
@@ -111,7 +111,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
     )
     # Shorten the Experiment and reduce to two Trials.
-    config = conf.set_max_length(config, 2)
+    config["hyperparameters"]["num_batches"] = 2
     prompt_vals = config["hyperparameters"]["call_kwargs"]["prompt"]["vals"]
     config["hyperparameters"]["call_kwargs"]["guidance_scale"] = 7.5
     while len(prompt_vals) > 1:
@@ -129,90 +129,6 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
             raise RuntimeError(HUGGINGFACE_CONTEXT_ERR_MSG)
         else:
             raise k
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "hf_image_classification"
-    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.hf_trainer_examples_path(test_dir),
-            1,
-            search_method_name="asha",
-        )
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "hf_language_modeling"
-    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.hf_trainer_examples_path(test_dir),
-            1,
-            search_method_name="binary",
-        )
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_torchvision_core_api_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "torchvision/core_api"
-    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.deepspeed_autotune_examples_path(test_dir),
-            1,
-            search_method_name="asha",
-        )
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "torchvision/deepspeed_trial"
-    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.deepspeed_autotune_examples_path(test_dir),
-            1,
-            search_method_name="random",
-        )
 
 
 @pytest.mark.distributed

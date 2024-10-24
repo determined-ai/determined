@@ -2464,33 +2464,6 @@ class v1CleanupLogsResponse(Printable):
         }
         return out
 
-class v1CloseTrialOperation(Printable):
-    """Close a trial with given ID."""
-    requestId: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        requestId: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(requestId, Unset):
-            self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CloseTrialOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "requestId" in obj:
-            kwargs["requestId"] = obj["requestId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "requestId" in vars(self):
-            out["requestId"] = self.requestId
-        return out
-
 class v1ClusterMessage(Printable):
     """Active notice from the server admin."""
     createdTime: "typing.Optional[str]" = None
@@ -2679,41 +2652,6 @@ class v1CompareTrialsResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "trials": [x.to_json(omit_unset) for x in self.trials],
         }
-        return out
-
-class v1CompleteValidateAfterOperation(Printable):
-    """Used to complete a ValidateAfterOperation."""
-    op: "typing.Optional[v1ValidateAfterOperation]" = None
-    searcherMetric: "typing.Optional[typing.Any]" = None
-
-    def __init__(
-        self,
-        *,
-        op: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[typing.Any, None, Unset]" = _unset,
-    ):
-        if not isinstance(op, Unset):
-            self.op = op
-        if not isinstance(searcherMetric, Unset):
-            self.searcherMetric = searcherMetric
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CompleteValidateAfterOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "op" in obj:
-            kwargs["op"] = v1ValidateAfterOperation.from_json(obj["op"]) if obj["op"] is not None else None
-        if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = obj["searcherMetric"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "op" in vars(self):
-            out["op"] = None if self.op is None else self.op.to_json(omit_unset)
-        if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = self.searcherMetric
         return out
 
 class v1Config(Printable):
@@ -3130,41 +3068,6 @@ class v1CreateGroupResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "group": self.group.to_json(omit_unset),
         }
-        return out
-
-class v1CreateTrialOperation(Printable):
-    """Create a trial with given hyperparameters."""
-    hyperparams: "typing.Optional[str]" = None
-    requestId: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        hyperparams: "typing.Union[str, None, Unset]" = _unset,
-        requestId: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(hyperparams, Unset):
-            self.hyperparams = hyperparams
-        if not isinstance(requestId, Unset):
-            self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CreateTrialOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "hyperparams" in obj:
-            kwargs["hyperparams"] = obj["hyperparams"]
-        if "requestId" in obj:
-            kwargs["requestId"] = obj["requestId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "hyperparams" in vars(self):
-            out["hyperparams"] = self.hyperparams
-        if not omit_unset or "requestId" in vars(self):
-            out["requestId"] = self.requestId
         return out
 
 class v1CreateTrialRequest(Printable):
@@ -4340,76 +4243,6 @@ class v1ExperimentActionResult(Printable):
         }
         return out
 
-class v1ExperimentInactive(Printable):
-    """ExperimentInactive is a searcher event triggered when an experiment
-    is no longer active.
-    """
-
-    def __init__(
-        self,
-        *,
-        experimentState: "experimentv1State",
-    ):
-        self.experimentState = experimentState
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExperimentInactive":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentState": experimentv1State(obj["experimentState"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "experimentState": self.experimentState.value,
-        }
-        return out
-
-class v1ExperimentSimulation(Printable):
-    """ExperimentSimulation holds the configuration and results of simulated run of
-    a searcher.
-    """
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    seed: "typing.Optional[int]" = None
-    trials: "typing.Optional[typing.Sequence[v1TrialSimulation]]" = None
-
-    def __init__(
-        self,
-        *,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        seed: "typing.Union[int, None, Unset]" = _unset,
-        trials: "typing.Union[typing.Sequence[v1TrialSimulation], None, Unset]" = _unset,
-    ):
-        if not isinstance(config, Unset):
-            self.config = config
-        if not isinstance(seed, Unset):
-            self.seed = seed
-        if not isinstance(trials, Unset):
-            self.trials = trials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExperimentSimulation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
-        if "seed" in obj:
-            kwargs["seed"] = obj["seed"]
-        if "trials" in obj:
-            kwargs["trials"] = [v1TrialSimulation.from_json(x) for x in obj["trials"]] if obj["trials"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
-        if not omit_unset or "seed" in vars(self):
-            out["seed"] = self.seed
-        if not omit_unset or "trials" in vars(self):
-            out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
-        return out
-
 class v1FailureType(DetEnum):
     """The failure type of a resource.
     - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.
@@ -5160,40 +4993,6 @@ class v1GetCommandsResponse(Printable):
         }
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        return out
-
-class v1GetCurrentTrialSearcherOperationResponse(Printable):
-    completed: "typing.Optional[bool]" = None
-    op: "typing.Optional[v1TrialOperation]" = None
-
-    def __init__(
-        self,
-        *,
-        completed: "typing.Union[bool, None, Unset]" = _unset,
-        op: "typing.Union[v1TrialOperation, None, Unset]" = _unset,
-    ):
-        if not isinstance(completed, Unset):
-            self.completed = completed
-        if not isinstance(op, Unset):
-            self.op = op
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetCurrentTrialSearcherOperationResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "completed" in obj:
-            kwargs["completed"] = obj["completed"]
-        if "op" in obj:
-            kwargs["op"] = v1TrialOperation.from_json(obj["op"]) if obj["op"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "completed" in vars(self):
-            out["completed"] = self.completed
-        if not omit_unset or "op" in vars(self):
-            out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
 
 class v1GetExperimentCheckpointsResponse(Printable):
@@ -6620,33 +6419,6 @@ class v1GetRunMetadataResponse(Printable):
             out["metadata"] = self.metadata
         return out
 
-class v1GetSearcherEventsResponse(Printable):
-    """Response to GetSearcherEventsRequest."""
-    searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None
-
-    def __init__(
-        self,
-        *,
-        searcherEvents: "typing.Union[typing.Sequence[v1SearcherEvent], None, Unset]" = _unset,
-    ):
-        if not isinstance(searcherEvents, Unset):
-            self.searcherEvents = searcherEvents
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "searcherEvents" in obj:
-            kwargs["searcherEvents"] = [v1SearcherEvent.from_json(x) for x in obj["searcherEvents"]] if obj["searcherEvents"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "searcherEvents" in vars(self):
-            out["searcherEvents"] = None if self.searcherEvents is None else [x.to_json(omit_unset) for x in self.searcherEvents]
-        return out
-
 class v1GetShellResponse(Printable):
     """Response to GetShellRequest."""
 
@@ -7767,35 +7539,6 @@ class v1IdleNotebookRequest(Printable):
             out["idle"] = self.idle
         if not omit_unset or "notebookId" in vars(self):
             out["notebookId"] = self.notebookId
-        return out
-
-class v1InitialOperations(Printable):
-    """InitialOperations is a searcher event signaling the creation of an
-    experiment.
-    """
-    placeholder: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        placeholder: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(placeholder, Unset):
-            self.placeholder = placeholder
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1InitialOperations":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "placeholder" in obj:
-            kwargs["placeholder"] = obj["placeholder"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "placeholder" in vars(self):
-            out["placeholder"] = self.placeholder
         return out
 
 class v1Int32FieldFilter(Printable):
@@ -12144,49 +11887,6 @@ class v1PostRunMetadataResponse(Printable):
             out["metadata"] = self.metadata
         return out
 
-class v1PostSearcherOperationsRequest(Printable):
-    """Request for sending operations from a custom search method."""
-    experimentId: "typing.Optional[int]" = None
-    searcherOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None
-    triggeredByEvent: "typing.Optional[v1SearcherEvent]" = None
-
-    def __init__(
-        self,
-        *,
-        experimentId: "typing.Union[int, None, Unset]" = _unset,
-        searcherOperations: "typing.Union[typing.Sequence[v1SearcherOperation], None, Unset]" = _unset,
-        triggeredByEvent: "typing.Union[v1SearcherEvent, None, Unset]" = _unset,
-    ):
-        if not isinstance(experimentId, Unset):
-            self.experimentId = experimentId
-        if not isinstance(searcherOperations, Unset):
-            self.searcherOperations = searcherOperations
-        if not isinstance(triggeredByEvent, Unset):
-            self.triggeredByEvent = triggeredByEvent
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostSearcherOperationsRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "experimentId" in obj:
-            kwargs["experimentId"] = obj["experimentId"]
-        if "searcherOperations" in obj:
-            kwargs["searcherOperations"] = [v1SearcherOperation.from_json(x) for x in obj["searcherOperations"]] if obj["searcherOperations"] is not None else None
-        if "triggeredByEvent" in obj:
-            kwargs["triggeredByEvent"] = v1SearcherEvent.from_json(obj["triggeredByEvent"]) if obj["triggeredByEvent"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "experimentId" in vars(self):
-            out["experimentId"] = self.experimentId
-        if not omit_unset or "searcherOperations" in vars(self):
-            out["searcherOperations"] = None if self.searcherOperations is None else [x.to_json(omit_unset) for x in self.searcherOperations]
-        if not omit_unset or "triggeredByEvent" in vars(self):
-            out["triggeredByEvent"] = None if self.triggeredByEvent is None else self.triggeredByEvent.to_json(omit_unset)
-        return out
-
 class v1PostTaskLogsRequest(Printable):
     """Request to PostTaskLogs."""
 
@@ -12581,29 +12281,29 @@ class v1PreviewHPSearchRequest(Printable):
 
 class v1PreviewHPSearchResponse(Printable):
     """Response to PreviewSearchRequest."""
-    simulation: "typing.Optional[v1ExperimentSimulation]" = None
+    summary: "typing.Optional[v1SearchSummary]" = None
 
     def __init__(
         self,
         *,
-        simulation: "typing.Union[v1ExperimentSimulation, None, Unset]" = _unset,
+        summary: "typing.Union[v1SearchSummary, None, Unset]" = _unset,
     ):
-        if not isinstance(simulation, Unset):
-            self.simulation = simulation
+        if not isinstance(summary, Unset):
+            self.summary = summary
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PreviewHPSearchResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
-        if "simulation" in obj:
-            kwargs["simulation"] = v1ExperimentSimulation.from_json(obj["simulation"]) if obj["simulation"] is not None else None
+        if "summary" in obj:
+            kwargs["summary"] = v1SearchSummary.from_json(obj["summary"]) if obj["summary"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
-        if not omit_unset or "simulation" in vars(self):
-            out["simulation"] = None if self.simulation is None else self.simulation.to_json(omit_unset)
+        if not omit_unset or "summary" in vars(self):
+            out["summary"] = None if self.summary is None else self.summary.to_json(omit_unset)
         return out
 
 class v1Project(Printable):
@@ -14798,54 +14498,6 @@ class v1RunPrepareForReportingResponse(Printable):
             out["storageId"] = self.storageId
         return out
 
-class v1RunnableOperation(Printable):
-    """RunnableOperation represents a single runnable operation emitted by a
-    searcher.
-    """
-    length: "typing.Optional[str]" = None
-    type: "typing.Optional[v1RunnableType]" = None
-
-    def __init__(
-        self,
-        *,
-        length: "typing.Union[str, None, Unset]" = _unset,
-        type: "typing.Union[v1RunnableType, None, Unset]" = _unset,
-    ):
-        if not isinstance(length, Unset):
-            self.length = length
-        if not isinstance(type, Unset):
-            self.type = type
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1RunnableOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "length" in obj:
-            kwargs["length"] = obj["length"]
-        if "type" in obj:
-            kwargs["type"] = v1RunnableType(obj["type"]) if obj["type"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "length" in vars(self):
-            out["length"] = self.length
-        if not omit_unset or "type" in vars(self):
-            out["type"] = None if self.type is None else self.type.value
-        return out
-
-class v1RunnableType(DetEnum):
-    """RunnableType defines the type of operation that should be executed by trial
-    runners.
-    - RUNNABLE_TYPE_UNSPECIFIED: Denotes an unknown runnable type.
-    - RUNNABLE_TYPE_TRAIN: Signals to a trial runner that it should run a train.
-    - RUNNABLE_TYPE_VALIDATE: Signals to a trial runner it should compute validation metrics.
-    """
-    UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
-    TRAIN = "RUNNABLE_TYPE_TRAIN"
-    VALIDATE = "RUNNABLE_TYPE_VALIDATE"
-
 class v1SSOProvider(Printable):
     """Describe one SSO provider."""
     alwaysRedirect: "typing.Optional[bool]" = None
@@ -15239,144 +14891,76 @@ class v1SearchRunsResponse(Printable):
         }
         return out
 
-class v1SearcherEvent(Printable):
-    """SearcherEvent is a message from master to a client-driven custom searcher
-    informing it of relevant changes in the state of an experiment.
+class v1SearchSummary(Printable):
+    """SearchSummary contains the estimated trials and training lengths that a
+    search plans to execute.
     """
-    experimentInactive: "typing.Optional[v1ExperimentInactive]" = None
-    initialOperations: "typing.Optional[v1InitialOperations]" = None
-    trialClosed: "typing.Optional[v1TrialClosed]" = None
-    trialCreated: "typing.Optional[v1TrialCreated]" = None
-    trialExitedEarly: "typing.Optional[v1TrialExitedEarly]" = None
-    trialProgress: "typing.Optional[v1TrialProgress]" = None
-    validationCompleted: "typing.Optional[v1ValidationCompleted]" = None
+    trials: "typing.Optional[typing.Sequence[v1TrialSummary]]" = None
 
     def __init__(
         self,
         *,
-        id: int,
-        experimentInactive: "typing.Union[v1ExperimentInactive, None, Unset]" = _unset,
-        initialOperations: "typing.Union[v1InitialOperations, None, Unset]" = _unset,
-        trialClosed: "typing.Union[v1TrialClosed, None, Unset]" = _unset,
-        trialCreated: "typing.Union[v1TrialCreated, None, Unset]" = _unset,
-        trialExitedEarly: "typing.Union[v1TrialExitedEarly, None, Unset]" = _unset,
-        trialProgress: "typing.Union[v1TrialProgress, None, Unset]" = _unset,
-        validationCompleted: "typing.Union[v1ValidationCompleted, None, Unset]" = _unset,
+        config: "typing.Dict[str, typing.Any]",
+        trials: "typing.Union[typing.Sequence[v1TrialSummary], None, Unset]" = _unset,
     ):
-        self.id = id
-        if not isinstance(experimentInactive, Unset):
-            self.experimentInactive = experimentInactive
-        if not isinstance(initialOperations, Unset):
-            self.initialOperations = initialOperations
-        if not isinstance(trialClosed, Unset):
-            self.trialClosed = trialClosed
-        if not isinstance(trialCreated, Unset):
-            self.trialCreated = trialCreated
-        if not isinstance(trialExitedEarly, Unset):
-            self.trialExitedEarly = trialExitedEarly
-        if not isinstance(trialProgress, Unset):
-            self.trialProgress = trialProgress
-        if not isinstance(validationCompleted, Unset):
-            self.validationCompleted = validationCompleted
+        self.config = config
+        if not isinstance(trials, Unset):
+            self.trials = trials
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1SearcherEvent":
+    def from_json(cls, obj: Json) -> "v1SearchSummary":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "id": obj["id"],
+            "config": obj["config"],
         }
-        if "experimentInactive" in obj:
-            kwargs["experimentInactive"] = v1ExperimentInactive.from_json(obj["experimentInactive"]) if obj["experimentInactive"] is not None else None
-        if "initialOperations" in obj:
-            kwargs["initialOperations"] = v1InitialOperations.from_json(obj["initialOperations"]) if obj["initialOperations"] is not None else None
-        if "trialClosed" in obj:
-            kwargs["trialClosed"] = v1TrialClosed.from_json(obj["trialClosed"]) if obj["trialClosed"] is not None else None
-        if "trialCreated" in obj:
-            kwargs["trialCreated"] = v1TrialCreated.from_json(obj["trialCreated"]) if obj["trialCreated"] is not None else None
-        if "trialExitedEarly" in obj:
-            kwargs["trialExitedEarly"] = v1TrialExitedEarly.from_json(obj["trialExitedEarly"]) if obj["trialExitedEarly"] is not None else None
-        if "trialProgress" in obj:
-            kwargs["trialProgress"] = v1TrialProgress.from_json(obj["trialProgress"]) if obj["trialProgress"] is not None else None
-        if "validationCompleted" in obj:
-            kwargs["validationCompleted"] = v1ValidationCompleted.from_json(obj["validationCompleted"]) if obj["validationCompleted"] is not None else None
+        if "trials" in obj:
+            kwargs["trials"] = [v1TrialSummary.from_json(x) for x in obj["trials"]] if obj["trials"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "id": self.id,
+            "config": self.config,
         }
-        if not omit_unset or "experimentInactive" in vars(self):
-            out["experimentInactive"] = None if self.experimentInactive is None else self.experimentInactive.to_json(omit_unset)
-        if not omit_unset or "initialOperations" in vars(self):
-            out["initialOperations"] = None if self.initialOperations is None else self.initialOperations.to_json(omit_unset)
-        if not omit_unset or "trialClosed" in vars(self):
-            out["trialClosed"] = None if self.trialClosed is None else self.trialClosed.to_json(omit_unset)
-        if not omit_unset or "trialCreated" in vars(self):
-            out["trialCreated"] = None if self.trialCreated is None else self.trialCreated.to_json(omit_unset)
-        if not omit_unset or "trialExitedEarly" in vars(self):
-            out["trialExitedEarly"] = None if self.trialExitedEarly is None else self.trialExitedEarly.to_json(omit_unset)
-        if not omit_unset or "trialProgress" in vars(self):
-            out["trialProgress"] = None if self.trialProgress is None else self.trialProgress.to_json(omit_unset)
-        if not omit_unset or "validationCompleted" in vars(self):
-            out["validationCompleted"] = None if self.validationCompleted is None else self.validationCompleted.to_json(omit_unset)
+        if not omit_unset or "trials" in vars(self):
+            out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
         return out
 
-class v1SearcherOperation(Printable):
-    """SearcherOperation is an operation issued by the custom searcher."""
-    closeTrial: "typing.Optional[v1CloseTrialOperation]" = None
-    createTrial: "typing.Optional[v1CreateTrialOperation]" = None
-    setSearcherProgress: "typing.Optional[v1SetSearcherProgressOperation]" = None
-    shutDown: "typing.Optional[v1ShutDownOperation]" = None
-    trialOperation: "typing.Optional[v1TrialOperation]" = None
+class v1SearchUnit(Printable):
+    """SearchUnit describes a length unit used by some searchers to manage training."""
+    name: "typing.Optional[str]" = None
+    value: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        closeTrial: "typing.Union[v1CloseTrialOperation, None, Unset]" = _unset,
-        createTrial: "typing.Union[v1CreateTrialOperation, None, Unset]" = _unset,
-        setSearcherProgress: "typing.Union[v1SetSearcherProgressOperation, None, Unset]" = _unset,
-        shutDown: "typing.Union[v1ShutDownOperation, None, Unset]" = _unset,
-        trialOperation: "typing.Union[v1TrialOperation, None, Unset]" = _unset,
+        maxLength: bool,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        value: "typing.Union[int, None, Unset]" = _unset,
     ):
-        if not isinstance(closeTrial, Unset):
-            self.closeTrial = closeTrial
-        if not isinstance(createTrial, Unset):
-            self.createTrial = createTrial
-        if not isinstance(setSearcherProgress, Unset):
-            self.setSearcherProgress = setSearcherProgress
-        if not isinstance(shutDown, Unset):
-            self.shutDown = shutDown
-        if not isinstance(trialOperation, Unset):
-            self.trialOperation = trialOperation
+        self.maxLength = maxLength
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(value, Unset):
+            self.value = value
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1SearcherOperation":
+    def from_json(cls, obj: Json) -> "v1SearchUnit":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "maxLength": obj["maxLength"],
         }
-        if "closeTrial" in obj:
-            kwargs["closeTrial"] = v1CloseTrialOperation.from_json(obj["closeTrial"]) if obj["closeTrial"] is not None else None
-        if "createTrial" in obj:
-            kwargs["createTrial"] = v1CreateTrialOperation.from_json(obj["createTrial"]) if obj["createTrial"] is not None else None
-        if "setSearcherProgress" in obj:
-            kwargs["setSearcherProgress"] = v1SetSearcherProgressOperation.from_json(obj["setSearcherProgress"]) if obj["setSearcherProgress"] is not None else None
-        if "shutDown" in obj:
-            kwargs["shutDown"] = v1ShutDownOperation.from_json(obj["shutDown"]) if obj["shutDown"] is not None else None
-        if "trialOperation" in obj:
-            kwargs["trialOperation"] = v1TrialOperation.from_json(obj["trialOperation"]) if obj["trialOperation"] is not None else None
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "value" in obj:
+            kwargs["value"] = obj["value"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "maxLength": self.maxLength,
         }
-        if not omit_unset or "closeTrial" in vars(self):
-            out["closeTrial"] = None if self.closeTrial is None else self.closeTrial.to_json(omit_unset)
-        if not omit_unset or "createTrial" in vars(self):
-            out["createTrial"] = None if self.createTrial is None else self.createTrial.to_json(omit_unset)
-        if not omit_unset or "setSearcherProgress" in vars(self):
-            out["setSearcherProgress"] = None if self.setSearcherProgress is None else self.setSearcherProgress.to_json(omit_unset)
-        if not omit_unset or "shutDown" in vars(self):
-            out["shutDown"] = None if self.shutDown is None else self.shutDown.to_json(omit_unset)
-        if not omit_unset or "trialOperation" in vars(self):
-            out["trialOperation"] = None if self.trialOperation is None else self.trialOperation.to_json(omit_unset)
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "value" in vars(self):
+            out["value"] = self.value
         return out
 
 class v1SetClusterMessageRequest(Printable):
@@ -15575,35 +15159,6 @@ class v1SetResourceQuotasRequest(Printable):
         }
         if not omit_unset or "clusterQuotaPairs" in vars(self):
             out["clusterQuotaPairs"] = self.clusterQuotaPairs
-        return out
-
-class v1SetSearcherProgressOperation(Printable):
-    """SetSearcherProgressOperation informs the master of the progress of the custom
-    searcher.
-    """
-    progress: "typing.Optional[float]" = None
-
-    def __init__(
-        self,
-        *,
-        progress: "typing.Union[float, None, Unset]" = _unset,
-    ):
-        if not isinstance(progress, Unset):
-            self.progress = progress
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SetSearcherProgressOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "progress" in obj:
-            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "progress" in vars(self):
-            out["progress"] = None if self.progress is None else dump_float(self.progress)
         return out
 
 class v1SetShellPriorityRequest(Printable):
@@ -15924,41 +15479,6 @@ class v1Shell(Printable):
             out["publicKey"] = self.publicKey
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
-        return out
-
-class v1ShutDownOperation(Printable):
-    """Shut down custom searcher method."""
-    cancel: "typing.Optional[bool]" = None
-    failure: "typing.Optional[bool]" = None
-
-    def __init__(
-        self,
-        *,
-        cancel: "typing.Union[bool, None, Unset]" = _unset,
-        failure: "typing.Union[bool, None, Unset]" = _unset,
-    ):
-        if not isinstance(cancel, Unset):
-            self.cancel = cancel
-        if not isinstance(failure, Unset):
-            self.failure = failure
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ShutDownOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "cancel" in obj:
-            kwargs["cancel"] = obj["cancel"]
-        if "failure" in obj:
-            kwargs["failure"] = obj["failure"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "cancel" in vars(self):
-            out["cancel"] = self.cancel
-        if not omit_unset or "failure" in vars(self):
-            out["failure"] = self.failure
         return out
 
 class v1Slot(Printable):
@@ -16773,54 +16293,6 @@ class v1TokenType(DetEnum):
     USER_SESSION = "TOKEN_TYPE_USER_SESSION"
     ACCESS_TOKEN = "TOKEN_TYPE_ACCESS_TOKEN"
 
-class v1TrialClosed(Printable):
-    """TrialClosed is a searcher event triggered when a trial has successfully
-    finished.
-    """
-
-    def __init__(
-        self,
-        *,
-        requestId: str,
-    ):
-        self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialClosed":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "requestId": obj["requestId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "requestId": self.requestId,
-        }
-        return out
-
-class v1TrialCreated(Printable):
-    """TrialCreated is a searcher event signaling the creation of a trial."""
-
-    def __init__(
-        self,
-        *,
-        requestId: str,
-    ):
-        self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialCreated":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "requestId": obj["requestId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "requestId": self.requestId,
-        }
-        return out
-
 class v1TrialEarlyExit(Printable):
     """Signals to the experiment the trial early exited."""
 
@@ -16854,48 +16326,6 @@ class v1TrialEarlyExitExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
-
-class v1TrialExitedEarly(Printable):
-    """TrialExitedEarly is a searcher event triggered when a trial exited
-    prematurely.
-    """
-
-    def __init__(
-        self,
-        *,
-        exitedReason: "v1TrialExitedEarlyExitedReason",
-        requestId: str,
-    ):
-        self.exitedReason = exitedReason
-        self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialExitedEarly":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "exitedReason": v1TrialExitedEarlyExitedReason(obj["exitedReason"]),
-            "requestId": obj["requestId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "exitedReason": self.exitedReason.value,
-            "requestId": self.requestId,
-        }
-        return out
-
-class v1TrialExitedEarlyExitedReason(DetEnum):
-    """The reason for an early exit.
-    - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).
-    - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.
-    - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop, from code.
-    - EXITED_REASON_USER_CANCELED: Indicates the trial exited due to a user requested stop, from the CLI or
-    UI.
-    """
-    UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
-    INVALID_HP = "EXITED_REASON_INVALID_HP"
-    USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
-    USER_CANCELED = "EXITED_REASON_USER_CANCELED"
 
 class v1TrialLogsFieldsResponse(Printable):
     """Response to TrialLogFieldsRequest."""
@@ -17090,33 +16520,6 @@ class v1TrialMetrics(Printable):
             out["stepsCompleted"] = self.stepsCompleted
         return out
 
-class v1TrialOperation(Printable):
-    """TrialOperation is any operation that a trial can perform while it is active."""
-    validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None
-
-    def __init__(
-        self,
-        *,
-        validateAfter: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
-    ):
-        if not isinstance(validateAfter, Unset):
-            self.validateAfter = validateAfter
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "validateAfter" in obj:
-            kwargs["validateAfter"] = v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj["validateAfter"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "validateAfter" in vars(self):
-            out["validateAfter"] = None if self.validateAfter is None else self.validateAfter.to_json(omit_unset)
-        return out
-
 class v1TrialProfilerMetricLabels(Printable):
     agentId: "typing.Optional[str]" = None
     gpuUuid: "typing.Optional[str]" = None
@@ -17206,35 +16609,6 @@ class v1TrialProfilerMetricsBatch(Printable):
         }
         return out
 
-class v1TrialProgress(Printable):
-    """TrialProgress is a searcher event that tells you the number of batches
-    completed in the trial.
-    """
-
-    def __init__(
-        self,
-        *,
-        partialUnits: float,
-        requestId: str,
-    ):
-        self.partialUnits = partialUnits
-        self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialProgress":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "partialUnits": float(obj["partialUnits"]),
-            "requestId": obj["requestId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "partialUnits": dump_float(self.partialUnits),
-            "requestId": self.requestId,
-        }
-        return out
-
 class v1TrialRunnerMetadata(Printable):
     """The metadata pertaining to the current running task for a trial."""
 
@@ -17256,43 +16630,6 @@ class v1TrialRunnerMetadata(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "state": self.state,
         }
-        return out
-
-class v1TrialSimulation(Printable):
-    """TrialSimulation is a specific sequence of workloads that were run before the
-    trial was completed.
-    """
-    occurrences: "typing.Optional[int]" = None
-    operations: "typing.Optional[typing.Sequence[v1RunnableOperation]]" = None
-
-    def __init__(
-        self,
-        *,
-        occurrences: "typing.Union[int, None, Unset]" = _unset,
-        operations: "typing.Union[typing.Sequence[v1RunnableOperation], None, Unset]" = _unset,
-    ):
-        if not isinstance(occurrences, Unset):
-            self.occurrences = occurrences
-        if not isinstance(operations, Unset):
-            self.operations = operations
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialSimulation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "occurrences" in obj:
-            kwargs["occurrences"] = obj["occurrences"]
-        if "operations" in obj:
-            kwargs["operations"] = [v1RunnableOperation.from_json(x) for x in obj["operations"]] if obj["operations"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "occurrences" in vars(self):
-            out["occurrences"] = self.occurrences
-        if not omit_unset or "operations" in vars(self):
-            out["operations"] = None if self.operations is None else [x.to_json(omit_unset) for x in self.operations]
         return out
 
 class v1TrialSourceInfo(Printable):
@@ -17351,6 +16688,35 @@ class v1TrialSourceInfoType(DetEnum):
     UNSPECIFIED = "TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED"
     INFERENCE = "TRIAL_SOURCE_INFO_TYPE_INFERENCE"
     FINE_TUNING = "TRIAL_SOURCE_INFO_TYPE_FINE_TUNING"
+
+class v1TrialSummary(Printable):
+    """TrialSummary describes the runs that are estimated to train for a certain
+    length.
+    """
+
+    def __init__(
+        self,
+        *,
+        count: int,
+        unit: "v1SearchUnit",
+    ):
+        self.count = count
+        self.unit = unit
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialSummary":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "count": obj["count"],
+            "unit": v1SearchUnit.from_json(obj["unit"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "count": self.count,
+            "unit": self.unit.to_json(omit_unset),
+        }
+        return out
 
 class v1TrialsSampleResponse(Printable):
 
@@ -18057,76 +17423,6 @@ class v1UserWebSetting(Printable):
             out["storagePath"] = self.storagePath
         if not omit_unset or "value" in vars(self):
             out["value"] = self.value
-        return out
-
-class v1ValidateAfterOperation(Printable):
-    """ValidateAfterOperation means the trial should train and validate after
-    training the given length.
-    """
-    length: "typing.Optional[str]" = None
-    requestId: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        length: "typing.Union[str, None, Unset]" = _unset,
-        requestId: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(length, Unset):
-            self.length = length
-        if not isinstance(requestId, Unset):
-            self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ValidateAfterOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "length" in obj:
-            kwargs["length"] = obj["length"]
-        if "requestId" in obj:
-            kwargs["requestId"] = obj["requestId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "length" in vars(self):
-            out["length"] = self.length
-        if not omit_unset or "requestId" in vars(self):
-            out["requestId"] = self.requestId
-        return out
-
-class v1ValidationCompleted(Printable):
-    """ValidationCompleted is a searcher event triggered when a validation has been
-    completed.
-    """
-
-    def __init__(
-        self,
-        *,
-        metric: typing.Any,
-        requestId: str,
-        validateAfterLength: str,
-    ):
-        self.metric = metric
-        self.requestId = requestId
-        self.validateAfterLength = validateAfterLength
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ValidationCompleted":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "metric": obj["metric"],
-            "requestId": obj["requestId"],
-            "validateAfterLength": obj["validateAfterLength"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "metric": self.metric,
-            "requestId": self.requestId,
-            "validateAfterLength": self.validateAfterLength,
-        }
         return out
 
 class v1ValidationHistoryEntry(Printable):
@@ -19268,33 +18564,6 @@ def get_CompareTrials(
         return v1CompareTrialsResponse.from_json(_resp.json())
     raise APIHttpError("get_CompareTrials", _resp)
 
-def post_CompleteTrialSearcherValidation(
-    session: "api.BaseSession",
-    *,
-    body: "v1CompleteValidateAfterOperation",
-    trialId: int,
-) -> None:
-    """Reports to the searcher that the trial has completed the given searcher
-    operation.
-
-    - body: The completed operation.
-    - trialId: The id of the trial.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/trials/{trialId}/searcher/completed_operation",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
-
 def post_ContinueExperiment(
     session: "api.BaseSession",
     *,
@@ -20346,30 +19615,6 @@ accessible workspaces.
     if _resp.status_code == 200:
         return v1GetCommandsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommands", _resp)
-
-def get_GetCurrentTrialSearcherOperation(
-    session: "api.BaseSession",
-    *,
-    trialId: int,
-) -> "v1GetCurrentTrialSearcherOperationResponse":
-    """Get the current searcher operation.
-
-    - trialId: The id of the trial.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/trials/{trialId}/searcher/operation",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetCurrentTrialSearcherOperationResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetCurrentTrialSearcherOperation", _resp)
 
 def get_GetExperiment(
     session: "api.BaseSession",
@@ -21779,30 +21024,6 @@ def get_GetRunMetadata(
     if _resp.status_code == 200:
         return v1GetRunMetadataResponse.from_json(_resp.json())
     raise APIHttpError("get_GetRunMetadata", _resp)
-
-def get_GetSearcherEvents(
-    session: "api.BaseSession",
-    *,
-    experimentId: int,
-) -> "v1GetSearcherEventsResponse":
-    """Get the list of custom searcher events with long polling.
-
-    - experimentId: The ID of the experiment.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/experiments/{experimentId}/searcher_events",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetSearcherEventsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetSearcherEvents", _resp)
 
 def get_GetShell(
     session: "api.BaseSession",
@@ -24581,31 +23802,6 @@ def post_PostRunMetadata(
     if _resp.status_code == 200:
         return v1PostRunMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostRunMetadata", _resp)
-
-def post_PostSearcherOperations(
-    session: "api.BaseSession",
-    *,
-    body: "v1PostSearcherOperationsRequest",
-    experimentId: int,
-) -> None:
-    """Submit operations to a custom searcher.
-
-    - experimentId: The experiment ID.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/experiments/{experimentId}/searcher_operations",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_PostSearcherOperations", _resp)
 
 def post_PostTaskLogs(
     session: "api.BaseSession",

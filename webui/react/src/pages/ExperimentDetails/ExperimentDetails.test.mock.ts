@@ -26,7 +26,6 @@ const RESPONSES = {
           bracket_rungs: [],
           divisor: 4,
           max_concurrent_trials: 16,
-          max_length: { batches: 937, epochs: 1, records: 1 },
           max_rungs: 5,
           max_trials: 16,
           metric: 'val_loss',
@@ -118,7 +117,6 @@ const RESPONSES = {
           bracket_rungs: [],
           divisor: 4,
           max_concurrent_trials: 16,
-          max_length: { batches: 937, epochs: 1, records: 1 },
           max_rungs: 5,
           max_trials: 16,
           metric: 'val_loss',
@@ -723,7 +721,6 @@ const RESPONSES = {
         profiling: { enabled: false },
         resources: {},
         searcher: {
-          max_length: { batches: 937, epochs: 1, records: 1 },
           metric: 'validation_loss',
           name: 'single' as const,
           smaller_is_better: true,
@@ -823,7 +820,6 @@ const RESPONSES = {
         },
         scheduling_unit: 100,
         searcher: {
-          max_length: { batches: 937, epochs: 1, records: 1 },
           metric: 'validation_loss',
           name: 'single' as const,
           smaller_is_better: true,

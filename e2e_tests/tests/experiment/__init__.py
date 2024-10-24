@@ -28,7 +28,6 @@ from .experiment import (
     root_user_home_bind_mount,
     run_basic_test,
     run_basic_test_with_temp_config,
-    run_basic_autotuning_test,
     run_failure_test,
     run_failure_test_with_temp_config,
     s3_checkpoint_config,

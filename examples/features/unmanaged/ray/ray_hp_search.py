@@ -25,9 +25,10 @@ def objective(config):
             # We need to pass a non-single searcher config to have the WebUI display our experiment
             # as HP search.
             searcher={
-                "name": "custom",
+                "name": "random",
                 "metric": "loss",
                 "smaller_is_better": True,
+                "max_trials": 2,
             },
             external_experiment_id=experiment_name,
             external_trial_id=trial_name,

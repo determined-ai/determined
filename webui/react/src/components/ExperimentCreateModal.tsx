@@ -25,8 +25,6 @@ import handleError, {
 import {
   FULL_CONFIG_BUTTON_TEXT,
   getExperimentName,
-  getMaxLengthType,
-  getMaxLengthValue,
   SIMPLE_CONFIG_BUTTON_TEXT,
   trialContinueConfig,
   upgradeConfig,
@@ -64,7 +62,6 @@ const RunEntityCopyMap = {
 export type CreateExperimentType = ValueOf<typeof CreateExperimentType>;
 
 const EXPERIMENT_NAME = 'name';
-const MAX_LENGTH = 'maxLength';
 
 interface Props {
   onClose?: () => void;
@@ -120,8 +117,6 @@ const ExperimentCreateModalComponent = ({
     ? `Fork ${capitalize(entityCopy.experiment)} ${experiment.id}`
     : `Continue ${capitalize(entityCopy.trial)} ${trial?.id}`;
 
-  const requiredFields = useMemo(() => [EXPERIMENT_NAME, MAX_LENGTH], []);
-
   const handleModalClose = () => {
     setModalState(DEFAULT_MODAL_STATE);
     onClose?.();
@@ -136,14 +131,6 @@ const ExperimentCreateModalComponent = ({
       if (!prev.isAdvancedMode) {
         prev.config.name = values[EXPERIMENT_NAME];
       }
-      if (values[MAX_LENGTH]) {
-        const maxLengthType = getMaxLengthType(prev.config);
-        if (maxLengthType) {
-          prev.config.searcher.max_length[maxLengthType] = parseInt(values[MAX_LENGTH]);
-        } else {
-          prev.config.searcher.max_length = parseInt(values[MAX_LENGTH]);
-        }
-      }
       prev.configString = yaml.dump(prev.config);
       return prev;
     });
@@ -151,7 +138,7 @@ const ExperimentCreateModalComponent = ({
     const hasError = hasErrors(form);
     const values = form.getFieldsValue();
     const missingRequiredFields = Object.entries(values).some(([key, value]) => {
-      return requiredFields.includes(key) && !value;
+      return EXPERIMENT_NAME === key && !value;
     });
     setDisabled(hasError || missingRequiredFields);
   };
@@ -191,15 +178,7 @@ const ExperimentCreateModalComponent = ({
     if (modalState.isAdvancedMode && form) {
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
-        const isFork = modalState.type === CreateExperimentType.Fork;
-
-        form.setFields([
-          { name: 'name', value: getExperimentName(newConfig) },
-          {
-            name: 'maxLength',
-            value: !isFork ? getMaxLengthValue(newConfig) : undefined,
-          },
-        ]);
+        form.setFields([{ name: 'name', value: getExperimentName(newConfig) }]);
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });
       }
@@ -212,19 +191,7 @@ const ExperimentCreateModalComponent = ({
   const getConfigFromForm = useCallback(
     (config: RawJson) => {
       if (!form) return yaml.dump(config);
-
-      const formValues = form.getFieldsValue();
       const newConfig = structuredClone(config);
-
-      if (formValues[MAX_LENGTH]) {
-        const maxLengthType = getMaxLengthType(newConfig);
-        if (maxLengthType === undefined) {
-          // Unitless searcher config.
-          newConfig.searcher.max_length = parseInt(formValues[MAX_LENGTH]);
-        } else {
-          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues[MAX_LENGTH]) };
-        }
-      }
       return yaml.dump(newConfig);
     },
     [form],
@@ -346,8 +313,8 @@ const ExperimentCreateModalComponent = ({
       };
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
-    form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [entityCopy, experiment, trial, type, isFork, form, requiredFields]);
+    form.validateFields([EXPERIMENT_NAME]); // initial disabled state set here, gets updated later in handleFieldsChange
+  }, [entityCopy, experiment, trial, type, isFork, form]);
 
   if (!experiment || (!isFork && !trial)) return <></>;
 
@@ -397,24 +364,6 @@ const ExperimentCreateModalComponent = ({
             ]}>
             <Input />
           </Form.Item>
-          {!isFork && (
-            <Form.Item
-              label={`Max ${getMaxLengthType(modalState.config) || 'length'}`}
-              name={MAX_LENGTH}
-              rules={[
-                {
-                  required: true,
-                  validator: (_rule, value) => {
-                    let errorMessage = '';
-                    if (!value) errorMessage = 'Please provide a max length.';
-                    if (value < 1) errorMessage = 'Max length must be at least 1.';
-                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
-                  },
-                },
-              ]}>
-              <Input type="number" />
-            </Form.Item>
-          )}
         </Form>
         <div>
           <Button onClick={toggleMode}>

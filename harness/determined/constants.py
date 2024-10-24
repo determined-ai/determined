@@ -1,25 +1,6 @@
 import os
 
 MAX_SLOTS_PER_AGENT = 16
-# The default configs to use in when running test experiments.
-#
-# TODO: Unify the defaults used here with the defaults used in master.
-DEFAULT_SEARCHER_CFG = {"name": "single", "max_length": {"batches": 100}}
-DEFAULT_RESOURCES_CFG = {"slots_per_trial": 1, "native_parallel": False}
-DEFAULT_SCHEDULING_UNIT = 100
-DEFAULT_OPTIMIZATIONS = {
-    "aggregation_frequency": 1,
-    "average_aggregated_gradients": True,
-    "average_training_metrics": True,
-    "gradient_compression": False,
-    "mixed_precision": "O0",
-}
-DEFAULT_EXP_CFG = {
-    "searcher": DEFAULT_SEARCHER_CFG,
-    "scheduling_unit": DEFAULT_SCHEDULING_UNIT,
-    "resources": DEFAULT_RESOURCES_CFG,
-    "optimizations": DEFAULT_OPTIMIZATIONS,
-}
 
 # Until we implement a more automatic solution, expose a temporary workaround of
 # allowing ports to be changed using envionment variables for the rare case that

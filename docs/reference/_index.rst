@@ -71,4 +71,3 @@
    Python SDK <python-sdk/_index>
    REST API <rest-api>
    Determined CLI Reference <cli-reference>
-   Customer Searcher Reference <custom-searcher-reference>

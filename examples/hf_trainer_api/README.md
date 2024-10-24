@@ -75,15 +75,3 @@ det experiment create deepspeed.yaml .
 The deepspeed configuration can be changed by altering the `hyperparameters.deepspeed_config` entry
 of the `deepspeed.yaml` config, as well as the corresponding line in the `entrypoint`. The default
 configuration is `ds_configs/ds_config_stage_1.json`.
-
-## DeepSpeed Autotune
-
-One can also use Determined's DeepSpeed Autotune functionality to automatically optimize the
-DeepSpeed settings. From either subdirectory, DeepSpeed parameters can be tuned to maximize the
-model FLOPs via the ASHA algorithm by running the following script, for instance:
-
-```
-python3 -m determined.pytorch.dsat asha deepspeed.yaml .
-```
-
-See [the documentation](https://docs.determined.ai/latest/model-dev-guide/apis-howto/deepspeed/autotuning.html) for more on the available DeepSpeed Autotuning options.

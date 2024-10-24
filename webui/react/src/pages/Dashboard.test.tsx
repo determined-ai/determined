@@ -278,9 +278,6 @@ describe('Dashboard', () => {
               scheduling_unit: 100,
               searcher: {
                 max_concurrent_trials: 16,
-                max_length: {
-                  epochs: 1,
-                },
                 max_trials: 2,
                 metric: 'accuracy',
                 name: 'random',

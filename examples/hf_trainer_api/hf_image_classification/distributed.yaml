@@ -9,8 +9,6 @@ resources:
   slots_per_trial: 2
 searcher:
   name: single
-  max_length:
-    batches: 100
   metric: eval_loss
 hyperparameters:
   training_arguments:

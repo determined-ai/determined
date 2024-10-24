@@ -8,10 +8,28 @@ from transformers import trainer_utils
 
 import determined as det
 
-logger = logging.getLogger("determined.transformers")
+logger = logging.getLogger("det.transformers")
 
 
 class DetCallback(transformers.TrainerCallback):  # type: ignore
+    """
+    ``DetCallback`` integrates a training loop built around ``transformers.Trainer`` with the
+    Determined cluster.  It reports metrics, uploads checkpoints, and handles preemption signals.
+    It also automatically restores training from the latest checkpoint after pauses or crashes.
+
+    Simply include ``DetCallback`` as in the list of ``callbacks`` that you pass to your
+    ``Trainer``.
+
+    Args:
+        core_context: the result of a ``det.core.init()`` call.
+        args: ``TrainingArgs`` from a ``transformers.HfArgumentParser``, the same ``args`` to be
+            passed to the ``Trainer``.
+        filter_metrics: a list of metric names to report to Determined.  Default: ``None`` (all
+            metrics are reported).
+        user_data: an optional dict of metadata to be stored in every checkpoint.
+            Default: ``None``.
+    """
+
     def __init__(
         self,
         core_context: det.core.Context,
@@ -20,32 +38,125 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         user_data: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__()
-
         self.core_context = core_context
-
         self.filter_metrics = filter_metrics
         self.user_data = user_data
+
+        self.last_train_metrics = -1
+        self.last_eval_metrics = -1
+        self.last_save = -1
+        self.last_progress = 0
+
+        info = det.get_cluster_info()
+        if not info:
+            raise RuntimeError("det.transformers.DetCallback must be run on a Determined cluster")
+        self.info = info
+
         self.load_last_checkpoint(args)
 
-        self.last_metrics: Dict[str, float] = {"train_step": -1, "eval_step": -1}
-        self.searcher_ops = self.core_context.searcher.operations()
-        self.current_op = next(self.searcher_ops)
-        self.updating_searcher = False
+        self.searcher_metric = None
+        self.time_metric = None
+        if self.info.task_type == "TRIAL":
+            searcher_config = self.info.trial._config["searcher"]
+            self._check_searcher_config(searcher_config, args)
+            self.searcher_metric = searcher_config["metric"]
+            self.time_metric = searcher_config.get("time_metric")
+            # Don't allow filtering of the searcher or time_metric metrics.
+            if self.filter_metrics:
+                self.filter_metrics.append(self.searcher_metric)
+                if self.time_metric:
+                    self.filter_metrics.append(self.time_metric)
 
-        cluster_info = det.get_cluster_info()
-        assert (
-            cluster_info
-        ), "Could not find `cluster_info`, the HF Callback must be run on a Determined Cluster"
-        searcher_config = cluster_info.trial._config["searcher"]
-        self.searcher_metric = searcher_config["metric"]
-        # Custom searchers have a different config structure which need to be handled differently
-        if searcher_config["name"] == "custom":
-            self.searcher_unit = "batches"
-            self.searcher_max_length = self.current_op.length
+        # Undocumented workarounds in case forcing the checkpoint and validations at the end of
+        # non-preempted training is a bad idea somehow.
+        self._force_final_save = True
+        self._force_final_evaluate = True
+
+    def load_last_checkpoint(self, args: transformers.TrainingArguments) -> None:
+        latest_checkpoint = self.info.latest_checkpoint
+        if latest_checkpoint is None:
+            return
+        if args.overwrite_output_dir is True:
+            logger.info(
+                "Skipping downloading last checkpoint from Determined due "
+                "to overwrite_output_dir=True."
+            )
+            return
+
+        # To resume DeepSpeed, each node requires ALL sharded model/optimizer states,
+        # so we can skip using selector and just download all files.
+        self.core_context.checkpoint.download(latest_checkpoint, args.output_dir)
+
+        checkpoint_path = trainer_utils.get_last_checkpoint(args.output_dir)
+        args.resume_from_checkpoint = checkpoint_path
+
+        logger.info(f"Latest checkpoint downloaded to {checkpoint_path}.")
+
+    def _check_searcher_config(
+        self, cfg: Dict[str, Any], args: transformers.TrainingArguments
+    ) -> None:
+        if args.max_steps > -1:
+            args_unit = "batches"
+            args_len = args.max_steps
+            len_arg = "--max_steps"
         else:
-            self.searcher_unit = list(searcher_config["max_length"].keys())[0]
-            self.searcher_max_length = list(searcher_config["max_length"].values())[0]
-            self._check_searcher_compatibility(args)
+            args_unit = "epochs"
+            args_len = args.num_train_epochs
+            len_arg = "--num_train_epochs"
+
+        if isinstance(cfg.get("max_length"), int):
+            # Legacy searcher config (unitless).  Has never been supported, actually.
+            raise ValueError(
+                "HF trainer no longer respects the deprecated searcher.max_length "
+                "field.  searcher.max_length is deprecated; please remove it and rely "
+                f"on {len_arg} instead to avoid ambiguous training specifications."
+            )
+        elif isinstance(cfg.get("max_length"), dict):
+            # Legacy searcher config; max_length must match provided args.
+            search_unit, search_len = next(iter(cfg["max_length"].items()))
+            if (search_unit, search_len) != (args_unit, args_len):
+                raise ValueError(
+                    "HF trainer units does not match configured searcher.max_length "
+                    f"({args_unit}={args_len} != {search_unit}={search_len}).  The "
+                    "searcher.max_length field is deprecated; please remove it and avoid "
+                    "ambiguous training specifications."
+                )
+        elif cfg["name"] in ["adaptive_asha", "async_halving"]:
+            # ASHA search: check time_metric and max_time are sane.
+            self.required_metrics.append(cfg["time_metric"])
+            search_unit = cfg["time_metric"]
+            search_len = cfg["max_time"]
+            if search_unit not in ("batches", "epochs"):
+                self.required_metrics.append(search_unit)
+            elif (search_unit, search_len) != (args_unit, args_len):
+                name = cfg["name"]
+                raise ValueError(
+                    "HF trainer units does not match configured the max_time configured for "
+                    f"{name} searcher ({args_unit}={args_len} != {search_unit}={search_len}.  "
+                    f"Please update one of the searcher.max_time config field or the {len_arg} "
+                    "to match the other."
+                )
+
+    def _check_eval_metrics(self, metrics: Dict[str, Any]) -> None:
+        search_ok = self.searcher_metric is None or self.searcher_metric in metrics
+        time_ok = self.time_metric is None or self.time_metric in metrics
+        if not search_ok and not time_ok:
+            raise ValueError(
+                f"Searcher metric '{self.searcher_metric}' set by searcher.metric config field "
+                f"and time metric '{self.time_metric}' from searcher.time_metric config field are "
+                "both missing; you must emit those metrics for the hyperparameter search to work."
+            )
+        if not search_ok:
+            raise ValueError(
+                f"Searcher metric '{self.searcher_metric}' set by searcher.metric config field "
+                "is missing; you must emit that metric for features like hyperparameter search, "
+                "checkpoint garbage collection, and selecting the best checkpoint to work."
+            )
+        if not time_ok:
+            raise ValueError(
+                f"Time metric '{self.time_metric}' set by searcher.time_metric config field is "
+                "missing; you must emit that metric for the hyperparameter search to work."
+            )
 
     def on_log(
         self,
@@ -60,53 +171,49 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
             return
         metrics, metric_type = self._get_metrics(logs)
         logger.debug(f"on_log metrics, global_step {state.global_step}", metrics)
+        metrics["batches"] = metrics.get("batches", state.global_step)
+        metrics["epochs"] = metrics.get("epochs", state.epoch)
         if metric_type == TRAIN:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
             # the same step as the in-progress training metrics.
-            if self.last_metrics["train_step"] != state.global_step:
+            if self.last_train_metrics != state.global_step:
+                self.last_train_metrics = state.global_step
                 if state.is_world_process_zero:
-                    self.core_context.train.report_training_metrics(
-                        steps_completed=state.global_step, metrics=metrics
+                    # Note: state.global_step represents steps_completed, not step index
+                    self.core_context.train.report_metrics(
+                        group="training", steps_completed=state.global_step, metrics=metrics
                     )
-                metrics["train_step"] = state.global_step
 
         elif metric_type == EVAL:
             # Prevents reporting metrics for the same step twice. This happens when
             # after-training evaluation is completed, and it is reported with the same
             # step as the last during-training evaluation.
-            if self.last_metrics["eval_step"] != state.global_step:
+            if self.last_eval_metrics != state.global_step:
+                self.last_eval_metrics = state.global_step
                 if state.is_world_process_zero:
-                    self.core_context.train.report_validation_metrics(
-                        steps_completed=state.global_step, metrics=metrics
+                    self._check_eval_metrics(metrics)
+                    # Note: state.global_step represents steps_completed, not step index
+                    self.core_context.train.report_metrics(
+                        group="validation", steps_completed=state.global_step, metrics=metrics
                     )
-                metrics["eval_step"] = state.global_step
         else:
             logger.warning(f"Metrics not reported: metric type = {metric_type}.")
 
-        self.last_metrics.update(metrics)
-
-        # Update searcher state after collecting the metrics.
-        if self.updating_searcher is True:
-            self._update_searcher(state, control)
-
-        # If searcher is NOT being updated and preemption signal is received
-        # (e.g., by pausing experiment in the WebUI), notify Trainer (via TrainerControl)
-        # to save the checkpoint and stop training.
-        if self.updating_searcher is False and self.core_context.preempt.should_preempt():
+        # If we've been preempted, save a checkpoint and shut down training.
+        if self.core_context.preempt.should_preempt():
             control.should_training_stop = True
-            control.should_save = True
+            # Don't set control.should_save now, or it can trigger multiple saves, if we trigger
+            # in a training on_log and arrive here again in an evaluate on_log.  We would not cause
+            # that to happen, but other callbacks could, such as if it were just naturally time for
+            # an evaluation.  So just let the save-at-end logic handle it.
 
     def _get_metrics(self, logs: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        metrics = logs
         metric_type = get_metric_type(logs)
-        if self.filter_metrics:
-            metrics = {}
-            for k, v in logs.items():
-                if any(m in k for m in self.filter_metrics) is True:
-                    metrics[k] = v
-
-        return metrics, metric_type
+        if not self.filter_metrics:
+            return logs, metric_type
+        filtered = {k: v for k, v in logs.items() if any(m in k for m in self.filter_metrics)}
+        return filtered, metric_type
 
     def on_save(
         self,
@@ -115,25 +222,24 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         control: transformers.TrainerControl,
         **kwargs: Any,
     ) -> None:
-        info = det.get_cluster_info()
-        assert info
-
+        self.last_save = state.global_step
         # local_path is where HF Trainer saves model and tokenizer in a given step.
         local_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
         if state.is_world_process_zero:
             if self.user_data is not None:
                 self._on_save_user_data(local_path)
 
-        det_checkpoint_metadata = {
+        metadata = {
             "steps_completed": state.global_step,
-            "trial_id": info.trial.trial_id,
         }
+        if self.info.task_type == "TRIAL":
+            metadata["trial_id"] = self.info.trial.trial_id
 
         def selector(x: str) -> bool:
             return x.startswith((f"checkpoint-{state.global_step}/", "runs/"))
 
         self.core_context.checkpoint.upload(
-            args.output_dir, metadata=det_checkpoint_metadata, shard=True, selector=selector
+            args.output_dir, metadata=metadata, shard=True, selector=selector
         )
 
     def _on_save_user_data(self, save_path: str) -> None:
@@ -145,28 +251,6 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         with open(os.path.join(save_path, "my_data.json"), "w") as f:
             json.dump(self.user_data, f)
 
-    def load_last_checkpoint(self, args: transformers.TrainingArguments) -> None:
-        info = det.get_cluster_info()
-        assert info
-
-        latest_checkpoint = info.latest_checkpoint
-        if latest_checkpoint is not None:
-            if args.overwrite_output_dir is True:
-                logger.info(
-                    "Skip downloading last checkpoint from Determined due "
-                    "to overwrite_output_dir=True."
-                )
-                return
-
-            # To resume DeepSpeed, each node requires ALL sharded model/optimizer states,
-            # so we can skip using selector and just download all files.
-            self.core_context.checkpoint.download(latest_checkpoint, args.output_dir)
-
-            checkpoint_path = trainer_utils.get_last_checkpoint(args.output_dir)
-            args.resume_from_checkpoint = checkpoint_path
-
-            logger.info(f"Latest checkpoint downloaded to {checkpoint_path}.")
-
     def on_step_end(
         self,
         args: transformers.TrainingArguments,
@@ -174,17 +258,14 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         control: transformers.TrainerControl,
         **kwargs: Any,
     ) -> None:
-        # state.epoch is not None only during training.
-        if state.epoch and self.searcher_unit == "batches":
-            if state.is_world_process_zero:
-                self.current_op.report_progress(state.global_step)
-
-            if state.global_step >= self.current_op.length:
-                logger.info(
-                    f"Max length of {self.current_op.length} steps reached for current "
-                    f"searcher operation. Updating searcher."
-                )
-                self._update_searcher(state, control)
+        if state.is_world_process_zero and args.max_steps > -1:
+            # There needs to be at least 1% increase in progress to report progress (maximum 100
+            # report_progress API calls in per trial).
+            progress = state.global_step / args.max_steps
+            percent = int(progress * 100)
+            if percent > self.last_progress:
+                self.last_progress = percent
+                self.core_context.train.report_progress(progress)
 
     def on_epoch_end(
         self,
@@ -193,95 +274,30 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         control: transformers.TrainerControl,
         **kwargs: Any,
     ) -> None:
-        # state.epoch is not None only during training.
-        if state.epoch and self.searcher_unit == "epochs":
-            if state.is_world_process_zero:
-                self.current_op.report_progress(state.epoch)
+        # Decide if we're about to shut down training.
+        is_end = False
+        if control.should_training_stop:
+            is_end = True
+        elif args.max_steps > -1:
+            is_end = state.global_step >= args.max_steps
+        else:
+            is_end = state.epoch >= args.num_train_epochs
 
-            if state.epoch >= self.current_op.length:
-                logger.info(
-                    f"Max length of {state.epoch} epochs reached for current "
-                    f"searcher operation. Updating searcher."
-                )
-                self._update_searcher(state, control)
+        # If training is ending, this is our last chance to ask for a eval and/or save.
+        if is_end:
+            # Avoid stale evaluate-at-end.
+            if state.global_step > self.last_eval_metrics:
+                # Also avoid evaluate-at-end if we have been preempted.
+                if self._force_final_evaluate and not self.core_context.preempt.should_preempt():
+                    control.should_evaluate = True
+            # Avoid stale save-at-end.
+            if state.global_step > self.last_save:
+                # You can't disable save-after-preemption.
+                if self._force_final_save or self.core_context.preempt.should_preempt():
+                    control.should_save = True
 
-    def _update_searcher(
-        self, state: transformers.TrainerState, control: transformers.TrainerControl
-    ) -> None:
-        if self._metrics_reported(state.global_step) is False:
-            self._wait_for_metrics(control)
-            return
-
-        if state.is_world_process_zero:
-            if self.last_metrics is None:
-                logger.warning(
-                    "No training or evaluation metrics has been recorded. Please "
-                    "check your settings for training metrics "
-                    "(--logging_strategy and --logging_steps) or "
-                    "evaluation metrics (--evaluation_strategy and --eval_steps). "
-                    "Reporting trainer_state.best_metric to the searcher."
-                )
-                searcher_metric = state.best_metric
-            elif self.searcher_metric not in self.last_metrics:
-                logger.warning(
-                    f"Searcher metric {self.searcher_metric} from the yaml config file does "
-                    "not match any of the recorded metrics "
-                    f"in {self.last_metrics}. "
-                    "Reporting trainer_state.best_metric to the searcher."
-                )
-                searcher_metric = state.best_metric
-            else:
-                searcher_metric = self.last_metrics[self.searcher_metric]
-
-            logger.info(f"Metric reported to searcher: {searcher_metric}")
-            self.current_op.report_completed(searcher_metric)
-
-        self.updating_searcher = False
-
-        try:
-            self.current_op = next(self.searcher_ops)
-        except StopIteration:
-            control.should_training_stop = True
-
-    def _metrics_reported(self, step: int) -> bool:
-        return self.last_metrics["eval_step"] == step and self.last_metrics["train_step"] == step
-
-    def _wait_for_metrics(self, control: transformers.TrainerControl) -> None:
-        # Notify Trainer (via transformers.TrainerControl) to:
-        # (1) log current training metrics,
-        # (2) evaluate the model and log evaluation metrics,
-        # (3) save the checkpoint.
-        #  updating_searcher is as an internal flag that indicates we are
-        #  in the process of updating the searcher with the current metrics.
-        control.should_log = True
-        control.should_evaluate = True
-        control.should_save = True
-        self.updating_searcher = True
-
-    def _check_searcher_compatibility(self, args: transformers.TrainingArguments) -> None:
-        if self.searcher_unit == "batches":
-            if args.max_steps == -1:
-                self._raise_config_mismatch("epochs", args.num_train_epochs)
-            elif args.max_steps != self.searcher_max_length:
-                self._raise_config_mismatch("batches", args.max_steps)
-        elif self.searcher_unit == "epochs":
-            if args.max_steps != -1:
-                self._raise_config_mismatch("batches", args.max_steps)
-            elif args.num_train_epochs != self.searcher_max_length:
-                self._raise_config_mismatch("epochs", args.num_train_epochs)
-
-    def _raise_config_mismatch(
-        self,
-        trainer_units: str,
-        trainer_len: float,
-    ) -> None:
-        raise ValueError(
-            f"HF trainer units {trainer_units}={trainer_len} MUST match searcher config "
-            f"{self.searcher_unit}={self.searcher_max_length}. "
-            f"Modify either --num_train_epochs for the training script or "
-            f"searcher.max_length.epochs in the experiment config so they are the same value "
-            f"(--max_steps and searcher.max_length.batches if using batches)."
-        )
+        if state.is_world_process_zero and args.max_steps == -1:
+            self.core_context.train.report_progress(state.epoch / args.num_train_epochs)
 
 
 EVAL = "eval_"
@@ -290,13 +306,10 @@ TRAIN = "train_"
 
 
 def get_metric_type(d: Dict[str, Any]) -> str:
-    for k, _ in d.items():
-        if k.startswith(EVAL):
-            return EVAL
-        elif k.startswith(TEST):
-            return TEST
-        else:
-            return TRAIN
+    if any(k.startswith(EVAL) for k in d):
+        return EVAL
+    if any(k.startswith(TEST) for k in d):
+        return TEST
     return TRAIN
 
 

@@ -9,7 +9,6 @@ resources:
 searcher:
    name: single
    metric: x
-   max_length: 100
 
 max_restarts: 2
 bind_mounts:

@@ -2,6 +2,7 @@ import contextlib
 import logging
 import random
 import sys
+import warnings
 from typing import Any, Dict, Iterator, Optional
 
 import numpy as np
@@ -94,11 +95,16 @@ class Trainer:
                 of ``collections.abc.Container`` (list, tuple, etc.). For example, ``Batch(100)``
                 would validate every 100 batches, while ``Batch([5, 30, 45])`` would validate
                 after every 5th, 30th, and 45th batch.
-            max_length: The maximum number of steps to train for. This value is required and
-                only applicable in local training mode. For on-cluster training, this value will
-                be ignored; the searcher’s ``max_length`` must be configured from the experiment
-                configuration. This is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which takes an
-                ``int``. For example, ``Epoch(1)`` would train for a maximum length of one epoch.
+            max_length: The maximum number of steps to train for. This is a ``TrainUnit`` type
+                (``Batch`` or ``Epoch``) which takes an ``int``. For example, ``Epoch(1)`` would
+                train for a maximum length of one epoch.
+
+                .. note::
+
+                   If using an ASHA searcher, this value should match the searcher config values in
+                   the experiment config (i.e. ``Epoch(1)`` = `max_time: 1` and `time_metric:
+                   "epochs"`).
+
             reporting_period: The number of steps to train for before reporting metrics and
                 searcher progress. For local training mode, metrics are printed to stdout. This
                 is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which can take an ``int`` or
@@ -146,8 +152,13 @@ class Trainer:
             if max_length is None:
                 raise ValueError("max_length must be defined in local training mode.")
 
-            if not isinstance(max_length.value, int):
-                raise TypeError("max_length must be configured in TrainUnit(int) types.")
+            if not isinstance(max_length, (pytorch.Batch, pytorch.Epoch)) or not isinstance(
+                max_length.value, int
+            ):
+                raise TypeError(
+                    "max_length must either be a det.pytorch.Batch(int) or det.pytorch.Epoch(int) "
+                    "type"
+                )
 
             if profiling_enabled:
                 logger.warning("Profiling is not supported in local training mode.")
@@ -160,12 +171,6 @@ class Trainer:
             if test_mode:
                 raise ValueError("test_mode is only supported in local training mode.")
 
-            if max_length is not None:
-                logger.warning(
-                    "max_length is ignored when training on-cluster. Please configure the "
-                    "searcher instead."
-                )
-
             assert self._info, "Unable to detect cluster info."
             if latest_checkpoint is None and self._info.latest_checkpoint is not None:
                 logger.warning(
@@ -176,10 +181,44 @@ class Trainer:
 
             smaller_is_better = bool(self._info.trial._config["searcher"]["smaller_is_better"])
             searcher_metric_name = self._info.trial._config["searcher"]["metric"]
+
             steps_completed = int(self._info.trial._steps_completed)
             global_batch_size = self._info.trial.hparams.get("global_batch_size", None)
             if global_batch_size:
                 global_batch_size = int(global_batch_size)
+
+            # Backwards compatibility: try to parse legacy `searcher.max_length` if `max_length`
+            # isn't passed in.
+            if max_length is None:
+                max_length_val = core._parse_searcher_max_length(self._info.trial._config)
+                if max_length_val:
+                    warnings.warn(
+                        "Configuring `max_length` from the `searcher.max_length` experiment "
+                        "config, which was deprecated in XXYYZZ and will be removed in a future "
+                        "release. Please set `fit(max_length=X)` with your desired training length "
+                        "directly.",
+                        FutureWarning,
+                        stacklevel=2,
+                    )
+                    max_length_unit = core._parse_searcher_units(self._info.trial._config)
+                    max_length = pytorch.TrainUnit._from_searcher_unit(
+                        max_length_val, max_length_unit, global_batch_size
+                    )
+
+            # If we couldn't parse the legacy `searcher.max_length`, raise an error.
+            if not max_length:
+                raise ValueError(
+                    "`fit(max_length=X)` must be set with your desired training length."
+                )
+            if not isinstance(max_length, (pytorch.Batch, pytorch.Epoch)) or not isinstance(
+                max_length.value, int
+            ):
+                raise TypeError(
+                    "max_length must either be a det.pytorch.Batch(int) or det.pytorch.Epoch(int) "
+                    "type."
+                )
+
+            _check_searcher_length(exp_conf=self._info.trial._config, max_length=max_length)
 
         trial_controller = pytorch._PyTorchTrialController(
             trial_inst=self._trial,
@@ -201,6 +240,43 @@ class Trainer:
         )
 
         trial_controller.run()
+
+
+def _check_searcher_length(
+    exp_conf: Dict[str, Any],
+    max_length: pytorch.TrainUnit,
+) -> None:
+    """
+    Certain searchers (ASHA and Adaptive ASHA) require configuring the maximum training length in
+    the experiment config. We check that the `max_length` passed to `fit()` matches the experiment
+    config and log warnings if it doesn't.
+    """
+    time_metric = exp_conf["searcher"].get("time_metric")
+    if time_metric is not None:
+        max_time = exp_conf["searcher"].get("max_time")
+        assert max_time, "`searcher.max_time` not configured"
+        if time_metric == "batches":
+            if not isinstance(max_length, pytorch.Batch) or max_length.value != max_time:
+                logger.warning(
+                    f"`max_length` passed into `fit()` method ({max_length}) does not match "
+                    f"`searcher.max_time` and `searcher.time_metric` from the experiment config "
+                    f"(Batch(value={max_time})). This may result in unexpected hyperparameter "
+                    f"search behavior."
+                )
+        elif time_metric == "epochs":
+            if not isinstance(max_length, pytorch.Epoch) or max_length.value != max_time:
+                logger.warning(
+                    f"`max_length` passed into `fit()` method ({max_length}) does not match "
+                    f"`searcher.max_time` and `searcher.time_metric` from the experiment config "
+                    f"(Epoch(value={max_time})). This may result in unexpected hyperparameter "
+                    f"search behavior."
+                )
+        else:
+            logger.warning(
+                "`searcher.time_metric` must be either 'batches' or 'epochs' "
+                f"for training with PyTorchTrials, but got {time_metric}. "
+                f"Training will proceed with {max_length} but may result in unexpected behavior."
+            )
 
 
 def _initialize_distributed_backend() -> Optional[core.DistributedContext]:

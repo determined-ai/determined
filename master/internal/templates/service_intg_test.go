@@ -70,13 +70,8 @@ func TestUnmarshalTemplateConfig(t *testing.T) {
 				},
 			},
 			RawSearcher: &expconf.SearcherConfigV0{
-				RawSingleConfig: &expconf.SingleConfigV0{
-					RawMaxLength: &expconf.LengthV0{
-						Unit:  expconf.Batches,
-						Units: 1,
-					},
-				},
-				RawMetric: ptrs.Ptr("loss_of_something"),
+				RawSingleConfig: &expconf.SingleConfigV0{},
+				RawMetric:       ptrs.Ptr("loss_of_something"),
 			},
 		})
 		err = UnmarshalTemplateConfig(ctx, input.Name, u, &fakeConfig, false)

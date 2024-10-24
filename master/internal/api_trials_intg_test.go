@@ -45,16 +45,18 @@ func createTestTrial(
 ) (*model.Trial, *model.Task) {
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
+	requestID := model.NewRequestID(rand.Reader)
 	task := &model.Task{
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  time.Now(),
-		TaskID:     trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(exp.ID, requestID),
 	}
 	require.NoError(t, db.AddTask(context.TODO(), task))
 
 	trial := &model.Trial{
 		StartTime:    time.Now(),
+		RequestID:    &requestID,
 		State:        model.PausedState,
 		ExperimentID: exp.ID,
 	}
@@ -743,20 +745,6 @@ func TestTrialAuthZ(t *testing.T) {
 							Labels: &trialv1.TrialProfilerMetricLabels{TrialId: int32(id)},
 						},
 					},
-				})
-			return err
-		}, false},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			_, err := api.GetCurrentTrialSearcherOperation(ctx,
-				&apiv1.GetCurrentTrialSearcherOperationRequest{
-					TrialId: int32(id),
-				})
-			return err
-		}, false},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.CompleteTrialSearcherValidation(ctx,
-				&apiv1.CompleteTrialSearcherValidationRequest{
-					TrialId: int32(id),
 				})
 			return err
 		}, false},

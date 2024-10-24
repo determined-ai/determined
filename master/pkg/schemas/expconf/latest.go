@@ -11,7 +11,6 @@ type (
 	CategoricalHyperparameter = CategoricalHyperparameterV0
 	CheckpointStorageConfig   = CheckpointStorageConfigV0
 	ConstHyperparameter       = ConstHyperparameterV0
-	CustomConfig              = CustomConfigV0
 	Device                    = DeviceV0
 	DevicesConfig             = DevicesConfigV0
 	DirectoryConfig           = DirectoryConfigV0
