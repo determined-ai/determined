@@ -4781,6 +4781,7 @@ workflows:
           name: test-e2e-cpu
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 6
@@ -4795,6 +4796,7 @@ workflows:
           name: test-e2e-cpu-double
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 5
@@ -4811,6 +4813,7 @@ workflows:
           name: test-e2e-cpu-oauth
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4825,6 +4828,7 @@ workflows:
           name: test-e2e-multi-k8s
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
