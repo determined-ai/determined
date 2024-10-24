@@ -352,14 +352,14 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	// Apply the scheduler's default priority if priority is not set in an invariant config or
 	// constraint.
 	if config.Resources().Priority() == nil {
-		enforcedPriority, _, err := configpolicy.FindAllowedPriority(
+		enforcedPriority, constraint, err := configpolicy.FindAllowedPriority(
 			&workspaceID,
 			model.ExperimentType,
 		)
 		if err != nil {
 			return nil, nil, config, nil, nil, err
 		}
-		if enforcedPriority == nil {
+		if enforcedPriority == nil || constraint {
 			prio := masterConfig.DefaultPriorityForPool(poolName.String())
 			config.RawResources.RawPriority = &prio
 		} else {
