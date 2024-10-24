@@ -96,7 +96,7 @@ type UserSession struct {
 	bun.BaseModel   `bun:"table:user_sessions"`
 	ID              SessionID         `db:"id" json:"id"`
 	UserID          UserID            `db:"user_id" json:"user_id"`
-	Expiry          null.Time         `db:"expiry" json:"expiry"`
+	Expiry          time.Time         `db:"expiry" json:"expiry"`
 	CreatedAt       time.Time         `db:"created_at" json:"created_at"`
 	TokenType       TokenType         `db:"token_type" json:"token_type"`
 	RevokedAt       null.Time         `db:"revoked_at" json:"revoked_at"`
@@ -109,7 +109,7 @@ func (s UserSession) Proto() *userv1.TokenInfo {
 	return &userv1.TokenInfo{
 		Id:          int32(s.ID),
 		UserId:      int32(s.UserID),
-		Expiry:      timestamppb.New(s.Expiry.ValueOrZero()),
+		Expiry:      timestamppb.New(s.Expiry),
 		CreatedAt:   timestamppb.New(s.CreatedAt),
 		TokenType:   s.TokenType.Proto(),
 		Revoked:     !s.RevokedAt.IsZero(), // Revoked if RevokedAt is non-zero

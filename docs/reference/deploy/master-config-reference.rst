@@ -1573,7 +1573,8 @@ cluster's database is bootstrapped, otherwise it is ignored.
 =========
 
 Define default ``default_lifespan_days`` & max lifespan ``max_lifespan_days`` master configurations
-for access tokens to set global defaults & limits on how long access tokens can be valid for.
+for access tokens. These settings allow administrators to set global defaults and limits on the
+validity period of access tokens.
 
 **************
  ``webhooks``

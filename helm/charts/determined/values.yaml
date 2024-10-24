@@ -104,6 +104,9 @@ useNodePortForMaster: false
   # authz option (EE-only) sets the authorization mode.
   # authz:
   #   type: rbac
+  # token:
+  #   max_lifespan_days: -1
+  #   default_lifespan_days: 30
 
 # oidc (EE-only) enables OpenID Connect Integration, which is only available if enterpriseEdition
 # is true. It allows users to use single sign-on with their organization’s identity provider.

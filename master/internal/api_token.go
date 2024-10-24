@@ -50,7 +50,7 @@ func (a *apiServer) PostAccessToken(
 	tokenExpiration := defaultTokenLifespan
 	if req.Lifespan != nil {
 		if *req.Lifespan == config.InfiniteTokenLifespanString {
-			tokenExpiration = nil
+			tokenExpiration = maxTokenLifespan
 		} else {
 			d, err := time.ParseDuration(*req.Lifespan)
 			if err != nil || d < 0 {
@@ -62,14 +62,12 @@ func (a *apiServer) PostAccessToken(
 	}
 
 	// Ensure the token lifespan does not exceed the maximum allowed.
-	if maxTokenLifespan != nil &&
-		tokenExpiration == nil ||
-		(maxTokenLifespan != nil && tokenExpiration != nil && *tokenExpiration > *maxTokenLifespan) {
+	if maxTokenLifespan != nil && tokenExpiration != nil && *tokenExpiration > *maxTokenLifespan {
 		return nil, status.Error(codes.InvalidArgument, "Token lifespan exceeds maximum allowed")
 	}
 
 	token, tokenID, err := token.CreateAccessToken(
-		ctx, targetFullUser.ID, tokenExpiration, token.WithTokenDescription(req.Description))
+		ctx, targetFullUser.ID, token.WithTokenExpiry(tokenExpiration), token.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
 	}
@@ -136,12 +134,8 @@ func (a *apiServer) GetAccessTokens(
 	}
 
 	if !req.ShowInactive {
-		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			q = q.WhereOr("us.expiry > ?", time.Now().UTC()).
-				WhereOr("us.expiry IS NULL ")
-			return q
-		})
-		query.Where("us.revoked_at IS NULL")
+		query.Where("us.expiry > ?", time.Now().UTC()).
+			Where("us.revoked_at IS NULL")
 	}
 
 	// Get only Access token type

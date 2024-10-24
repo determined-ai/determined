@@ -15,6 +15,7 @@ import (
 	"github.com/o1egl/paseto"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -48,14 +49,15 @@ func TestCreateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add an access Token.
-	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID, nil)
+	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
-	actLifespan := restoredToken.Expiry.Ptr()
-	require.Nil(t, actLifespan)
+	expLifespan := config.DefaultTokenLifespan * 24 * time.Hour
+	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
+	require.Equal(t, expLifespan, actLifespan)
 
 	tokenInfos, err := getAccessToken(context.TODO(), testUser.ID)
 	require.NoError(t, err)
@@ -76,17 +78,17 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
-	expLifespan := 30 * 24 * time.Hour * 3
+	expLifespan := config.DefaultTokenLifespan * 24 * time.Hour
 	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID,
-		&expLifespan, WithTokenDescription(desc))
+		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
 
-	actLifespan := restoredToken.Expiry.Time.Sub(restoredToken.CreatedAt)
-	require.Equal(t, expLifespan, actLifespan)
+	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
+	require.Equal(t, expLifespan.Truncate(time.Second), actLifespan.Truncate(time.Second))
 	require.Equal(t, desc, restoredToken.Description.String)
 
 	tokenInfos, err := getAccessToken(context.TODO(), testUser.ID)
@@ -106,7 +108,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	userID, _, _, err := addTestSession()
 	require.NoError(t, err)
 
-	token, tokenID, err := CreateAccessToken(context.TODO(), userID, nil)
+	token, tokenID, err := CreateAccessToken(context.TODO(), userID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
@@ -137,7 +139,7 @@ func TestGetAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken.
-	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID, nil)
+	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
@@ -227,6 +229,7 @@ func getAccessToken(ctx context.Context, userID model.UserID) ([]model.UserSessi
 		Table("user_sessions").
 		Where("user_id = ?", userID).
 		Where("token_type = ?", model.TokenTypeAccessToken).
+		Where("revoked_at IS NULL").
 		Scan(ctx, &tokenInfos)
 	if err != nil {
 		return nil, err
