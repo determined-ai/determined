@@ -31,6 +31,7 @@ import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { groupBy, keyBy, mapValues } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -79,7 +80,6 @@ import {
   DetailedUser,
   FlatRun,
   FlatRunAction,
-  ProjectColumn,
   RunState,
   SelectionType as SelectionState,
 } from 'types';
@@ -187,6 +187,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
 
   const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
+
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
   const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
@@ -232,6 +233,24 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       return NotLoaded;
     }
   }, [projectId]);
+
+  // expand sorts to include types from metadata columns so the column ids match
+  const expandedSorts = useMemo(() => {
+    return projectColumns.match({
+      _: () => sorts,
+      Loaded(pc) {
+        const groupedColumns = groupBy(pc, (c) => c.column);
+        const columnToExpandedColumns = mapValues(groupedColumns, (cols) =>
+          cols.map((c) => formatColumnKey(c)),
+        );
+        return sorts
+          .filter(validSort.is)
+          .flatMap((sort) =>
+            columnToExpandedColumns[sort.column].map((ec) => ({ ...sort, column: ec })),
+          );
+      },
+    });
+  }, [sorts, projectColumns]);
 
   const arrayTypeColumns = useMemo(() => {
     const arrayTypeColumns = projectColumns
@@ -317,13 +336,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     return [...STATIC_COLUMNS, ...settings.columns.slice(0, settings.pinnedColumnsCount)];
   }, [settings.columns, settings.pinnedColumnsCount]);
 
+  const projectColumnsMap = useMemo(() => {
+    return projectColumns.map((columns) => keyBy(columns, formatColumnKey));
+  }, [projectColumns]);
+
   const columns: ColumnDef<FlatRun>[] = useMemo(() => {
-    const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
-      projectColumns,
-      (columns) => {
-        return columns.reduce((acc, col) => ({ ...acc, [formatColumnKey(col)]: col }), {});
-      },
-    );
     const columnDefs = getColumnDefs({
       appTheme,
       columnWidths: settings.columnWidths,
@@ -480,7 +497,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     appTheme,
     columnsIfLoaded,
     isDarkMode,
-    projectColumns,
+    projectColumnsMap,
     projectHeatmap,
     selection.rows,
     settings.columnWidths,
@@ -905,7 +922,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         return items;
       }
 
-      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      const column = projectColumnsMap.getOrElse({})[columnId];
       const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
         // Column is pinned if the index is inside of the frozen columns
@@ -1052,7 +1069,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     [
       bannedFilterColumns,
       bannedSortColumns,
-      projectColumns,
+      projectColumnsMap,
       settings.pinnedColumnsCount,
       settings.selection,
       settings.pageLimit,
@@ -1212,7 +1229,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               }}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
               selection={selection}
-              sorts={sorts}
+              sorts={expandedSorts}
               staticColumns={STATIC_COLUMNS}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
