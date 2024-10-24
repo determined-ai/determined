@@ -136,7 +136,6 @@ export const getColumnDefs = ({
   },
   checkpointCount: {
     id: 'checkpointCount',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       data: Number(record.experiment.checkpoints),
@@ -145,11 +144,11 @@ export const getColumnDefs = ({
     }),
     title: 'Checkpoints',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.checkpointCount ?? defaultColumnWidths.checkpointCount ?? MIN_COLUMN_WIDTH,
   },
   checkpointSize: {
     id: 'checkpointSize',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: record.experiment.checkpointSize
@@ -160,6 +159,7 @@ export const getColumnDefs = ({
     }),
     title: 'Checkpoint Size',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.checkpointSize ?? defaultColumnWidths.checkpointSize ?? MIN_COLUMN_WIDTH,
   },
   description: {
@@ -176,7 +176,6 @@ export const getColumnDefs = ({
   },
   duration: {
     id: 'duration',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getDurationInEnglish(record.experiment),
@@ -185,6 +184,7 @@ export const getColumnDefs = ({
     }),
     title: 'Duration',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.duration ?? defaultColumnWidths.duration ?? MIN_COLUMN_WIDTH,
   },
   externalExperimentId: {
@@ -305,7 +305,6 @@ export const getColumnDefs = ({
   },
   numTrials: {
     id: 'numTrials',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       data: record.experiment.numTrials,
@@ -314,6 +313,7 @@ export const getColumnDefs = ({
     }),
     title: 'Trials',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.numTrials ?? defaultColumnWidths.numTrials ?? MIN_COLUMN_WIDTH,
   },
   progress: {
@@ -346,7 +346,6 @@ export const getColumnDefs = ({
   },
   searcherMetric: {
     id: 'searcherMetric',
-    isNumerical: false,
     renderer: (record: ExperimentWithTrial) => {
       const sMetric = record.experiment.searcherMetric ?? '';
       return {
@@ -374,7 +373,6 @@ export const getColumnDefs = ({
   },
   startTime: {
     id: 'startTime',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.experiment.startTime)),
@@ -383,6 +381,7 @@ export const getColumnDefs = ({
     }),
     title: 'Start Time',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidths.startTime ?? defaultColumnWidths.startTime ?? MIN_COLUMN_WIDTH,
   },
   state: {
@@ -456,7 +455,6 @@ export const searcherMetricsValColumn = (
 ): ColumnDef<ExperimentWithTrial> => {
   return {
     id: 'searcherMetricsVal',
-    isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
       const sMetricValue = record.bestTrial?.searcherMetricsVal;
 
@@ -483,6 +481,7 @@ export const searcherMetricsValColumn = (
     },
     title: 'Searcher Metric Value',
     tooltip: () => undefined,
+    type: 'number',
     width: columnWidth ?? DEFAULT_COLUMN_WIDTH,
   };
 };
