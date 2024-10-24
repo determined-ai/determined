@@ -90,14 +90,14 @@ func (s SearcherConfigV0) AsLegacy() LegacySearcher {
 //
 //go:generate ../gen.sh
 type SingleConfigV0 struct {
-	RawMaxLength *LengthV0 `json:"max_length"`
+	RawMaxLength *LengthV0 `json:"max_length,omitempty"`
 }
 
 // RandomConfigV0 configures a random search.
 //
 //go:generate ../gen.sh
 type RandomConfigV0 struct {
-	RawMaxLength           *LengthV0 `json:"max_length"`
+	RawMaxLength           *LengthV0 `json:"max_length,omitempty"`
 	RawMaxTrials           *int      `json:"max_trials"`
 	RawMaxConcurrentTrials *int      `json:"max_concurrent_trials"`
 }
@@ -106,7 +106,7 @@ type RandomConfigV0 struct {
 //
 //go:generate ../gen.sh
 type GridConfigV0 struct {
-	RawMaxLength           *LengthV0 `json:"max_length"`
+	RawMaxLength           *LengthV0 `json:"max_length,omitempty"`
 	RawMaxConcurrentTrials *int      `json:"max_concurrent_trials"`
 }
 
@@ -122,8 +122,8 @@ type AsyncHalvingConfigV0 struct {
 	RawTimeMetric          *string  `json:"time_metric"`
 	// These config options are deprecated and should not be used.
 	// They exist to help parse legacy exp configs.
-	RawMaxLength *LengthV0 `json:"max_length"`
-	RawStopOnce  *bool     `json:"stop_once"`
+	RawMaxLength *LengthV0 `json:"max_length,omitempty"`
+	RawStopOnce  *bool     `json:"stop_once,omitempty"`
 }
 
 // Length returns the maximum training length.
@@ -163,8 +163,8 @@ type AdaptiveASHAConfigV0 struct {
 	RawTimeMetric          *string       `json:"time_metric"`
 	// These config options are deprecated and should not be used.
 	// They exist to help parse legacy exp configs.
-	RawMaxLength *LengthV0 `json:"max_length"`
-	RawStopOnce  *bool     `json:"stop_once"`
+	RawMaxLength *LengthV0 `json:"max_length,omitempty"`
+	RawStopOnce  *bool     `json:"stop_once,omitempty"`
 }
 
 // Length returns the maximum training length.
@@ -181,7 +181,7 @@ func (a AdaptiveASHAConfigV0) Length() Length {
 //go:generate ../gen.sh
 type SyncHalvingConfigV0 struct {
 	RawNumRungs        *int      `json:"num_rungs"`
-	RawMaxLength       *LengthV0 `json:"max_length"`
+	RawMaxLength       *LengthV0 `json:"max_length,omit_empty"`
 	RawBudget          *LengthV0 `json:"budget"`
 	RawDivisor         *float64  `json:"divisor"`
 	RawTrainStragglers *bool     `json:"train_stragglers"`
@@ -191,7 +191,7 @@ type SyncHalvingConfigV0 struct {
 //
 //go:generate ../gen.sh
 type AdaptiveConfigV0 struct {
-	RawMaxLength       *LengthV0     `json:"max_length"`
+	RawMaxLength       *LengthV0     `json:"max_length,omit_empty"`
 	RawBudget          *LengthV0     `json:"budget"`
 	RawBracketRungs    []int         `json:"bracket_rungs"`
 	RawDivisor         *float64      `json:"divisor"`
@@ -204,7 +204,7 @@ type AdaptiveConfigV0 struct {
 //
 //go:generate ../gen.sh
 type AdaptiveSimpleConfigV0 struct {
-	RawMaxLength *LengthV0     `json:"max_length"`
+	RawMaxLength *LengthV0     `json:"max_length,omit_empty"`
 	RawMaxTrials *int          `json:"max_trials"`
 	RawDivisor   *float64      `json:"divisor"`
 	RawMode      *AdaptiveMode `json:"mode"`
