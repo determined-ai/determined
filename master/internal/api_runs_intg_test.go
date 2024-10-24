@@ -1787,6 +1787,7 @@ func TestGetRunGroups(t *testing.T) {
 	req := &apiv1.GetRunGroupsRequest{
 		ProjectId: &projectID,
 		Group:     "state",
+		Sort:      ptrs.Ptr("state=asc"),
 	}
 
 	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
@@ -1823,4 +1824,19 @@ func TestGetRunGroups(t *testing.T) {
 	resp, err = api.GetRunGroups(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Groups, 2)
+	require.Equal(t, resp.Groups[0].GroupName, string(model.PausedState))
+	require.Equal(t, resp.Groups[1].GroupName, string(model.CanceledState))
+
+	filter := `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+		`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+		`"conjunction":"and","kind":"group"},"showArchived":true}`
+	req = &apiv1.GetRunGroupsRequest{
+		ProjectId: &projectID,
+		Filter:    &filter,
+		Group:     "state",
+	}
+
+	resp, err = api.GetRunGroups(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Groups, 1)
 }
