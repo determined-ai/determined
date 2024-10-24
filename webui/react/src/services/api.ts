@@ -7,7 +7,7 @@ import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import { EmptyParams, RawJson, SingleEntityParams } from 'types';
 import * as Type from 'types';
 import { generateDetApi } from 'utils/service';
-import { tensorBoardMatchesSource } from 'utils/task';
+import { tensorBoardMatchesSource, tensorBoardSearchesMatchesSource } from 'utils/task';
 
 /* Authentication */
 
@@ -536,6 +536,31 @@ export const resumeSearches = generateDetApi<
   Api.V1ResumeSearchesResponse,
   Type.BulkActionResult
 >(Config.resumeSearches);
+
+export const cancelSearches = generateDetApi<
+  Api.V1ResumeSearchesRequest,
+  Api.V1ResumeSearchesResponse,
+  Type.BulkActionResult
+>(Config.resumeSearches);
+
+export const launchTensorBoardSearches = generateDetApi<
+  Service.LaunchTensorBoardSearchesParams,
+  Api.V1LaunchTensorboardSearchesResponse,
+  Type.CommandResponse
+>(Config.launchTensorBoardSearches);
+
+export const openOrCreateTensorBoardSearches = async (
+  params: Service.LaunchTensorBoardSearchesParams,
+): Promise<Type.CommandResponse> => {
+  const tensorboards = await getTensorBoards({});
+  const match = tensorboards.find(
+    (tensorboard) =>
+      !terminalCommandStates.has(tensorboard.state) &&
+      tensorBoardSearchesMatchesSource(tensorboard, params),
+  );
+  if (match) return { command: match, warnings: [V1LaunchWarning.CURRENTSLOTSEXCEEDED] };
+  return launchTensorBoardSearches(params);
+};
 
 /* Tasks */
 

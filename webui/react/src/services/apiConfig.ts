@@ -1225,6 +1225,32 @@ export const resumeSearches: DetApi<
   request: (params, options) => detApi.Internal.resumeSearches(params, options),
 };
 
+export const cancelSearches: DetApi<
+  Api.V1CancelSearchesRequest,
+  Api.V1CancelSearchesResponse,
+  Type.BulkActionResult
+> = {
+  name: 'cancelSearches',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.cancelSearches(params, options),
+};
+
+export const launchTensorBoardSearches: DetApi<
+  Service.LaunchTensorBoardSearchesParams,
+  Api.V1LaunchTensorboardSearchesResponse,
+  Type.CommandResponse
+> = {
+  name: 'launchTensorBoard',
+  postProcess: (response) => {
+    return {
+      command: decoder.mapV1TensorBoard(response.tensorboard),
+      warnings: response.warnings || [],
+    };
+  },
+  request: (params: Service.LaunchTensorBoardSearchesParams) =>
+    detApi.Internal.launchTensorboardSearches(params),
+};
+
 /* Runs */
 
 export const searchRuns: DetApi<

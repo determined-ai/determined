@@ -15,22 +15,22 @@ import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
-import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import { defaultProjectSettings } from 'components/Searches/Searches.settings';
+import SearchTensorBoardModal from 'components/SearchTensorBoardModal';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
 import {
   archiveSearches,
-  cancelExperiments,
+  cancelSearches,
   deleteSearches,
   getExperiments,
   killSearches,
-  openOrCreateTensorBoard,
+  openOrCreateTensorBoardSearches,
   pauseSearches,
   resumeSearches,
   unarchiveSearches,
@@ -166,8 +166,8 @@ const TableActionBar: React.FC<Props> = ({
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
-  const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
-    useModal(ExperimentTensorBoardModal);
+  const { Component: SearchTensorBoardModalComponent, open: openSearchTensorBoardModal } =
+    useModal(SearchTensorBoardModal);
   const isMobile = useMobile();
   const { openToast } = useToast();
 
@@ -223,10 +223,7 @@ const TableActionBar: React.FC<Props> = ({
         return getActionsForExperimentsUnion(experiments, [...batchActions], permissions); // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
       }
       case 'ALL_EXCEPT':
-        return batchActions.filter(
-          (action) =>
-            action !== ExperimentAction.OpenTensorBoard && action !== ExperimentAction.Cancel,
-        );
+        return batchActions;
     }
   }, [selection, permissions, experimentMap]);
 
@@ -250,17 +247,20 @@ const TableActionBar: React.FC<Props> = ({
 
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
-          if (params.searchIds === undefined) break;
-          if (params.searchIds.length !== selectedExperiments.length) {
-            // if unmanaged experiments are selected, open experimentTensorBoardModal
-            openExperimentTensorBoardModal();
-          } else {
+          if (
+            params.searchIds === undefined ||
+            params.searchIds.length === selectedExperiments.length
+          ) {
             openCommandResponse(
-              await openOrCreateTensorBoard({
-                experimentIds: params.searchIds,
+              await openOrCreateTensorBoardSearches({
+                filter: params.filter,
+                searchIds: params.searchIds,
                 workspaceId: project?.workspaceId,
               }),
             );
+          } else {
+            // if unmanaged experiments are selected, open searchTensorBoardModal
+            openSearchTensorBoardModal();
           }
           return;
         }
@@ -274,10 +274,7 @@ const TableActionBar: React.FC<Props> = ({
           return await archiveSearches(params);
         case ExperimentAction.Cancel:
           if (params.searchIds === undefined) break;
-          return await cancelExperiments({
-            experimentIds: params.searchIds,
-            projectId: params.projectId,
-          });
+          return await cancelSearches(params);
         case ExperimentAction.Kill:
           return await killSearches(params);
         case ExperimentAction.Pause:
@@ -296,7 +293,7 @@ const TableActionBar: React.FC<Props> = ({
       tableFilterString,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
-      openExperimentTensorBoardModal,
+      openSearchTensorBoardModal,
     ],
   );
 
@@ -519,8 +516,8 @@ const TableActionBar: React.FC<Props> = ({
         projectId={project.id}
         onSubmit={handleSubmitRetainLogs}
       />
-      <ExperimentTensorBoardModalComponent
-        selectedExperiments={selectedExperiments}
+      <SearchTensorBoardModalComponent
+        selectedSearches={selectedExperiments}
         workspaceId={project?.workspaceId}
       />
     </div>

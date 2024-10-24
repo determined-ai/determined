@@ -300,6 +300,12 @@ export interface LaunchTensorBoardParams {
   filters?: Api.V1BulkExperimentFilters;
 }
 
+export interface LaunchTensorBoardSearchesParams {
+  searchIds?: Array<number>;
+  workspaceId?: number;
+  filter?: string;
+}
+
 export interface LaunchJupyterLabParams {
   config?: {
     description?: string;
