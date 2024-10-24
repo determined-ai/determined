@@ -257,7 +257,7 @@ echo "Running cluster..."
 devcluster -c $TEMPYAML --oneshot > devcluster.log 2>&1 &
 
 devcluster_pid=$(ps -A | grep devcluster | head -n 1 | awk '{print $1}')
-echo f"devcluster started on pid: $devcluster_pid"
+echo "devcluster started on pid: $devcluster_pid"
 if [ "$CI" = true ]; then
     echo "Setting variables for CI"
     # exports for circle ci
@@ -267,3 +267,4 @@ if [ "$CI" = true ]; then
     echo "export SLURM_DEVCLUSTER_CONFIG=${TEMPYAML}" >> "$BASH_ENV"
     echo "export SLURM_DEVCLUSTER_PID=${devcluster_pid}" >> "$BASH_ENV"
 fi
+sleep 120 # DNJ DEBUG is this job just finishing too fast?
