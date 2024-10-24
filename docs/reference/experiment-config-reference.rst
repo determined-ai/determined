@@ -315,9 +315,21 @@ language syntax). For more information about the syntax, you can visit this `RE2
 
 -  ``action``: Optional. The action to take when the pattern is matched. Actions include:
 
-   -  ``exclude_node``: Excludes a failed trial's restart attempts from being scheduled on nodes
-      with matching error logs.
-   -  ``cancel_retries``: Prevents a trial from restarting if it reports a matching log.
+   -  ``exclude_node``: Excludes a failed trial's restart attempts (due to its ``max_restarts``
+      policy) from being scheduled on nodes with matched error logs. This is useful for bypassing
+      nodes with hardware issues, such as uncorrectable GPU ECC errors.
+
+      .. note::
+
+         This option is not supported on PBS systems.
+
+      For the agent resource manager, if a trial becomes unschedulable due to enough node
+      exclusions, and ``launch_error`` in the master config is set to true (default), the trial will
+      fail.
+
+   -  ``cancel_retries``: Prevents a trial from restarting if a log matches the pattern, even if the
+      trial has remaining max_restarts. This avoids using resources retrying a trial that encounters
+      failures unlikely to be resolved by retrying, such as CUDA memory issues.
 
 Example configuration:
 
@@ -334,12 +346,14 @@ Example configuration:
           type: cancel_retries
 
 When a log policy matches, its name (if provided) will be displayed as a label in the WebUI,
-allowing for easy identification of specific issues or events during a run.
+allowing for easy identification of specific issues or events during a run. These labels will appear
+in both the run table and run detail views.
 
 These settings may also be specified at the cluster or resource pool level through task container
 defaults.
 
-To find out more about log management, visit :ref:`Log Management <log-management>`.
+To find out more about log management features like **Log Search** and **Log Signal**, visit
+:ref:`Log Management <log-management>`.
 
 .. _log-retention-days:
 
