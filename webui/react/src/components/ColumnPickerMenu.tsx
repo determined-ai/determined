@@ -103,16 +103,17 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
-    const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce((acc, col) => ({ ...acc, [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)) }), {});
+    const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce(
+      (acc, col) => ({
+        ...acc,
+        [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)),
+      }),
+      {},
+    );
 
     const newColumns = allFilteredColumnsChecked
       ? columnState.filter((col) => !filteredColumnMap[col])
-      : [
-          ...new Set([
-            ...columnState,
-            ...filteredColumns.map((col) => formatColumnKey(col)),
-          ]),
-        ];
+      : [...new Set([...columnState, ...filteredColumns.map((col) => formatColumnKey(col))])];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
         newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
