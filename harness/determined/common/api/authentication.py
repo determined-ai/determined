@@ -704,3 +704,35 @@ def validate_token_store_v2(store: Any) -> None:
         if not all(api.canonicalize_master_url(key) == key for key in masters):
             # A non-canonical master url is present.
             raise api.errors.CorruptTokenCacheException()
+
+
+def login_with_token(
+    master_address: str,
+    token: str,
+    cert: Optional[certs.Cert] = None,
+) -> "api.Session":
+    """
+    Log in using a provided token, without interacting with the TokenStore on the file system.
+
+    This function sends a login request to the master to authenticate the token and retrieve user
+    information. If successful, it stores the token in the TokenStore and returns a new api.Session
+    object, which can be used for future authenticated requests.
+
+    Returns:
+        api.Session: A new session object with the authenticated token.
+    """
+    unauth_session = api.UnauthSession(master=master_address, cert=cert)
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        r = unauth_session.get("api/v1/me", headers=headers)
+        if r.status_code != 200:
+            raise api.errors.APIException(response=r)
+    except (api.errors.UnauthenticatedException, api.errors.APIException):
+        raise
+
+    username = r.json()["user"]["username"]
+
+    token_store = TokenStore(master_address)
+    token_store.set_token(username, token)
+    token_store.set_active(username)
+    return api.Session(master=master_address, username=username, token=token, cert=cert)
