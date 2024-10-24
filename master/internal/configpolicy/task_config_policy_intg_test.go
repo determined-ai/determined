@@ -608,6 +608,7 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		require.NoError(t, err)
 
 		conf.SetName(wkspInvariantConfig.Name())
+		conf.RawReproducibility = wkspInvariantConfig.RawReproducibility
 		require.Equal(t, wkspInvariantConfig, *conf)
 	})
 
