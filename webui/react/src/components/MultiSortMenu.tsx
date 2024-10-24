@@ -2,7 +2,7 @@ import Button from 'hew/Button';
 import { DirectionType, Sort, validSort } from 'hew/DataGrid/DataGrid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import Select from 'hew/Select';
+import Select, { Option } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 
 import { V1ColumnType } from 'services/api-ts-sdk';
@@ -130,16 +130,23 @@ export const sortMenuItemsForColumn = (
   });
 };
 
-const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => (
-  <Select
-    data-test="direction"
-    options={optionsByColumnType[type]}
-    placeholder="Select direction"
-    value={value}
-    width="100%"
-    onChange={(val) => onChange?.(val as DirectionType)}
-  />
-);
+const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => {
+  const options = optionsByColumnType[type];
+  return (
+    <Select
+      data-test="direction"
+      placeholder="Select direction"
+      value={value}
+      width="100%"
+      onChange={(val) => onChange?.(val as DirectionType)}>
+      {options.map((o) => (
+        <Option data-select-value={o.value} key={o.value}>
+          {o.label}
+        </Option>
+      ))}
+    </Select>
+  );
+};
 
 const ColumnOptions: React.FC<ColumnOptionsProps> = ({
   onChange,
