@@ -1,0 +1,62 @@
+---
+name: "Start minor release"
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The Determined minor version to release. E.g. 0.38.0. This will create a new release branch and make commits on main."
+        required: true
+
+jobs:
+  start-minor-release:
+    name: "Start minor release"
+    env:
+      GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Validate version"
+        shell: bash {0}
+        run: |
+          grep -E -o '[0-9]+\.[0-9]+\.0' <<<'${{ github.event.inputs.version }}'
+
+          ret=$?
+          if [[ $ret != 0 ]]; then
+            echo '::error::Version string must match <[0-9]+\.[0-9]+\.0>. Got: <${{ github.event.inputs.version }}>'
+            exit $ret
+          fi
+
+      - name: Configure git username and e-mail"
+        run: |
+          git config user.name  github-actions
+          git config user.email \
+            41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.0"
+
+      - name: "Install protobuf dependencies"
+        run: "make get-deps-proto"
+
+      - name: "Create release branch"
+        run: |
+          echo 'Creating branch: release-${{ github.event.inputs.version }}'
+          git checkout -b release-${{ github.event.inputs.version }}
+
+          echo 'Pushing release branch'
+          git push -u origin release-${{ github.event.inputs.version }}
+
+      - name: "Switch back to main"
+        run: "git checkout main"
+
+      - name: "Publish changes to main"
+        run: |
+          ./tools/scripts/lock-api-state.sh
+          ./tools/scripts/lock-published-urls.sh
+          git push origin main
