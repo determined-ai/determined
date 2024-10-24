@@ -327,15 +327,11 @@ class DeepSpeedTrialController:
             self.training_iterator = (
                 iter(self.training_loader) if self.training_loader is not None else None
             )
-            self.training_enumerator = enumerate(
-                dataloader_next(self.training_iterator), start=self.start_from_batch
-            )
 
             def cleanup_iterator() -> None:
                 # Explicitly trigger the iterator's shutdown (which happens in __del__).
                 # See the rather long note in pytorch/torch/utils/data/dataloader.py.
                 del self.training_iterator
-                del self.training_enumerator
 
             exit_stack.enter_context(defer(cleanup_iterator))
 
@@ -443,7 +439,7 @@ class DeepSpeedTrialController:
 
         while self._steps_until_complete(train_length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
-                self.training_enumerator, train_boundaries
+                train_boundaries
             )
 
             metrics = self._aggregate_training_metrics(training_metrics)
@@ -498,7 +494,7 @@ class DeepSpeedTrialController:
                 raise pytorch._ShouldExit(skip_exit_checkpoint=True)
 
     def _train_with_boundaries(
-        self, training_enumerator: Iterator, train_boundaries: List[pytorch._TrainBoundary]
+        self, train_boundaries: List[pytorch._TrainBoundary]
     ) -> Tuple[List[pytorch._TrainBoundary], List]:
         training_metrics = []
 
