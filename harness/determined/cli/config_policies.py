@@ -90,7 +90,7 @@ def delete_config_policies(args: argparse.Namespace) -> None:
 
 args_description: cli.ArgsDescription = [
     cli.Cmd(
-        "config-policies",
+        "config-policies cp",
         None,
         "manage config policies",
         [
@@ -110,7 +110,8 @@ args_description: cli.ArgsDescription = [
                         "--workspace-name",
                         type=str,
                         required=False,
-                        help="apply config policies to workspace",
+                        help="get config policies from this workspace. When not specified, get "
+                        "global config policies",
                     ),
                     cli.Group(cli.output_format_args["json"], cli.output_format_args["yaml"]),
                 ],
@@ -138,7 +139,8 @@ args_description: cli.ArgsDescription = [
                         "--workspace-name",
                         type=str,
                         required=False,
-                        help="apply config policies to this workspace",
+                        help="apply config policies to this workspace. When not specified, apply "
+                        "global config policies",
                     ),
                 ],
             ),
@@ -158,7 +160,8 @@ args_description: cli.ArgsDescription = [
                         "--workspace-name",
                         type=str,
                         required=False,
-                        help="apply config policies to workspace",
+                        help="delete config policies from this workspace. When not specified, "
+                        "delete global config policies",
                     ),
                 ],
             ),
