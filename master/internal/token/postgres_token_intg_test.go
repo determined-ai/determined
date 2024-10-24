@@ -48,16 +48,14 @@ func TestCreateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add an access Token.
-	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID)
+	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID, nil)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
-
-	expLifespan := DefaultTokenLifespan
-	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
-	require.Equal(t, expLifespan, actLifespan)
+	actLifespan := restoredToken.Expiry.Ptr()
+	require.Nil(t, actLifespan)
 
 	tokenInfos, err := getAccessToken(context.TODO(), testUser.ID)
 	require.NoError(t, err)
@@ -78,17 +76,17 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
-	expLifespan := DefaultTokenLifespan * 3
+	expLifespan := 30 * 24 * time.Hour * 3
 	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID,
-		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
+		&expLifespan, WithTokenDescription(desc))
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
 
-	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
-	require.Equal(t, expLifespan.Truncate(time.Second), actLifespan.Truncate(time.Second))
+	actLifespan := restoredToken.Expiry.Time.Sub(restoredToken.CreatedAt)
+	require.Equal(t, expLifespan, actLifespan)
 	require.Equal(t, desc, restoredToken.Description.String)
 
 	tokenInfos, err := getAccessToken(context.TODO(), testUser.ID)
@@ -108,7 +106,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	userID, _, _, err := addTestSession()
 	require.NoError(t, err)
 
-	token, tokenID, err := CreateAccessToken(context.TODO(), userID)
+	token, tokenID, err := CreateAccessToken(context.TODO(), userID, nil)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
@@ -117,7 +115,7 @@ func TestUpdateAccessToken(t *testing.T) {
 
 	// Test before updating Access token
 	description := "description"
-	require.True(t, accessToken.RevokedAt.IsZero())
+	require.False(t, accessToken.Proto().Revoked)
 	require.NotEqual(t, description, accessToken.Description)
 
 	opt := AccessTokenUpdateOptions{Description: &description, SetRevoked: true}
@@ -125,7 +123,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test after updating access token
-	require.False(t, tokenInfo.RevokedAt.IsZero())
+	require.True(t, tokenInfo.Proto().Revoked)
 	require.Contains(t, description, tokenInfo.Description.String)
 
 	// Delete from DB by UserID for cleanup
@@ -139,7 +137,7 @@ func TestGetAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken.
-	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID)
+	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID, nil)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
@@ -228,7 +226,6 @@ func getAccessToken(ctx context.Context, userID model.UserID) ([]model.UserSessi
 	err := db.Bun().NewSelect().
 		Table("user_sessions").
 		Where("user_id = ?", userID).
-		Where("revoked_at IS NULL").
 		Where("token_type = ?", model.TokenTypeAccessToken).
 		Scan(ctx, &tokenInfos)
 	if err != nil {

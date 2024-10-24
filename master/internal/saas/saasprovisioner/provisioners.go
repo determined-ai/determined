@@ -218,7 +218,7 @@ func (p *SAASProvisioner) GetAndMaybeProvisionUserByToken(ctx context.Context, t
 	session := &model.UserSession{
 		ID:     model.SessionID(u.ID),
 		UserID: u.ID,
-		Expiry: time.Unix(claims.ExpiresAt, 0),
+		Expiry: null.TimeFrom(time.Unix(claims.ExpiresAt, 0)),
 	}
 
 	return u, session, nil

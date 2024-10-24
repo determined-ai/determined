@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/token"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -67,11 +68,11 @@ func TestPostAccessTokenWithLifespan(t *testing.T) {
 	// With lifespan input
 	resp, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
 		UserId:      int32(userID),
-		Lifespan:    lifespan,
+		Lifespan:    ptrs.Ptr("5s"),
 		Description: desc,
 	})
-	token, tokenID := resp.Token, resp.TokenId
 	require.NoError(t, err)
+	token, tokenID := resp.Token, resp.TokenId
 	require.NotNil(t, token)
 	require.NotNil(t, tokenID)
 
@@ -261,13 +262,9 @@ func getTestUser(ctx context.Context) (model.UserID, error) {
 func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string,
 	tokenID model.TokenID,
 ) error {
-	expLifespan := token.DefaultTokenLifespan
-	var err error
-	if lifespan != "" {
-		expLifespan, err = time.ParseDuration(lifespan)
-		if err != nil {
-			return fmt.Errorf("Invalid duration format")
-		}
+	expLifespan, err := time.ParseDuration(lifespan)
+	if err != nil {
+		return fmt.Errorf("Invalid duration format")
 	}
 	var expiry, createdAt time.Time
 	err = db.Bun().NewSelect().

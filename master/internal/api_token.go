@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/token"
@@ -36,18 +38,39 @@ func (a *apiServer) PostAccessToken(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	tokenExpiration := token.DefaultTokenLifespan
-	if req.Lifespan != "" {
-		d, err := time.ParseDuration(req.Lifespan)
-		if err != nil || d < 0 {
-			return nil, status.Error(codes.InvalidArgument,
-				"Lifespan must be a Go-formatted duration string with a positive value")
+	defaultTokenLifespan, err := parseLifespanDays(a.m.config.Security.Token.DefaultLifespanDays)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Failed to parse default lifespan")
+	}
+
+	maxTokenLifespan, err := parseLifespanDays(a.m.config.Security.Token.MaxLifespanDays)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Failed to parse max lifespan")
+	}
+
+	tokenExpiration := defaultTokenLifespan
+	if req.Lifespan != nil {
+		if *req.Lifespan == config.InfiniteTokenLifespanString {
+			tokenExpiration = nil
+		} else {
+			d, err := time.ParseDuration(*req.Lifespan)
+			if err != nil || d < 0 {
+				return nil, status.Error(codes.InvalidArgument,
+					"Lifespan must be a Go-formatted duration string with a positive value")
+			}
+			tokenExpiration = &d
 		}
-		tokenExpiration = d
+	}
+
+	// Ensure the token lifespan does not exceed the maximum allowed.
+	if maxTokenLifespan != nil &&
+		tokenExpiration == nil ||
+		(maxTokenLifespan != nil && tokenExpiration != nil && *tokenExpiration > *maxTokenLifespan) {
+		return nil, status.Error(codes.InvalidArgument, "Token lifespan exceeds maximum allowed")
 	}
 
 	token, tokenID, err := token.CreateAccessToken(
-		ctx, targetFullUser.ID, token.WithTokenExpiry(&tokenExpiration), token.WithTokenDescription(req.Description))
+		ctx, targetFullUser.ID, tokenExpiration, token.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
 	}
@@ -184,4 +207,17 @@ func (a *apiServer) PatchAccessToken(
 		return nil, err
 	}
 	return &apiv1.PatchAccessTokenResponse{TokenInfo: patchedTokenInfo.Proto()}, nil
+}
+
+// parseLifespanDays parses a lifespan in days into either a time.Duration or nil if the lifespan is
+// infinite.
+func parseLifespanDays(dayDuration int) (*time.Duration, error) {
+	if dayDuration == config.InfiniteTokenLifespan {
+		return nil, nil
+	}
+	duration, err := time.ParseDuration(strconv.Itoa(dayDuration*24) + "h")
+	if err != nil {
+		return nil, err
+	}
+	return &duration, nil
 }
