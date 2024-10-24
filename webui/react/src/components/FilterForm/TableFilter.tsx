@@ -9,6 +9,7 @@ import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { FormKind } from 'components/FilterForm/components/type';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
+import { formatColumnKey } from 'utils/flatRun';
 
 interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;
@@ -32,7 +33,7 @@ const TableFilter = ({
   onIsOpenFilterChange,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns).filter(
-    (column) => !bannedFilterColumns?.has(column.column),
+    (column) => !bannedFilterColumns?.has(formatColumnKey(column)),
   );
   const fieldCount = useObservable(formStore.fieldCount);
   const formset = useObservable(formStore.formset);

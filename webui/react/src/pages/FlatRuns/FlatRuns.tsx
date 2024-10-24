@@ -237,7 +237,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const arrayTypeColumns = projectColumns
       .getOrElse([])
       .filter((col) => col.type === V1ColumnType.ARRAY)
-      .map((col) => col.column);
+      .map((col) => formatColumnKey(col));
     return arrayTypeColumns;
   }, [projectColumns]);
 
