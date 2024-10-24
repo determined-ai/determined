@@ -56,6 +56,12 @@ or CLI.
    both the invariant config and constraints for a given scope are updated together. It is not
    possible to update only one of these components independently.
 
+.. note::
+
+   Admins are encouraged to draft and save their config policies for each scope in separate YAML or 
+   JSON files. This allows for consistency between config policies set in the WebUI and CLI and
+   lessens the chance for unintended changes to be made to a given scope's policies.
+
 WebUI
 =====
 
