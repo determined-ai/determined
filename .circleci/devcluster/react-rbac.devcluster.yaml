@@ -1,0 +1,47 @@
+temp_dir: /tmp/priority_scheduler
+
+stages:
+  - db:
+      name: db
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        security:
+          initial_user_password: $INITIAL_USER_PASSWORD
+          authz:
+            rbac_ui_enabled: true
+        port: 8082
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
+        launch_error: false
+        telemetry:
+          enabled: false
+        resource_manager:
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+          type: agent
+
+  - agent:
+      name: agent1
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8082
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5

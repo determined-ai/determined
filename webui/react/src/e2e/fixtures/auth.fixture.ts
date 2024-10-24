@@ -3,6 +3,7 @@ import { Page } from '@playwright/test';
 import { expect } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { password, username } from 'e2e/utils/envVars';
+import { defaultURL } from 'e2e/utils/pages';
 
 export class AuthFixture {
   readonly #page: Page;
@@ -18,7 +19,7 @@ export class AuthFixture {
   }
 
   async login({
-    expectedURL = /dashboard/,
+    expectedURL = defaultURL,
     username = this.#USERNAME,
     password = this.#PASSWORD,
   }: {
