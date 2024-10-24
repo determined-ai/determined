@@ -1,10 +1,10 @@
 import Avatar from 'hew/Avatar';
-import CodeEditor from 'hew/CodeEditor';
 import { Modal } from 'hew/Modal';
 import { Label } from 'hew/Typography';
 import yaml from 'js-yaml';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import { NavigationItem } from 'components/NavigationSideBar';
 import { paths } from 'routes/utils';
 import { Template, Workspace } from 'types';
