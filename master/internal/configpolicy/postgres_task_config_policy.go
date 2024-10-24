@@ -3,6 +3,7 @@ package configpolicy
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -112,4 +113,56 @@ func DeleteConfigPolicies(ctx context.Context,
 			strings.ToLower(workloadType), scope, err)
 	}
 	return nil
+}
+
+// GetEnforcedConfig gets the fields of the global invariant config or constraint if specified, and
+// the workspace invariant config or constraint otherwise. If neither is specified, returns nil.
+func GetEnforcedConfig[T any](ctx context.Context, wkspID *int, policyType, field, workloadType string) (*T,
+	error,
+) {
+	if policyType != "invariant_config" && policyType != "constraints" {
+		return nil, fmt.Errorf("invalid policy type :%s", policyType)
+	}
+
+	var confBytes []byte
+	var conf T
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		globalField := tx.NewSelect().
+			ColumnExpr("? -> ? AS globconf", bun.Safe(policyType), bun.Safe(field)).
+			Table("task_config_policies").
+			Where("workspace_id IS NULL").
+			Where("workload_type = ?", workloadType)
+
+		wkspField := tx.NewSelect().
+			ColumnExpr("? -> ? AS wkspconf", bun.Safe(policyType), bun.Safe(field)).
+			Table("task_config_policies").
+			Where("workspace_id = '?'", wkspID).
+			Where("workload_type = ?", workloadType)
+
+		both := tx.NewSelect().TableExpr("global_field").
+			Join("NATURAL JOIN wksp_field")
+
+		err := tx.NewSelect().ColumnExpr("coalesce(globconf, wkspconf)").
+			With("global_field", globalField).
+			With("wksp_field", wkspField).
+			Table("both").With("both", both).
+			Scan(ctx, &confBytes)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error getting config field %s: %w", field, err)
+	}
+
+	err = json.Unmarshal(confBytes, &conf)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling config field: %w", err)
+	}
+
+	return &conf, nil
 }

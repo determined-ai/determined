@@ -2347,3 +2347,27 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	}
 	t.Error("expected experiments to delete after 15 seconds and they did not")
 }
+
+func TestGetWorkspaceByConfig(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+	})
+	require.NoError(t, err)
+	wkspName := &resp.Workspace.Name
+
+	t.Run("no workspace name", func(t *testing.T) {
+		w, err := getWorkspaceByConfig(expconf.ExperimentConfig{RawWorkspace: ptrs.Ptr("")})
+		require.NoError(t, err)
+
+		// Verify we get the Uncategorized workspace.
+		require.Equal(t, 1, w.ID)
+	})
+	t.Run("has workspace name", func(t *testing.T) {
+		w, err := getWorkspaceByConfig(expconf.ExperimentConfig{
+			RawWorkspace: wkspName,
+		})
+		require.NoError(t, err)
+		require.Equal(t, *wkspName, w.Name)
+	})
+}
