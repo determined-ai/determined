@@ -72,8 +72,8 @@ const FilterField = ({
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
   const currentColumn = useMemo(
-    () => columns.find((c) => c.column === field.columnName),
-    [columns, field.columnName],
+    () => columns.find((c) => c.type === field.type && c.column === field.columnName),
+    [columns, field.columnName, field.type],
   );
 
   const columnType = useMemo(() => {

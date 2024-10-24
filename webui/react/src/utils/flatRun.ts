@@ -122,7 +122,7 @@ export const removeColumnTypePrefix = (columnName: V1ColumnType): string => {
   return columnName.replace('COLUMN_TYPE_', '');
 };
 
-/// wanna know why this separator is used? see https://hpe-aiatscale.atlassian.net/browse/ET-785
+/// we want to use special characters as "separators" to prevent user input to match with such when creating the arbitrary metadata
 export const COLUMN_SEPARATOR = '␟';
 export const METADATA_SEPARATOR = '\u241F' as const; // TODO: unify after merging PR 10052
 
