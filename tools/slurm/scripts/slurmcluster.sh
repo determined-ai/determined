@@ -267,4 +267,4 @@ if [ "$CI" = true ]; then
     echo "export SLURM_DEVCLUSTER_CONFIG=${TEMPYAML}" >> "$BASH_ENV"
     echo "export SLURM_DEVCLUSTER_PID=${devcluster_pid}" >> "$BASH_ENV"
 fi
-sleep 120 # DNJ DEBUG is this job just finishing too fast?
+sleep 120 # We have to wait for the next jobs to start otherwise this can just skip jobs
