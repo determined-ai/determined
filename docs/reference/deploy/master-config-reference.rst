@@ -1528,6 +1528,11 @@ Specifies configuration settings for SSH.
 
 Number of bits to use when generating RSA keys for SSH for tasks. Maximum size is 16384.
 
+``key_type``
+============
+
+Specifies the crypto system for SSH. Currently accepts ``RSA``, ``ECDSA`` or ``ED25519``.
+
 ``authz``
 =========
 

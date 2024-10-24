@@ -102,7 +102,7 @@ message LaunchShellRequest {
   string template_name = 2;
   // The files to run with the command.
   repeated determined.util.v1.File files = 3;
-  // Additional data.
+  // Deprecated: Do not use.
   bytes data = 4;
   // Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
   int32 workspace_id = 5;

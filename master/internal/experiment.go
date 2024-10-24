@@ -158,7 +158,7 @@ func newExperiment(
 
 	taskSpec.AgentUserGroup = agentUserGroup
 
-	generatedKeys, err := ssh.GenerateKey(taskSpec.SSHRsaSize, nil)
+	generatedKeys, err := ssh.GenerateKey(taskSpec.SSHConfig)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "generating ssh keys for trials")
 	}
