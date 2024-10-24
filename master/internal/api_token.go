@@ -19,8 +19,8 @@ import (
 )
 
 var errAccessTokenRequiresEE = status.Error(
-	codes.InvalidArgument,
-	"users cannot log in with an access token. This feature requires the Enterprise Edition.",
+	codes.FailedPrecondition,
+	"users cannot log in with an access token without a valid Enterprise Edition license set up.",
 )
 
 // PostAccessToken takes user id and optional lifespan, description and creates an
