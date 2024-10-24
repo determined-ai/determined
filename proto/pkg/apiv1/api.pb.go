@@ -4640,6 +4640,7 @@ type DeterminedClient interface {
 	DeleteWorkspaceConfigPolicies(ctx context.Context, in *DeleteWorkspaceConfigPoliciesRequest, opts ...grpc.CallOption) (*DeleteWorkspaceConfigPoliciesResponse, error)
 	// Delete global task config policies.
 	DeleteGlobalConfigPolicies(ctx context.Context, in *DeleteGlobalConfigPoliciesRequest, opts ...grpc.CallOption) (*DeleteGlobalConfigPoliciesResponse, error)
+	// Get runs in a project, grouped by a provided column.
 	GetRunGroups(ctx context.Context, in *GetRunGroupsRequest, opts ...grpc.CallOption) (*GetRunGroupsResponse, error)
 }
 
@@ -7908,6 +7909,7 @@ type DeterminedServer interface {
 	DeleteWorkspaceConfigPolicies(context.Context, *DeleteWorkspaceConfigPoliciesRequest) (*DeleteWorkspaceConfigPoliciesResponse, error)
 	// Delete global task config policies.
 	DeleteGlobalConfigPolicies(context.Context, *DeleteGlobalConfigPoliciesRequest) (*DeleteGlobalConfigPoliciesResponse, error)
+	// Get runs in a project, grouped by a provided column.
 	GetRunGroups(context.Context, *GetRunGroupsRequest) (*GetRunGroupsResponse, error)
 }
 

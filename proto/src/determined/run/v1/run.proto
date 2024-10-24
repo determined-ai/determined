@@ -241,12 +241,7 @@ message Run {
 message RunGroup {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [
-        "start_time",
-        "state",
-        "checkpoint_size",
-        "checkpoint_count"
-      ]
+      required: [ "start_time", "state", "checkpoint_size", "checkpoint_count" ]
     }
   };
   // Name of the grouping category.

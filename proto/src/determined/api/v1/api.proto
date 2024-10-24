@@ -2887,13 +2887,13 @@ service Determined {
     };
   }
 
-  rpc GetRunGroups(GetRunGroupsRequest)
-    returns (GetRunGroupsResponse) {
-      option (google.api.http) = {
-        get: "/api/v1/runs/groups"
-      };
-      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-        tags: "Internal"
-      };
-    }
+  // Get runs in a project, grouped by a provided column.
+  rpc GetRunGroups(GetRunGroupsRequest) returns (GetRunGroupsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/runs/groups"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }

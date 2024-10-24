@@ -261,7 +261,6 @@ message PostRunMetadataResponse {
   google.protobuf.Struct metadata = 1;
 }
 
-
 // Group runs in Run Table.
 message GetRunGroupsRequest {
   // ID of the project to look at
