@@ -146,6 +146,12 @@ PARENT_PATH=$(
 TEMPDIR=$(mktemp -d)
 echo "Using tempdir $TEMPDIR"
 
+# for tests to consume 
+export SLURM_GCLOUD_ZONE=$ZONE
+export SLURM_GCLOUD_INSTANCE_NAME=$INSTANCE_NAME
+export SLURM_GCLOUD_PROJECT=$PROJECT
+
+
 # Wait for SSH (terraform returns before ssh is up).
 echo "Trying SSH connection..."
 until gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- ls; do
@@ -235,6 +241,7 @@ TEMPYAML=$TEMPDIR/slurmcluster.yaml
 envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML
 echo "Generated devcluster file: $TEMPYAML"
 
+
 # We connect to the Slurm VM using an external IP address, but although it's a
 # single node cluster, the Determined master running on the test machine tries
 # to connect to the shell container using its private 10.X.X.X address.
@@ -245,6 +252,18 @@ echo "Generated devcluster file: $TEMPYAML"
 # Note: Do not set ALL_PROXY before calling "gcloud" or it will fail.
 export ALL_PROXY=socks5://localhost:${SOCKS5_PROXY_PORT}
 
-# Run devcluster.
+# Run devcluster. # DNJ TODO add logging back
 echo "Running cluster..."
-devcluster -c $TEMPYAML --oneshot
+devcluster -c $TEMPYAML --oneshot > devcluster.log 2>&1 &
+
+devcluster_pid=$(ps -A | grep devcluster | head -n 1 | awk '{print $1}')
+echo f"devcluster started on pid: $devcluster_pid"
+if [ "$CI" = true ]; then
+    echo "Setting variables for CI"
+    # exports for circle ci
+    echo "export SLURM_GCLOUD_ZONE=${SLURM_GCLOUD_ZONE}" >> "$BASH_ENV"
+    echo "export SLURM_GCLOUD_INSTANCE_NAME=${SLURM_GCLOUD_INSTANCE_NAME}" >> "$BASH_ENV"
+    echo "export SLURM_GCLOUD_PROJECT=${SLURM_GCLOUD_PROJECT}" >> "$BASH_ENV"
+    echo "export SLURM_DEVCLUSTER_CONFIG=${TEMPYAML}" >> "$BASH_ENV"
+    echo "export SLURM_DEVCLUSTER_PID=${devcluster_pid}" >> "$BASH_ENV"
+fi

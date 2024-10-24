@@ -61,7 +61,7 @@ class ManagedK8sCluster(abstract_cluster.Cluster):
 
         patch = [{"op": "add", "path": "/spec/replicas", "value": desired_pods}]
         self.v1.patch_namespaced_deployment_scale(
-            name=master_deployment.metadata.name,
+            name=f"{master_deployment.metadata.name}",
             namespace=master_deployment.metadata.namespace,
             body=patch,
         )
@@ -86,7 +86,9 @@ class ManagedK8sCluster(abstract_cluster.Cluster):
         WAIT_FOR_UP = 60
         for _ in range(WAIT_FOR_UP):
             try:
-                assert len(managed_cluster.get_agent_data(sess)) > 0
+                agent_data = managed_cluster.get_agent_data(sess)
+                assert len(agent_data) > 0
+                print(f"DNJ DEBUG agent data len: {len(agent_data)}, data {agent_data}")
                 return
             except Exception as e:
                 print(f"Can't reach master, retrying again {e}")
