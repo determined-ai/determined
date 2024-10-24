@@ -80,28 +80,28 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 			}
 
 			if compiledRegex.MatchString(log.Log) {
-				if policy.Action() != nil {
-					switch policy.Action().Type {
-					case expconf.LogActionTypeCancelRetries:
-						if err := addDontRetry(
-							ctx, model.TaskID(log.TaskID), *log.AgentID, *pattern, log.Log,
-						); err != nil {
-							return fmt.Errorf("adding don't retry: %w", err)
-						}
+				err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+					if policy.Action() != nil {
+						switch policy.Action().Type {
+						case expconf.LogActionTypeCancelRetries:
+							if err := addDontRetry(
+								ctx, model.TaskID(log.TaskID), *log.AgentID, *pattern, log.Log, tx,
+							); err != nil {
+								return fmt.Errorf("adding don't retry: %w", err)
+							}
 
-					case expconf.LogActionTypeExcludeNode:
-						if err := addRetryOnDifferentNode(
-							ctx, model.TaskID(log.TaskID), *log.AgentID, *pattern, log.Log,
-						); err != nil {
-							return fmt.Errorf("adding retry on different node: %w", err)
+						case expconf.LogActionTypeExcludeNode:
+							if err := addRetryOnDifferentNode(
+								ctx, model.TaskID(log.TaskID), *log.AgentID, *pattern, log.Log, tx,
+							); err != nil {
+								return fmt.Errorf("adding retry on different node: %w", err)
+							}
+						default:
+							return fmt.Errorf("unrecognized log pattern policy type")
 						}
-					default:
-						return fmt.Errorf("unrecognized log pattern policy type")
 					}
-				}
 
-				if policy.Name() != nil {
-					err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+					if policy.Name() != nil {
 						if _, err := tx.NewUpdate().Model(&model.Task{}).
 							Set("log_policy_matched = ?", *policy.Name()).
 							Where("task_id = ?", log.TaskID).
@@ -116,12 +116,12 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 							Exec(ctx); err != nil {
 							return fmt.Errorf("updating log signal of task %s: %w", log.TaskID, err)
 						}
-
-						return nil
-					})
-					if err != nil {
-						return fmt.Errorf("updating log_policy_matched: %w", err)
 					}
+
+					return nil
+				})
+				if err != nil {
+					return fmt.Errorf("\"%s\" matches pattern \"%s\" but failed to update db: %w", log.Log, *pattern, err)
 				}
 			}
 		}
@@ -159,7 +159,7 @@ func GetBlockedNodes(ctx context.Context, taskID model.TaskID) ([]string, error)
 }
 
 func addRetryOnDifferentNode(
-	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
+	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string, tx bun.Tx,
 ) error {
 	m := &retryOnDifferentNode{
 		TaskID:        taskID,
@@ -167,7 +167,7 @@ func addRetryOnDifferentNode(
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
 	}
-	res, err := db.Bun().NewInsert().Model(m).
+	res, err := tx.NewInsert().Model(m).
 		On("CONFLICT (task_id, node_name, regex) DO NOTHING"). // Only care about the first log.
 		Exec(ctx)
 	if err != nil {
@@ -202,7 +202,7 @@ type dontRetry struct {
 }
 
 func addDontRetry(
-	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
+	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string, tx bun.Tx,
 ) error {
 	m := &dontRetry{
 		TaskID:        taskID,
@@ -210,7 +210,7 @@ func addDontRetry(
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
 	}
-	if _, err := db.Bun().NewInsert().Model(m).
+	if _, err := tx.NewInsert().Model(m).
 		On("CONFLICT (task_id, regex) DO NOTHING"). // Only care about the first log.
 		Exec(ctx); err != nil {
 		return fmt.Errorf("adding don't retry policy %+v: %w", m, err)

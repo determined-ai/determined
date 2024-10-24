@@ -171,6 +171,8 @@ func (s *LogActionV0) UnmarshalJSON(data []byte) error {
 		case LogActionTypeCancelRetries, LogActionTypeExcludeNode:
 			*s = LogActionV0{Type: lat}
 			return nil
+		default:
+			return fmt.Errorf("unrecognized action type: %s, data: %q", lat, string(data))
 		}
 	}
 
