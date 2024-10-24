@@ -813,24 +813,16 @@ class DeepSpeedTrialController:
                         if isinstance(metric, torch.Tensor):
                             metric = metric.cpu().detach().numpy()
                         vld_metrics[name] = metric
-                # Verify validation metric names are the same across batches.
-                if keys is None:
-                    keys = vld_metrics.keys()
-                else:
-                    if keys != vld_metrics.keys():
-                        raise ValueError(
-                            "Validation metric names must match across all batches of data: "
-                            f"{keys} != {vld_metrics.keys()}.",
-                        )
-                if not isinstance(vld_metrics, dict):
-                    raise TypeError(
-                        "validation_metrics() must return a "
-                        "dictionary of string names to Tensor "
-                        "metrics; "
-                        f"got {vld_metrics}.",
-                    )
-                # TODO: For performance perform -> cpu() only at the end of validation.
-                batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
+                    # Verify validation metric names are the same across batches.
+                    if keys is None:
+                        keys = vld_metrics.keys()
+                    else:
+                        if keys != vld_metrics.keys():
+                            raise ValueError(
+                                "Validation metric names must match across all batches of data: "
+                                f"{keys} != {vld_metrics.keys()}.",
+                            )
+                    batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
                 if self.test_mode:
                     break
 
