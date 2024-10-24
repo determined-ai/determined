@@ -506,7 +506,7 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 			WorkspaceId:  workspaceID,
 			WorkloadType: model.NTSCType,
 		})
-	require.Equal(t, status.Error(codes.PermissionDenied, err.Error()), err)
+	require.Equal(t, status.Error(codes.PermissionDenied, expectedErr.Error()), err)
 
 	_, err = api.PutWorkspaceConfigPolicies(ctx,
 		&apiv1.PutWorkspaceConfigPoliciesRequest{
@@ -514,7 +514,7 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 			WorkloadType:   model.NTSCType,
 			ConfigPolicies: validConstraintsPolicyYAML,
 		})
-	require.Equal(t, status.Error(codes.PermissionDenied, err.Error()), err)
+	require.Equal(t, status.Error(codes.PermissionDenied, expectedErr.Error()), err)
 
 	// (Workspace-level) Nil error returns whatever the request returned.
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
@@ -544,14 +544,14 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 
 	_, err = api.DeleteGlobalConfigPolicies(ctx,
 		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
-	require.Equal(t, status.Error(codes.PermissionDenied, err.Error()), err)
+	require.Equal(t, status.Error(codes.PermissionDenied, expectedErr.Error()), err)
 
 	_, err = api.PutGlobalConfigPolicies(ctx,
 		&apiv1.PutGlobalConfigPoliciesRequest{
 			WorkloadType:   model.NTSCType,
 			ConfigPolicies: validNTSCConfigPolicyYAML,
 		})
-	require.Equal(t, status.Error(codes.PermissionDenied, err.Error()), err)
+	require.Equal(t, status.Error(codes.PermissionDenied, expectedErr.Error()), err)
 
 	// (Global) Nil error returns whatever the request returned.
 	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
