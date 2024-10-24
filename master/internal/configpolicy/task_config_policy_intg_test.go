@@ -34,7 +34,8 @@ func TestFindAllowedPriority(t *testing.T) {
 	user := db.RequireMockUser(t, pgDB)
 	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit), model.ExperimentType)
 	limit, exists, err := FindAllowedPriority(nil, model.ExperimentType)
-	require.Equal(t, globalLimit, limit)
+	require.NotNil(t, limit)
+	require.Equal(t, globalLimit, *limit)
 	require.True(t, exists)
 	require.NoError(t, err)
 
@@ -44,7 +45,8 @@ func TestFindAllowedPriority(t *testing.T) {
 	addConfig(t, user, nil, invariantConfig, model.NTSCType)
 	limit, _, err = FindAllowedPriority(nil, model.NTSCType)
 	require.ErrorIs(t, err, errPriorityImmutable)
-	require.Equal(t, configPriority, limit)
+	require.NotNil(t, limit)
+	require.Equal(t, configPriority, *limit)
 
 	// Experiment priority set.
 	configPriority = 7
@@ -52,7 +54,8 @@ func TestFindAllowedPriority(t *testing.T) {
 	addConfig(t, user, nil, invariantConfig, model.ExperimentType)
 	limit, _, err = FindAllowedPriority(nil, model.ExperimentType)
 	require.ErrorIs(t, err, errPriorityImmutable)
-	require.Equal(t, configPriority, limit)
+	require.NotNil(t, limit)
+	require.Equal(t, configPriority, *limit)
 }
 
 func TestPriorityUpdateAllowed(t *testing.T) {
