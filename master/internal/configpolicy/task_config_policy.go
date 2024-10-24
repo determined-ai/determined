@@ -317,7 +317,7 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 
 	// No invariant configs. Check for constraints.
 	if globalExists {
-		return priorityWithinLimit(priority, *wkspEnforcedPriority, smallerHigher), nil
+		return priorityWithinLimit(priority, *globalEnforcedPriority, smallerHigher), nil
 	}
 	if wkspExists {
 		return priorityWithinLimit(priority, *wkspEnforcedPriority, smallerHigher), nil
