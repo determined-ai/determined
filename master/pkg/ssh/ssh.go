@@ -96,7 +96,6 @@ func generateECDSAKey() (PrivateAndPublicKeys, error) {
 }
 
 func generateED25519Key() (PrivateAndPublicKeys, error) {
-
 	ed25519PublicKey, privateKey, err := ed25519.GenerateKey(nil)
 	if err != nil {
 		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ED25519 private key")
@@ -117,5 +116,4 @@ func generateED25519Key() (PrivateAndPublicKeys, error) {
 		PrivateKey: pem.EncodeToMemory(block),
 		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
 	}, nil
-
 }
