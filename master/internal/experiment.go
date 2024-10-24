@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
@@ -65,7 +65,7 @@ type (
 		activeConfig        expconf.ExperimentConfig
 		db                  *internaldb.PgDB
 		rm                  rm.ResourceManager
-		syslog              *logrus.Entry
+		syslog              *log.Entry
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 		continueTrials      bool
@@ -168,7 +168,7 @@ func newExperiment(
 		activeConfig: activeConfig,
 		db:           m.db,
 		rm:           m.rm,
-		syslog: logrus.WithFields(logrus.Fields{
+		syslog: log.WithFields(log.Fields{
 			"component":     "experiment",
 			"job-id":        expModel.JobID,
 			"experiment-id": expModel.ID,
@@ -411,6 +411,39 @@ func (e *internalExperiment) PatchTrialState(msg experiment.PatchTrialState) err
 func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	// Only allow max slots changes if it is not specified as an invariant config or enforced as a
+	// constraint.
+
+	w, err := getWorkspaceByConfig(e.activeConfig)
+	if err != nil {
+		log.Warnf("unable to set max slots")
+		return
+	}
+	enforcedMaxSlots, err := configpolicy.GetEnforcedConfig[int](context.TODO(), &w.ID,
+		"invariant_config",
+		"'resources' -> 'max_slots'", model.ExperimentType)
+	if err != nil {
+		log.Warnf("unable to set max slots")
+		return
+	}
+
+	if enforcedMaxSlots != nil {
+		msg.MaxSlots = enforcedMaxSlots
+	}
+
+	maxSlotsLimit, err := configpolicy.GetEnforcedConfig[int](context.TODO(), &w.ID,
+		"constraints",
+		"'resources' -> 'max_slots'", model.ExperimentType)
+	if err != nil {
+		log.Warnf("unable to set max slots")
+		return
+	}
+
+	if enforcedMaxSlots == nil && maxSlotsLimit != nil && msg.MaxSlots != nil &&
+		*msg.MaxSlots > *maxSlotsLimit {
+		log.Warnf("unable to set max slots")
+		return
+	}
 
 	resources := e.activeConfig.Resources()
 	resources.SetMaxSlots(msg.MaxSlots)
