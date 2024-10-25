@@ -374,7 +374,7 @@ const idToFilter = (operator: Operator, id: number) =>
 export const getIdsFilter = (
   filterFormSet: FilterFormSetWithoutId,
   selection: SelectionType,
-): FilterFormSetWithoutId | undefined => {
+): FilterFormSetWithoutId => {
   const filterGroup: FilterFormSetWithoutId['filterGroup'] =
     selection.type === 'ALL_EXCEPT'
       ? {

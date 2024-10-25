@@ -25,9 +25,12 @@ const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <FlatRunActionButton
+        filter="{}"
         isMobile={false}
         projectId={1}
         selectedRuns={selectedFlatRuns}
+        selection={{ selections: selectedFlatRuns.map((run) => run.id), type: 'ONLY_IN' }}
+        selectionSize={selectedFlatRuns.length}
         workspaceId={1}
         onActionComplete={onActionComplete}
         onActionSuccess={onActionSuccess}

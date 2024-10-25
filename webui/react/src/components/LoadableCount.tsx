@@ -1,3 +1,4 @@
+import Button from 'hew/Button';
 import { Loadable } from 'hew/utils/loadable';
 import { useMemo } from 'react';
 
@@ -10,6 +11,9 @@ interface Props {
   total: Loadable<number>;
   labelSingular: string;
   labelPlural: string;
+  onActualSelectAll?: () => void;
+  onClearSelect?: () => void;
+  pageSize?: number;
   selectedCount: number;
 }
 
@@ -17,6 +21,9 @@ const LoadableCount: React.FC<Props> = ({
   total,
   labelPlural,
   labelSingular,
+  onActualSelectAll,
+  onClearSelect,
+  pageSize = 20,
   selectedCount,
 }: Props) => {
   const isMobile = useMobile();
@@ -41,11 +48,37 @@ const LoadableCount: React.FC<Props> = ({
     });
   }, [labelPlural, labelSingular, total, selectedCount]);
 
+  const actualSelectAll = useMemo(() => {
+    return Loadable.match(total, {
+      _: () => null,
+      Loaded: (loadedTotal) => {
+        if (onActualSelectAll && selectedCount >= pageSize && selectedCount < loadedTotal) {
+          return (
+            <Button data-test="select-all" type="text" onClick={onActualSelectAll}>
+              Select all {labelPlural} in table
+            </Button>
+          );
+        } else if (onClearSelect && (selectedCount >= pageSize || selectedCount === loadedTotal)) {
+          return (
+            <Button data-test="clear-selection" type="text" onClick={onClearSelect}>
+              Clear Selection
+            </Button>
+          );
+        }
+
+        return null;
+      },
+    });
+  }, [labelPlural, onActualSelectAll, onClearSelect, pageSize, selectedCount, total]);
+
   if (!isMobile) {
     return (
-      <span className={css.base} data-test="count">
-        {selectionLabel}
-      </span>
+      <>
+        <span className={css.base} data-test="count">
+          {selectionLabel}
+        </span>
+        {actualSelectAll}
+      </>
     );
   } else {
     return null;
