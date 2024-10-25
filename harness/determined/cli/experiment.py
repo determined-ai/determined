@@ -190,7 +190,7 @@ def submit_experiment(args: argparse.Namespace) -> None:
 
     if args.test_mode:
         warnings.warn(
-            "The --test flag to det experiment create has been deprecated in Determined XXYYZZ and "
+            "The --test flag to det experiment create has been deprecated in Determined 0.38.0 and "
             "will be removed in a future version.  The searcher.max_length setting of the "
             "experiment config has also been deprecated, and since --test mode relies on that "
             "setting, --test mode will cease to work as soon as you remove max_length.",
@@ -277,7 +277,7 @@ def local_experiment(args: argparse.Namespace) -> None:
 
     warnings.warn(
         "The --local and --test flags to det experiment create have both been deprecated in "
-        "Determined XXYYZZ and will be removed in a future version.  The searcher.max_length "
+        "Determined 0.38.0 and will be removed in a future version.  The searcher.max_length "
         "setting of the experiment config has also been deprecated, and since --test mode relies "
         "on that setting, --test mode will cease to work as soon as you remove max_length.  "
         "Additionally, --local mode should no longer be necessary, as you should be able to just "

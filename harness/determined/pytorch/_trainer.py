@@ -194,7 +194,7 @@ class Trainer:
                 if max_length_val:
                     warnings.warn(
                         "Configuring `max_length` from the `searcher.max_length` experiment "
-                        "config, which was deprecated in XXYYZZ and will be removed in a future "
+                        "config, which was deprecated in 0.38.0 and will be removed in a future "
                         "release. Please set `fit(max_length=X)` with your desired training length "
                         "directly.",
                         FutureWarning,
