@@ -890,6 +890,13 @@ class TFKerasTrialController(det.TrialController):
         if self.env.experiment_config.average_training_metrics_enabled():
             final_metrics = self._allreduce_logs(final_metrics)
 
+        # Inject batches and epochs into avg metrics.
+        # (this is after batches and possibly epochs have been updated)
+        final_metrics["batches"] = final_metrics.get(
+            "batches", self.multiplexer.state.total_batches
+        )
+        final_metrics["epochs"] = final_metrics.get("epochs", self.multiplexer.state.epoch)
+
         self.multiplexer._train_workload_end(final_metrics)
         self._stop_training_check()
 
@@ -961,6 +968,11 @@ class TFKerasTrialController(det.TrialController):
 
         step_duration = time.time() - validation_start_time
         logger.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
+
+        # Inject batches and epochs into validation metrics.
+        # (this is after batches and possibly epochs have been updated)
+        metrics["batches"] = metrics.get("batches", self.multiplexer.state.total_batches)
+        metrics["epochs"] = metrics.get("epochs", self.multiplexer.state.epoch)
 
         self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         self.upload_tb_files()
