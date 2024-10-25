@@ -27,7 +27,6 @@ func (a *apiServer) PostAccessToken(
 	if err != nil {
 		return nil, err
 	}
-
 	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
@@ -37,30 +36,19 @@ func (a *apiServer) PostAccessToken(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	defaultTokenLifespan, err := a.m.config.Security.Token.GetDefaultLifespan()
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to parse default lifespan")
-	}
-
-	maxTokenLifespan, err := a.m.config.Security.Token.GetMaxLifespan()
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to parse max lifespan")
-	}
-
-	tokenExpiration := defaultTokenLifespan
+	maxTokenLifespan := a.m.config.Security.Token.MaxLifespan()
+	tokenExpiration := a.m.config.Security.Token.DefaultLifespan()
 	if req.Lifespan != nil {
 		if *req.Lifespan == config.InfiniteTokenLifespanString {
 			tokenExpiration = maxTokenLifespan
 		} else {
 			d, err := time.ParseDuration(*req.Lifespan)
 			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"failed to parse lifespan %s: %s", *req.Lifespan, err)
+			} else if d < 0 {
 				return nil, status.Error(codes.InvalidArgument,
-					fmt.Sprintf("Failed to parse lifespan %s, with error: %v", *req.Lifespan,
-						err.Error()))
-			}
-			if d < 0 {
-				return nil, status.Error(codes.InvalidArgument,
-					"Lifespan must be a Go-formatted duration string with a positive value")
+					"lifespan must be a Go-formatted duration string with a positive value")
 			}
 			tokenExpiration = d
 		}
@@ -68,10 +56,9 @@ func (a *apiServer) PostAccessToken(
 
 	// Ensure the token lifespan does not exceed the maximum allowed or minimum -1 value.
 	if tokenExpiration > maxTokenLifespan {
-		return nil, status.Error(codes.InvalidArgument, "Token Lifespan must be less than max"+
-			" token lifespan")
+		return nil, status.Error(codes.InvalidArgument, "token Lifespan must be less than max token lifespan")
 	}
-	if tokenExpiration < -1 {
+	if tokenExpiration < 0 {
 		return nil, status.Error(codes.InvalidArgument, "token lifespan must be greater than 0 days,"+
 			" unless set to -1 for infinite lifespan")
 	}

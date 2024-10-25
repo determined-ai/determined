@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
@@ -48,9 +47,9 @@ const (
 	InfiniteTokenLifespanString = "-1"
 	// DefaultTokenLifespanDays is the default token lifespan in days.
 	DefaultTokenLifespanDays = 30
-	// MaxAllowedTokenMaxLifespan is the max allowed lifespan for tokens.
+	// MaxAllowedTokenLifespanDays is the max allowed lifespan for tokens.
 	// This is the maximum number of days a go duration can represent.
-	MaxAllowedTokenMaxLifespan = 106751
+	MaxAllowedTokenLifespanDays = 106751
 )
 
 type (
@@ -410,10 +409,10 @@ func (c *Config) Resolve() error {
 	}
 
 	if c.Security.Token.MaxLifespanDays == InfiniteTokenLifespan {
-		c.Security.Token.MaxLifespanDays = MaxAllowedTokenMaxLifespan
+		c.Security.Token.MaxLifespanDays = MaxAllowedTokenLifespanDays
 	}
 	if c.Security.Token.DefaultLifespanDays == InfiniteTokenLifespan {
-		c.Security.Token.DefaultLifespanDays = MaxAllowedTokenMaxLifespan
+		c.Security.Token.DefaultLifespanDays = MaxAllowedTokenLifespanDays
 	}
 
 	return nil
@@ -479,24 +478,14 @@ type TokenConfig struct {
 	DefaultLifespanDays int `json:"default_lifespan_days"`
 }
 
-// GetMaxLifespan returns the parsed time.Duration for MaxLifespanDays.
-func (t *TokenConfig) GetMaxLifespan() (time.Duration, error) {
-	return ParseLifespanDays(t.MaxLifespanDays)
+// MaxLifespan returns MaxLifespanDays as a time.Duration.
+func (t *TokenConfig) MaxLifespan() time.Duration {
+	return time.Duration(t.MaxLifespanDays) * 24 * time.Hour
 }
 
-// GetDefaultLifespan returns the parsed time.Duration for DefaultLifespanDays.
-func (t *TokenConfig) GetDefaultLifespan() (time.Duration, error) {
-	return ParseLifespanDays(t.DefaultLifespanDays)
-}
-
-// ParseLifespanDays parses a lifespan in days into either a time.Duration or nil if the lifespan is
-// infinite.
-func ParseLifespanDays(dayDuration int) (time.Duration, error) {
-	duration, err := time.ParseDuration(strconv.Itoa(dayDuration*24) + "h")
-	if err != nil {
-		return 0, err
-	}
-	return duration, nil
+// DefaultLifespan returns DefaultLifespanDays as a time.Duration.
+func (t *TokenConfig) DefaultLifespan() time.Duration {
+	return time.Duration(t.DefaultLifespanDays) * 24 * time.Hour
 }
 
 // Validate implements the check.Validatable interface for the TokenConfig.
@@ -516,14 +505,14 @@ func (t *TokenConfig) Validate() []error {
 		errs = append(errs, errors.New("default token lifespan must be less than max token"+
 			" lifespan"))
 	}
-	if t.MaxLifespanDays > MaxAllowedTokenMaxLifespan {
-		errs = append(errs, fmt.Errorf("max token lifespan should be less than %v, as per"+
-			" Go standards", MaxAllowedTokenMaxLifespan),
+	if t.MaxLifespanDays > MaxAllowedTokenLifespanDays {
+		errs = append(errs, fmt.Errorf("max token lifespan should be less than %v, Go's max duration"+
+			" value", MaxAllowedTokenLifespanDays),
 		)
 	}
-	if t.DefaultLifespanDays > MaxAllowedTokenMaxLifespan {
-		errs = append(errs, fmt.Errorf("default token lifespan days should be less than %v, as per"+
-			" Go standards", MaxAllowedTokenMaxLifespan),
+	if t.DefaultLifespanDays > MaxAllowedTokenLifespanDays {
+		errs = append(errs, fmt.Errorf("default token lifespan days should be less than %v, Go's max"+
+			" duration value", MaxAllowedTokenLifespanDays),
 		)
 	}
 	return errs
