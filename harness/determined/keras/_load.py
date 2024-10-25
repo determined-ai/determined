@@ -38,7 +38,7 @@ def load_model_from_checkpoint_path(
 
     .. warning::
 
-        load_model_from_checkpoint_path has been deprecated in Determined XXYYZZ and will be removed
+        load_model_from_checkpoint_path has been deprecated in Determined 0.38.0 and will be removed
         in a future version.  This function is designed to work with TFKerasTrial, which is also
         deprecated.  Please use the new :class:`~determined.keras.DeterminedCallback` for
         training instead, which allows you to use ``model.load_weights()`` to restore from
@@ -46,7 +46,7 @@ def load_model_from_checkpoint_path(
     """
 
     warnings.warn(
-        "load_model_from_checkpoint_path has been deprecated in Determined XXYYZZ and will be "
+        "load_model_from_checkpoint_path has been deprecated in Determined 0.38.0 and will be "
         "removedin a future version.  This function is designed to work with TFKerasTrial, which "
         "is alsodeprecated.  Please use the new det.keras.DeterminedCallback fortraining instead, "
         "which allows you to use ``model.load_weights()`` to restore fromcheckpoints.",

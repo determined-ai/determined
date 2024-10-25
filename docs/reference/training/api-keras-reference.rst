@@ -29,7 +29,7 @@
  Deprecated APIs
 #################
 
-The following APIs have been deprecated as of Determined XXYYZZ and will be removed in a future
+The following APIs have been deprecated as of Determined 0.38.0 and will be removed in a future
 version. Please migrate your ``TFKerasTrial``-based training to use the new
 :class:`~determined.keras.DeterminedCallback` instead.
 

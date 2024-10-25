@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 import time
+import warnings
 from typing import List, Tuple
 
 import determined as det
@@ -223,8 +224,8 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
     parser.add_argument(
         "--trial",
         help=(
-            "use a Trial class as the entrypoint to training.  When --trial is used, the SCRIPT "
-            "positional argument must be omitted."
+            "(deprecated) use a Trial class as the entrypoint to training.  When --trial is used, "
+            "the SCRIPT positional argument must be omitted."
         ),
     )
     # For training scripts.
@@ -270,5 +271,14 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
 
 
 if __name__ == "__main__":
+    warnings.warn(
+        "determined.launch.horovod has been deprecated in Determined 0.38.0 and will be "
+        "removed in a future version.  For PyTorchTrial users, please switch to "
+        "determined.launch.torch_distributed instead.  For TFKerasTrial users, please migrate "
+        "to the new det.keras.DeterminedCallback for training and use the new "
+        "determined.launch.tensorflow launcher with it.",
+        FutureWarning,
+        stacklevel=2,
+    )
     hvd_args, script, autohorovod = parse_args(sys.argv[1:])
     sys.exit(main(hvd_args, script, autohorovod))
