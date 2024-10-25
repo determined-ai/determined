@@ -372,7 +372,8 @@ func (t *trial) maybeAllocateTask() error {
 	// Only allocate for active trials, or trials that have been restored and are stopping.
 	// We need to allocate for stopping because we need to reattach the allocation.
 	shouldAllocateState := t.state == model.ActiveState || (t.restored && model.StoppingStates[t.state])
-	if t.allocationID != nil || t.searcher.EarlyExitedByUserCode || t.searcher.EarlyStoppedBySearcher || !shouldAllocateState {
+	searcherStop := t.searcher.EarlyExitedByUserCode || t.searcher.EarlyStoppedBySearcher
+	if t.allocationID != nil || searcherStop || !shouldAllocateState {
 		t.syslog.WithFields(logrus.Fields{
 			"allocation-id":          t.allocationID,
 			"trial-early-exited":     t.searcher.EarlyExitedByUserCode,
