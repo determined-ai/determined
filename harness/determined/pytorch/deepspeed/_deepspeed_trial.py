@@ -852,9 +852,9 @@ class DeepSpeedTrialController:
             metrics["batches"] = metrics.get("batches", self.state.batches_trained)
             metrics["epochs"] = metrics.get("epochs", self.state.epochs_trained)
 
-        self.core_context.train.report_validation_metrics(
-            steps_completed=self.state.batches_trained, metrics=metrics
-        )
+            self.core_context.train.report_validation_metrics(
+                steps_completed=self.state.batches_trained, metrics=metrics
+            )
         should_checkpoint = False
 
         # Checkpoint according to policy.
