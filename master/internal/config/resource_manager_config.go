@@ -188,8 +188,11 @@ type KubernetesResourceManagerConfig struct {
 	KubeconfigPath string       `json:"kubeconfig_path"`
 
 	DetMasterScheme string `json:"determined_master_scheme,omitempty"`
-	DetMasterIP     string `json:"determined_master_ip,omitempty"`
-	DetMasterPort   int32  `json:"determined_master_port,omitempty"`
+	// DeprecatedDetMasterHost shouldn't be used. Use the method DetMasterHost instead.
+	DeprecatedDetMasterHost string `json:"determined_master_host,omitempty"`
+	// DeprecatedDetMasterIP shouldn't be used. Use the method DetMasterHost instead.
+	DeprecatedDetMasterIP string `json:"determined_master_ip,omitempty"`
+	DetMasterPort         int32  `json:"determined_master_port,omitempty"`
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
@@ -201,6 +204,15 @@ type KubernetesResourceManagerConfig struct {
 	Name string `json:"name"`
 
 	Metadata map[string]string `json:"metadata"`
+}
+
+// DetMasterHost returns `det_master_host` from the config, falling back to the older `det_master_ip`. Callers
+// should use this method instead the fields directly but the fields must be public for YAML deserialization to work.
+func (k KubernetesResourceManagerConfig) DetMasterHost() string {
+	if k.DeprecatedDetMasterHost != "" {
+		return k.DeprecatedDetMasterHost
+	}
+	return k.DeprecatedDetMasterIP
 }
 
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
@@ -294,33 +306,31 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // Validate implements the check.Validatable interface.
 func (k KubernetesResourceManagerConfig) Validate() []error {
-	var checkSlotType error
+	var errs []error
 	switch k.SlotType {
 	case device.CPU, device.CUDA, device.ROCM:
 	default:
-		checkSlotType = errors.Errorf("slot_type must be cuda, cpu, or rocm")
+		errs = append(errs, errors.New("slot_type must be cuda, cpu, or rocm"))
 	}
 
-	var checkCPUResource error
 	if k.SlotType == device.CPU {
-		checkCPUResource = check.GreaterThan(
-			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
+		errs = append(errs, check.GreaterThan(
+			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0"))
 	}
 
-	var checkRMScheduler error
 	if k.DefaultScheduler == PriorityScheduling {
-		checkRMScheduler = fmt.Errorf("the ``priority`` scheduler was deprecated, please " +
-			"use the default Kubernetes scheduler or coscheduler")
+		errs = append(errs, errors.New("the ``priority`` scheduler was deprecated, please "+
+			"use the default Kubernetes scheduler or coscheduler"))
 	} else if k.DefaultScheduler != "" && k.DefaultScheduler != "coscheduler" {
-		checkRMScheduler = fmt.Errorf("only blank or ``coscheduler`` values allowed for Kubernetes scheduler")
+		errs = append(errs, errors.New("only blank or ``coscheduler`` values allowed for Kubernetes scheduler"))
 	}
 
-	return []error{
-		checkSlotType,
-		checkCPUResource,
-		check.NotEmpty(k.ClusterName, "cluster_name is required"),
-		checkRMScheduler,
+	if k.DeprecatedDetMasterHost != "" && k.DeprecatedDetMasterIP != "" {
+		errs = append(errs, errors.New("use the new determined_master_host instead of determined_master_ip, not both"))
 	}
+
+	errs = append(errs, check.NotEmpty(k.ClusterName, "cluster_name is required"))
+	return errs
 }
 
 // PodSlotResourceRequests contains the per-slot container requests.

@@ -108,7 +108,7 @@ type jobsService struct {
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 	masterServiceName     string
 	masterTLSConfig       model.TLSClientConfig
-	detMasterIP           string
+	detMasterHost         string
 	detMasterPort         int32
 	detMasterScheme       string
 	kubeconfigPath        string
@@ -175,7 +175,7 @@ func newJobsService(
 	slotResourceRequests config.PodSlotResourceRequests,
 	resourcePoolConfigs []config.ResourcePoolConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
-	detMasterIP string,
+	detMasterHost string,
 	detMasterPort int32,
 	detMasterScheme string,
 	kubeconfigPath string,
@@ -200,7 +200,7 @@ func newJobsService(
 		slotResourceRequests:              slotResourceRequests,
 		resourcePoolConfigs:               resourcePoolConfigs,
 		baseContainerDefaults:             taskContainerDefaults,
-		detMasterIP:                       detMasterIP,
+		detMasterHost:                     detMasterHost,
 		detMasterPort:                     detMasterPort,
 		currentNodes:                      make(map[string]*k8sV1.Node),
 		nodeToSystemResourceRequests:      make(map[string]int64),
@@ -225,7 +225,7 @@ func newJobsService(
 	if err := p.startClientSet(ns); err != nil {
 		return nil, err
 	}
-	if err := p.getMasterIPAndPort(); err != nil {
+	if err := p.getMasterHostAndPort(); err != nil {
 		return nil, err
 	}
 	if err := p.getSystemResourceRequests(); err != nil {
@@ -419,22 +419,22 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 	return cl, nil
 }
 
-func (j *jobsService) getMasterIPAndPort() error {
-	if j.detMasterIP != "" && j.detMasterPort != 0 {
+func (j *jobsService) getMasterHostAndPort() error {
+	if j.detMasterHost != "" && j.detMasterPort != 0 {
 		// Master ip and port were manually configured. For special circumstances, e.g., the master is running
 		// outside of this cluster (happens in development or when we spread across multiple k8s clusters).
 		return nil
 	}
+
 	masterService, err := j.clientSet.CoreV1().
 		Services(j.getInitialNamespace()).
 		Get(context.TODO(), j.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get master service: %w", err)
 	}
-
-	j.detMasterIP = masterService.Spec.ClusterIP
+	j.detMasterHost = fmt.Sprintf("%s.%s.svc.cluster.local", masterService.Namespace, masterService.Name)
 	j.detMasterPort = masterService.Spec.Ports[0].Port
-	j.syslog.Infof("master URL set to %s:%d", j.detMasterIP, j.detMasterPort)
+	j.syslog.Infof("master URL set to %s:%d", j.detMasterHost, j.detMasterPort)
 	return nil
 }
 
@@ -617,7 +617,7 @@ func (j *jobsService) startJob(msg startJob) error {
 		msg.spec.ClusterID,
 		j.clientSet,
 		msg.namespace,
-		j.detMasterIP,
+		j.detMasterHost,
 		j.detMasterPort,
 		j.detMasterScheme,
 		j.masterTLSConfig,
@@ -908,7 +908,7 @@ func (j *jobsService) recreateJobHandler(
 		startMsg.spec.ClusterID,
 		j.clientSet,
 		job.Namespace,
-		j.detMasterIP,
+		j.detMasterHost,
 		j.detMasterPort,
 		j.detMasterScheme,
 		j.masterTLSConfig,
