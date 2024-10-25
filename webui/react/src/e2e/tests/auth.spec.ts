@@ -1,5 +1,6 @@
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { Cluster } from 'e2e/models/pages/Cluster';
+import { DefaultRoute } from 'e2e/models/pages/DefaultRoute';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {
@@ -13,8 +14,9 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveDeterminedTitle('Home');
-      await expect(page).toHaveURL(/dashboard/);
+      const defaultPage = new DefaultRoute(page);
+      await expect(page).toHaveDeterminedTitle(defaultPage.title);
+      await expect(page).toHaveURL(defaultPage.url);
     });
 
     await test.step('Logout', async () => {

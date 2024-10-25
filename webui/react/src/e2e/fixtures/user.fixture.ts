@@ -4,6 +4,7 @@ import { expect } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { isRbacEnabled } from 'e2e/utils/rbac';
 import { TestUser } from 'e2e/utils/users';
 
 interface CreateUserFields {
@@ -43,16 +44,18 @@ export class UserFixture {
       );
     }
 
-    const checkedAttribute =
-      await this.userManagementPage.createUserModal.adminToggle.pwLocator.getAttribute(
-        'aria-checked',
-      );
-    if (checkedAttribute === null) {
-      throw new Error('Expected attribute aria-checked to be present.');
-    }
-    const adminState = JSON.parse(checkedAttribute);
-    if (!!formValues.admin !== adminState) {
-      await this.userManagementPage.createUserModal.adminToggle.pwLocator.click();
+    if (!isRbacEnabled()) {
+      const checkedAttribute =
+        await this.userManagementPage.createUserModal.adminToggle.pwLocator.getAttribute(
+          'aria-checked',
+        );
+      if (checkedAttribute === null) {
+        throw new Error('Expected attribute aria-checked to be present.');
+      }
+      const adminState = JSON.parse(checkedAttribute);
+      if (!!formValues.admin !== adminState) {
+        await this.userManagementPage.createUserModal.adminToggle.pwLocator.click();
+      }
     }
 
     // password and username are required to create a user; if these are filled, submit should be enabled
@@ -180,7 +183,9 @@ export class UserFixture {
     } else {
       await row.user.alias.pwLocator.waitFor({ state: 'hidden' });
     }
-    await expect(row.role.pwLocator).toContainText(user.admin ? 'Admin' : 'Member');
+    if (!isRbacEnabled()) {
+      await expect(row.role.pwLocator).toContainText(user.admin ? 'Admin' : 'Member');
+    }
     await expect(row.status.pwLocator).toContainText(user.active ? 'Active' : 'Inactive');
   }
 
