@@ -411,40 +411,20 @@ func (e *internalExperiment) PatchTrialState(msg experiment.PatchTrialState) err
 func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	// Only allow max slots changes if it is not specified as an invariant config or enforced as a
-	// constraint.
 
 	w, err := getWorkspaceByConfig(e.activeConfig)
 	if err != nil {
 		log.Warnf("unable to set max slots")
 		return
 	}
-	enforcedMaxSlots, err := configpolicy.GetEnforcedConfig[int](context.TODO(), &w.ID,
-		"invariant_config",
-		"'resources' -> 'max_slots'", model.ExperimentType)
-	if err != nil {
-		log.Warnf("unable to set max slots")
+
+	canContinue, slots, err := configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+	if !canContinue {
+		log.Warnf("unable to set max slots: %s", err.Error())
 		return
 	}
 
-	if enforcedMaxSlots != nil {
-		msg.MaxSlots = enforcedMaxSlots
-	}
-
-	maxSlotsLimit, err := configpolicy.GetEnforcedConfig[int](context.TODO(), &w.ID,
-		"constraints",
-		"'resources' -> 'max_slots'", model.ExperimentType)
-	if err != nil {
-		log.Warnf("unable to set max slots")
-		return
-	}
-
-	if enforcedMaxSlots == nil && maxSlotsLimit != nil && msg.MaxSlots != nil &&
-		*msg.MaxSlots > *maxSlotsLimit {
-		log.Warnf("unable to set max slots")
-		return
-	}
-
+	msg.MaxSlots = slots
 	resources := e.activeConfig.Resources()
 	resources.SetMaxSlots(msg.MaxSlots)
 	e.activeConfig.SetResources(resources)
@@ -1133,6 +1113,23 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 }
 
 func (e *internalExperiment) setWeight(weight float64) error {
+	// Only set requested weight if it is not set in an invariant config.
+	w, err := getWorkspaceByConfig(e.activeConfig)
+	if err != nil {
+		log.Warnf("unable to set max slots")
+		return fmt.Errorf("unable to set weight, ")
+	}
+	enforcedWeight, err := configpolicy.GetConfigPolicyField[float64](context.TODO(), &w.ID,
+		"invariant_config",
+		"'resources' -> 'weight'", model.ExperimentType)
+	if err != nil {
+		log.Warnf("unable to set weight %v", weight)
+		return nil
+	}
+	if enforcedWeight != nil {
+		weight = *enforcedWeight
+	}
+
 	resources := e.activeConfig.Resources()
 	oldWeight := resources.Weight()
 	resources.SetWeight(weight)

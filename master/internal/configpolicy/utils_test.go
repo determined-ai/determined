@@ -1,11 +1,14 @@
 package configpolicy
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -608,5 +611,100 @@ invariant_config:
 `, nil,
 		)
 		require.Error(t, err) // stub CM-493
+	})
+}
+
+func TestCanSetMaxSlots(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+	user := db.RequireMockUser(t, pgDB)
+	ctx := context.Background()
+	w := createWorkspaceWithUser(ctx, t, user.ID)
+	t.Run("nil slots request", func(t *testing.T) {
+		canSetReqSlots, slots, err := CanSetMaxSlots(nil, w.ID)
+		require.NoError(t, err)
+		require.Nil(t, slots)
+		require.True(t, canSetReqSlots)
+	})
+
+	err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+		WorkspaceID:   &w.ID,
+		WorkloadType:  model.ExperimentType,
+		LastUpdatedBy: user.ID,
+		InvariantConfig: ptrs.Ptr(`
+{
+	"resources": {
+		"max_slots": 13
+	}
+}
+`),
+		Constraints: ptrs.Ptr(`
+{
+	"resources": {
+		"max_slots": 13
+	}
+}
+`),
+	})
+	require.NoError(t, err)
+
+	t.Run("slots different than config higher", func(t *testing.T) {
+		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(15), w.ID)
+		require.NoError(t, err)
+		require.True(t, canSetReqSlots)
+		require.NotNil(t, slots)
+		require.Equal(t, 13, *slots)
+	})
+
+	t.Run("slots different than config lower", func(t *testing.T) {
+		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(10), w.ID)
+		require.NoError(t, err)
+		require.True(t, canSetReqSlots)
+		require.NotNil(t, slots)
+		require.Equal(t, 13, *slots)
+	})
+
+	t.Run("just constarints slots higher", func(t *testing.T) {
+		err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:   &w.ID,
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints: ptrs.Ptr(`
+	{
+		"resources": {
+			"max_slots": 23
+		}
+	}
+	`),
+		})
+
+		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(25), w.ID)
+		require.ErrorContains(t, err, SlotsReqTooHighErr)
+		require.False(t, canSetReqSlots)
+		require.Nil(t, slots)
+	})
+
+	t.Run("just constarints slots lower", func(t *testing.T) {
+		err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:   &w.ID,
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints: ptrs.Ptr(`
+	{
+		"resources": {
+			"max_slots": 23
+		}
+	}
+	`),
+		})
+
+		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(20), w.ID)
+		require.NoError(t, err)
+		require.True(t, canSetReqSlots)
+		require.NotNil(t, slots)
+		require.Equal(t, 20, *slots)
 	})
 }

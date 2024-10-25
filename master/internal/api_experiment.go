@@ -1219,7 +1219,6 @@ func (a *apiServer) PatchExperiment(
 			activeConfig.SetResources(resources)
 		}
 
-		// Only allow setting checkpoint storage if it is not specified as an invariant config.
 		newCheckpointStorage := req.Experiment.CheckpointStorage
 
 		if newCheckpointStorage != nil {
@@ -1241,7 +1240,7 @@ func (a *apiServer) PatchExperiment(
 					activeConfig.Workspace()))
 			}
 
-			enforcedChkptConf, err := configpolicy.GetEnforcedConfig[expconf.CheckpointStorageConfig](
+			enforcedChkptConf, err := configpolicy.GetConfigPolicyField[expconf.CheckpointStorageConfig](
 				ctx, &w.ID, "invariant_config", "checkpoint_storage",
 				model.ExperimentType)
 			if err != nil {
@@ -1262,6 +1261,7 @@ func (a *apiServer) PatchExperiment(
 			if !ok {
 				return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(exp.Id)), true)
 			}
+
 			if newResources.MaxSlots != nil {
 				msg := sproto.SetGroupMaxSlots{MaxSlots: ptrs.Ptr(int(*newResources.MaxSlots))}
 				e.SetGroupMaxSlots(msg)
@@ -1488,15 +1488,14 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
 
-	// Determine which workspace the experiment is in.
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
 	w, err := getWorkspaceByConfig(activeConfig)
 	if err != nil {
 		return nil, false, status.Errorf(codes.Internal,
 			fmt.Sprintf("failed to get workspace %s", activeConfig.Workspace()))
 	}
 
-	// Merge the config with the optionally specified invariant config specified by task config
-	// policies.
 	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(
 		context.TODO(),
 		w.ID, mergedConfig)

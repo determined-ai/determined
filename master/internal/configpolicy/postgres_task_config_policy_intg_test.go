@@ -664,8 +664,8 @@ func requireEqualTaskPolicy(t *testing.T, exp *model.TaskConfigPolicies, act *mo
 func TestGetEnforcedConfig(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
-	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
-	defer cleanup()
+	pgDB, _ := db.MustResolveNewPostgresDatabase(t)
+	// defer cleanup()
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 
 	user := db.RequireMockUser(t, pgDB)
@@ -710,10 +710,12 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		checkpointStorage, err := GetEnforcedConfig[expconf.CheckpointStorageConfig](ctx, &w.ID,
+		checkpointStorage, err := GetConfigPolicyField[expconf.CheckpointStorageConfig](ctx, &w.ID,
 			"invariant_config", "'checkpoint_storage'", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, checkpointStorage)
+
+		// global config enforced?
 		require.Equal(t, expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{
 				RawHostPath:      ptrs.Ptr("global_host_path"),
@@ -749,10 +751,12 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		maxSlots, err := GetEnforcedConfig[int](ctx, &w.ID, "invariant_config",
+		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID, "invariant_config",
 			"'resources' -> 'max_slots'", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, maxSlots)
+
+		// workspace config enforced?
 		require.Equal(t, 15, *maxSlots)
 	})
 
@@ -788,10 +792,12 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		maxSlots, err := GetEnforcedConfig[int](ctx, &w.ID, "constraints",
+		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
 			"'resources' -> 'max_slots'", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, maxSlots)
+
+		// global constraint enforced?
 		require.Equal(t, 25, *maxSlots)
 	})
 
@@ -823,10 +829,54 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		maxSlots, err := GetEnforcedConfig[int](ctx, &w.ID, "constraints",
+		priority, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
 			"'priority_limit'", model.ExperimentType)
 		require.NoError(t, err)
-		require.NotNil(t, maxSlots)
-		require.Equal(t, 40, *maxSlots)
+		require.NotNil(t, priority)
+
+		// global constraint enforced?
+		require.Equal(t, 40, *priority)
+	})
+
+	t.Run("priority constraints wksp", func(t *testing.T) {
+		// delete global config policies
+		err = DeleteConfigPolicies(ctx, nil, model.ExperimentType)
+		require.NoError(t, err)
+
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:   &w.ID,
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints:   &wkspConstraints,
+		})
+		require.NoError(t, err)
+
+		priority, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
+			"'priority_limit'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, priority)
+
+		// workspace constraint enforced?
+		require.Equal(t, 50, *priority)
+	})
+
+	t.Run("field not set in config", func(t *testing.T) {
+		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID, "invariant_config",
+			"'max_restarts'", model.ExperimentType)
+		require.NoError(t, err)
+		require.Nil(t, maxRestarts)
+	})
+
+	t.Run("nonexistent constraints field", func(t *testing.T) {
+		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
+			"'max_restarts'", model.ExperimentType)
+		require.NoError(t, err)
+		require.Nil(t, maxRestarts)
+	})
+
+	t.Run("invalid policy type", func(t *testing.T) {
+		_, err := GetConfigPolicyField[int](ctx, &w.ID, "bad policy",
+			"'debug'", model.ExperimentType)
+		require.ErrorContains(t, err, invalidPolicyTypeErr)
 	})
 }
