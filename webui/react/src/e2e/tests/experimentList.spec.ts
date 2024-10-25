@@ -59,7 +59,11 @@ test.describe('Experiment List', () => {
       const count = await getCount();
       if (count !== 0) {
         await grid.headRow.clickSelectHeader();
-        await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.click();
+        const isClearSelectionVisible =
+          await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.isVisible();
+        if (isClearSelectionVisible) {
+          await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.click();
+        }
       }
     });
     await test.step('Reset Columns', async () => {
