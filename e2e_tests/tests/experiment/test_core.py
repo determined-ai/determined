@@ -117,6 +117,7 @@ def test_end_to_end_adaptive() -> None:
         conf.fixtures_path("mnist_pytorch"),
         None,
     )
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_COMPLETED)
 
     test_checkpoints.wait_for_gc_to_finish(sess, experiment_ids=[exp_id])
 
