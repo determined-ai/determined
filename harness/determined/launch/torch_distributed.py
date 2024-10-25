@@ -3,6 +3,7 @@ import logging
 import os
 import subprocess
 import sys
+import warnings
 from typing import List, Tuple
 
 import determined as det
@@ -127,8 +128,8 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
     parser.add_argument(
         "--trial",
         help=(
-            "use a Trial class as the entrypoint to training.  When --trial is used, the SCRIPT "
-            "positional argument must be omitted."
+            "(deprecated) use a Trial class as the entrypoint to training.  When --trial is used, "
+            "the SCRIPT positional argument must be omitted."
         ),
     )
     # For training scripts.
@@ -148,6 +149,19 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
             parser.print_usage()
             print("error: extra arguments to --trial:", script, file=sys.stderr)
             sys.exit(1)
+        # We may have arrived here indirectly if the user specified a legacy entrypoint, in which
+        # case we have a warning for them in exec/harness.py.  Only issue the warning if they
+        # explicitly configured the --trial argument.
+        info = det.get_cluster_info()
+        if info and "--trial" in info.trial._config["entrypoint"]:
+            warnings.warn(
+                "Support for --trial argument to determined.launch.torch_distributed has been "
+                "deprecated in Determined XXYYZZ and will be removed in a future version.  You can "
+                "keep your PyTorchTrial, but please replace your --trial argument with a script "
+                "that uses the det.pytorch.Trainer() to train your PyTorchTrial.",
+                FutureWarning,
+                stacklevel=2,
+            )
         script = det.util.legacy_trial_entrypoint_to_script(parsed.trial)
     elif not script:
         # There needs to be at least one script argument.

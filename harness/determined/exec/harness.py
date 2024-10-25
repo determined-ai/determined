@@ -3,6 +3,7 @@ import contextlib
 import faulthandler
 import logging
 import sys
+import warnings
 from typing import Iterator, Optional, Type
 
 import determined as det
@@ -42,9 +43,9 @@ def main(train_entrypoint: str) -> int:
         if hasattr(det.pytorch, "deepspeed") and issubclass(
             trial_class, det.pytorch.deepspeed.DeepSpeedTrial
         ):
-            return _run_deepspeed_trial(trial_class, info)
+            return _run_deepspeed_trial(trial_class, info, train_entrypoint)
         elif issubclass(trial_class, det.pytorch.PyTorchTrial):
-            return _run_pytorch_trial(trial_class, info)
+            return _run_pytorch_trial(trial_class, info, train_entrypoint)
 
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.
     # It was natural to create this big-blob-of-config object, but it was a mistake to pass it into
@@ -138,10 +139,24 @@ def main(train_entrypoint: str) -> int:
 def _run_pytorch_trial(
     trial_class: "Type[det.pytorch.PyTorchTrial]",
     info: det.ClusterInfo,
+    train_entrypoint: str,
 ) -> int:
     from determined import pytorch
 
     det.common.set_logger(info.trial._debug)
+
+    # Only warn here if the user set a legacy entrypoint, not if we arrived here after user passed
+    # a --trial argument to a launcher.
+    if train_entrypoint == info.trial._config["entrypoint"]:
+        warnings.warn(
+            f"Support for legacy entrypoint format ({train_entrypoint}) has been deprecated in "
+            "Determined XXYYZZ and will be removed in a future version.  You can keep your "
+            "PyTorchTrial, but please replace your model_def:TrialClass-style entrypoint "
+            "with a script-style entrypoint, and use the det.pytorch.Trainer() to train your "
+            "PyTorchTrial.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
     logger.debug("Starting harness.")
 
@@ -202,11 +217,25 @@ def _run_pytorch_trial(
 def _run_deepspeed_trial(
     trial_class: "Type[det.pytorch.deepspeed.DeepSpeedTrial]",
     info: det.ClusterInfo,
+    train_entrypoint: str,
 ) -> int:
     from determined import pytorch
     from determined.pytorch import deepspeed as det_ds
 
     det.common.set_logger(info.trial._debug)
+
+    # Only warn here if the user set a legacy entrypoint, not if we arrived here after user passed
+    # a --trial argument to a launcher.
+    if train_entrypoint == info.trial._config["entrypoint"]:
+        warnings.warn(
+            f"Support for legacy entrypoint format ({train_entrypoint}) has been deprecated in "
+            "Determined XXYYZZ and will be removed in a future version.  You can keep your "
+            "DeepSpeedTrial, but please replace your model_def:TrialClass-style entrypoint "
+            "with a script-style entrypoint, and use the new det.pytorch.deepspeed.Trainer() "
+            "to train your DeepSpeedTrial.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
     logger.debug("Starting harness.")
 
