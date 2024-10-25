@@ -242,9 +242,9 @@ Clear the message with the following command:
 
       det master cluster-message clear
 
-************
+****************************
  Viewing Log Search Results
-************
+****************************
 
 To perform a log search:
 
