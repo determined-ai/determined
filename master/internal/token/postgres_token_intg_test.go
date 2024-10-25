@@ -55,7 +55,7 @@ func TestCreateAccessToken(t *testing.T) {
 	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
-	expLifespan := config.DefaultTokenLifespan * 24 * time.Hour
+	expLifespan := config.DefaultTokenLifespanDays * 24 * time.Hour
 	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
 	require.Equal(t, expLifespan, actLifespan)
 
@@ -78,7 +78,7 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
-	expLifespan := config.DefaultTokenLifespan * 24 * time.Hour
+	expLifespan := config.DefaultTokenLifespanDays * 24 * time.Hour
 	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID,
 		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)

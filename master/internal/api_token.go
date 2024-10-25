@@ -37,12 +37,12 @@ func (a *apiServer) PostAccessToken(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	defaultTokenLifespan, err := token.ParseLifespanDays(a.m.config.Security.Token.DefaultLifespanDays)
+	defaultTokenLifespan, err := a.m.config.Security.Token.GetDefaultLifespan()
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to parse default lifespan")
 	}
 
-	maxTokenLifespan, err := token.ParseLifespanDays(a.m.config.Security.Token.MaxLifespanDays)
+	maxTokenLifespan, err := a.m.config.Security.Token.GetMaxLifespan()
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to parse max lifespan")
 	}
@@ -53,21 +53,26 @@ func (a *apiServer) PostAccessToken(
 			tokenExpiration = maxTokenLifespan
 		} else {
 			d, err := time.ParseDuration(*req.Lifespan)
-			if err != nil || d < 0 {
+			if err != nil {
+				return nil, status.Error(codes.InvalidArgument,
+					fmt.Sprintf("Failed to parse lifespan %s, with error: %v", *req.Lifespan,
+						err.Error()))
+			}
+			if d < 0 {
 				return nil, status.Error(codes.InvalidArgument,
 					"Lifespan must be a Go-formatted duration string with a positive value")
 			}
-			tokenExpiration = &d
+			tokenExpiration = d
 		}
 	}
 
 	// Ensure the token lifespan does not exceed the maximum allowed.
-	if maxTokenLifespan != nil && tokenExpiration != nil && *tokenExpiration > *maxTokenLifespan {
+	if maxTokenLifespan != 0 && tokenExpiration != 0 && tokenExpiration > maxTokenLifespan {
 		return nil, status.Error(codes.InvalidArgument, "Token lifespan exceeds maximum allowed")
 	}
 
 	token, tokenID, err := token.CreateAccessToken(
-		ctx, targetFullUser.ID, token.WithTokenExpiry(tokenExpiration), token.WithTokenDescription(req.Description))
+		ctx, targetFullUser.ID, token.WithTokenExpiry(&tokenExpiration), token.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
 	}

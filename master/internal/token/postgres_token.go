@@ -3,7 +3,6 @@ package token
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/o1egl/paseto"
@@ -49,7 +48,7 @@ func CreateAccessToken(
 	accessToken := &model.UserSession{
 		UserID:      userID,
 		CreatedAt:   now,
-		Expiry:      now.Add(config.DefaultTokenLifespan * 24 * time.Hour),
+		Expiry:      now.Add(config.DefaultTokenLifespanDays * 24 * time.Hour),
 		TokenType:   model.TokenTypeAccessToken,
 		Description: null.StringFromPtr(nil),
 		RevokedAt:   null.Time{},
@@ -153,18 +152,4 @@ func GetUserIDFromTokenID(ctx context.Context, tokenID int32) (*model.UserID, er
 		return nil, err
 	}
 	return &userID, nil
-}
-
-// ParseLifespanDays parses a lifespan in days into either a time.Duration or nil if the lifespan is
-// infinite.
-func ParseLifespanDays(dayDuration int) (*time.Duration, error) {
-	if dayDuration == config.InfiniteTokenLifespan {
-		maxLifespan := time.Duration(config.DefaultTokenMaxLifespanDays) * 24 * time.Hour
-		return &maxLifespan, nil
-	}
-	duration, err := time.ParseDuration(strconv.Itoa(dayDuration*24) + "h")
-	if err != nil {
-		return nil, err
-	}
-	return &duration, nil
 }

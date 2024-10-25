@@ -104,7 +104,8 @@ useNodePortForMaster: false
   # authz option (EE-only) sets the authorization mode.
   # authz:
   #   type: rbac
-  # token:
+  # access token option (EE-Only) allows to authenticate in automated workflows.
+  # token (EE-Only):
   #   max_lifespan_days: -1
   #   default_lifespan_days: 30
 

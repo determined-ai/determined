@@ -120,7 +120,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 				Security: config.SecurityConfig{
 					Token: config.TokenConfig{
 						MaxLifespanDays:     config.DefaultTokenMaxLifespanDays,
-						DefaultLifespanDays: config.DefaultTokenLifespan,
+						DefaultLifespanDays: config.DefaultTokenLifespanDays,
 					},
 				},
 			},
