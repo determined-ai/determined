@@ -66,7 +66,6 @@ def error_no_credentials() -> None:
 
 def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment]:
     deployment_type_map = {
-        constants.deployment_types.SIMPLE: simple.Simple,
         constants.deployment_types.SIMPLE_RDS: simple.SimpleRDS,
         constants.deployment_types.SECURE: secure.Secure,
         constants.deployment_types.EFS: vpc.EFS,

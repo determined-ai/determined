@@ -1,17 +1,16 @@
 class deployment_types:
-    SIMPLE = "simple"
     SIMPLE_RDS = "simple-rds"
     SECURE = "secure"
     EFS = "efs"
     GENAI = "genai"
     FSX = "fsx"
     GOVCLOUD = "govcloud"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, EFS, FSX, GOVCLOUD, SIMPLE_RDS, GENAI]
+    DEPLOYMENT_TYPES = [SIMPLE_RDS, SECURE, EFS, FSX, GOVCLOUD, GENAI]
     TYPE_TAG_KEY = "deployment-type"
 
 
 class defaults:
-    DEPLOYMENT_TYPE = deployment_types.SIMPLE
+    DEPLOYMENT_TYPE = deployment_types.SIMPLE_RDS
     DB_PASSWORD = "postgres"
     REGION = "us-west-2"
     STACK_TAG_KEY = "managed-by"
