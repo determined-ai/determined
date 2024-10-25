@@ -1116,14 +1116,13 @@ func (e *internalExperiment) setWeight(weight float64) error {
 	// Only set requested weight if it is not set in an invariant config.
 	w, err := getWorkspaceByConfig(e.activeConfig)
 	if err != nil {
-		log.Warnf("unable to set max slots")
-		return fmt.Errorf("unable to set weight, ")
+		return fmt.Errorf("error getting workspace: %w", err)
 	}
 	enforcedWeight, err := configpolicy.GetConfigPolicyField[float64](context.TODO(), &w.ID,
 		"invariant_config",
 		"'resources' -> 'weight'", model.ExperimentType)
 	if err != nil {
-		return err
+		return fmt.Errorf("error checking against config policies: %w", err)
 	}
 	if enforcedWeight != nil {
 		weight = *enforcedWeight
