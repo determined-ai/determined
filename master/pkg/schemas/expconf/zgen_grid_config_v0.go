@@ -8,15 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (g GridConfigV0) MaxLength() LengthV0 {
-	if g.RawMaxLength == nil {
-		panic("You must call WithDefaults on GridConfigV0 before .MaxLength")
-	}
-	return *g.RawMaxLength
+func (g GridConfigV0) MaxLength() *LengthV0 {
+	return g.RawMaxLength
 }
 
-func (g *GridConfigV0) SetMaxLength(val LengthV0) {
-	g.RawMaxLength = &val
+func (g *GridConfigV0) SetMaxLength(val *LengthV0) {
+	g.RawMaxLength = val
 }
 
 func (g GridConfigV0) MaxConcurrentTrials() int {

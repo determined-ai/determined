@@ -834,44 +834,14 @@ func (a *apiServer) PreviewHPSearch(
 		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	sm := searcher.NewSearchMethod(sc)
-	s := searcher.NewSearcher(req.Seed, sm, hc)
-	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, sc.Metric())
+	sim, err := searcher.Simulate(sc, hc)
 	if err != nil {
 		return nil, err
 	}
-	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
-	indexes := make(map[string]int, len(sim.Results))
-	toProto := func(op searcher.ValidateAfter) ([]*experimentv1.RunnableOperation, error) {
-		return []*experimentv1.RunnableOperation{
-			{
-				Type:   experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-				Length: op.Length,
-			},
-			{
-				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-			},
-		}, nil
-	}
-	for _, result := range sim.Results {
-		var operations []*experimentv1.RunnableOperation
-		for _, msg := range result {
-			ops, err := toProto(msg)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error converting msg in simultion result %s", msg)
-			}
-			operations = append(operations, ops...)
-		}
-		hash := fmt.Sprint(operations)
-		if i, ok := indexes[hash]; ok {
-			protoSim.Trials[i].Occurrences++
-		} else {
-			protoSim.Trials = append(protoSim.Trials,
-				&experimentv1.TrialSimulation{Operations: operations, Occurrences: 1})
-			indexes[hash] = len(protoSim.Trials) - 1
-		}
-	}
-	return &apiv1.PreviewHPSearchResponse{Simulation: protoSim}, nil
+
+	return &apiv1.PreviewHPSearchResponse{
+		Summary: sim.Proto(),
+	}, nil
 }
 
 func (a *apiServer) ActivateExperiment(
@@ -2106,7 +2076,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
 	var metricMeasurements []db.MetricMeasurements
-	xAxisLabelMetrics := []string{"epoch"}
 
 	trial.TrialId = trialID
 
@@ -2125,7 +2094,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
 		[]string{metricName},
-		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		startBatches, endBatches, maxDatapoints,
 		"batches", nil, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")

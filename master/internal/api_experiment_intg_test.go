@@ -1421,7 +1421,6 @@ func createTestExpWithActiveConfig(
 		Config:    activeConfig.AsLegacy(),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
-
 	// Get experiment as our API mostly will to make it easier to mock.
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
