@@ -12,8 +12,8 @@ Sometimes, you want to analyze and visualize your model's training progress and 
 performance over multiple epochs.
 
 In this article, we'll show you how to view epoch-based metric data in the WebUI by reporting an
-epoch metric to the Determined master via the Core API. To do this, we'll define an epoch metric and
-use it as the X-Axis label in the WebUI.
+``epochs`` metric to the Determined master via the Core API. To do this, we'll define an ``epochs``
+metric and use it as the X-Axis label in the WebUI.
 
 **Recommended**
 
@@ -73,7 +73,7 @@ In the WebUI, we can select our experiment and visit the **Logs** tab.
  Step 2: Report Epoch-Based Metrics
 ************************************
 
-In this section, we'll define our epoch metric.
+In this section, we'll define our ``epochs`` metric.
 
 -  To follow along, use the ``model_def_metrics.py`` script and its accompanying ``metrics.yaml``
    experiment configuration file.
@@ -96,27 +96,31 @@ training and validation metrics.
 However, we also want to report epoch-based metrics and to allow Determined to keep track of the
 specific epoch for which training loss is being reported.
 
--  To do this, we'll modify the train() method to include ``epoch_idx`` as a metric:
+-  To do this, we'll modify the train() method to include ``epochs`` as a metric. We will calculate
+   fractional completed epochs based on ``batches_completed``, since this training code reports more
+   frequently than once per epoch:
 
 .. code:: python
 
+   partial_epoch = batches_completed / len(training_loader)
    core_context.train.report_training_metrics(
      steps_completed=batches_completed + epoch_idx * len(train_loader),
-     metrics={"train_loss": loss.item(), "epoch": epoch_idx},
+     metrics={"train_loss": loss.item(), "epochs": epoch_idx + partial_epoch},
    )
 
--  Similarly, we'll include ``epoch`` as a metric in the reported validation metrics. This allows
+-  Similarly, we'll include ``epochs`` as a metric in the reported validation metrics. This allows
    Determined to track the specific epoch for which the validation loss is being reported:
 
 .. code:: python
 
+   epochs_completed = epoch_idx + 1
    core_context.train.report_validation_metrics(
       steps_completed=steps_completed,
-      metrics={"test_loss": test_loss, "epoch": epoch},
+      metrics={"test_loss": test_loss, "epochs": epochs_completed},
    )
 
-Now that we've reported an epoch value, **Epoch** will be an available option for the X-Axis when we
-view our metric data graph in the WebUI.
+Now that we've reported an ``epochs`` metric, **Epochs** will be an available option for the X-Axis
+when we view our metric data graph in the WebUI.
 
 Step 2.2: Run the Experiment & View Epoch-Based Metrics
 =======================================================
@@ -133,7 +137,7 @@ Our modified script is ready to report epoch-based metrics to the Determined mas
 
 Our experiment opens in the **Overview** tab.
 
--  We'll go to the **Metrics** tab, select the **X-Axis** menu and then choose **Epoch**.
+-  We'll go to the **Metrics** tab, select the **X-Axis** menu and then choose **Epochs**.
 -  If we scroll down, we'll be able to see the epoch-based metrics graph.
 
 .. image:: ../assets/images/webui-metrics-epoch-based.png
