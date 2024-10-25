@@ -307,26 +307,26 @@ func configPolicyOverlap(config1, config2 interface{}) {
 // enforced max slots for the workspace if that's set as an invariant config, and returns the
 // requested max slots otherwise. Returns an error when max slots is not set as an invariant config
 // and the requested max slots violates the constriant.
-func CanSetMaxSlots(slotsReq *int, wkspID int) (bool, *int, error) {
+func CanSetMaxSlots(slotsReq *int, wkspID int) (*int, error) {
 	if slotsReq == nil {
-		return true, slotsReq, nil
+		return slotsReq, nil
 	}
 	enforcedMaxSlots, err := GetConfigPolicyField[int](context.TODO(), &wkspID,
 		"invariant_config",
 		"'resources' -> 'max_slots'", model.ExperimentType)
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	if enforcedMaxSlots != nil {
-		return true, enforcedMaxSlots, nil
+		return enforcedMaxSlots, nil
 	}
 
 	maxSlotsLimit, err := GetConfigPolicyField[int](context.TODO(), &wkspID,
 		"constraints",
 		"'resources' -> 'max_slots'", model.ExperimentType)
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	var canSetReqSlots bool
@@ -334,8 +334,8 @@ func CanSetMaxSlots(slotsReq *int, wkspID int) (bool, *int, error) {
 		canSetReqSlots = true
 	}
 	if !canSetReqSlots {
-		return false, nil, fmt.Errorf(SlotsReqTooHighErr+": %d > %d", *slotsReq, *maxSlotsLimit)
+		return nil, fmt.Errorf(SlotsReqTooHighErr+": %d > %d", *slotsReq, *maxSlotsLimit)
 	}
 
-	return true, slotsReq, nil
+	return slotsReq, nil
 }

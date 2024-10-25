@@ -418,8 +418,8 @@ func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 		return
 	}
 
-	canContinue, slots, err := configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
-	if !canContinue {
+	slots, err := configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+	if err != nil {
 		log.Warnf("unable to set max slots: %s", err.Error())
 		return
 	}
@@ -1123,8 +1123,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		"invariant_config",
 		"'resources' -> 'weight'", model.ExperimentType)
 	if err != nil {
-		log.Warnf("unable to set weight %v", weight)
-		return nil
+		return err
 	}
 	if enforcedWeight != nil {
 		weight = *enforcedWeight

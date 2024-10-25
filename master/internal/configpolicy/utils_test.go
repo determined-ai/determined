@@ -624,10 +624,9 @@ func TestCanSetMaxSlots(t *testing.T) {
 	ctx := context.Background()
 	w := createWorkspaceWithUser(ctx, t, user.ID)
 	t.Run("nil slots request", func(t *testing.T) {
-		canSetReqSlots, slots, err := CanSetMaxSlots(nil, w.ID)
+		slots, err := CanSetMaxSlots(nil, w.ID)
 		require.NoError(t, err)
 		require.Nil(t, slots)
-		require.True(t, canSetReqSlots)
 	})
 
 	err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
@@ -652,22 +651,20 @@ func TestCanSetMaxSlots(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("slots different than config higher", func(t *testing.T) {
-		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(15), w.ID)
+		slots, err := CanSetMaxSlots(ptrs.Ptr(15), w.ID)
 		require.NoError(t, err)
-		require.True(t, canSetReqSlots)
 		require.NotNil(t, slots)
 		require.Equal(t, 13, *slots)
 	})
 
 	t.Run("slots different than config lower", func(t *testing.T) {
-		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(10), w.ID)
+		slots, err := CanSetMaxSlots(ptrs.Ptr(10), w.ID)
 		require.NoError(t, err)
-		require.True(t, canSetReqSlots)
 		require.NotNil(t, slots)
 		require.Equal(t, 13, *slots)
 	})
 
-	t.Run("just constarints slots higher", func(t *testing.T) {
+	t.Run("just constraints slots higher", func(t *testing.T) {
 		err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 			WorkspaceID:   &w.ID,
 			WorkloadType:  model.ExperimentType,
@@ -680,14 +677,14 @@ func TestCanSetMaxSlots(t *testing.T) {
 	}
 	`),
 		})
+		require.NoError(t, err)
 
-		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(25), w.ID)
+		slots, err := CanSetMaxSlots(ptrs.Ptr(25), w.ID)
 		require.ErrorContains(t, err, SlotsReqTooHighErr)
-		require.False(t, canSetReqSlots)
 		require.Nil(t, slots)
 	})
 
-	t.Run("just constarints slots lower", func(t *testing.T) {
+	t.Run("just constraints slots lower", func(t *testing.T) {
 		err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 			WorkspaceID:   &w.ID,
 			WorkloadType:  model.ExperimentType,
@@ -700,10 +697,10 @@ func TestCanSetMaxSlots(t *testing.T) {
 	}
 	`),
 		})
-
-		canSetReqSlots, slots, err := CanSetMaxSlots(ptrs.Ptr(20), w.ID)
 		require.NoError(t, err)
-		require.True(t, canSetReqSlots)
+
+		slots, err := CanSetMaxSlots(ptrs.Ptr(20), w.ID)
+		require.NoError(t, err)
 		require.NotNil(t, slots)
 		require.Equal(t, 20, *slots)
 	})
