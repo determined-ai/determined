@@ -568,7 +568,7 @@ func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, rea
 		e.handleSearcherActions(ops, err)
 	}()
 
-	state.Closed = true
+	state.EarlyExitedByUserCode = true
 	e.TrialSearcherState[requestID] = state
 
 	t, ok := e.trials[requestID]
@@ -660,7 +660,7 @@ func (e *internalExperiment) handleSearcherActions(
 			e.trialCreated(t)
 		case searcher.Stop:
 			state := e.TrialSearcherState[action.RequestID]
-			state.Stopped = true
+			state.EarlyStoppedBySearcher = true
 			e.TrialSearcherState[action.RequestID] = state
 			updatedTrials[action.RequestID] = true
 		case searcher.Shutdown:

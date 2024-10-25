@@ -517,8 +517,8 @@ func shimExperimentSnapshotV5(snapshot []byte) ([]byte, error) {
 				"trial_seed": searcherState.Create.TrialSeed,
 				"request_id": searcherState.Create.RequestID,
 			},
-			"Stopped": searcherState.Stop || searcherState.Complete,
-			"Closed":  searcherState.Closed && searcherState.Complete,
+			"EarlyStoppedBySearcher": searcherState.Stop || searcherState.Complete,
+			"EarlyExitedByUserCode":  searcherState.Closed && searcherState.Complete,
 		}
 	}
 

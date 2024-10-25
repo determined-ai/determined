@@ -38,9 +38,9 @@ type (
 	// TrialSearcherState is a message sent to an search to indicate that a run has
 	// changed searcher state.
 	TrialSearcherState struct {
-		Create  searcher.Create
-		Stopped bool
-		Closed  bool
+		Create                 searcher.Create
+		EarlyStoppedBySearcher bool
+		EarlyExitedByUserCode  bool
 	}
 )
 

@@ -230,14 +230,14 @@ func (t *trial) PatchSearcherState(req experiment.TrialSearcherState) error {
 
 	t.searcher = req
 	switch {
-	case t.searcher.Stopped:
+	case t.searcher.EarlyStoppedBySearcher:
 		return t.patchState(
 			model.StateWithReason{
 				State:               model.StoppingCompletedState,
 				InformationalReason: "searcher decided to early stop trial",
 			},
 		)
-	case t.searcher.Closed:
+	case t.searcher.EarlyExitedByUserCode:
 		return t.patchState(model.StateWithReason{
 			State:               model.StoppingCanceledState,
 			InformationalReason: "trial received early exit signal",
@@ -372,13 +372,13 @@ func (t *trial) maybeAllocateTask() error {
 	// Only allocate for active trials, or trials that have been restored and are stopping.
 	// We need to allocate for stopping because we need to reattach the allocation.
 	shouldAllocateState := t.state == model.ActiveState || (t.restored && model.StoppingStates[t.state])
-	if t.allocationID != nil || t.searcher.Closed || t.searcher.Stopped || !shouldAllocateState {
+	if t.allocationID != nil || t.searcher.EarlyExitedByUserCode || t.searcher.EarlyStoppedBySearcher || !shouldAllocateState {
 		t.syslog.WithFields(logrus.Fields{
-			"allocation-id":    t.allocationID,
-			"searcher-closed":  t.searcher.Closed,
-			"searcher-stopped": t.searcher.Stopped,
-			"trial-state":      t.state,
-			"restored":         t.restored,
+			"allocation-id":          t.allocationID,
+			"trial-early-exited":     t.searcher.EarlyExitedByUserCode,
+			"searcher-early-stopped": t.searcher.EarlyStoppedBySearcher,
+			"trial-state":            t.state,
+			"restored":               t.restored,
 		}).Trace("decided not to allocate trial")
 		return nil
 	}
@@ -587,7 +587,7 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			State:               model.StoppingToTerminalStates[t.state],
 			InformationalReason: "trial stopped",
 		})
-	case t.searcher.Stopped:
+	case t.searcher.EarlyStoppedBySearcher:
 		if exit.Err != nil {
 			return t.transition(model.StateWithReason{
 				State: model.ErrorState,

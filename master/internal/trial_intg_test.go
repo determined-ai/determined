@@ -37,16 +37,16 @@ func TestTrial(t *testing.T) {
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create:  searcher.Create{},
-		Stopped: false,
-		Closed:  false,
+		Create:                 searcher.Create{},
+		EarlyStoppedBySearcher: false,
+		EarlyExitedByUserCode:  false,
 	}))
 
 	// Running stage.
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create:  searcher.Create{},
-		Stopped: true,
-		Closed:  false,
+		Create:                 searcher.Create{},
+		EarlyStoppedBySearcher: true,
+		EarlyExitedByUserCode:  false,
 	}))
 	require.True(t, alloc.AssertExpectations(t))
 	require.NotNil(t, tr.allocationID)
@@ -75,9 +75,9 @@ func TestTrialRestarts(t *testing.T) {
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create:  searcher.Create{},
-		Stopped: false,
-		Closed:  false,
+		Create:                 searcher.Create{},
+		EarlyStoppedBySearcher: false,
+		EarlyExitedByUserCode:  false,
 	}))
 
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
@@ -151,7 +151,7 @@ func setup(t *testing.T) (
 		time.Now(),
 		eID,
 		model.PausedState,
-		experiment.TrialSearcherState{Create: searcher.Create{}, Closed: true},
+		experiment.TrialSearcherState{Create: searcher.Create{}, EarlyExitedByUserCode: true},
 		rmImpl,
 		a.m.db,
 		expConf,
