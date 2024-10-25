@@ -16,7 +16,7 @@ message PostAccessTokenRequest {
   int32 user_id = 1;
   // Lifespan expressing how long the token should last. Should be a Go-format
   // duration (e.g. "2s", "4m", "72h".)
-  string lifespan = 2;
+  optional string lifespan = 2;
   // Description of the token.
   string description = 3;
 }

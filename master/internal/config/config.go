@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/jinzhu/copier"
 	log "github.com/sirupsen/logrus"
@@ -35,11 +36,20 @@ var (
 	masterConfig *Config
 )
 
-// KubernetesDefaultPriority is the default K8 resource manager priority.
 const (
+	// KubernetesDefaultPriority is the default K8 resource manager priority.
 	KubernetesDefaultPriority = 50
 	sslModeDisable            = "disable"
 	preemptionScheduler       = "preemption"
+	// InfiniteTokenLifespan is the value to set the token lifespan to infinite.
+	InfiniteTokenLifespan = -1
+	// InfiniteTokenLifespanString is the string representation of InfiniteTokenLifespan.
+	InfiniteTokenLifespanString = "-1"
+	// DefaultTokenLifespanDays is the default token lifespan in days.
+	DefaultTokenLifespanDays = 30
+	// MaxAllowedTokenLifespanDays is the max allowed lifespan for tokens.
+	// This is the maximum number of days a go duration can represent.
+	MaxAllowedTokenLifespanDays = 106751
 )
 
 const (
@@ -120,6 +130,10 @@ func DefaultConfig() *Config {
 				KeyType: KeyTypeED25519,
 			},
 			AuthZ: *DefaultAuthZConfig(),
+			Token: TokenConfig{
+				MaxLifespanDays:     DefaultTokenLifespanDays,
+				DefaultLifespanDays: DefaultTokenLifespanDays,
+			},
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port: 0,
@@ -403,6 +417,13 @@ func (c *Config) Resolve() error {
 		c.SAML.GroupsAttributeName = ""
 	}
 
+	if c.Security.Token.MaxLifespanDays == InfiniteTokenLifespan {
+		c.Security.Token.MaxLifespanDays = MaxAllowedTokenLifespanDays
+	}
+	if c.Security.Token.DefaultLifespanDays == InfiniteTokenLifespan {
+		c.Security.Token.DefaultLifespanDays = MaxAllowedTokenLifespanDays
+	}
+
 	return nil
 }
 
@@ -455,8 +476,55 @@ type SecurityConfig struct {
 	TLS         TLSConfig            `json:"tls"`
 	SSH         SSHConfig            `json:"ssh"`
 	AuthZ       AuthZConfig          `json:"authz"`
+	Token       TokenConfig          `json:"token"`
 
 	InitialUserPassword string `json:"initial_user_password"`
+}
+
+// TokenConfig is the configuration setting for tokens.
+type TokenConfig struct {
+	MaxLifespanDays     int `json:"max_lifespan_days"`
+	DefaultLifespanDays int `json:"default_lifespan_days"`
+}
+
+// MaxLifespan returns MaxLifespanDays as a time.Duration.
+func (t *TokenConfig) MaxLifespan() time.Duration {
+	return time.Duration(t.MaxLifespanDays) * 24 * time.Hour
+}
+
+// DefaultLifespan returns DefaultLifespanDays as a time.Duration.
+func (t *TokenConfig) DefaultLifespan() time.Duration {
+	return time.Duration(t.DefaultLifespanDays) * 24 * time.Hour
+}
+
+// Validate implements the check.Validatable interface for the TokenConfig.
+func (t *TokenConfig) Validate() []error {
+	var errs []error
+	if t.MaxLifespanDays < 0 {
+		errs = append(errs, errors.New("max token lifespan must be greater than 0 days, unless"+
+			" set to -1 for infinite lifespan"),
+		)
+	}
+	if t.DefaultLifespanDays < 0 {
+		errs = append(errs, errors.New("default token lifespan must be greater than 0 days,"+
+			" unless set to -1 for infinite lifespan"),
+		)
+	}
+	if t.DefaultLifespanDays > t.MaxLifespanDays {
+		errs = append(errs, errors.New("default token lifespan must be less than max token"+
+			" lifespan"))
+	}
+	if t.MaxLifespanDays > MaxAllowedTokenLifespanDays {
+		errs = append(errs, fmt.Errorf("max token lifespan should be less than %v, Go's max duration"+
+			" value", MaxAllowedTokenLifespanDays),
+		)
+	}
+	if t.DefaultLifespanDays > MaxAllowedTokenLifespanDays {
+		errs = append(errs, fmt.Errorf("default token lifespan days should be less than %v, Go's max"+
+			" duration value", MaxAllowedTokenLifespanDays),
+		)
+	}
+	return errs
 }
 
 // SSHConfig is the configuration setting for SSH.

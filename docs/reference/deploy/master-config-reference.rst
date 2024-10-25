@@ -1578,6 +1578,18 @@ Integer identifier of a role to be assigned. Defaults to ``2``, which is the rol
 Initial password for the built-in ``determined`` and ``admin`` users. Applies on first launch when a
 cluster's database is bootstrapped, otherwise it is ignored.
 
+``token``
+=========
+
+Applies only to Determined Enterprise Edition. Defines default and maximum lifespan settings for
+access tokens. These settings allow administrators to control how long access tokens can remain
+valid, enhancing security while supporting automation.
+
+-  ``default_lifespan_days``: Specifies the default lifespan (in days) for new access tokens.
+   Defaults to 30 days.
+-  ``max_lifespan_days``: Specifies the maximum allowed lifespan (in days) for access tokens.
+   Setting this to ``-1`` allows for an infinite token lifespan. Defaults to ``-1``.
+
 **************
  ``webhooks``
 **************
