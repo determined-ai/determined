@@ -188,7 +188,7 @@ type KubernetesResourceManagerConfig struct {
 	KubeconfigPath string       `json:"kubeconfig_path"`
 
 	DetMasterScheme string `json:"determined_master_scheme,omitempty"`
-	DetMasterHost   string `json:"determined_master_host,omitempty"`
+	DetMasterIP     string `json:"determined_master_ip,omitempty"`
 	DetMasterPort   int32  `json:"determined_master_port,omitempty"`
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
@@ -294,27 +294,33 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // Validate implements the check.Validatable interface.
 func (k KubernetesResourceManagerConfig) Validate() []error {
-	var errs []error
+	var checkSlotType error
 	switch k.SlotType {
 	case device.CPU, device.CUDA, device.ROCM:
 	default:
-		errs = append(errs, errors.New("slot_type must be cuda, cpu, or rocm"))
+		checkSlotType = errors.Errorf("slot_type must be cuda, cpu, or rocm")
 	}
 
+	var checkCPUResource error
 	if k.SlotType == device.CPU {
-		errs = append(errs, check.GreaterThan(
-			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0"))
+		checkCPUResource = check.GreaterThan(
+			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 
+	var checkRMScheduler error
 	if k.DefaultScheduler == PriorityScheduling {
-		errs = append(errs, errors.New("the ``priority`` scheduler was deprecated, please "+
-			"use the default Kubernetes scheduler or coscheduler"))
+		checkRMScheduler = fmt.Errorf("the ``priority`` scheduler was deprecated, please " +
+			"use the default Kubernetes scheduler or coscheduler")
 	} else if k.DefaultScheduler != "" && k.DefaultScheduler != "coscheduler" {
-		errs = append(errs, errors.New("only blank or ``coscheduler`` values allowed for Kubernetes scheduler"))
+		checkRMScheduler = fmt.Errorf("only blank or ``coscheduler`` values allowed for Kubernetes scheduler")
 	}
 
-	errs = append(errs, check.NotEmpty(k.ClusterName, "cluster_name is required"))
-	return errs
+	return []error{
+		checkSlotType,
+		checkCPUResource,
+		check.NotEmpty(k.ClusterName, "cluster_name is required"),
+		checkRMScheduler,
+	}
 }
 
 // PodSlotResourceRequests contains the per-slot container requests.

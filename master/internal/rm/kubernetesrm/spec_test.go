@@ -422,7 +422,7 @@ func TestDetMasterEnvVar(t *testing.T) {
 			}
 
 			j := &job{
-				masterHost:      "example.com",
+				masterIP:        "example.com",
 				masterPort:      1234,
 				masterScheme:    c.masterScheme,
 				masterTLSConfig: c.masterTLSConfig,
