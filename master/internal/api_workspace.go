@@ -1322,17 +1322,6 @@ func (a *apiServer) DeleteWorkspace(
 		}
 	}
 
-	// modelsExist, err := a.workspaceHasModels(ctx, req.Id)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if modelsExist {
-	// 	return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first",
-	// 		req.Id)
-	// }
-
-	// experimentsExist, err :=
-
 	holder := &workspacev1.Workspace{}
 	// TODO(kristine): DET-10138 update workspace state in transaction with template delete
 	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
