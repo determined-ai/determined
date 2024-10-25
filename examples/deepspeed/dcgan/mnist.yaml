@@ -22,8 +22,6 @@ resources:
 searcher:
   name: single
   metric: no_validation_metric
-  max_length:
-    batches: 200
 min_validation_period:
   batches: 0
 entrypoint:
