@@ -24,7 +24,7 @@ from determined.pytorch._metric_utils import (
     _convert_metrics_to_numpy,
     _log_tb_metrics,
 )
-from determined.pytorch._util import (
+from determined.pytorch._trainer_utils import (
     Batch,
     Epoch,
     _ShouldExit,

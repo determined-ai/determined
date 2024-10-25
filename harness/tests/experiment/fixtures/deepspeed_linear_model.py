@@ -26,6 +26,7 @@ class MetricsCallbacks(pytorch.PyTorchCallback):
     def on_checkpoint_load_start(self, checkpoint: Optional[Dict]):
         self.trial.checkpoint_found = checkpoint is not None
 
+
 class ReproducibilityCallbacks(pytorch.PyTorchCallback):
     def __init__(self, trial) -> None:
         self.trial = trial
@@ -37,6 +38,7 @@ class ReproducibilityCallbacks(pytorch.PyTorchCallback):
     def on_training_workload_end(self, avg_metrics, batch_metrics):
         self.trial.avg_metrics.append(avg_metrics)
         self.trial.batch_metrics.append(batch_metrics)
+
 
 class TwoEngineMetricsCallbacks(pytorch.PyTorchCallback):
     def __init__(self) -> None:

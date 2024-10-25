@@ -430,17 +430,15 @@ class DeepSpeedTrialController:
         if self.test_mode:
             train_length = pytorch.Batch(1)
         elif self.local_training:
-            train_length = self.max_length  # type: ignore
+            train_length = self.max_length
         else:
             train_length = pytorch.TrainUnit._from_searcher_unit(
                 op.length, self.searcher_unit, self.global_batch_size
-            )  # type: ignore
+            )
         assert train_length
 
         while self._steps_until_complete(train_length) > 0:
-            train_boundaries, training_metrics = self._train_with_boundaries(
-                train_boundaries
-            )
+            train_boundaries, training_metrics = self._train_with_boundaries(train_boundaries)
 
             metrics = self._aggregate_training_metrics(training_metrics)
             metrics = self.context.distributed.broadcast(metrics)
@@ -1090,6 +1088,9 @@ class DeepSpeedTrialController:
             # We assume these stateful objects should be the same across slots and only have
             # the chief save them.
             util.write_user_code(path, not self.local_training)
+            assert self.state
+            with path.joinpath("trial_state.pkl").open("wb") as f:
+                pickle.dump(vars(self.state), f)
 
         rng_state = {
             "cpu_rng_state": torch.random.get_rng_state(),
@@ -1116,10 +1117,6 @@ class DeepSpeedTrialController:
             callback.on_checkpoint_save_start(checkpoint)
         ckpt_name = f"det_state_dict_rank{self.context.distributed.rank}.pth"
         torch.save(checkpoint, str(path.joinpath(ckpt_name)))
-
-        assert self.state
-        with path.joinpath("trial_state.pkl").open("wb") as f:
-            pickle.dump(vars(self.state), f)
 
         # We allow users to override save behavior if needed, but we default to using
         # the save method provided by DeepSpeed.

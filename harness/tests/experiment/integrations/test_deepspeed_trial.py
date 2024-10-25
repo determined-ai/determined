@@ -1,5 +1,4 @@
 # type: ignore
-import appdirs
 import copy
 import json
 import os
@@ -7,15 +6,16 @@ import pathlib
 import shutil
 from typing import Iterator
 
+import appdirs
 import pytest
 import torch
 from deepspeed.runtime import config_utils
 
 import determined
-from determined import pytorch
 import determined.pytorch.deepspeed as det_ds
-from determined.pytorch.deepspeed import _trainer
-from tests.experiment.fixtures import deepspeed_linear_model
+from determined import pytorch  # noqa: I2041
+from determined.pytorch.deepspeed import _trainer  # noqa: I2041
+from tests.experiment.fixtures import deepspeed_linear_model  # noqa: I2041
 
 ds_config_path = str(
     pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/ds_config.json")
@@ -40,7 +40,7 @@ def manual_init_distributed() -> Iterator[None]:
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.deepspeed
 @pytest.mark.gpu
-class TestDeepSpeedTrial():
+class TestDeepSpeedTrial:
     def setup_method(self) -> None:
         # These environment variables are usually set by the launcher, but we set them manually here
         # since they are required internally by the deepspeed model engine.
@@ -82,7 +82,6 @@ class TestDeepSpeedTrial():
                 trial = deepspeed_linear_model.LinearDeepSpeedTrial(train_context, updated_hparams)
                 trainer = det_ds.Trainer(trial, train_context)
                 trainer.fit(max_length=pytorch.Batch(16))
-
 
     def test_manual_init_distributed(self, manual_init_distributed: None):
         updated_hparams = copy.deepcopy(self.hparams)
@@ -175,7 +174,9 @@ class TestDeepSpeedTrial():
             match=r"Validation metric names must match across all batches of data: .*",
         ):
             with det_ds.init() as train_context:
-                trial = deepspeed_linear_model.DifferingValidMetricKeyTrial(train_context, self.hparams)
+                trial = deepspeed_linear_model.DifferingValidMetricKeyTrial(
+                    train_context, self.hparams
+                )
                 trainer = det_ds.Trainer(trial, train_context)
                 trainer.fit(validation_period=pytorch.Batch(16), max_length=pytorch.Batch(16))
 
@@ -184,14 +185,7 @@ class TestDeepSpeedTrial():
             determined.errors.InvalidExperimentException, match=r"Only one MPU can be passed .*"
         ):
             with det_ds.init() as train_context:
-                trial = deepspeed_linear_model.LinearDeepSpeedTrial(train_context, self.hparams)
-                train_context.set_mpu(
-                    det_ds.make_data_parallel_mpu(train_context.distributed)
-                )
-                # TODO: CHECK IF THIS SECOND CALL IS NECESSARY
-                train_context.set_mpu(
-                    det_ds.make_data_parallel_mpu(train_context.distributed)
-                )
+                train_context.set_mpu(det_ds.make_data_parallel_mpu(train_context.distributed))
 
     def test_custom_reducer(self) -> None:
         updated_hparams = copy.deepcopy(self.hparams)
@@ -233,11 +227,13 @@ class TestDeepSpeedTrial():
             trial2 = deepspeed_linear_model.LinearDeepSpeedTrial(train_context, self.hparams)
             trainer = det_ds.Trainer(trial2, train_context)
             assert trial1.checkpoint_uuid is not None
-            trainer.fit(validation_period=pytorch.Batch(16),
-                        max_length=pytorch.Batch(16),
-                        latest_checkpoint=os.path.join(
-                            appdirs.user_data_dir("determined"),trial1.checkpoint_uuid)
-                        )
+            trainer.fit(
+                validation_period=pytorch.Batch(16),
+                max_length=pytorch.Batch(16),
+                latest_checkpoint=os.path.join(
+                    appdirs.user_data_dir("determined"), trial1.checkpoint_uuid
+                ),
+            )
 
     def test_restore_invalid_checkpoint(self) -> None:
         with det_ds.init() as train_context:
@@ -251,14 +247,16 @@ class TestDeepSpeedTrial():
             trainer = det_ds.Trainer(trial2, train_context)
             assert trial1.checkpoint_uuid is not None
             with pytest.raises(AssertionError, match="Failed to load deepspeed checkpoint."):
-                trainer.fit(validation_period=pytorch.Batch(16),
-                            max_length=pytorch.Batch(16),
-                            latest_checkpoint=os.path.join(
-                                appdirs.user_data_dir("determined"), trial1.checkpoint_uuid)
-                            )
+                trainer.fit(
+                    validation_period=pytorch.Batch(16),
+                    max_length=pytorch.Batch(16),
+                    latest_checkpoint=os.path.join(
+                        appdirs.user_data_dir("determined"), trial1.checkpoint_uuid
+                    ),
+                )
 
     # TODO: Remove this particular skip after CI is updated (INFENG-659)
-    @pytest.mark.skipif(shutil.disk_usage("/dev/shm")[0] < 10 ** 8, reason="insufficient shm size")
+    @pytest.mark.skipif(shutil.disk_usage("/dev/shm")[0] < 10**8, reason="insufficient shm size")
     def test_reproducibility(self) -> None:
         with det_ds.init() as train_context:
             _trainer._set_random_seeds(self.trial_seed)
@@ -269,11 +267,10 @@ class TestDeepSpeedTrial():
 
         with det_ds.init() as train_context:
             _trainer._set_random_seeds(self.trial_seed)
-            train_context._trial_seed=self.trial_seed
+            train_context._trial_seed = self.trial_seed
             trial2 = deepspeed_linear_model.LinearPipelineEngineTrial(train_context, self.hparams)
             trainer = det_ds.Trainer(trial2, train_context)
             trainer.fit(validation_period=pytorch.Batch(100), max_length=pytorch.Batch(1000))
-
 
         assert len(trial1.avg_metrics) == len(trial2.avg_metrics)
         for A, B in zip(trial1.avg_metrics, trial2.avg_metrics):
@@ -294,7 +291,6 @@ class TestDeepSpeedTrial():
             for key in A.keys():
                 assert abs(A[key] - B[key]) < 10e-7
 
-
     def test_callbacks(self) -> None:
         with det_ds.init() as train_context:
             trial = deepspeed_linear_model.LinearCallbackTrial(train_context, self.hparams)
@@ -312,6 +308,7 @@ class TestDeepSpeedTrial():
                 "training_workloads_ended": 2,
                 "trial_shutdowns": 1,
             }
+
 
 @pytest.mark.deepspeed
 def test_overwrite_deepspeed_config() -> None:
