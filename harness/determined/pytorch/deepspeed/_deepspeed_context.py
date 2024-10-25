@@ -232,16 +232,14 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
     def use_pipeline_parallel(self) -> bool:
         return self._use_pipeline_parallel
 
-    @property
-    def train_micro_batch_size_per_gpu(self) -> int:
+    def get_train_micro_batch_size_per_gpu(self) -> int:
         if self._train_micro_batch_size_per_gpu is None:
             raise det.errors.InvalidExperimentException(
                 "Please call wrap_model_engine before accessing train_micro_batch_size."
             )
         return self._train_micro_batch_size_per_gpu
 
-    @property
-    def num_micro_batches_per_slot(self) -> int:
+    def get_num_micro_batches_per_slot(self) -> int:
         if self._num_micro_batches_per_slot is None:
             raise det.errors.InvalidExperimentException(
                 "Please call wrap_model_engine before accessing num_micro_batches_per_slot."

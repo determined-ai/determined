@@ -194,14 +194,14 @@ class DeepSpeedTrialController:
                 )
 
                 if self.context.use_pipeline_parallel:
-                    if len(self.validation_loader) < self.context.num_micro_batches_per_slot:
+                    if len(self.validation_loader) < self.context.get_num_micro_batches_per_slot():
                         raise det.errors.InvalidExperimentException(
                             "Number of train micro batches in validation data loader should not be "
                             "less than the number of gradient accumulation steps when using "
                             "pipeline parallelism."
                         )
                     excluded_micro_batches = (
-                        len(validation_data) % self.context.num_micro_batches_per_slot
+                        len(validation_data) % self.context.get_num_micro_batches_per_slot()
                     )
                     if excluded_micro_batches:
                         logger.warning(
@@ -232,9 +232,9 @@ class DeepSpeedTrialController:
 
             if self.context.use_pipeline_parallel:
                 self.num_validation_batches = (
-                    self.num_validation_batches // self.context.num_micro_batches_per_slot
+                    self.num_validation_batches // self.context.get_num_micro_batches_per_slot()
                 )
-                self.validation_batch_size *= self.context.num_micro_batches_per_slot
+                self.validation_batch_size *= self.context.get_num_micro_batches_per_slot()
 
         # We will do a gather on to get train and val loader lengths and broadcast to all slots.
         self.context._epoch_len = (
@@ -248,7 +248,9 @@ class DeepSpeedTrialController:
                     "Training data loader length inconsistent across ranks. "
                     "Using the minimum for epoch length."
                 )
-            self.context._epoch_len = min(all_epoch_lens) // self.context.num_micro_batches_per_slot
+            self.context._epoch_len = (
+                min(all_epoch_lens) // self.context.get_num_micro_batches_per_slot()
+            )
         self.context._epoch_len = self.context.distributed.broadcast(self.context._epoch_len)
 
         all_tuples = self.context.distributed.gather(
@@ -495,7 +497,7 @@ class DeepSpeedTrialController:
         return train_boundaries, training_metrics
 
     def _train_batch(self, epoch_idx: int, batch_idx: int) -> List[dict]:
-        num_micro_batches = self.context.num_micro_batches_per_slot
+        num_micro_batches = self.context.get_num_micro_batches_per_slot()
         if self.context.use_pipeline_parallel or self.context._manual_grad_accumulation:
             num_micro_batches = 1
 
@@ -541,12 +543,13 @@ class DeepSpeedTrialController:
         model0 = self.context.models[0]
         if not isinstance(model0, deepspeed.PipelineEngine):
             assert (
-                model0.micro_steps % self.context.num_micro_batches_per_slot == 0
+                model0.micro_steps % self.context.get_num_micro_batches_per_slot() == 0
             ), "did not train for gradient accumulation steps"
 
         batch_dur = time.time() - batch_start_time
         batch_inputs = (
-            self.context.train_micro_batch_size_per_gpu * self.context.num_micro_batches_per_slot
+            self.context.get_train_micro_batch_size_per_gpu()
+            * self.context.get_num_micro_batches_per_slot()
         )
         samples_per_second = batch_inputs / batch_dur
         samples_per_second *= self.context.distributed.size
