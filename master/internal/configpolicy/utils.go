@@ -2,6 +2,7 @@ package configpolicy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -27,6 +28,9 @@ const (
 	InvalidNTSCConfigPolicyErr = "invalid ntsc config policy"
 	// NotSupportedConfigPolicyErr is the error reported when admins attempt to set NTSC invariant config.
 	NotSupportedConfigPolicyErr = "not supported"
+	// SlotsReqTooHighErr is the error reported when the requested slots violates the max slots
+	// constraint.
+	SlotsReqTooHighErr = "requested slots is violates max slots constraint"
 )
 
 // ConfigPolicyWarning logs a warning for the configuration policy component.
@@ -297,4 +301,41 @@ func configPolicyOverlap(config1, config2 interface{}) {
 			}
 		}
 	}
+}
+
+// CanSetMaxSlots returns true if the slots requested don't violate a constraint. It returns the
+// enforced max slots for the workspace if that's set as an invariant config, and returns the
+// requested max slots otherwise. Returns an error when max slots is not set as an invariant config
+// and the requested max slots violates the constriant.
+func CanSetMaxSlots(slotsReq *int, wkspID int) (*int, error) {
+	if slotsReq == nil {
+		return slotsReq, nil
+	}
+	enforcedMaxSlots, err := GetConfigPolicyField[int](context.TODO(), &wkspID,
+		"invariant_config",
+		"'resources' -> 'max_slots'", model.ExperimentType)
+	if err != nil {
+		return nil, err
+	}
+
+	if enforcedMaxSlots != nil {
+		return enforcedMaxSlots, nil
+	}
+
+	maxSlotsLimit, err := GetConfigPolicyField[int](context.TODO(), &wkspID,
+		"constraints",
+		"'resources' -> 'max_slots'", model.ExperimentType)
+	if err != nil {
+		return nil, err
+	}
+
+	var canSetReqSlots bool
+	if maxSlotsLimit == nil || *slotsReq <= *maxSlotsLimit {
+		canSetReqSlots = true
+	}
+	if !canSetReqSlots {
+		return nil, fmt.Errorf(SlotsReqTooHighErr+": %d > %d", *slotsReq, *maxSlotsLimit)
+	}
+
+	return slotsReq, nil
 }

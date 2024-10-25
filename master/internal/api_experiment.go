@@ -1218,6 +1218,7 @@ func (a *apiServer) PatchExperiment(
 			}
 			activeConfig.SetResources(resources)
 		}
+
 		newCheckpointStorage := req.Experiment.CheckpointStorage
 
 		if newCheckpointStorage != nil {
@@ -1231,6 +1232,23 @@ func (a *apiServer) PatchExperiment(
 			storage.SetSaveTrialBest(int(newCheckpointStorage.SaveTrialBest))
 			storage.SetSaveTrialLatest(int(newCheckpointStorage.SaveTrialLatest))
 			activeConfig.SetCheckpointStorage(storage)
+
+			// Only allow checkpoint storage changes if it is not specified as an invariant config.
+			w, err := getWorkspaceByConfig(activeConfig)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("failed to get workspace %s",
+					activeConfig.Workspace()))
+			}
+
+			enforcedChkptConf, err := configpolicy.GetConfigPolicyField[expconf.CheckpointStorageConfig](
+				ctx, &w.ID, "invariant_config", "checkpoint_storage",
+				model.ExperimentType)
+			if err != nil {
+				return nil, fmt.Errorf("unable to fetch task config policies: %w", err)
+			}
+			if enforcedChkptConf != nil {
+				activeConfig.SetCheckpointStorage(*enforcedChkptConf)
+			}
 		}
 
 		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
@@ -1470,20 +1488,16 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
 
-	// Determine which workspace the experiment is in.
-	wkspName := activeConfig.Workspace()
-	if wkspName == "" {
-		wkspName = model.DefaultWorkspaceName
-	}
-	ctx := context.TODO()
-	w, err := workspace.WorkspaceByName(ctx, wkspName)
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	w, err := getWorkspaceByConfig(activeConfig)
 	if err != nil {
 		return nil, false, status.Errorf(codes.Internal,
 			fmt.Sprintf("failed to get workspace %s", activeConfig.Workspace()))
 	}
-	// Merge the config with the optionally specified invariant config specified by task config
-	// policies.
-	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+
+	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(
+		context.TODO(),
 		w.ID, mergedConfig)
 	if err != nil {
 		return nil, false,
@@ -1497,6 +1511,15 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	}
 
 	return bytes.([]byte), isSingle, nil
+}
+
+func getWorkspaceByConfig(config expconf.ExperimentConfig) (*model.Workspace, error) {
+	wkspName := config.Workspace()
+	if wkspName == "" {
+		wkspName = model.DefaultWorkspaceName
+	}
+	ctx := context.TODO()
+	return workspace.WorkspaceByName(ctx, wkspName)
 }
 
 var errContinueHPSearchCompleted = status.Error(codes.FailedPrecondition,

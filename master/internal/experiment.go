@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
@@ -65,7 +65,7 @@ type (
 		activeConfig        expconf.ExperimentConfig
 		db                  *internaldb.PgDB
 		rm                  rm.ResourceManager
-		syslog              *logrus.Entry
+		syslog              *log.Entry
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 		continueTrials      bool
@@ -168,7 +168,7 @@ func newExperiment(
 		activeConfig: activeConfig,
 		db:           m.db,
 		rm:           m.rm,
-		syslog: logrus.WithFields(logrus.Fields{
+		syslog: log.WithFields(log.Fields{
 			"component":     "experiment",
 			"job-id":        expModel.JobID,
 			"experiment-id": expModel.ID,
@@ -412,6 +412,19 @@ func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	w, err := getWorkspaceByConfig(e.activeConfig)
+	if err != nil {
+		log.Warnf("unable to set max slots")
+		return
+	}
+
+	slots, err := configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+	if err != nil {
+		log.Warnf("unable to set max slots: %s", err.Error())
+		return
+	}
+
+	msg.MaxSlots = slots
 	resources := e.activeConfig.Resources()
 	resources.SetMaxSlots(msg.MaxSlots)
 	e.activeConfig.SetResources(resources)
@@ -1100,6 +1113,21 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 }
 
 func (e *internalExperiment) setWeight(weight float64) error {
+	// Only set requested weight if it is not set in an invariant config.
+	w, err := getWorkspaceByConfig(e.activeConfig)
+	if err != nil {
+		return fmt.Errorf("error getting workspace: %w", err)
+	}
+	enforcedWeight, err := configpolicy.GetConfigPolicyField[float64](context.TODO(), &w.ID,
+		"invariant_config",
+		"'resources' -> 'weight'", model.ExperimentType)
+	if err != nil {
+		return fmt.Errorf("error checking against config policies: %w", err)
+	}
+	if enforcedWeight != nil {
+		weight = *enforcedWeight
+	}
+
 	resources := e.activeConfig.Resources()
 	oldWeight := resources.Weight()
 	resources.SetWeight(weight)
