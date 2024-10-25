@@ -228,6 +228,89 @@ func TestApplyBackwardsCompatibility(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "determined master ip to host rename, ip set",
+			before: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type":                 "kubernetes",
+					"determined_master_ip": "10.0.0.1",
+				},
+				"additional_resource_managers": []map[string]any{
+					{
+						"type":                 "kubernetes",
+						"determined_master_ip": "10.0.0.2",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type":                   "kubernetes",
+					"determined_master_host": "10.0.0.1",
+				},
+				"additional_resource_managers": []map[string]any{
+					{
+						"type":                   "kubernetes",
+						"determined_master_host": "10.0.0.2",
+					},
+				},
+			},
+		},
+		{
+			name: "determined master ip to host rename, both set",
+			before: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type":                   "kubernetes",
+					"determined_master_host": "10.0.0.1",
+					"determined_master_ip":   "10.0.0.1",
+				},
+				"additional_resource_managers": []map[string]any{
+					{
+						"type":                   "kubernetes",
+						"determined_master_host": "10.0.0.2",
+						"determined_master_ip":   "10.0.0.2",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type":                   "kubernetes",
+					"determined_master_host": "10.0.0.1",
+				},
+				"additional_resource_managers": []map[string]any{
+					{
+						"type":                   "kubernetes",
+						"determined_master_host": "10.0.0.2",
+					},
+				},
+			},
+		},
+		{
+			name: "determined master ip to host rename, host set get left alone",
+			before: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type":                   "kubernetes",
+					"determined_master_host": "10.0.0.1",
+				},
+				"additional_resource_managers": []map[string]any{
+					{
+						"type":                   "kubernetes",
+						"determined_master_host": "10.0.0.2",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type":                   "kubernetes",
+					"determined_master_host": "10.0.0.1",
+				},
+				"additional_resource_managers": []map[string]any{
+					{
+						"type":                   "kubernetes",
+						"determined_master_host": "10.0.0.2",
+					},
+				},
+			},
+		},
 	}
 	for ix := range tcs {
 		tc := tcs[ix]

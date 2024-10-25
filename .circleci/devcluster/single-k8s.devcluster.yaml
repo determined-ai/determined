@@ -33,5 +33,5 @@ stages:
           slot_resource_requests:
             cpu: 1
           kubeconfig_path: ~/.kube/config
-          determined_master_ip: $DOCKER_LOCALHOST
+          determined_master_host: $DOCKER_LOCALHOST
           determined_master_port: 8080
