@@ -155,7 +155,7 @@ the same as the “cluster name” for a given cluster.
 
    If an additional resource manager needs to connect to the Determined master through a gateway
    requiring TLS, ``resource_manager.determined_master_scheme`` should be set to ``https``. If
-   ``resource_manager.determined_master_scheme`` is not set ``determined_master_ip`` will assume
+   ``resource_manager.determined_master_scheme`` is not set ``determined_master_host`` will assume
    ``https`` if the master is terminating TLS and ``http`` otherwise.
 
 *******

@@ -325,7 +325,7 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
             + "These will be ignored."
         )
     assert resource_manager["type"] == "kubernetes"
-    resource_manager["determined_master_ip"] = cfg.reverse_proxy_host
+    resource_manager["determined_master_host"] = cfg.reverse_proxy_host
     resource_manager["determined_master_port"] = remote_port
     assert gateway.ip is not None, "Gateway IP is not set"
     resource_manager.update(gateway.to_config())
