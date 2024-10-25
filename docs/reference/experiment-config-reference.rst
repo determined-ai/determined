@@ -311,7 +311,8 @@ language syntax). For more information about the syntax, you can visit this `RE2
 -  ``name``: Required. A name for the log policy. This name will be displayed as a label in the UI
    when the log policy matches.
 
--  ``pattern``: Optional. The regex pattern to match in the logs.
+-  ``pattern``: Required. The regex pattern to match in the logs. Can't omit this field unless the
+   intention is to disable an existing policy.
 
 -  ``action``: Optional. The action to take when the pattern is matched. Actions include:
 
