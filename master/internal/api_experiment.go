@@ -1251,11 +1251,6 @@ func (a *apiServer) PatchExperiment(
 			}
 		}
 
-		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-		if err := a.m.db.SaveExperimentConfig(modelExp.ID, activeConfig); err != nil {
-			return nil, errors.Wrapf(err, "patching experiment %d", modelExp.ID)
-		}
-
 		if newResources != nil {
 			e, ok := experiment.ExperimentRegistry.Load(int(exp.Id))
 			if !ok {
@@ -1264,6 +1259,15 @@ func (a *apiServer) PatchExperiment(
 
 			if newResources.MaxSlots != nil {
 				msg := sproto.SetGroupMaxSlots{MaxSlots: ptrs.Ptr(int(*newResources.MaxSlots))}
+				w, err := getWorkspaceByConfig(activeConfig)
+				if err != nil {
+					return nil, status.Errorf(codes.Internal, err.Error())
+				}
+
+				err = configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+				if err != nil {
+					return nil, status.Errorf(codes.InvalidArgument, err.Error())
+				}
 				e.SetGroupMaxSlots(msg)
 			}
 			if newResources.Weight != nil {
@@ -1278,6 +1282,11 @@ func (a *apiServer) PatchExperiment(
 					return nil, errors.Wrapf(err, "cannot change experiment priority to %v", *newResources.Priority)
 				}
 			}
+		}
+
+		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
+		if err := a.m.db.SaveExperimentConfig(modelExp.ID, activeConfig); err != nil {
+			return nil, errors.Wrapf(err, "patching experiment %d", modelExp.ID)
 		}
 
 		if newCheckpointStorage != nil {

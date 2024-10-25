@@ -418,13 +418,12 @@ func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 		return
 	}
 
-	slots, err := configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+	err = configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
 	if err != nil {
 		log.Warnf("unable to set max slots: %s", err.Error())
 		return
 	}
 
-	msg.MaxSlots = slots
 	resources := e.activeConfig.Resources()
 	resources.SetMaxSlots(msg.MaxSlots)
 	e.activeConfig.SetResources(resources)

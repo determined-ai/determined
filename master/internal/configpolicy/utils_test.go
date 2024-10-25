@@ -624,9 +624,8 @@ func TestCanSetMaxSlots(t *testing.T) {
 	ctx := context.Background()
 	w := createWorkspaceWithUser(ctx, t, user.ID)
 	t.Run("nil slots request", func(t *testing.T) {
-		slots, err := CanSetMaxSlots(nil, w.ID)
+		err := CanSetMaxSlots(nil, w.ID)
 		require.NoError(t, err)
-		require.Nil(t, slots)
 	})
 
 	err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
@@ -640,28 +639,17 @@ func TestCanSetMaxSlots(t *testing.T) {
 	}
 }
 `),
-		Constraints: ptrs.Ptr(`
-{
-	"resources": {
-		"max_slots": 13
-	}
-}
-`),
 	})
 	require.NoError(t, err)
 
 	t.Run("slots different than config higher", func(t *testing.T) {
-		slots, err := CanSetMaxSlots(ptrs.Ptr(15), w.ID)
-		require.NoError(t, err)
-		require.NotNil(t, slots)
-		require.Equal(t, 13, *slots)
+		err = CanSetMaxSlots(ptrs.Ptr(15), w.ID)
+		require.ErrorContains(t, err, SlotsAlreadySetErr)
 	})
 
 	t.Run("slots different than config lower", func(t *testing.T) {
-		slots, err := CanSetMaxSlots(ptrs.Ptr(10), w.ID)
-		require.NoError(t, err)
-		require.NotNil(t, slots)
-		require.Equal(t, 13, *slots)
+		err = CanSetMaxSlots(ptrs.Ptr(10), w.ID)
+		require.ErrorContains(t, err, SlotsAlreadySetErr)
 	})
 
 	t.Run("just constraints slots higher", func(t *testing.T) {
@@ -679,9 +667,8 @@ func TestCanSetMaxSlots(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		slots, err := CanSetMaxSlots(ptrs.Ptr(25), w.ID)
+		err = CanSetMaxSlots(ptrs.Ptr(25), w.ID)
 		require.ErrorContains(t, err, SlotsReqTooHighErr)
-		require.Nil(t, slots)
 	})
 
 	t.Run("just constraints slots lower", func(t *testing.T) {
@@ -699,9 +686,7 @@ func TestCanSetMaxSlots(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		slots, err := CanSetMaxSlots(ptrs.Ptr(20), w.ID)
+		err = CanSetMaxSlots(ptrs.Ptr(20), w.ID)
 		require.NoError(t, err)
-		require.NotNil(t, slots)
-		require.Equal(t, 20, *slots)
 	})
 }

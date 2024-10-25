@@ -150,6 +150,9 @@ func GetConfigPolicyField[T any](ctx context.Context, wkspID *int, policyType, f
 		if err == nil && len(globalBytes) == 0 {
 			confBytes = wkspBytes
 		}
+		if len(globalBytes) > 0 || len(wkspBytes) > 0 {
+			err = nil
+		}
 		return err
 	})
 	if err == sql.ErrNoRows || len(confBytes) == 0 {
