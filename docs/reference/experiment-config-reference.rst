@@ -368,9 +368,6 @@ To disable showing labels from the default policies:
      - name: CUDA OOM
      - name: ECC Error
 
-To find out more about log management features like **Log Search** and **Log Signal**, visit
-:ref:`Log Management <log-management>`.
-
 .. _log-retention-days:
 
 ``retention_policy``
