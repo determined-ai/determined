@@ -276,19 +276,6 @@ func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.RunTaskID
 	return ids, nil
 }
 
-// TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
-func TrialByExperimentAndRequestID(
-	ctx context.Context, experimentID int, requestID model.RequestID,
-) (*model.Trial, error) {
-	t := &model.Trial{}
-	if err := Bun().NewSelect().Model(t).
-		Where("experiment_id = ?", experimentID).
-		Where("request_id = ?", requestID).Scan(ctx); err != nil {
-		return nil, fmt.Errorf("error querying for trial %s: %w", requestID, err)
-	}
-	return t, nil
-}
-
 // TrialByTaskID looks up a trial by taskID, returning an error if none exists.
 // This errors if you called it with a non trial taskID.
 func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, error) {
@@ -665,6 +652,11 @@ func (db *PgDB) addTrialMetrics(
 	case float64, nil:
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
+	switch v := m.Metrics.AvgMetrics.Fields["epochs"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return 0, fmt.Errorf("cannot add metric with non numeric 'epochs' value got %v", v)
 	}
 	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mGroup),
 		func(tx *sqlx.Tx) error {
@@ -1077,4 +1069,17 @@ RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
 	}
 
 	return nil
+}
+
+// TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
+func TrialByExperimentAndRequestID(
+	ctx context.Context, experimentID int, requestID model.RequestID,
+) (*model.Trial, error) {
+	var t model.Trial
+	if err := Bun().NewSelect().Model(&t).
+		Where("experiment_id = ?", experimentID).
+		Where("request_id = ?", requestID).Scan(ctx); err != nil {
+		return nil, fmt.Errorf("error querying for trial %s: %w", requestID, err)
+	}
+	return &t, nil
 }
