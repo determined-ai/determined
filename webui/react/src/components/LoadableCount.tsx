@@ -54,13 +54,13 @@ const LoadableCount: React.FC<Props> = ({
       Loaded: (loadedTotal) => {
         if (onActualSelectAll && selectedCount >= pageSize && selectedCount < loadedTotal) {
           return (
-            <Button type="text" onClick={onActualSelectAll}>
+            <Button data-test="select-all" type="text" onClick={onActualSelectAll}>
               Select all {labelPlural} in table
             </Button>
           );
-        } else if (onClearSelect && selectedCount >= pageSize) {
+        } else if (onClearSelect && (selectedCount >= pageSize || selectedCount === loadedTotal)) {
           return (
-            <Button type="text" onClick={onClearSelect}>
+            <Button data-test="clear-selection" type="text" onClick={onClearSelect}>
               Clear Selection
             </Button>
           );

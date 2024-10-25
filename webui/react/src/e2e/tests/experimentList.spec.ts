@@ -56,10 +56,10 @@ test.describe('Experiment List', () => {
       timeout: 10_000,
     });
     await test.step('Deselect', async () => {
-      let count = await getCount();
-      while (count !== 0) {
+      const count = await getCount();
+      if (count !== 0) {
         await grid.headRow.clickSelectHeader();
-        count = await getCount();
+        await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.click();
       }
     });
     await test.step('Reset Columns', async () => {
