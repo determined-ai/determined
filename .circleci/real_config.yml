@@ -4846,6 +4846,7 @@ workflows:
           name: test-e2e-single-k8s
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4861,6 +4862,7 @@ workflows:
           name: test-e2e-port-registry
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4875,6 +4877,7 @@ workflows:
           name: test-e2e-cpu-elastic
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4890,6 +4893,7 @@ workflows:
           name: test-e2e-postgres10-with-ssl
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4905,6 +4909,7 @@ workflows:
           name: test-e2e-postgres14-with-ssl
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4920,6 +4925,7 @@ workflows:
           name: test-e2e-old-agent-versions
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4933,6 +4939,9 @@ workflows:
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4951,6 +4960,7 @@ workflows:
           context:
             - okta
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4964,6 +4974,7 @@ workflows:
           name: test-e2e-rbac
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
@@ -4977,6 +4988,7 @@ workflows:
           name: test-e2e-cpu-model-registry-rbac
           context:
             - dev-ci-cluster-default-user-credentials
+            - github-read
           requires:
             - build-go-ee
           parallelism: 1
