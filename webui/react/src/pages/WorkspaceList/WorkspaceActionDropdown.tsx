@@ -156,7 +156,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     } else if (!workspace.archived) {
       menuItems.push({ key: MenuKey.Edit, label: 'View Config' });
     }
-    if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
+    if (canDeleteWorkspace({ workspace })) {
       menuItems.push({ type: 'divider' });
       menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
     }
