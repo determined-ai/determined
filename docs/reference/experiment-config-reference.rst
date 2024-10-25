@@ -308,11 +308,11 @@ Optional. Defines actions and labels in response to trial logs matching specifie
 language syntax). For more information about the syntax, you can visit this `RE2 reference page
 <https://github.com/google/re2/wiki/Syntax>`__. Each log policy can have the following fields:
 
--  ``name``: Required. A name for the log policy. This name will be displayed as a label in the UI
-   when the log policy matches.
+-  ``name``: Required. The name of the log policy, displayed as a label in the WebUI when a log
+   policy match occurs.
 
--  ``pattern``: Optional. It is required to provide a regex pattern to match in the logs unless the
-   intention is to disable an existing policy.
+-  ``pattern``: Optional. Defines a regex pattern to match log entries. If not specified, this
+   policy is disabled.
 
 -  ``action``: Optional. The action to take when the pattern is matched. Actions include:
 
@@ -344,9 +344,8 @@ Example configuration:
        pattern: ".*CUDA out of memory.*"
        action: cancel_retries
 
-When a log policy matches, its name will be displayed as a label in the WebUI, allowing for easy
-identification of specific issues during a run. These labels will appear in both the run table and
-run detail views.
+When a log policy matches, its name appears as a label in the WebUI, making it easy to identify
+specific issues during a run. These labels are shown in both the run table and run detail views.
 
 These settings may also be specified at the cluster or resource pool level through task container
 defaults.
