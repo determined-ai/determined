@@ -14,20 +14,11 @@ var ExperimentRegistry = tasklist.NewRegistry[int, Experiment]()
 
 // Experiment-specific interface types.
 type (
-	// TrialCompleteOperation is a message sent to an experiment to indicate that a trial has
-	// completed an operation.
-	TrialCompleteOperation struct {
-		RequestID model.RequestID
-		Op        searcher.ValidateAfter
-		Metric    interface{}
-	}
-
 	// TrialReportProgress is a message sent to an experiment to indicate that a trial has
 	// reported progress.
 	TrialReportProgress struct {
-		RequestID model.RequestID
-		Progress  searcher.PartialUnits
-		IsRaw     bool
+		Progress searcher.PartialUnits
+		IsRaw    bool
 	}
 
 	// UserInitiatedEarlyTrialExit is a user-injected message, provided through the early exit API. It
@@ -44,21 +35,19 @@ type (
 		State     model.StateWithReason
 	}
 
-	// TrialSearcherState is a message sent to an experiment to indicate that a trial has
+	// TrialSearcherState is a message sent to an search to indicate that a run has
 	// changed searcher state.
 	TrialSearcherState struct {
-		Create   searcher.Create
-		Op       searcher.ValidateAfter
-		Complete bool
-		Closed   bool
+		Create                 searcher.Create
+		EarlyStoppedBySearcher bool
+		EarlyExitedByUserCode  bool
 	}
 )
 
 // Experiment is an interface that represents an experiment.
 type Experiment interface {
-	TrialCompleteOperation(msg TrialCompleteOperation) error
-	TrialReportProgress(msg TrialReportProgress) error
-	TrialGetSearcherState(requestID model.RequestID) (TrialSearcherState, error)
+	TrialReportProgress(requestID model.RequestID, msg TrialReportProgress) error
+	TrialReportValidation(requestID model.RequestID, metrics map[string]interface{}) error
 	UserInitiatedEarlyTrialExit(msg UserInitiatedEarlyTrialExit) error
 	PatchTrialState(msg PatchTrialState) error
 	SetGroupMaxSlots(msg sproto.SetGroupMaxSlots)
