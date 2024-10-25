@@ -190,7 +190,7 @@ def submit_experiment(args: argparse.Namespace) -> None:
 
     if args.test_mode:
         warnings.warn(
-            "The --test flag to det experiment create has been deprecated in Determined XXYYZZ and "
+            "The --test flag to det experiment create has been deprecated in Determined 0.38.0 and "
             "will be removed in a future version.  The searcher.max_length setting of the "
             "experiment config has also been deprecated, and since --test mode relies on that "
             "setting, --test mode will cease to work as soon as you remove max_length.",

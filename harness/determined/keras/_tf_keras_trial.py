@@ -183,7 +183,7 @@ class TFKerasTrialController(det.TrialController):
         # TFKerasTrial's __init__ method may not be called by user-defined subclasses, so we fire
         # the warning here.  Also, this will show up before some of the worst tf log vomit, I hope.
         warnings.warn(
-            "TFKerasTrial has been deprecated in Determined XXYYZZ and will be removed in a future "
+            "TFKerasTrial has been deprecated in Determined 0.38.0 and will be removed in a future "
             "version.  Please use the new det.keras.DeterminedCallback for training.",
             FutureWarning,
             stacklevel=2,
@@ -1016,7 +1016,7 @@ class TFKerasTrial(det.LegacyTrial):
 
     .. warning::
 
-        TFKerasTrial has been deprecated in Determined XXYYZZ and will be removed in a future
+        TFKerasTrial has been deprecated in Determined 0.38.0 and will be removed in a future
         version.  Please use the new :class:`~determined.keras.DeterminedCallback` for training.
     """
 

@@ -56,7 +56,7 @@ def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
 class SearcherOperation:
     """
     .. warning::
-        SearcherOperation is deprecated in XXYYZZ, and will be removed in a future version.
+        SearcherOperation is deprecated in 0.38.0, and will be removed in a future version.
 
     A ``SearcherOperation`` is a request from the hyperparameter-search logic for the training
     script to execute one train-validate-report cycle.
@@ -89,7 +89,7 @@ class SearcherOperation:
     def length(self) -> int:
         """
         .. warning::
-            SearcherOperation.length is deprecated in XXYYZZ, and will be removed in a future
+            SearcherOperation.length is deprecated in 0.38.0, and will be removed in a future
             version.  Instead, you should directly specify your training length in your training
             code.
 
@@ -101,7 +101,7 @@ class SearcherOperation:
     def report_progress(self, length: float) -> None:
         """
         .. warning::
-            SearcherOperation.report_progress is deprecated in XXYYZZ, and will be removed in a
+            SearcherOperation.report_progress is deprecated in 0.38.0, and will be removed in a
             future version.  Instead, report progess with
             :meth:`~determined.core.TrainContext.report_progress`.
 
@@ -128,7 +128,7 @@ class SearcherOperation:
     def report_completed(self, searcher_metric: Any) -> None:
         """
         .. warning::
-            SearcherOperation.report_completed is deprecated in XXYYZZ, and will be removed in a
+            SearcherOperation.report_completed is deprecated in 0.38.0, and will be removed in a
             future version.  Instead, just exit 0 when your training is complete.
 
         ``report_completed()`` is the final step of a train-validate-report cycle.
@@ -148,7 +148,7 @@ class SearcherOperation:
 class SearcherMode(enum.Enum):
     """
     .. warning::
-        SearcherMode is deprecated in XXYYZZ, and will be removed in a future version.
+        SearcherMode is deprecated in 0.38.0, and will be removed in a future version.
 
     ``SearcherMode`` defines the calling behavior of the ``SearcherContext.operations()`` call.
 
@@ -168,7 +168,7 @@ class SearcherMode(enum.Enum):
 class SearcherContext:
     """
     .. warning::
-        SearcherContext is deprecated in XXYYZZ, and will be removed in a future version.  Instead
+        SearcherContext is deprecated in 0.38.0, and will be removed in a future version.  Instead
         of using ``SearcherContext.operations()`` to decide how long to train for, you should set
         your training length directly in your training code.
 
@@ -241,7 +241,7 @@ class SearcherContext:
     ) -> Iterator[SearcherOperation]:
         """
         .. warning::
-            SearcherContext.operations is deprecated in XXYYZZ, and will be removed in a future
+            SearcherContext.operations is deprecated in 0.38.0, and will be removed in a future
             version.  Instead, you should set your training length directly in your training code.
 
         This method no longer talks to the Determined master; it just yields a single
@@ -250,7 +250,7 @@ class SearcherContext:
         """
 
         warnings.warn(
-            "SearcherContext.operations() was deprecated in Determined XXYYZZ and will be removed "
+            "SearcherContext.operations() was deprecated in Determined 0.38.0 and will be removed "
             "in a future version.  Instead, you should set your training length directly in your "
             "training code.",
             FutureWarning,
@@ -300,7 +300,7 @@ class SearcherContext:
     def acknowledge_out_of_ops(self) -> None:
         """
         .. warning::
-            SearcherContext.acknowledge_out_of_ops() is deprecated in XXYYZZ, and will be removed in
+            SearcherContext.acknowledge_out_of_ops() is deprecated in 0.38.0, and will be removed in
             a future version.  Current calls to this function are ignored, and there should not need
             to be a replacement.
         """
@@ -309,7 +309,7 @@ class SearcherContext:
     def get_configured_units(self) -> Optional[Unit]:
         """
         .. warning::
-            SearcherContext.get_configured_units() is deprecated in XXYYZZ, and will be removed in
+            SearcherContext.get_configured_units() is deprecated in 0.38.0, and will be removed in
             a future version.  Note that the ``searcher.max_length`` filed of the experiment config
             is also deprecated and will be removed as well.  Instead, you should directly specify
             your training length in your training code.
@@ -374,7 +374,7 @@ class DummySearcherContext(SearcherContext):
         auto_ack: bool = True,
     ) -> Iterator[SearcherOperation]:
         warnings.warn(
-            "SearcherContext.operations() was deprecated in Determined XXYYZZ and will be removed "
+            "SearcherContext.operations() was deprecated in Determined 0.38.0 and will be removed "
             "in a future version.  Instead, you should set your training length directly in your "
             "training code.",
             FutureWarning,

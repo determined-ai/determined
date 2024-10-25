@@ -45,7 +45,7 @@ class Callback(tf.keras.callbacks.Callback):  # type: ignore
 
     .. warning::
 
-        det.keras.callbacks.Callback has been deprecated in Determined XXYYZZ and will be removed
+        det.keras.callbacks.Callback has been deprecated in Determined 0.38.0 and will be removed
         in a future version.  This Callback class is designed to work with TFKerasTrial, which is
         also deprecated.  Please use the new :class:`~determined.keras.DeterminedCallback` for
         training, and use normal keras Callabacks with it.
@@ -550,7 +550,7 @@ class EarlyStopping(tf.keras.callbacks.EarlyStopping, Callback):  # type: ignore
 
     .. warning::
 
-        EarlyStopping has been deprecated in Determined XXYYZZ and will be removed in a future
+        EarlyStopping has been deprecated in Determined 0.38.0 and will be removed in a future
         version.  Determined's EarlyStopping is a customization of keras' EarlyStopping callback
         that is specific to TFKerasTrial, which is also deprecated.  Please use the new
         :class:`~determined.keras.DeterminedCallback` for training, and use keras' EarlyStopping
@@ -593,7 +593,7 @@ class EarlyStopping(tf.keras.callbacks.EarlyStopping, Callback):  # type: ignore
         self.test_end_count = 0
 
         warnings.warn(
-            "EarlyStopping has been deprecated in Determined XXYYZZ and will be removed in a "
+            "EarlyStopping has been deprecated in Determined 0.38.0 and will be removed in a "
             "future version.  Determined's EarlyStopping is a customization of keras' "
             "EarlyStopping callback that is specific to TFKerasTrial, which is also deprecated. "
             "Please use the new det.keras.DeterminedCallback for training, and use keras' "
@@ -634,7 +634,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
 
     .. warning::
 
-        ReduceLROnPlateau has been deprecated in Determined XXYYZZ and will be removed in a future
+        ReduceLROnPlateau has been deprecated in Determined 0.38.0 and will be removed in a future
         version.  Determined's ReduceLROnPlateau is a customization of keras' ReduceLROnPlateau
         callback that is specific to TFKerasTrial, which is also deprecated.  Please use the new
         :class:`~determined.keras.DeterminedCallback` for training, and use keras'
@@ -678,7 +678,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
         self.test_end_count = 0
 
         warnings.warn(
-            "ReduceLROnPlateau has been deprecated in Determined XXYYZZ and will be removed in a "
+            "ReduceLROnPlateau has been deprecated in Determined 0.38.0 and will be removed in a "
             "future version.  Determined's ReduceLROnPlateau is a customization of keras' "
             "ReduceLROnPlateau callback that is specific to TFKerasTrial, which is also "
             "deprecated.  Please use the new det.keras.DeterminedCallback for training, and use "
@@ -714,7 +714,7 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
 
     .. warning::
 
-        det.keras.callbacks.TensorBoard has been deprecated in Determined XXYYZZ and will be removed
+        det.keras.callbacks.TensorBoard has been deprecated in Determined 0.38.0 and will be removed
         in a future version.  This version of keras' TensorBoard callback is designed to work with
         TFKerasTrial, which is also deprecated.  Please use the new
         :class:`~determined.keras.DeterminedCallback` for training, and use the new
@@ -735,7 +735,7 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
         tf.keras.callbacks.TensorBoard.__init__(self, log_dir=log_dir, *args, **kwargs)
 
         warnings.warn(
-            "det.keras.callbacks.TensorBoard has been deprecated in Determined XXYYZZ and will be "
+            "det.keras.callbacks.TensorBoard has been deprecated in Determined 0.38.0 and will be "
             "removed in a future version.  This version of keras' TensorBoard callback is designed "
             "to work with TFKerasTrial, which is also deprecated.  Please use the new "
             "det.keras.DeterminedCallback for training, and use the new det.keras.TensorBoard with "
