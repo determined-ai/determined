@@ -6,4 +6,4 @@
    search result will take users directly to the relevant position in the log, allowing them to
    easily view logs both before and after the matched entry. Additionally, add support for
    regex-based searches, providing more flexible log filtering. For more details, refer to
-   :ref:`log_policies <config-log-policies>`.
+   :ref:`WebUI <web-ui-if>`.
