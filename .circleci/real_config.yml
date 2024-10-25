@@ -55,6 +55,9 @@ parameters:
   do_nightly_tests:
     type: boolean
     default: false
+  do_upgrade_tests:
+    type: boolean
+    default: false
   ee:
     type: boolean
     default: false
@@ -97,6 +100,10 @@ release-dryrun: &release-dryrun
     only:
       # Tags like: v3.1.3+dryrun
       - /v\d+\.\d+\.\d+\+dryrun/
+
+release-upgrade: &release-upgrade
+  - "release-0.34.0"
+  - "release-0.35.0"
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
@@ -1487,6 +1494,11 @@ commands:
           command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>> || circleci-agent step halt
           background: true
 
+  stop-devcluster:
+    steps:
+      - run: 
+          command: pkill -SIGHUP -f "devcluster" && rm -rf /tmp/devcluster/lock
+  
   make-component:
     description: "Basic parameterized version of make for building Determined components."
     parameters:
@@ -3170,6 +3182,9 @@ jobs:
       k8s-version:
         type: string
         default: "1.29.5"
+      upgrade-branch:
+        type: string
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3190,6 +3205,17 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
+      
+      - when:
+          condition: <<parameters.upgrade-branch>>
+          steps:
+            - run: 
+                name: Get Determined version branch commits.
+                command: |
+                  git fetch origin <<parameters.upgrade-branch>> && git checkout --track origin/<<parameters.upgrade-branch>>
+            - license-gen
+            - run: make -C master build
+            - run: make -C agent build
 
       - when:
           condition: <<parameters.run-minikubes>>
@@ -3210,6 +3236,21 @@ jobs:
                   - run:
                       name: Start additionalrm minikube
                       command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
+      - when:
+          condition: <<parameters.upgrade-branch>>
+          steps:
+            - install-devcluster
+            - unless:
+                condition: <<parameters.managed-devcluster>>
+                steps:
+                  - start-devcluster:
+                      devcluster-config: <<parameters.devcluster-config>>
+                      target-stage: <<parameters.target-stage>>
+                  - stop-devcluster
+            - checkout
+            - run: make -C master build
+            - run: make -C agent build
+
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
@@ -4720,6 +4761,231 @@ workflows:
                 - main
           requires:
             - package-and-push-system-dev-ee
+
+  test-e2e-upgrade:
+    when: << pipeline.parameters.do_upgrade_tests >>
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          name: build-go-ee
+          context: github-read
+
+      - test-e2e:
+          name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          parallelism: 6
+          resource-class: xlarge
+          tf2: true
+          mark: e2e_cpu
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          parallelism: 5
+          resource-class: large
+          tf2: true
+          mark: e2e_cpu_2a
+          target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: oauth.devcluster.yaml
+          mark: test_oauth
+          target-stage: agent1
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+            - github-read
+          requires:
+            - build-go-ee
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
+          multi-k8s: true
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_single_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
+          run-minikubes: true
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          resource-class: large
+          mark: e2e_cpu_elastic
+          devcluster-config: elastic.devcluster.yaml
+          target-stage: agent
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "10"
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "14"
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: custom-agent-version.devcluster.yaml
+          target-stage: agent
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+              agent-version: ["0.17.10"]
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: saml.devcluster.yaml
+          mark: e2e_saml
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+      
+      - test-e2e:
+          name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_rbac
+          devcluster-config: single-rbac.devcluster.yaml
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
+
+      - test-e2e:
+          name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: rbac-model-registry.yaml
+          mark: test_model_registry_rbac
+          target-stage: agent1
+          matrix:
+            parameters:
+              upgrade-branch: *release-upgrade
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
