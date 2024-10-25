@@ -726,8 +726,8 @@ class trialv1Trial(Printable):
     checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    logPolicyMatched: "typing.Optional[str]" = None
     logRetentionDays: "typing.Optional[int]" = None
-    logSignal: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
@@ -753,8 +753,8 @@ class trialv1Trial(Printable):
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        logPolicyMatched: "typing.Union[str, None, Unset]" = _unset,
         logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
-        logSignal: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
@@ -782,10 +782,10 @@ class trialv1Trial(Printable):
             self.endTime = endTime
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
+        if not isinstance(logPolicyMatched, Unset):
+            self.logPolicyMatched = logPolicyMatched
         if not isinstance(logRetentionDays, Unset):
             self.logRetentionDays = logRetentionDays
-        if not isinstance(logSignal, Unset):
-            self.logSignal = logSignal
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(runnerState, Unset):
@@ -826,10 +826,10 @@ class trialv1Trial(Printable):
             kwargs["endTime"] = obj["endTime"]
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
+        if "logPolicyMatched" in obj:
+            kwargs["logPolicyMatched"] = obj["logPolicyMatched"]
         if "logRetentionDays" in obj:
             kwargs["logRetentionDays"] = obj["logRetentionDays"]
-        if "logSignal" in obj:
-            kwargs["logSignal"] = obj["logSignal"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "runnerState" in obj:
@@ -870,10 +870,10 @@ class trialv1Trial(Printable):
             out["endTime"] = self.endTime
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
+        if not omit_unset or "logPolicyMatched" in vars(self):
+            out["logPolicyMatched"] = self.logPolicyMatched
         if not omit_unset or "logRetentionDays" in vars(self):
             out["logRetentionDays"] = self.logRetentionDays
-        if not omit_unset or "logSignal" in vars(self):
-            out["logSignal"] = self.logSignal
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "runnerState" in vars(self):
@@ -2138,6 +2138,68 @@ class v1CancelExperimentsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1CancelExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
+class v1CancelSearchesRequest(Printable):
+    """Cancel searches."""
+    filter: "typing.Optional[str]" = None
+    searchIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(searchIds, Unset):
+            self.searchIds = searchIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CancelSearchesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "searchIds" in obj:
+            kwargs["searchIds"] = obj["searchIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "searchIds" in vars(self):
+            out["searchIds"] = self.searchIds
+        return out
+
+class v1CancelSearchesResponse(Printable):
+    """Response to CancelSearchesRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1SearchActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CancelSearchesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -3508,7 +3570,7 @@ class v1DeleteSearchesRequest(Printable):
         return out
 
 class v1DeleteSearchesResponse(Printable):
-    """Response to DeleteSearchesResponse."""
+    """Response to DeleteSearchesRequest."""
 
     def __init__(
         self,
@@ -4527,7 +4589,7 @@ class v1FlatRun(Printable):
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     localId: "typing.Optional[str]" = None
-    logSignal: "typing.Optional[str]" = None
+    logPolicyMatched: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -4554,7 +4616,7 @@ class v1FlatRun(Printable):
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         localId: "typing.Union[str, None, Unset]" = _unset,
-        logSignal: "typing.Union[str, None, Unset]" = _unset,
+        logPolicyMatched: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -4585,8 +4647,8 @@ class v1FlatRun(Printable):
             self.labels = labels
         if not isinstance(localId, Unset):
             self.localId = localId
-        if not isinstance(logSignal, Unset):
-            self.logSignal = logSignal
+        if not isinstance(logPolicyMatched, Unset):
+            self.logPolicyMatched = logPolicyMatched
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(searcherMetricValue, Unset):
@@ -4625,8 +4687,8 @@ class v1FlatRun(Printable):
             kwargs["labels"] = obj["labels"]
         if "localId" in obj:
             kwargs["localId"] = obj["localId"]
-        if "logSignal" in obj:
-            kwargs["logSignal"] = obj["logSignal"]
+        if "logPolicyMatched" in obj:
+            kwargs["logPolicyMatched"] = obj["logPolicyMatched"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "searcherMetricValue" in obj:
@@ -4665,8 +4727,8 @@ class v1FlatRun(Printable):
             out["labels"] = self.labels
         if not omit_unset or "localId" in vars(self):
             out["localId"] = self.localId
-        if not omit_unset or "logSignal" in vars(self):
-            out["logSignal"] = self.logSignal
+        if not omit_unset or "logPolicyMatched" in vars(self):
+            out["logPolicyMatched"] = self.logPolicyMatched
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "searcherMetricValue" in vars(self):
@@ -8217,7 +8279,7 @@ class v1KillSearchesRequest(Printable):
         return out
 
 class v1KillSearchesResponse(Printable):
-    """Response to KillSearchesResponse."""
+    """Response to KillSearchesRequest."""
 
     def __init__(
         self,
@@ -8668,6 +8730,108 @@ class v1LaunchTensorboardResponse(Printable):
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
+        }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "tensorboard": self.tensorboard.to_json(omit_unset),
+        }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
+        return out
+
+class v1LaunchTensorboardSearchesRequest(Printable):
+    """Request to launch a tensorboard using searches matching a filter."""
+    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    files: "typing.Optional[typing.Sequence[v1File]]" = None
+    filter: "typing.Optional[str]" = None
+    searchIds: "typing.Optional[typing.Sequence[int]]" = None
+    templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(config, Unset):
+            self.config = config
+        if not isinstance(files, Unset):
+            self.files = files
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(searchIds, Unset):
+            self.searchIds = searchIds
+        if not isinstance(templateName, Unset):
+            self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LaunchTensorboardSearchesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "config" in obj:
+            kwargs["config"] = obj["config"]
+        if "files" in obj:
+            kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "searchIds" in obj:
+            kwargs["searchIds"] = obj["searchIds"]
+        if "templateName" in obj:
+            kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = self.config
+        if not omit_unset or "files" in vars(self):
+            out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "searchIds" in vars(self):
+            out["searchIds"] = self.searchIds
+        if not omit_unset or "templateName" in vars(self):
+            out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        return out
+
+class v1LaunchTensorboardSearchesResponse(Printable):
+    """Response to LaunchTensorboardSearchesRequest."""
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Dict[str, typing.Any]",
+        tensorboard: "v1Tensorboard",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
+    ):
+        self.config = config
+        self.tensorboard = tensorboard
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LaunchTensorboardSearchesResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
             "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
@@ -18945,6 +19109,27 @@ def post_CancelExperiments(
         return v1CancelExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_CancelExperiments", _resp)
 
+def post_CancelSearches(
+    session: "api.BaseSession",
+    *,
+    body: "v1CancelSearchesRequest",
+) -> "v1CancelSearchesResponse":
+    """Cancel searches."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/searches/cancel",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CancelSearchesResponse.from_json(_resp.json())
+    raise APIHttpError("post_CancelSearches", _resp)
+
 def post_CheckpointsRemoveFiles(
     session: "api.BaseSession",
     *,
@@ -23196,6 +23381,27 @@ def post_LaunchTensorboard(
     if _resp.status_code == 200:
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
+
+def post_LaunchTensorboardSearches(
+    session: "api.BaseSession",
+    *,
+    body: "v1LaunchTensorboardSearchesRequest",
+) -> "v1LaunchTensorboardSearchesResponse":
+    """Launch a tensorboard for one or more searches using bulk search filters."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/searches/tensorboards",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1LaunchTensorboardSearchesResponse.from_json(_resp.json())
+    raise APIHttpError("post_LaunchTensorboardSearches", _resp)
 
 def get_ListRPsBoundToWorkspace(
     session: "api.BaseSession",

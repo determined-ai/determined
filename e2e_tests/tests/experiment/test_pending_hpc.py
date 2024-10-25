@@ -1,10 +1,7 @@
-import tempfile
-import time
-
 import pytest
 
-from determined.common import util
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -32,6 +29,7 @@ def skip_if_not_suitable_resource_pool() -> None:
 def test_hpc_job_pending_reason() -> None:
     skip_if_not_suitable_resource_pool()
     sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
 
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -48,52 +46,37 @@ def test_hpc_job_pending_reason() -> None:
     config.setdefault("pbs", {})
     config["pbs"]["slots_per_node"] = 6
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        running_exp_id = exp.create_experiment(
-            sess, tf.name, conf.fixtures_path("mnist_pytorch"), None
-        )
-    print(f"Created experiment {running_exp_id}")
-    exp.wait_for_experiment_state(sess, running_exp_id, bindings.experimentv1State.RUNNING)
+    running_exp = detobj.create_experiment(config, conf.fixtures_path("mnist_pytorch"))
+    print(f"Created running experiment {running_exp.id}")
+    exp.wait_for_experiment_state(sess, running_exp.id, bindings.experimentv1State.RUNNING)
 
     # Launch another experiment requesting 6 CPUs
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        pending_exp_id = exp.create_experiment(
-            sess, tf.name, conf.fixtures_path("mnist_pytorch"), None
+    pending_exp = detobj.create_experiment(config, conf.fixtures_path("mnist_pytorch"))
+    print(f"Created pending experiment {pending_exp.id}")
+
+    exp.wait_for_experiment_state(sess, pending_exp.id, bindings.experimentv1State.QUEUED)
+
+    # Wait for the second experiment to show it is pending in its logs.
+    pattern = "HPC job waiting to be scheduled"
+    logs = []
+    for log in pending_exp.await_first_trial().iter_logs(follow=True):
+        if pattern in log:
+            break
+        logs.append(log)
+    else:
+        text = "".join(logs)
+        raise ValueError(
+            f"did not find '{pattern}' in logs:\n-- BEGIN TEXT --\n{text}-- END TEXT --"
         )
-    print(f"Created experiment {pending_exp_id}")
 
-    exp.wait_for_experiment_state(sess, pending_exp_id, bindings.experimentv1State.QUEUED)
-    print(f"Experiment {pending_exp_id} pending")
-
-    # Kill the first experiment to shorten the test run. First wait for 60 seconds
-    # for the pending job to have a chance to refresh the state and write out the
-    # state reason in experiment logs
-    time.sleep(60)
-    exp.kill_experiments(sess, [running_exp_id], -1)
+    # Release resources, letting the pending experiment onto the cluster.
+    running_exp.kill()
+    running_exp.wait(interval=0.01)
 
     # Make sure the second experiment will start running after the first experiment
     # releases the CPUs
-    exp.wait_for_experiment_state(sess, pending_exp_id, bindings.experimentv1State.RUNNING)
-    print(f"Experiment {pending_exp_id} running")
+    exp.wait_for_experiment_state(sess, pending_exp.id, bindings.experimentv1State.RUNNING)
 
-    # Now kill the second experiment to shorten the test run
-    exp.kill_experiments(sess, [pending_exp_id], -1)
-
-    trials = exp.experiment_trials(sess, pending_exp_id)
-    print(f"Check logs for exp {pending_exp_id}")
-    slurm_result = exp.check_if_string_present_in_trial_logs(
-        sess,
-        trials[0].trial.id,
-        "HPC job waiting to be scheduled: The job is waiting for resources to become available.",
-    )
-    pbs_result = exp.check_if_string_present_in_trial_logs(
-        sess,
-        trials[0].trial.id,
-        "HPC job waiting to be scheduled: Not Running: Insufficient amount of resource: ncpus ",
-    )
-
-    assert pbs_result or slurm_result
+    # Don't care if the experiment finishes.
+    pending_exp.kill()
+    pending_exp.wait(interval=0.01)

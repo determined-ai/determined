@@ -52,6 +52,15 @@ const (
 	MaxAllowedTokenLifespanDays = 106751
 )
 
+const (
+	// KeyTypeRSA uses RSA.
+	KeyTypeRSA = "RSA"
+	// KeyTypeECDSA uses ECDSA.
+	KeyTypeECDSA = "ECDSA"
+	// KeyTypeED25519 uses ED25519.
+	KeyTypeED25519 = "ED25519"
+)
+
 type (
 	// ExperimentConfigPatch is the updatedble fields for patching an experiment.
 	ExperimentConfigPatch struct {
@@ -118,7 +127,7 @@ func DefaultConfig() *Config {
 				Group: "root",
 			},
 			SSH: SSHConfig{
-				RsaKeySize: 1024,
+				KeyType: KeyTypeED25519,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 			Token: TokenConfig{
@@ -520,7 +529,8 @@ func (t *TokenConfig) Validate() []error {
 
 // SSHConfig is the configuration setting for SSH.
 type SSHConfig struct {
-	RsaKeySize int `json:"rsa_key_size"`
+	RsaKeySize int    `json:"rsa_key_size"`
+	KeyType    string `json:"key_type"`
 }
 
 // TLSConfig is the configuration for setting up serving over TLS.
@@ -543,10 +553,15 @@ func (t *TLSConfig) Validate() []error {
 // Validate implements the check.Validatable interface.
 func (t *SSHConfig) Validate() []error {
 	var errs []error
-	if t.RsaKeySize < 1 {
-		errs = append(errs, errors.New("RSA Key size must be greater than 0"))
-	} else if t.RsaKeySize > 16384 {
-		errs = append(errs, errors.New("RSA Key size must be less than 16,384"))
+	if t.KeyType != KeyTypeRSA && t.KeyType != KeyTypeECDSA && t.KeyType != KeyTypeED25519 {
+		errs = append(errs, errors.New("Crypto system must be one of 'RSA', 'ECDSA' or 'ED25519'"))
+	}
+	if t.KeyType == KeyTypeRSA {
+		if t.RsaKeySize < 1 {
+			errs = append(errs, errors.New("RSA Key size must be greater than 0"))
+		} else if t.RsaKeySize > 16384 {
+			errs = append(errs, errors.New("RSA Key size must be less than 16,384"))
+		}
 	}
 	return errs
 }

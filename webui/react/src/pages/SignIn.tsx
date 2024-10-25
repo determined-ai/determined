@@ -1,6 +1,8 @@
 import Button from 'hew/Button';
+import CodeSample from 'hew/CodeSample';
 import Divider from 'hew/Divider';
 import Form from 'hew/Form';
+import { useTheme } from 'hew/Theme';
 import { notification } from 'hew/Toast';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -8,7 +10,6 @@ import { useLocation } from 'react-router-dom';
 
 import LogoGoogle from 'assets/images/logo-sso-google-white.svg?url';
 import LogoOkta from 'assets/images/logo-sso-okta-white.svg?url';
-import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
@@ -41,7 +42,9 @@ const SignIn: React.FC = () => {
   const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
   const { rbacEnabled } = useObservable(determinedStore.info);
-
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
   const queries = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const ssoQueries = handleRelayState(queries);
 
@@ -74,9 +77,10 @@ const SignIn: React.FC = () => {
       // Show auth token via notification if requested via query parameters.
       if (queries.get('cli') === 'true')
         notification.open({
-          description: <AuthToken />,
+          className: themeClass,
+          description: <CodeSample text={globalStorage.authToken || 'Auth token not found.'} />,
           duration: 0,
-          message: '',
+          message: 'Your Determined Authentication Token',
         });
 
       // Reroute the authenticated user to the app.
@@ -94,7 +98,7 @@ const SignIn: React.FC = () => {
     } else if (isAuthChecked) {
       uiActions.hideSpinner();
     }
-  }, [isAuthenticated, isAuthChecked, info, location, queries, uiActions, rbacEnabled]);
+  }, [isAuthenticated, isAuthChecked, info, location, queries, uiActions, rbacEnabled, themeClass]);
 
   useEffect(() => {
     uiActions.hideChrome();

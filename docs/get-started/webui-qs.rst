@@ -70,8 +70,8 @@ our multi-trial search. Finally, we'll run a remote distributed training job.
 
       #. Open a terminal window and navigate to the directory where you extracted the tar file.
 
-         The ``const.yaml`` file is a YAML-formatted :ref:`experiment configuration
-         <experiment-config-reference>` file that corresponds to an example experiment.
+         The ``const.yaml`` file is a YAML-formatted configuration file that corresponds to an
+         example experiment.
 
       #. Create an experiment that specifies the ``const.yaml`` configuration file by typing the
          following :ref:`CLI <cli-ug>` command.

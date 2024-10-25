@@ -21,13 +21,13 @@ flake8-tidy-imports
 isort==5.11.5 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 jax==0.3.15  # Versions 0.4.* use self-documenting f-strings, which are incompatible with Python 3.7, which mypy is configured for. Later patches of 0.3.* cause other mypy errors.
 mypy==0.910
-bump2version>=1.0.1
 pre-commit~=2.20
 # Earlier versions had different type annotations
 pyzmq>=23.2.1
 devcluster>=1,<2
 coverage
 sqlfluff==2.1.4
+setuptools==70.0.0
 # typeshed
 types-certifi
 types-chardet

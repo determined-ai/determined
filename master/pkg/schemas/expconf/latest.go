@@ -31,8 +31,6 @@ type (
 	LogPoliciesConfig         = LogPoliciesConfigV0
 	LogPolicy                 = LogPolicyV0
 	LogAction                 = LogActionV0
-	LogActionCancelRetries    = LogActionCancelRetriesV0
-	LogActionExcludeNode      = LogActionExcludeNodeV0
 	LogHyperparameter         = LogHyperparameterV0
 	OptimizationsConfig       = OptimizationsConfigV0
 	PbsConfig                 = PbsConfigV0

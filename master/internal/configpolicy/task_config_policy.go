@@ -228,6 +228,8 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 	if !reflect.DeepEqual(originalConfig, config) {
 		log.Warnf("some fields were overridden by admin %s config policies", scope)
 	}
+
+	config = schemas.WithDefaults(config)
 	return &config, nil
 }
 

@@ -170,7 +170,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
 		ColumnExpr("rm.metadata AS metadata").
-		ColumnExpr("r.log_signal AS log_signal").
+		ColumnExpr("r.log_policy_matched AS log_policy_matched").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").

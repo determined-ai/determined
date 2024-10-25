@@ -172,7 +172,6 @@ func setup(t *testing.T) (
 		&model.Checkpoint{},
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},
-			SSHRsaSize:     1024,
 			Workspace:      model.DefaultWorkspaceName,
 		},
 		ssh.PrivateAndPublicKeys{},

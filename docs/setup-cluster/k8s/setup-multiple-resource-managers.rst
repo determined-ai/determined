@@ -25,8 +25,7 @@ Any requests to resource pools not defined in the master configuration are route
 resource manager. Such requests are not routed to additional resource managers, if defined.
 
 To enable use of Determined tasks that rely on Determined proxies in the external-to-master
-clusters, set up a gateway as described in the docs :doc:Internal Task Gateway here :doc:`Internal
-Task Gateway here <internal-task-gateway>`.
+clusters, set up a gateway as described in the :doc:`internal-task-gateway`.
 
 *********************************************
  How to Configure Multiple Resource Managers
@@ -73,14 +72,14 @@ Follow this example to create as many resource managers (clusters) as needed.
 
    .. code:: yaml
 
-        resource_manager:
-       type: kubernetes
-      name: default-rm # optional, should match the name of your default RM/cluster
+      resource_manager:
+        type: kubernetes
+        cluster_name: default-rm # optional, should match the name of your default RM/cluster
        ... add any other specs you might need ...
       additional_resource_managers:
       - resource_manager:
          type: kubernetes
-         name: additional-rm # should match the name of your other RM(s)
+         cluster_name: additional-rm # should match the name of your other RM(s)
          kubeconfig_path: <whatever-path-your-rm-config-is-like ~/.kubeconfig>
          ... add whatever other specs you might need ...
          resource_pools:
@@ -133,7 +132,9 @@ the same as the “cluster name” for a given cluster.
 
       additional_resource_managers:
       - resource_manager:
-         type: kubernetes name: <rm-name> namespace: default
+         type: kubernetes
+         cluster_name: <rm-name>
+         default_namespace: default
          # or whatever other namespace you want to use
          kubeconfig_secret_name: <The secret name, from ``kubectl describe secret <rm-name>``>
          kubeconfig_secret_value: <The data value, from ``kubectl describe secret <rm-name>``>

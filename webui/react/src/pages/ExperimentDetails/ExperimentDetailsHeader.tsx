@@ -732,7 +732,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 )}
               </Spinner>
             </Column>
-            <span>Experiment {experiment.id}</span>
+            <span>{capitalize(copyMap.experiment)} {experiment.id}</span>
             <span role="experimentName">
               {experiment.name}
             </span>
@@ -785,6 +785,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
         experimentIds={isMovable ? [experiment.id] : []}
+        selectionSize={1}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleModalClose}

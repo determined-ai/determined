@@ -13,9 +13,15 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/token"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+)
+
+var errAccessTokenRequiresEE = status.Error(
+	codes.FailedPrecondition,
+	"users cannot log in with an access token without a valid Enterprise Edition license set up.",
 )
 
 // PostAccessToken takes user id and optional lifespan, description and creates an
@@ -23,6 +29,10 @@ import (
 func (a *apiServer) PostAccessToken(
 	ctx context.Context, req *apiv1.PostAccessTokenRequest,
 ) (*apiv1.PostAccessTokenResponse, error) {
+	if !license.IsEE() {
+		return nil, errAccessTokenRequiresEE
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -75,6 +85,10 @@ func (a *apiServer) PostAccessToken(
 func (a *apiServer) GetAccessTokens(
 	ctx context.Context, req *apiv1.GetAccessTokensRequest,
 ) (*apiv1.GetAccessTokensResponse, error) {
+	if !license.IsEE() {
+		return nil, errAccessTokenRequiresEE
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -178,6 +192,10 @@ func (a *apiServer) GetAccessTokens(
 func (a *apiServer) PatchAccessToken(
 	ctx context.Context, req *apiv1.PatchAccessTokenRequest,
 ) (*apiv1.PatchAccessTokenResponse, error) {
+	if !license.IsEE() {
+		return nil, errAccessTokenRequiresEE
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err

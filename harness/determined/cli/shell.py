@@ -1,7 +1,6 @@
 import argparse
 import contextlib
 import functools
-import getpass
 import os
 import pathlib
 import platform
@@ -22,9 +21,6 @@ from determined.common.api import bindings
 
 def start_shell(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    data = {}
-    if args.passphrase:
-        data["passphrase"] = getpass.getpass("Enter new passphrase: ")
     config = ntsc.parse_config(args.config_file, None, args.config, args.volume)
     workspace_id = cli.workspace.get_workspace_id_from_args(args)
 
@@ -35,7 +31,6 @@ def start_shell(args: argparse.Namespace) -> None:
         args.template,
         context_path=args.context,
         includes=args.include,
-        data=data,
         workspace_id=workspace_id,
     )
     shell = bindings.v1LaunchShellResponse.from_json(resp).shell
@@ -280,12 +275,6 @@ args_description: cli.ArgsDescription = [
                         help=ntsc.INCLUDE_DESC,
                     ),
                     cli.Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
-                    cli.Arg(
-                        "-p",
-                        "--passphrase",
-                        action="store_true",
-                        help="passphrase to encrypt the shell private key",
-                    ),
                     cli.Arg(
                         "--template",
                         type=str,

@@ -29,6 +29,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -38,6 +39,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
@@ -124,7 +126,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 					},
 				},
 			},
-			taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},
+			taskSpec: &tasks.TaskSpec{SSHConfig: config.SSHConfig{KeyType: "ED25519"}},
 			allRms:   map[string]rm.ResourceManager{config.DefaultClusterName: mockRM},
 		},
 	}
@@ -929,6 +931,62 @@ func TestPostUserActivity(t *testing.T) {
 	activityCount, err = getActivityEntry(ctx, curUser.ID, 1)
 	require.NoError(t, err)
 	require.Equal(t, 1, activityCount, ctx)
+}
+
+func TestFilterUserByRoleId(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "rbac"}
+	defer func() {
+		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
+	}()
+	testRole := rbac.Role{
+		ID:   10002,
+		Name: uuid.New().String(),
+	}
+	_, err := db.Bun().NewInsert().Model(&testRole).Exec(ctx)
+	require.NoError(t, err, "failure creating role in setup")
+
+	user0 := model.User{Username: uuid.New().String()}
+	_, err = db.HackAddUser(context.TODO(), &user0)
+	require.NoError(t, err)
+	user1 := model.User{Username: uuid.New().String()}
+	_, err = db.HackAddUser(context.TODO(), &user1)
+	require.NoError(t, err)
+
+	err = rbac.AddRoleAssignments(ctx, nil,
+		[]*rbacv1.UserRoleAssignment{
+			{
+				UserId: int32(user0.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: &rbacv1.Role{
+						RoleId: int32(testRole.ID),
+					},
+					ScopeWorkspaceId: nil,
+				},
+			},
+			{
+				UserId: int32(user1.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: &rbacv1.Role{
+						RoleId: int32(testRole.ID),
+					},
+					ScopeWorkspaceId: ptrs.Ptr(int32(1)),
+				},
+			},
+		},
+	)
+	require.NoError(t, err, "error adding role assignment")
+	resp, err := api.GetUsers(ctx, &apiv1.GetUsersRequest{
+		RoleIdAssignedDirectlyToUser: []int32{int32(testRole.ID)},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Users, 1)
+	require.Equal(t, int32(user0.ID), resp.Users[0].Id)
+
+	_, err = db.Bun().NewDelete().Table("roles").Where("id = ?", testRole.ID).Exec(ctx)
+	if err != nil {
+		t.Logf("Error cleaning up role")
+	}
 }
 
 func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {
