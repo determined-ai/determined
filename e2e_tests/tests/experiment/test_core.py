@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from determined.common import api
+from determined.common import api, experimental
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
@@ -139,15 +139,12 @@ def test_end_to_end_adaptive() -> None:
     d = client.Determined._from_session(sess)
     exp_ref = d.get_experiment(exp_id)
 
-    top_2 = exp_ref.top_n_checkpoints(2)
-    top_k = exp_ref.top_n_checkpoints(
-        len(trials), sort_by="validation_loss", smaller_is_better=True
+    top_k = exp_ref.list_checkpoints(
+        sort_by=experimental.checkpoint.CheckpointSortBy.SEARCHER_METRIC,
+        order_by=experimental.OrderBy.ASCENDING,
     )
 
-    top_2_uuids = [c.uuid for c in top_2]
     top_k_uuids = [c.uuid for c in top_k]
-
-    assert top_2_uuids == top_k_uuids[:2]
 
     # Check that metrics are truly in sorted order.
     assert all(c.training is not None for c in top_k)
@@ -160,11 +157,12 @@ def test_end_to_end_adaptive() -> None:
     assert metrics == sorted(metrics)
 
     # Check that changing smaller is better reverses the checkpoint ordering.
-    top_k_reversed = exp_ref.top_n_checkpoints(
-        len(trials), sort_by="validation_loss", smaller_is_better=False
+    top_k_reversed = exp_ref.list_checkpoints(
+        sort_by=experimental.checkpoint.CheckpointSortBy.SEARCHER_METRIC,
+        order_by=experimental.OrderBy.DESCENDING,
     )
-    top_k_reversed_uuids = [c.uuid for c in top_k_reversed]
 
+    top_k_reversed_uuids = [c.uuid for c in top_k_reversed]
     assert top_k_uuids == top_k_reversed_uuids[::-1]
 
     checkpoint = top_k[0]
