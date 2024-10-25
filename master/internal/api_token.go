@@ -66,9 +66,14 @@ func (a *apiServer) PostAccessToken(
 		}
 	}
 
-	// Ensure the token lifespan does not exceed the maximum allowed.
-	if maxTokenLifespan != 0 && tokenExpiration != 0 && tokenExpiration > maxTokenLifespan {
-		return nil, status.Error(codes.InvalidArgument, "Token lifespan exceeds maximum allowed")
+	// Ensure the token lifespan does not exceed the maximum allowed or minimum -1 value.
+	if tokenExpiration > maxTokenLifespan {
+		return nil, status.Error(codes.InvalidArgument, "Token Lifespan must be less than max"+
+			" token lifespan")
+	}
+	if tokenExpiration < -1 {
+		return nil, status.Error(codes.InvalidArgument, "token lifespan must be greater than 0 days,"+
+			" unless set to -1 for infinite lifespan")
 	}
 
 	token, tokenID, err := token.CreateAccessToken(

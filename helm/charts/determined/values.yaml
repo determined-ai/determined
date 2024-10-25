@@ -105,7 +105,7 @@ useNodePortForMaster: false
   # authz:
   #   type: rbac
   # access token option (EE-Only) allows to authenticate in automated workflows.
-  # token (EE-Only):
+  # token:
   #   max_lifespan_days: -1
   #   default_lifespan_days: 30
 

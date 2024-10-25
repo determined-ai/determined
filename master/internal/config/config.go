@@ -48,9 +48,9 @@ const (
 	InfiniteTokenLifespanString = "-1"
 	// DefaultTokenLifespanDays is the default token lifespan in days.
 	DefaultTokenLifespanDays = 30
-	// DefaultTokenMaxLifespanDays is the default max lifespan for tokens.
+	// MaxAllowedTokenMaxLifespan is the max allowed lifespan for tokens.
 	// This is the maximum number of days a go duration can represent.
-	DefaultTokenMaxLifespanDays = 106751
+	MaxAllowedTokenMaxLifespan = 106751
 )
 
 type (
@@ -409,6 +409,13 @@ func (c *Config) Resolve() error {
 		c.SAML.GroupsAttributeName = ""
 	}
 
+	if c.Security.Token.MaxLifespanDays == InfiniteTokenLifespan {
+		c.Security.Token.MaxLifespanDays = MaxAllowedTokenMaxLifespan
+	}
+	if c.Security.Token.DefaultLifespanDays == InfiniteTokenLifespan {
+		c.Security.Token.DefaultLifespanDays = MaxAllowedTokenMaxLifespan
+	}
+
 	return nil
 }
 
@@ -485,15 +492,41 @@ func (t *TokenConfig) GetDefaultLifespan() (time.Duration, error) {
 // ParseLifespanDays parses a lifespan in days into either a time.Duration or nil if the lifespan is
 // infinite.
 func ParseLifespanDays(dayDuration int) (time.Duration, error) {
-	if dayDuration == InfiniteTokenLifespan {
-		maxLifespan := time.Duration(DefaultTokenMaxLifespanDays) * 24 * time.Hour
-		return maxLifespan, nil
-	}
 	duration, err := time.ParseDuration(strconv.Itoa(dayDuration*24) + "h")
 	if err != nil {
 		return 0, err
 	}
 	return duration, nil
+}
+
+// Validate implements the check.Validatable interface for the TokenConfig.
+func (t *TokenConfig) Validate() []error {
+	var errs []error
+	if t.MaxLifespanDays < 0 {
+		errs = append(errs, errors.New("max token lifespan must be greater than 0 days, unless"+
+			" set to -1 for infinite lifespan"),
+		)
+	}
+	if t.DefaultLifespanDays < 0 {
+		errs = append(errs, errors.New("default token lifespan must be greater than 0 days,"+
+			" unless set to -1 for infinite lifespan"),
+		)
+	}
+	if t.DefaultLifespanDays > t.MaxLifespanDays {
+		errs = append(errs, errors.New("default token lifespan must be less than max token"+
+			" lifespan"))
+	}
+	if t.MaxLifespanDays > MaxAllowedTokenMaxLifespan {
+		errs = append(errs, fmt.Errorf("max token lifespan should be less than %v, as per"+
+			" Go standards", MaxAllowedTokenMaxLifespan),
+		)
+	}
+	if t.DefaultLifespanDays > MaxAllowedTokenMaxLifespan {
+		errs = append(errs, fmt.Errorf("default token lifespan days should be less than %v, as per"+
+			" Go standards", MaxAllowedTokenMaxLifespan),
+		)
+	}
+	return errs
 }
 
 // SSHConfig is the configuration setting for SSH.
@@ -505,51 +538,6 @@ type SSHConfig struct {
 type TLSConfig struct {
 	Cert string `json:"cert"`
 	Key  string `json:"key"`
-}
-
-// Validate implements the check.Validatable interface for the TokenConfig.
-func (t *TokenConfig) Validate() []error {
-	var errs []error
-	if t.MaxLifespanDays < 1 && t.MaxLifespanDays != InfiniteTokenLifespan {
-		errs = append(
-			errs,
-			errors.New("max token lifespan must be greater than 0 days, unless set to -1 for"+
-				"infinite lifespan"),
-		)
-	}
-	if t.DefaultLifespanDays < 1 && t.DefaultLifespanDays != InfiniteTokenLifespan {
-		errs = append(
-			errs,
-			errors.New("default token lifespan must be greater than 0 days, unless set to -1"+
-				"for infinite lifespan"),
-		)
-	}
-	if t.DefaultLifespanDays == InfiniteTokenLifespan &&
-		t.MaxLifespanDays != InfiniteTokenLifespan {
-		errs = append(
-			errs,
-			errors.New("default token lifespan can only be set to -1 for infinite lifespan"+
-				"if max Token Lifespan is also set to -1"),
-		)
-	}
-	if t.MaxLifespanDays != InfiniteTokenLifespan && t.DefaultLifespanDays > t.MaxLifespanDays {
-		errs = append(errs, errors.New("default Token Lifespan must be less than Max Token"+
-			"Lifespan"))
-	}
-	if t.MaxLifespanDays > DefaultTokenMaxLifespanDays {
-		errs = append(
-			errs,
-			fmt.Errorf("max token lifespan should be less than %v", DefaultTokenMaxLifespanDays),
-		)
-	}
-	if t.DefaultLifespanDays > DefaultTokenMaxLifespanDays {
-		errs = append(
-			errs,
-			fmt.Errorf("default token lifespan days should be less than %v",
-				DefaultTokenMaxLifespanDays),
-		)
-	}
-	return errs
 }
 
 // Validate implements the check.Validatable interface.
