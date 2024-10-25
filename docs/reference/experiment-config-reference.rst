@@ -308,10 +308,10 @@ Optional. Defines actions and labels in response to trial logs matching specifie
 language syntax). For more information about the syntax, you can visit this `RE2 reference page
 <https://github.com/google/re2/wiki/Syntax>`__. Each log policy can have the following fields:
 
--  ``name``: Optional. A name for the log policy. If provided, this name will be displayed as a
-   label in the UI when the log policy matches.
+-  ``name``: Required. A name for the log policy. This name will be displayed as a label in the UI
+   when the log policy matches.
 
--  ``pattern``: Required. The regex pattern to match in the logs.
+-  ``pattern``: Optional. The regex pattern to match in the logs.
 
 -  ``action``: Optional. The action to take when the pattern is matched. Actions include:
 
@@ -336,21 +336,37 @@ Example configuration:
 .. code:: yaml
 
    log_policies:
-      - name: "ECC Error"
-        pattern: ".*uncorrectable ECC error encountered.*"
-        action:
-          type: exclude_node
-      - name: "CUDA OOM"
-        pattern: ".*CUDA out of memory.*"
-        action:
-          type: cancel_retries
+     - name: ECC Error
+       pattern: ".*uncorrectable ECC error encountered.*"
+       action: exclude_node
+     - name: CUDA OOM
+       pattern: ".*CUDA out of memory.*"
+       action: cancel_retries
 
-When a log policy matches, its name (if provided) will be displayed as a label in the WebUI,
-allowing for easy identification of specific issues or events during a run. These labels will appear
-in both the run table and run detail views.
+When a log policy matches, its name will be displayed as a label in the WebUI, allowing for easy
+identification of specific issues during a run. These labels will appear in both the run table and
+run detail views.
 
 These settings may also be specified at the cluster or resource pool level through task container
 defaults.
+
+Default policies:
+
+.. code:: yaml
+
+   log_policies:
+     - name: CUDA OOM
+       pattern: ".*CUDA out of memory.*"
+     - name: ECC Error
+       pattern: ".*uncorrectable ECC error encountered.*"
+
+To disable showing labels from the default policies:
+
+.. code:: yaml
+
+   log_policies:
+     - name: CUDA OOM
+     - name: ECC Error
 
 To find out more about log management features like **Log Search** and **Log Signal**, visit
 :ref:`Log Management <log-management>`.

@@ -40,10 +40,9 @@ Example configuration:
 .. code:: yaml
 
    log_policies:
-      - name: "CUDA OOM"
+      - name: CUDA OOM
         pattern: ".*CUDA out of memory.*"
-        action:
-          type: cancel_retries
+        action: cancel_retries
 
 This will display a "CUDA OOM" label in the UI when a CUDA out of memory error is encountered in the
 logs.
