@@ -38,8 +38,13 @@ def main(train_entrypoint: str) -> int:
 
     # We can't import pytorch directly because if running TfKerasTrials with an image that contains
     # both torch and keras, keras will throw exceptions due to unexpected CUDNN library versions.
-    if hasattr(det, "pytorch") and issubclass(trial_class, det.pytorch.PyTorchTrial):
-        return _run_pytorch_trial(trial_class, info)
+    if hasattr(det, "pytorch"):
+        if hasattr(det.pytorch, "deepspeed") and issubclass(
+            trial_class, det.pytorch.deepspeed.DeepSpeedTrial
+        ):
+            return _run_deepspeed_trial(trial_class, info)
+        elif issubclass(trial_class, det.pytorch.PyTorchTrial):
+            return _run_pytorch_trial(trial_class, info)
 
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.
     # It was natural to create this big-blob-of-config object, but it was a mistake to pass it into
@@ -190,6 +195,58 @@ def _run_pytorch_trial(
                 test_mode=False,
                 profiling_enabled=bool(info.trial._config["profiling"]["enabled"]),
             )
+
+    return 0
+
+
+def _run_deepspeed_trial(
+    trial_class: "Type[det.pytorch.deepspeed.DeepSpeedTrial]",
+    info: det.ClusterInfo,
+) -> int:
+    from determined import pytorch
+    from determined.pytorch import deepspeed as det_ds
+
+    det.common.set_logger(info.trial._debug)
+
+    logger.debug("Starting harness.")
+
+    with det_ds.init(
+        hparams=info.trial.hparams,
+        exp_conf=info.trial._config,
+    ) as train_context:
+        trial_inst = trial_class(train_context)
+
+        if train_context.distributed.size > 1 and not train_context.distributed.rank == 0:
+            log_level = logging.DEBUG if info.trial._debug else logging.WARNING
+            logging.getLogger().setLevel(log_level)
+
+        logger.info(
+            f"Creating {det_ds.DeepSpeedTrialController.__name__} with {trial_class.__name__}."
+        )
+
+        trainer = det_ds.Trainer(trial_inst, train_context)
+
+        if "global_batch_size" in info.trial.hparams:
+            global_batch_size = int(info.trial.hparams["global_batch_size"])  # type: Optional[int]
+        else:
+            global_batch_size = None
+
+        trainer.fit(
+            checkpoint_period=pytorch.TrainUnit._from_values(
+                **info.trial._config["min_checkpoint_period"],
+                global_batch_size=global_batch_size,
+            ),
+            validation_period=pytorch.TrainUnit._from_values(
+                **info.trial._config["min_validation_period"],
+                global_batch_size=global_batch_size,
+            ),
+            reporting_period=pytorch.Batch(info.trial._config["scheduling_unit"]),
+            checkpoint_policy=info.trial._config["checkpoint_policy"],
+            latest_checkpoint=info.latest_checkpoint,
+            step_zero_validation=info.trial._config["perform_initial_validation"],
+            test_mode=False,
+            profiling_enabled=bool(info.trial._config["profiling"]["enabled"]),
+        )
 
     return 0
 
