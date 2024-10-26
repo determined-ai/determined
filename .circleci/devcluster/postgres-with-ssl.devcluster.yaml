@@ -12,7 +12,7 @@ stages:
             cd /tmp/pg
             openssl req -new -x509 -days 365 -nodes -text -out server.crt -keyout server.key -subj "/CN=localhost"
             chmod 0400 server.crt server.key
-            uid=$(docker run --rm "postgres:{$DET_POSTGRES_VERSION}" id -u postgres)
+            uid=$(docker run --rm "postgres:${DET_POSTGRES_VERSION}" id -u postgres)
             sudo chown $uid server.crt server.key
             cat >pg_hba.conf <<EOF
             local all all trust
@@ -34,7 +34,7 @@ stages:
         - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
         - -v
         - /tmp/pg:/tmp/pg
-        - "postgres:{$DET_POSTGRES_VERSION}"
+        - "postgres:${DET_POSTGRES_VERSION}"
         - postgres
         - -c
         - ssl=true
