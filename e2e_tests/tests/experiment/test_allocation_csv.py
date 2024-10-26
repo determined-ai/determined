@@ -2,8 +2,8 @@ import csv
 import datetime
 import io
 import re
-import time
 import sys
+import time
 import uuid
 from typing import Optional
 

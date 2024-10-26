@@ -238,7 +238,7 @@ def test_ntsc_iface_access() -> None:
             api_utils.kill_ntsc(creds[0], typ, created_id)
         # Delete the project so the workspace can be deleted
         for pid in created_projects:
-            bindings.delete_DeleteProject(pid)
+            bindings.delete_DeleteProject(creds[0], id=pid)
         # Wait for deletion
         time.sleep(0.5)
 
@@ -310,7 +310,7 @@ def test_ntsc_proxy() -> None:
 
         for pid in created_projects:
             # Delete the project so the workspace can be deleted
-            bindings.delete_DeleteProject(pid)
+            bindings.delete_DeleteProject(creds[0], id=pid)
         # Wait for deletion
         time.sleep(0.5)
 

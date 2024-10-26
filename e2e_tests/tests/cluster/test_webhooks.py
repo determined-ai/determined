@@ -191,7 +191,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     for i in ws_id:
         bindings.delete_DeleteWebhook(sess, id=i or 0)
     # Delete the project so the workspace can be deleted
-    bindings.delete_DeleteProject(project.id)
+    bindings.delete_DeleteProject(sess, id=project.id)
     # Wait for deletion
     time.sleep(0.5)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
@@ -279,7 +279,7 @@ def test_custom_webhook(isSlack: bool) -> None:
 
     bindings.delete_DeleteWebhook(sess, id=w.id or 0)
     # Delete the project so the workspace can be deleted
-    bindings.delete_DeleteProject(project.id)
+    bindings.delete_DeleteProject(sess, id=project.id)
     # Wait for deletion
     time.sleep(0.5)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
@@ -346,7 +346,7 @@ def test_specific_webhook() -> None:
     bindings.delete_DeleteWebhook(sess, id=webhook_res_2.id or 0)
     
     # Delete the project so the workspace can be deleted
-    bindings.delete_DeleteProject(project.id)
+    bindings.delete_DeleteProject(sess, id=project.id)
     # Wait for deletion
     time.sleep(0.5)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
