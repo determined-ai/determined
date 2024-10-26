@@ -3,6 +3,7 @@ import http
 import os
 import random
 import re
+import time
 import tempfile
 import uuid
 from typing import Generator, List, Optional, Tuple
@@ -381,6 +382,10 @@ def test_workspace_org() -> None:
         assert e.value.status_code == http.HTTPStatus.CONFLICT
 
     finally:
+        # Clean out projects so workspaces can be cleaned
+        for p in test_projects:
+            bindings.delete_DeleteProject(sess, id=p.id)
+        time.sleep(0.5)
         # Clean out workspaces and all dependencies.
         for w in test_workspaces:
             bindings.delete_DeleteWorkspace(sess, id=w.id)
