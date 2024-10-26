@@ -344,7 +344,7 @@ def test_specific_webhook() -> None:
 
     bindings.delete_DeleteWebhook(sess, id=webhook_res_1.id or 0)
     bindings.delete_DeleteWebhook(sess, id=webhook_res_2.id or 0)
-    
+
     # Delete the project so the workspace can be deleted
     bindings.delete_DeleteProject(sess, id=project.id)
     # Wait for deletion

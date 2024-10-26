@@ -314,6 +314,7 @@ def test_ntsc_proxy() -> None:
         # Wait for deletion
         time.sleep(0.5)
 
+
 @pytest.mark.e2e_cpu_rbac
 @api_utils.skipif_rbac_not_enabled()
 def test_tsb_listed() -> None:
