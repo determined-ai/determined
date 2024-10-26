@@ -7,6 +7,7 @@ import pickle
 import random
 import sys
 import time
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import h5py
@@ -179,6 +180,14 @@ class TFKerasTrialController(det.TrialController):
         env: det.EnvContext,
         distributed_backend: det._DistributedBackend,
     ) -> None:
+        # TFKerasTrial's __init__ method may not be called by user-defined subclasses, so we fire
+        # the warning here.  Also, this will show up before some of the worst tf log vomit, I hope.
+        warnings.warn(
+            "TFKerasTrial has been deprecated in Determined 0.38.0 and will be removed in a future "
+            "version.  Please use the new det.keras.DeterminedCallback for training.",
+            FutureWarning,
+            stacklevel=2,
+        )
         # Initialize the correct horovod.
         if distributed_backend.use_horovod():
             hvd = horovod.hvd
@@ -881,6 +890,13 @@ class TFKerasTrialController(det.TrialController):
         if self.env.experiment_config.average_training_metrics_enabled():
             final_metrics = self._allreduce_logs(final_metrics)
 
+        # Inject batches and epochs into avg metrics.
+        # (this is after batches and possibly epochs have been updated)
+        final_metrics["batches"] = final_metrics.get(
+            "batches", self.multiplexer.state.total_batches
+        )
+        final_metrics["epochs"] = final_metrics.get("epochs", self.multiplexer.state.epoch)
+
         self.multiplexer._train_workload_end(final_metrics)
         self._stop_training_check()
 
@@ -953,6 +969,11 @@ class TFKerasTrialController(det.TrialController):
         step_duration = time.time() - validation_start_time
         logger.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
+        # Inject batches and epochs into validation metrics.
+        # (this is after batches and possibly epochs have been updated)
+        metrics["batches"] = metrics.get("batches", self.multiplexer.state.total_batches)
+        metrics["epochs"] = metrics.get("epochs", self.multiplexer.state.epoch)
+
         self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         self.upload_tb_files()
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
@@ -992,6 +1013,11 @@ class TFKerasTrial(det.LegacyTrial):
     ``tf.compat.v1.disable_eager_execution`` after your import statements.
     If you are using TensorFlow 1.x in eager mode, please add
     ``experimental_run_tf_function=False`` to your model compile function.
+
+    .. warning::
+
+        TFKerasTrial has been deprecated in Determined 0.38.0 and will be removed in a future
+        version.  Please use the new :class:`~determined.keras.DeterminedCallback` for training.
     """
 
     trial_controller_class = TFKerasTrialController

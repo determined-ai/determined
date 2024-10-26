@@ -18,7 +18,7 @@ import logging
 import pathlib
 import sys
 import time
-from typing import Iterator, Optional, Tuple
+from typing import Optional, Tuple
 
 import determined as det
 from determined import core
@@ -64,8 +64,6 @@ def main(
             last_action_id, steps_completed = load_state(trial_id, path)
             starting_action_id = last_action_id + 1
 
-    operations = None  # type: Iterator[core.SearcherOperation]
-
     for action_id, action in enumerate(actions[starting_action_id:], start=starting_action_id):
         logging.info(f"executing {action}")
         if action["action"] == "exit":
@@ -88,12 +86,6 @@ def main(
         elif action["action"] == "log":
             msg = base64.b64decode(action["base64"]).decode("utf8")
             logging.log(action["level"], msg)
-        elif action["action"] == "complete_searcher_operation":
-            # Get operations if we haven't already.
-            if not operations:
-                operations = core_context.searcher.operations(core.SearcherMode.ChiefOnly)
-            op = next(operations)
-            op.report_completed(action["metric"])
         else:
             raise ValueError(f"unexpected action type: {action}")
 

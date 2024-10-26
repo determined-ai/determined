@@ -1,5 +1,6 @@
 import enum
 import logging
+import warnings
 from typing import Any, Iterator, Optional
 
 import determined as det
@@ -13,6 +14,26 @@ class Unit(enum.Enum):
     EPOCHS = "EPOCHS"
     RECORDS = "RECORDS"
     BATCHES = "BATCHES"
+
+
+def _parse_searcher_max_length(experiment_config: dict) -> Optional[int]:
+    searcher = experiment_config.get("searcher", {})
+
+    max_length = searcher.get("max_length")
+    if max_length is None:
+        return None
+
+    if isinstance(max_length, int):
+        return max_length
+
+    # assume something like {"epochs": 10}
+    assert isinstance(max_length, dict), max_length
+    values = max_length.values()
+    if not values:
+        return None
+    out = next(iter(values))
+    assert isinstance(out, int), max_length
+    return out
 
 
 def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
@@ -34,6 +55,9 @@ def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
 
 class SearcherOperation:
     """
+    .. warning::
+        SearcherOperation is deprecated in 0.38.0, and will be removed in a future version.
+
     A ``SearcherOperation`` is a request from the hyperparameter-search logic for the training
     script to execute one train-validate-report cycle.
 
@@ -64,6 +88,11 @@ class SearcherOperation:
     @property
     def length(self) -> int:
         """
+        .. warning::
+            SearcherOperation.length is deprecated in 0.38.0, and will be removed in a future
+            version.  Instead, you should directly specify your training length in your training
+            code.
+
         ``length`` represents the total amount of training which should be reached by the train step
         before the validate-report steps.
         """
@@ -71,6 +100,11 @@ class SearcherOperation:
 
     def report_progress(self, length: float) -> None:
         """
+        .. warning::
+            SearcherOperation.report_progress is deprecated in 0.38.0, and will be removed in a
+            future version.  Instead, report progess with
+            :meth:`~determined.core.TrainContext.report_progress`.
+
         ``report_progress()`` reports the training progress to the Determined master so the WebUI
         can show accurate progress to users.
 
@@ -84,13 +118,19 @@ class SearcherOperation:
         if self._completed and length != self._length:
             raise RuntimeError("you must not call op.report_progress() after op.report_completed()")
         logger.debug(f"op.report_progress({length})")
+        # get the floating point progress
+        progress = min(1.0, max(0.0, length / self._length))
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/progress",
-            data=det.util.json_encode({"progress": length}),
+            data=det.util.json_encode({"progress": progress, "is_raw": True}),
         )
 
     def report_completed(self, searcher_metric: Any) -> None:
         """
+        .. warning::
+            SearcherOperation.report_completed is deprecated in 0.38.0, and will be removed in a
+            future version.  Instead, just exit 0 when your training is complete.
+
         ``report_completed()`` is the final step of a train-validate-report cycle.
 
         ``report_completed()`` requires the value of the metric you are searching over.  This value
@@ -103,16 +143,13 @@ class SearcherOperation:
         if self._completed:
             raise RuntimeError("you may only call op.report_completed() once")
         self._completed = True
-        body = {"op": {"length": self._length}, "searcherMetric": searcher_metric}
-        logger.debug(f"op.report_completed({searcher_metric})")
-        self._session.post(
-            f"/api/v1/trials/{self._trial_id}/searcher/completed_operation",
-            data=det.util.json_encode(body),
-        )
 
 
 class SearcherMode(enum.Enum):
     """
+    .. warning::
+        SearcherMode is deprecated in 0.38.0, and will be removed in a future version.
+
     ``SearcherMode`` defines the calling behavior of the ``SearcherContext.operations()`` call.
 
     When mode is ``WorkersAskChief`` (the default), all workers must call
@@ -130,6 +167,11 @@ class SearcherMode(enum.Enum):
 
 class SearcherContext:
     """
+    .. warning::
+        SearcherContext is deprecated in 0.38.0, and will be removed in a future version.  Instead
+        of using ``SearcherContext.operations()`` to decide how long to train for, you should set
+        your training length directly in your training code.
+
     ``SearcherContext`` gives direct access to operations emitted by the search algorithm in the
     master.  Each ``SearcherOperation`` emitted has a (unitless) length that you should train for,
     then you complete the op by reporting the validation metric you are searching over.
@@ -183,28 +225,14 @@ class SearcherContext:
         session: api.Session,
         dist: core.DistributedContext,
         trial_id: int,
-        run_id: int,
-        allocation_id: str,
+        max_length: int,
         units: Optional[Unit] = None,
     ) -> None:
         self._session = session
         self._dist = dist
         self._trial_id = trial_id
-        self._run_id = run_id
-        self._allocation_id = allocation_id
+        self._length = max_length
         self._units = units
-
-    def _get_searcher_op(self) -> Optional[SearcherOperation]:
-        logger.debug("_get_searcher_op()")
-        r = self._session.get(f"/api/v1/trials/{self._trial_id}/searcher/operation")
-        body = r.json()
-        if body["completed"]:
-            return None
-
-        # grpc-gateway encodes uint64 as a string, since it is bigger than a JavaScript `number`.
-        length = int(body["op"]["validateAfter"]["length"])
-        is_chief = self._dist.rank == 0
-        return SearcherOperation(self._session, self._trial_id, length=length, is_chief=is_chief)
 
     def operations(
         self,
@@ -212,65 +240,80 @@ class SearcherContext:
         auto_ack: bool = True,
     ) -> Iterator[SearcherOperation]:
         """
-        Iterate through all the operations this searcher has to offer.
+        .. warning::
+            SearcherContext.operations is deprecated in 0.38.0, and will be removed in a future
+            version.  Instead, you should set your training length directly in your training code.
 
-        See :class:`~determined.core.SearcherMode` for details about calling requirements in
-        distributed training scenarios.
-
-        After training to the point specified by each ``SearcherOperation``, the chief, and only the
-        chief, must call ``op.report_completed(``) on each operation.  This is true regardless of
-        the ``searcher_mode`` setting because the Determined master needs a clear, unambiguous
-        report of when an operation is completed.
+        This method no longer talks to the Determined master; it just yields a single
+        ``SearcherOperation`` objects based on the ``searcher.max_length`` in the experiment config
+        (which is also deprecated).
         """
-        searcher_mode = SearcherMode(searcher_mode)
 
+        warnings.warn(
+            "SearcherContext.operations() was deprecated in Determined 0.38.0 and will be removed "
+            "in a future version.  Instead, you should set your training length directly in your "
+            "training code.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
+        yield from self._operations(searcher_mode)
+
+    def _operations(
+        self,
+        searcher_mode: SearcherMode = SearcherMode.WorkersAskChief,
+    ) -> Iterator[SearcherOperation]:
+        """
+        The internal-only version of .operations which doesn't show a warning.
+
+        This is meant to be called by other, deprecated things which internally depend on
+        .operations() and have their own deprecation warning.  That way the user gets the
+        deprecation warning for what they actually used.
+        """
+
+        searcher_mode = SearcherMode(searcher_mode)
+        # Force the same synchronization behavior we used to have before fabricating operations.
         if self._dist.rank == 0:
-            # Chief gets operations from master.
-            while True:
-                op = self._get_searcher_op()
-                if searcher_mode == SearcherMode.WorkersAskChief:
-                    # Broadcast op.length (or None) to workers.  We broadcast just the length
-                    # because SearcherOperation is not serializable, and the is_chief attribute
-                    # obviously must be set on a per-worker basis.
-                    _ = self._dist.broadcast(op and op.length)
-                if op is None:
-                    if auto_ack:
-                        self.acknowledge_out_of_ops()
-                    break
-                yield op
-                if not op._completed:
-                    raise RuntimeError("you must call op.report_completed() on each operation")
+            # Chief fabricates an op.
+            op = SearcherOperation(self._session, self._trial_id, self._length, True)
+            if searcher_mode == SearcherMode.WorkersAskChief:
+                # Broadcast op to workers.
+                _ = self._dist.broadcast(op and op.length)
+            yield op
+            if not op._completed:
+                raise RuntimeError("you must call op.report_completed() on each operation")
+            if searcher_mode == SearcherMode.WorkersAskChief:
+                _ = self._dist.broadcast(None)
         else:
             if searcher_mode != SearcherMode.WorkersAskChief:
                 raise RuntimeError(
-                    "you cannot call searcher.operations(searcher_mode=ChiefOnly) from a non-chief "
-                    "worker."
+                    "you cannot call searcher.operations(searcher_mode=ChiefOnly) "
+                    "from a non-chief worker."
                 )
             # Worker gets operations from chief.
             while True:
                 op_length = self._dist.broadcast(None)
                 if op_length is None:
                     break
-                yield SearcherOperation(
-                    self._session, self._trial_id, length=op_length, is_chief=False
-                )
+                yield SearcherOperation(self._session, self._trial_id, op_length, False)
 
     def acknowledge_out_of_ops(self) -> None:
         """
-        acknowledge_out_of_ops() tells the Determined master that you are shutting down because
-        you have recognized the searcher has no more operations for you to complete at this time.
-
-        This is important for the Determined master to know that it is safe to restart this process
-        should new operations be assigned to this trial.
-
-        acknowledge_out_of_ops() is normally called automatically just before operations() raises a
-        StopIteration, unless operations() is called with auto_ack=False.
+        .. warning::
+            SearcherContext.acknowledge_out_of_ops() is deprecated in 0.38.0, and will be removed in
+            a future version.  Current calls to this function are ignored, and there should not need
+            to be a replacement.
         """
-        logger.debug(f"acknowledge_out_of_ops(allocation_id:{self._allocation_id})")
-        self._session.post(f"/api/v1/allocations/{self._allocation_id}/signals/ack_preemption")
+        pass
 
     def get_configured_units(self) -> Optional[Unit]:
         """
+        .. warning::
+            SearcherContext.get_configured_units() is deprecated in 0.38.0, and will be removed in
+            a future version.  Note that the ``searcher.max_length`` filed of the experiment config
+            is also deprecated and will be removed as well.  Instead, you should directly specify
+            your training length in your training code.
+
         get_configured_units() reports what units were used in the searcher field of the experiment
         config.  If no units were configured, None is returned.
 
@@ -330,6 +373,14 @@ class DummySearcherContext(SearcherContext):
         searcher_mode: SearcherMode = SearcherMode.WorkersAskChief,
         auto_ack: bool = True,
     ) -> Iterator[SearcherOperation]:
+        warnings.warn(
+            "SearcherContext.operations() was deprecated in Determined 0.38.0 and will be removed "
+            "in a future version.  Instead, you should set your training length directly in your "
+            "training code.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
         searcher_mode = SearcherMode(searcher_mode)
         # Force the same synchronization behavior in the DummySearcherContext as the real one.
         if self._dist.rank == 0:
@@ -361,3 +412,36 @@ class DummySearcherContext(SearcherContext):
 
     def get_configured_units(self) -> Optional[Unit]:
         return Unit.EPOCHS
+
+
+class SearcherContextMissing(SearcherContext):
+    def __init__(self) -> None:
+        pass
+
+    def operations(
+        self,
+        searcher_mode: SearcherMode = SearcherMode.WorkersAskChief,
+        auto_ack: bool = True,
+    ) -> Iterator[SearcherOperation]:
+        raise ValueError(
+            "SearcherContext was not created because your experiment config does not have the "
+            "searcher.max_length set.  Both the searcher.max_length and the SearcherContext are "
+            "deprecated.  Instead, you should specify your training length directly in your "
+            "training code and avoid all calls to core_context.searcher."
+        )
+
+    def acknowledge_out_of_ops(self) -> None:
+        raise ValueError(
+            "SearcherContext was not created because your experiment config does not have the "
+            "searcher.max_length set.  Both the searcher.max_length and the SearcherContext are "
+            "deprecated.  Instead, you should specify your training length directly in your "
+            "training code and avoid all calls to core_context.searcher."
+        )
+
+    def get_configured_units(self) -> Optional[Unit]:
+        raise ValueError(
+            "SearcherContext was not created because your experiment config does not have the "
+            "searcher.max_length set.  Both the searcher.max_length and the SearcherContext are "
+            "deprecated.  Instead, you should specify your training length directly in your "
+            "training code and avoid all calls to core_context.searcher."
+        )

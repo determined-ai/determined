@@ -8,3 +8,4 @@ from determined.pytorch.deepspeed._deepspeed_context import (
     overwrite_deepspeed_config,
 )
 from determined.pytorch.deepspeed._deepspeed_trial import DeepSpeedTrial, DeepSpeedTrialController
+from determined.pytorch.deepspeed._trainer import init, Trainer

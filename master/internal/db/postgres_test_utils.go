@@ -361,13 +361,8 @@ func RequireMockExperimentParams(
 			},
 		},
 		RawSearcher: &expconf.SearcherConfigV0{
-			RawSingleConfig: &expconf.SingleConfigV0{
-				RawMaxLength: &expconf.LengthV0{
-					Unit:  expconf.Batches,
-					Units: 1,
-				},
-			},
-			RawMetric: ptrs.Ptr(defaultSearcherMetric),
+			RawSingleConfig: &expconf.SingleConfigV0{},
+			RawMetric:       ptrs.Ptr(defaultSearcherMetric),
 		},
 	}
 	if p.HParamNames != nil {

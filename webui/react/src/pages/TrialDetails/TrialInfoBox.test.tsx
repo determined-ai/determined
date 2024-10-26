@@ -45,7 +45,6 @@ const mockExperiment: ExperimentBase = {
     profiling: { enabled: false },
     resources: {},
     searcher: {
-      max_length: { batches: 937, epochs: 1, records: 1 },
       max_trials: 16,
       metric: 'val_loss',
       name: 'adaptive_asha' as const,

@@ -69,11 +69,9 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
                 )
             )
             # Docs snippet start: report training metrics
-            # NEW: Report training metrics to Determined
-            # master via core_context.
-            # Index by (batch_idx + 1) * (epoch-1) * len(train_loader)
-            # to continuously plot loss on one graph for consecutive
-            # epochs.
+            # NEW: Report training metrics to Determined master via core_context.
+            # Index by batches_completed + epoch_idx * len(train_loader)
+            # to continuously plot loss on one graph for consecutive epochs.
             core_context.train.report_training_metrics(
                 steps_completed=batches_completed + epoch_idx * len(train_loader),
                 metrics={"train_loss": loss.item()},
@@ -108,8 +106,7 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
     )
     # Docs snippet end: include args
     # Docs snippet start: report validation metrics
-    # NEW: Report validation metrics to Determined master
-    # via core_context.
+    # NEW: Report validation metrics to Determined master via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss},
@@ -213,17 +210,17 @@ def main(core_context):
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch_idx in range(0, args.epochs):
-        # Docs snippet start: calculate steps completed
-        # NEW: Calculate steps_completed for plotting test metrics.
-        steps_completed = epoch_idx * len(train_loader)
-        # Docs snippet end: calculate steps completed
-
         # Docs snippet start: pass core context
         # NEW: Pass core_context into train() and test().
         train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
 
-        # NEW: Pass args, test_loader, epoch, and steps_completed into
-        # test().
+        # Docs snippet start: calculate steps completed
+        # NEW: Calculate steps_completed for plotting test metrics.
+        epochs_completed = epoch_idx + 1
+        steps_completed = epochs_completed * len(train_loader)
+        # Docs snippet end: calculate steps completed
+
+        # NEW: Pass args, test_loader, epoch, and steps_completed into test().
         test(
             args,
             model,
@@ -236,8 +233,7 @@ def main(core_context):
         scheduler.step()
         # Docs snippet end: pass core context
 
-        # NEW: Remove model saving logic, checkpointing shown in next
-        # stage.
+        # NEW: Remove model saving logic, checkpointing shown in next stage.
 
 
 # Docs snippet start: modify main loop core context

@@ -177,8 +177,8 @@ def test_docker_login() -> None:
 def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
-    config["searcher"]["max_length"] = {"epochs": 1}
-    config["records_per_epoch"] = 64
+    assert "--epochs 1" in config["entrypoint"], "update test to match tutorial"
+    config["entrypoint"] = config["entrypoint"].replace("--epochs 1", "--batches 64")
     config["max_restarts"] = 0
 
     exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)

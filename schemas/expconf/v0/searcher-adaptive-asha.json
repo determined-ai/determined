@@ -8,7 +8,6 @@
         "name"
     ],
     "eventuallyRequired": [
-        "max_length",
         "max_trials",
         "metric"
     ],
@@ -33,6 +32,20 @@
             ],
             "default": null,
             "minimum": 1
+        },
+        "time_metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "max_time": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
         },
         "mode": {
             "enum": [
@@ -81,7 +94,7 @@
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": null
         },
         "metric": {
             "type": [

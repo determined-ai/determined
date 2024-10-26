@@ -25,16 +25,17 @@
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
                 },
                 {
-                    "unionKey": "const:name=custom",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
-                },
-                {
                     "unionKey": "const:name=adaptive_asha",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
                 },
                 {
                     "unionKey": "const:name=async_halving",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=custom",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
                 },
                 {
                     "$comment": "this is an EOL searcher, not to be used in new experiments",
@@ -65,6 +66,8 @@
         "max_concurrent_trials": true,
         "max_length": true,
         "max_rungs": true,
+        "max_time": true,
+        "time_metric": true,
         "max_trials": true,
         "mode": true,
         "name": true,

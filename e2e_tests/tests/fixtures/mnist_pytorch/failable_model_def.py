@@ -27,6 +27,7 @@ if __name__ == "__main__":
         trial = MNistFailable(context=train_context, hparams=info.trial.hparams)
         trainer = pytorch.Trainer(trial, train_context)
         trainer.fit(
+            max_length=pytorch.Batch(8),
             checkpoint_policy="none",
             checkpoint_period=pytorch.Batch(3),
             validation_period=pytorch.Batch(1),

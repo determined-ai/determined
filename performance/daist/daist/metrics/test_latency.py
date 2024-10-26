@@ -25,12 +25,12 @@ class Test(BaseMetricsTest):
                                 samples: int) -> Experiment:
 
         cfg = self._cfg.format(name=f'{self.id()}',
+                               num_batches=samples,
                                metric_count=metric_count,
                                param1=model_def.Param.CONCURRENCY,
                                param1_minval=1,
                                param1_maxval=concurrency+1,
                                param1_count=concurrency,
-                               searcher_max_length=samples,
                                searcher_max_concurrent_trials=concurrency)
 
         return self._run_experiment(cfg)
