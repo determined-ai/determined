@@ -1910,6 +1910,20 @@ jobs:
           command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
+  publish-helm-gh-rc:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - make-component:
+          component: helm
+          target: release-gh-rc
+
   publish-helm-gh:
     parameters:
       ee:
@@ -5575,6 +5589,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-filters
+
+      - publish-helm-gh-rc:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *rc-filters
 
       - upload-try-now-template:
           context: determined-production
