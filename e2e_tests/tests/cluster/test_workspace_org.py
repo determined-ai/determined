@@ -474,7 +474,7 @@ def setup_workspaces(
         for e in exps:
             if e.workspaceId not in wids:
                 continue
-            bindings.delete_DeleteExperiment(session, id=e.id)
+            bindings.delete_DeleteExperiment(session, experimentId=e.id)
         time.sleep(0.5)
 
         for w in workspaces:
