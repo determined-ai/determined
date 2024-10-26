@@ -478,6 +478,14 @@ def setup_workspaces(
         time.sleep(0.5)
 
         for w in workspaces:
+            projects = bindings.get_GetWorkspaceProjects(
+                session,
+                id=w.id,
+                sortBy=bindings.v1GetWorkspaceProjectsRequestSortBy.NAME,
+            ).projects
+            for p in projects:
+                bindings.delete_DeleteProject(session, id=p.id)
+            time.sleep(0.5)
             # TODO check if it needs deleting.
             bindings.delete_DeleteWorkspace(session, id=w.id)
 
