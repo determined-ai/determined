@@ -128,21 +128,21 @@ package-ee: packaging/LICENSE buildx
 
 .PHONY: release
 release: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release: packaging/LICENSE buildx
 	goreleaser --rm-dist
 	make publish-nvcr
 
 .PHONY: release-dryrun
 release-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
-release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 # We intentionally do not invoke `make publish-nvcr(-dryrun)` here.
 release-dryrun: packaging/LICENSE buildx
 	goreleaser --rm-dist -f ./.goreleaser_dryrun.yml
 
 .PHONY: release-ee
 release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
 release-ee: packaging/LICENSE buildx
 	goreleaser --rm-dist -f ./.goreleaser_ee.yml
 

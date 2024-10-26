@@ -270,7 +270,7 @@ package-small: gen buildx-small
 release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release: gen buildx
 	$(GORELEASER) --rm-dist
 	make publish-nvcr
@@ -279,7 +279,7 @@ release: gen buildx
 release-dryrun: export DET_SEGMENT_MASTER_KEY ?=
 release-dryrun: export DET_SEGMENT_WEBUI_KEY ?=
 release-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
-release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 # We intentionally do not invoke `make publish-nvcr(-dryrun)` here.
 release-dryrun: gen buildx
 	$(GORELEASER) --rm-dist -f ./.goreleaser_dryrun.yml
@@ -290,7 +290,7 @@ release-ee: export DET_SEGMENT_WEBUI_KEY ?=
 release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
 release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
 release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
 release-ee: gen buildx
 	$(GORELEASER) --rm-dist -f ./.goreleaser_ee.yml
 
