@@ -1,6 +1,6 @@
 import time
 import uuid
-from typing import Dict, List, int
+from typing import Dict, List
 
 import pytest
 
