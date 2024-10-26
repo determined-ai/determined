@@ -26,6 +26,18 @@ release-gh:
 	git clean -df
 	goreleaser --rm-dist
 
+.PHONY: release-gh-rc
+release-gh-rc: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+# The following line lists all tags by creation date, finds the current tag and
+# the next line after, then prints that second line, which should be the most
+# recent previous tag. This works if the previous tag is both a minor release,
+# or an rc release.
+release-gh-rc: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-gh-rc:
+	go install github.com/goreleaser/goreleaser@v1.14.1
+	git clean -df
+	goreleaser --rm-dist
+
 .PHONY: release-gh-dryrun
 release-gh-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
 release-gh-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
