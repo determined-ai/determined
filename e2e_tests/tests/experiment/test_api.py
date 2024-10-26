@@ -1,5 +1,5 @@
-import uuid
 import time
+import uuid
 from typing import Dict, List, int
 
 import pytest

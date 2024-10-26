@@ -1,3 +1,3 @@
 declare module 'notebook' {
-    export default any;
+  export default any;
 }
