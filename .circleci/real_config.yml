@@ -1507,9 +1507,9 @@ commands:
           no_output_timeout: <<parameters.no_output_timeout>>
           command: |
             if <<parameters.dryrun>>; then
-              make -C <<parameters.component>> <<parameters.target>>
-            else
               make -C <<parameters.component>> <<parameters.target>>-dryrun
+            else
+              make -C <<parameters.component>> <<parameters.target>>
             fi
 
 jobs:
