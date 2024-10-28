@@ -526,6 +526,7 @@ def _test_master_restart_kill_works(managed_cluster_restarts: abstract_cluster.C
         managed_cluster_restarts.restart_master()
         managed_cluster_restarts.restart_agent()
 
+
 @pytest.mark.e2e_slurm
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime, slots", [(0, 0), (20, 1), (60, 1)])

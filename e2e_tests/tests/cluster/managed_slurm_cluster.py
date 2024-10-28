@@ -15,26 +15,27 @@ from tests.cluster import abstract_cluster, utils
 # devcluster instance. It is used as part of the e2e slurm tests that require the master to be
 # restarted.
 class ManagedSlurmCluster(abstract_cluster.Cluster):
-    
     def __init__(self) -> None:
-        self.is_circleci_job = False # DNJ DEBUG os.getenv("CIRCLECI")
+        self.is_circleci_job = False  # DNJ DEBUG os.getenv("CIRCLECI")
         self.gcloud_zone = os.getenv("SLURM_GCLOUD_ZONE")
         self.gcloud_instance_name = os.getenv("SLURM_GCLOUD_INSTANCE_NAME")
         self.gcloud_project = os.getenv("SLURM_GCLOUD_PROJECT")
         self.existing_devcluster_pid = os.getenv("SLURM_DEVCLUSTER_PID")
-        print(f"DNJ DEBUG fixture start {self.gcloud_zone}, {self.gcloud_instance_name}, {self.gcloud_project}, {self.existing_devcluster_pid}")
+        print(
+            f"DNJ DEBUG fixture start {self.gcloud_zone}, {self.gcloud_instance_name}, {self.gcloud_project}, {self.existing_devcluster_pid}"
+        )
         self.dc = None
         self.ssh_cmd = [
-        "gcloud",
-         "compute", 
-         "ssh", 
-         "--zone",
-         f"{self.gcloud_zone}", 
-         f"{self.gcloud_instance_name}", 
-         "--project", 
-         f"{self.gcloud_project}", 
-         "--"
-    ]
+            "gcloud",
+            "compute",
+            "ssh",
+            "--zone",
+            f"{self.gcloud_zone}",
+            f"{self.gcloud_instance_name}",
+            "--project",
+            f"{self.gcloud_project}",
+            "--",
+        ]
         return
 
     def __enter__(self) -> "ManagedSlurmCluster":
@@ -49,7 +50,9 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
         return
 
     def kill_master(self) -> None:
-        print(f"DNJ DEBUG killing job {self.gcloud_zone}, {self.gcloud_instance_name}, {self.gcloud_project}")
+        print(
+            f"DNJ DEBUG killing job {self.gcloud_zone}, {self.gcloud_instance_name}, {self.gcloud_project}"
+        )
         if self.is_circleci_job:
             # Use the pre-installed determined master service when running the tests as part of a
             # CircleCI job.
@@ -91,7 +94,7 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
                         "./tools/slurmcluster.sh -s <machine name> to create one."
                     )
                 self.dc = subprocess.Popen(  # type: ignore
-                    self.ssh_cmd + [ "devcluster", "-c", master_config_file, "--oneshot"],
+                    self.ssh_cmd + ["devcluster", "-c", master_config_file, "--oneshot"],
                     cwd="..",
                 )
             time.sleep(30)
@@ -106,11 +109,25 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
         pass
 
     def _gcloud_ssh(self, cmd: str):
+        print(f"DNJ DEBUG GCLOUD SSH GOING WITH COMMAND {cmd}")
         assert self.gcloud_zone, "SLURM_GCLOUD_ZONE must be set for this test!"
         assert self.gcloud_instance_name, "SLURM_GCLOUD_INSTANCE_NAME must be set for this test!"
         assert self.gcloud_project, "SLURM_GCLOUD_PROJECT must be set for this test!"
-        subprocess.run(shlex.split(f'gcloud compute ssh --zone "{self.gcloud_zone}" "{self.gcloud_instance_name}" --project "{self.gcloud_project}" -- {cmd}'))
-    
+        out = subprocess.run(
+            shlex.split(
+                (
+                    f"gcloud compute ssh --zone "
+                    f'"{self.gcloud_zone}" '
+                    f'"{self.gcloud_instance_name}" '
+                    f'--project "{self.gcloud_project}" '
+                    f"-- {cmd}"
+                )
+            )
+        )
+        assert (
+            out.returncode == 0
+        ), f"Failed gcloud command {cmd}. stdout: {out.stdout}, stderr: {out.stderr}"
+
 
 # Create a pytest fixture that returns a ManagedSlurmCluster instance and set it's scope equal as
 # session (active for entire duration of the pytest command execution).
@@ -127,7 +144,7 @@ def managed_slurm_cluster_session(request: Any) -> Iterator[ManagedSlurmCluster]
 def managed_slurm_cluster_restarts(
     managed_slurm_cluster_session: ManagedSlurmCluster, request: Any
 ) -> Iterator[ManagedSlurmCluster]:
-    if managed_slurm_cluster_session.is_circleci_job: 
+    if managed_slurm_cluster_session.is_circleci_job:
         # CircleCI job has master running on port 8080
         conf.MASTER_PORT = "8080"
     else:
