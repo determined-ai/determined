@@ -2101,12 +2101,12 @@ jobs:
       - add-and-fetch-upstream
       - when:
           condition:
-            - not: force
+            - not: <<parameters.force>>
           steps:
             - skip-if-only-docs
       - when:
           condition:
-            - not: force
+            - not: <<parameters.force>>
           steps:
             - skip-if-only-github
       - react-get-deps
