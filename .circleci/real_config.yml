@@ -2101,7 +2101,7 @@ jobs:
       - add-and-fetch-upstream
       - when:
           condition:
-            - not: <<parameters.force>>
+            not: <<parameters.force>>
           steps:
             - skip-if-only-docs
             - skip-if-only-github
