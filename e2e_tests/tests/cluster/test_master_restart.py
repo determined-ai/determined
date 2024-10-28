@@ -525,6 +525,7 @@ def _test_master_restart_kill_works(managed_cluster_restarts: abstract_cluster.C
     except Exception:
         managed_cluster_restarts.restart_master()
         managed_cluster_restarts.restart_agent()
+        raise
 
 
 @pytest.mark.e2e_slurm

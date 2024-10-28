@@ -252,12 +252,6 @@ echo "Generated devcluster file: $TEMPYAML"
 # Note: Do not set ALL_PROXY before calling "gcloud" or it will fail.
 export ALL_PROXY=socks5://localhost:${SOCKS5_PROXY_PORT}
 
-# Run devcluster. # DNJ TODO add logging back
-echo "Running cluster..."
-devcluster -c $TEMPYAML --oneshot > devcluster.log 2>&1 &
-
-devcluster_pid=$(ps -A | grep devcluster | head -n 1 | awk '{print $1}')
-echo "devcluster started on pid: $devcluster_pid"
 if [ "$CI" = true ]; then
     echo "Setting variables for CI"
     # exports for circle ci
@@ -265,6 +259,21 @@ if [ "$CI" = true ]; then
     echo "export SLURM_GCLOUD_INSTANCE_NAME=${SLURM_GCLOUD_INSTANCE_NAME}" >> "$BASH_ENV"
     echo "export SLURM_GCLOUD_PROJECT=${SLURM_GCLOUD_PROJECT}" >> "$BASH_ENV"
     echo "export SLURM_DEVCLUSTER_CONFIG=${TEMPYAML}" >> "$BASH_ENV"
-    echo "export SLURM_DEVCLUSTER_PID=${devcluster_pid}" >> "$BASH_ENV"
+
 fi
+# Run devcluster. # DNJ TODO add logging back
+echo "Running cluster..."
+devcluster -c $TEMPYAML --oneshot 
+
+# devcluster_pid=$(ps -A | grep devcluster | head -n 1 | awk '{print $1}')
+# echo "devcluster started on pid: $devcluster_pid"
+# if [ "$CI" = true ]; then
+#     echo "Setting variables for CI"
+#     # exports for circle ci
+#     echo "export SLURM_GCLOUD_ZONE=${SLURM_GCLOUD_ZONE}" >> "$BASH_ENV"
+#     echo "export SLURM_GCLOUD_INSTANCE_NAME=${SLURM_GCLOUD_INSTANCE_NAME}" >> "$BASH_ENV"
+#     echo "export SLURM_GCLOUD_PROJECT=${SLURM_GCLOUD_PROJECT}" >> "$BASH_ENV"
+#     echo "export SLURM_DEVCLUSTER_CONFIG=${TEMPYAML}" >> "$BASH_ENV"
+#     echo "export SLURM_DEVCLUSTER_PID=${devcluster_pid}" >> "$BASH_ENV"
+# fi
 sleep 120 # We have to wait for the next jobs to start otherwise this can just skip jobs
