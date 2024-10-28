@@ -56,7 +56,8 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
         if self.is_circleci_job:
             # Use the pre-installed determined master service when running the tests as part of a
             # CircleCI job.
-            self._gcloud_ssh("sleep 1") #"sudo systemctl stop determined-master")
+            # self._gcloud_ssh("sudo systemctl stop determined-master")
+            pass
         else:
             # Use the local instance of devcluster.
             if self.dc:
@@ -77,7 +78,8 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
             if self.is_circleci_job:
                 # Use the pre-installed determined master service when running the tests as part
                 # of a CircleCI job.
-                self._gcloud_ssh("sleep1") #"sudo systemctl start determined-master")
+                # self._gcloud_ssh("sudo systemctl start determined-master")
+                pass
             else:
                 # Use a local instance of the devcluster.
                 master_config_file = os.getenv("SLURM_DEVCLUSTER_CONFIG")
@@ -94,7 +96,7 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
                         "./tools/slurmcluster.sh -s <machine name> to create one."
                     )
                 self.dc = subprocess.Popen(  # type: ignore
-                    self.ssh_cmd + ["devcluster", "-c", master_config_file, "--oneshot"],
+                    ["devcluster", "-c", master_config_file, "--oneshot"],
                     cwd="..",
                 )
             time.sleep(30)
