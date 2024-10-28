@@ -163,9 +163,8 @@ func (a *apiServer) GetUsers(
 		ColumnExpr("h.uid AS agent_uid").
 		ColumnExpr("h.gid AS agent_gid").
 		ColumnExpr("h.user_ AS agent_user").
-		ColumnExpr("h.group_ AS agent_group").
-		ColumnExpr("COALESCE(u.display_name, u.username) AS name")
-
+		ColumnExpr("h.group_ AS agent_group")
+		
 	if req.Name != "" {
 		nameFilterExpr := "%" + req.Name + "%"
 		query.Where("u.display_name ILIKE ? OR u.username ILIKE ?", nameFilterExpr, nameFilterExpr)
@@ -196,7 +195,12 @@ func (a *apiServer) GetUsers(
 	if !ok {
 		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
 	}
-	query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
+	if sortColumn == "name" {
+		// ensure lexicographical sort:
+		query.OrderExpr("COALESCE(u.display_name, u.username) COLLATE \"C\" " + orderBy)
+		} else {
+			query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
+	}
 	if sortColumn != "id" {
 		query.OrderExpr("id asc")
 	}

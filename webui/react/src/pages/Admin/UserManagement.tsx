@@ -40,7 +40,7 @@ import { DetailedUser, UserRole as UserRoleType } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
-import { alphaNumericSorter, booleanSorter, numericSorter } from 'utils/sort';
+import { booleanSorter, numericSorter } from 'utils/sort';
 
 import css from './UserManagement.module.scss';
 import {
@@ -404,8 +404,10 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
         key: V1GetUsersRequestSortBy.NAME,
         onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'user' }),
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
-        sorter: (a: DetailedUser, b: DetailedUser) => {
-          return alphaNumericSorter(a.displayName || a.username, b.displayName || b.username);
+        sorter: () => {
+          // do not overwrite paginated backend sort order:
+          return 0;
+          // TODO: should not overwrite paginated backend sort order anywhere in the app
         },
         title: 'User',
       },
@@ -428,7 +430,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
         key: V1GetUsersRequestSortBy.ADMIN,
         onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'role' }),
         render: (isAdmin: boolean) => <>{isAdmin ? 'Admin' : 'Member'}</>,
-        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isAdmin, b.isAdmin),
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(b.isAdmin, a.isAdmin),
         title: 'Role',
       },
       {

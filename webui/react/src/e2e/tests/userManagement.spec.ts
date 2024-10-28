@@ -1,9 +1,13 @@
+import { orderBy } from 'lodash';
+
+import { ApiUserFixture } from 'e2e/fixtures/api.user.fixture';
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
-import { sessionRandomHash } from 'e2e/utils/naming';
+import { safeName, sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
 import { TestUser } from 'e2e/utils/users';
+import { V1User } from 'services/api-ts-sdk';
 
 test.describe('User Management', () => {
   // One list of users per test session. This is to encourage a final teardown
@@ -124,16 +128,23 @@ test.describe('User Management', () => {
   });
 
   test.describe('User Management List', () => {
-    const usernamePrefix = 'test-user-pagination';
+    const usernamePrefix = 'test-user-list';
+    const listTestUsers: V1User[] = [];
+
     test.beforeAll(async ({ backgroundApiUser }) => {
-      await test.step('Create User', async () => {
+      await test.step('Create test users', async () => {
         // pagination will be 10 per page, so create 11 users
         for (let i = 0; i < 11; i++) {
           const userResponse = await backgroundApiUser.createUser(
-            backgroundApiUser.new({ usernamePrefix }),
+            // adding index prefix allows more specific testing of sorting:
+            backgroundApiUser.new({ usernamePrefix: `${i}-${usernamePrefix}` }),
           );
           if (userResponse.user?.id) {
             testUserIds.push(userResponse.user.id);
+            listTestUsers.push({
+              ...userResponse.user,
+              displayName: userResponse.user.displayName || undefined,
+            });
           } else {
             throw new Error('createUser: invalid API response');
           }
@@ -171,11 +182,7 @@ test.describe('User Management', () => {
         // search for users created this session and wait for table stable
         await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
         await expect(async () => {
-          expect(
-            await userManagementPage.table.table.filterRows(async (row) => {
-              return (await row.user.name.pwLocator.textContent())?.indexOf(usernamePrefix) === 0;
-            }),
-          ).toHaveLength(10);
+          expect(await userManagementPage.table.table.rows.pwLocator.all()).toHaveLength(10);
         }).toPass({ timeout: 10_000 });
         // go to page 2 to see users
         await expect(async () => {
@@ -279,6 +286,125 @@ test.describe('User Management', () => {
           ).toPass({ timeout: 20_000 });
         });
       }
+    });
+
+    test.describe('Sort and filter', () => {
+      const ADMIN_UPDATE_INDEX = 0;
+      const STATUS_UPDATE_INDEX = 1;
+      const NAME_UPDATE_INDEX = 2;
+
+      const updateUser = async (index: number, updates: Partial<V1User>, api: ApiUserFixture) => {
+        const userId = listTestUsers[index].id;
+        if (userId === undefined) throw new Error('patchUser: invalid user');
+        const updated = await api.patchUser(userId, updates);
+        Object.assign(listTestUsers[index], updated);
+      };
+
+      test.beforeAll(async ({ backgroundApiUser }) => {
+        const testDisplayName = safeName('0-test-display-name');
+
+        await updateUser(ADMIN_UPDATE_INDEX, { admin: false }, backgroundApiUser);
+        await updateUser(STATUS_UPDATE_INDEX, { active: false }, backgroundApiUser);
+        await updateUser(NAME_UPDATE_INDEX, { displayName: testDisplayName }, backgroundApiUser);
+      });
+
+      test.afterAll(async ({ backgroundApiUser }) => {
+        await updateUser(ADMIN_UPDATE_INDEX, { admin: true }, backgroundApiUser);
+        await updateUser(STATUS_UPDATE_INDEX, { active: true }, backgroundApiUser);
+        await updateUser(NAME_UPDATE_INDEX, { displayName: '' }, backgroundApiUser);
+      });
+
+      test('Sort', async ({ page }) => {
+        const userManagementPage = new UserManagement(page);
+
+        const pagination = userManagementPage.table.table.pagination;
+        await expect(
+          repeatWithFallback(
+            async () => {
+              await pagination.perPage.openMenu();
+              await pagination.perPage.perPage10.pwLocator.click();
+            },
+            async () => {
+              // BUG [ET-233]
+              await userManagementPage.goto();
+            },
+          ),
+        ).toPass({ timeout: 25_000 });
+
+        await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
+
+        const validateSort = async (
+          sortBy: 'name' | 'admin' | 'active' | 'modifiedAt',
+          order: 'asc' | 'desc',
+        ) => {
+          const tableUsernames = await Promise.all(
+            (await userManagementPage.table.table.rows.username.pwLocator.all()).map(
+              async (username) => {
+                return await username.textContent();
+              },
+            ),
+          );
+
+          const sortedListTestUsers = orderBy(
+            listTestUsers,
+            sortBy === 'name' ? (u) => u.displayName || u.username : sortBy,
+            order,
+          );
+
+          expect(tableUsernames).toEqual(sortedListTestUsers.slice(0, 10).map((u) => u.username));
+        };
+
+        const testSort = async (
+          columnId: 'user' | 'role' | 'status' | 'modified',
+          sortBy: 'name' | 'admin' | 'active' | 'modifiedAt',
+        ) => {
+          await expect(
+            repeatWithFallback(
+              async () => {
+                await expect(
+                  userManagementPage.table.table.headRow[columnId].pwLocator,
+                ).toHaveAttribute('aria-sort', 'ascending');
+              },
+              async () => {
+                await userManagementPage.table.table.headRow[columnId].pwLocator.click();
+              },
+            ),
+          ).toPass();
+
+          await validateSort(sortBy, 'asc');
+
+          await expect(
+            repeatWithFallback(
+              async () => {
+                await expect(
+                  userManagementPage.table.table.headRow[columnId].pwLocator,
+                ).toHaveAttribute('aria-sort', 'descending');
+              },
+              async () => {
+                await userManagementPage.table.table.headRow[columnId].pwLocator.click();
+              },
+            ),
+          ).toPass();
+
+          await validateSort(sortBy, 'desc');
+        };
+
+        await test.step('Sort by user', async () => {
+          await testSort('user', 'name');
+        });
+
+        await test.step('Sort by role', async () => {
+          await testSort('role', 'admin');
+        });
+
+        await test.step('Sort by status', async () => {
+          await testSort('status', 'active');
+        });
+
+        await test.step('Sort by last modified', async () => {
+          await testSort('modified', 'modifiedAt');
+        });
+      });
     });
   });
 });

@@ -150,6 +150,10 @@ class UserRow extends Row {
     parent: this,
     selector: '[data-testid="user"]',
   });
+  readonly username = new BaseComponent({
+    parent: this,
+    selector: '[class^="Nameplate_text"] div:last-child',
+  });
   readonly status = new BaseComponent({
     parent: this,
     selector: '[data-testid="status"]',
