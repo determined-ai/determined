@@ -135,31 +135,28 @@ func GetConfigPolicyField[T any](ctx context.Context, wkspID *int, policyType, f
 			ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
 			Where("workspace_id IS NULL").
 			Where("workload_type = ?", workloadType).Scan(ctx, &globalBytes)
-		if err == nil && len(globalBytes) > 0 {
-			confBytes = globalBytes
-		}
 		if err != nil && err != sql.ErrNoRows {
 			return err
 		}
+
+		confBytes = globalBytes
 
 		var wkspBytes []byte
 		err = tx.NewSelect().Table("task_config_policies").
 			ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
 			Where("workspace_id = ?", wkspID).
 			Where("workload_type = ?", workloadType).Scan(ctx, &wkspBytes)
-		if err == nil && len(globalBytes) == 0 {
+		if len(globalBytes) == 0 {
 			confBytes = wkspBytes
-		}
-		if len(globalBytes) > 0 || len(wkspBytes) > 0 {
-			err = nil
 		}
 		return err
 	})
-	if err == sql.ErrNoRows || len(confBytes) == 0 {
-		return nil, nil
-	}
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("error getting config field %s: %w", field, err)
+	}
+	if len(confBytes) == 0 {
+		// The field is not enforced as a config policy. Should not be an error.
+		return nil, nil
 	}
 
 	err = json.Unmarshal(confBytes, &conf)

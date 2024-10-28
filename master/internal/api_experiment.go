@@ -1241,13 +1241,35 @@ func (a *apiServer) PatchExperiment(
 			}
 
 			enforcedChkptConf, err := configpolicy.GetConfigPolicyField[expconf.CheckpointStorageConfig](
-				ctx, &w.ID, "invariant_config", "checkpoint_storage",
+				ctx, &w.ID, "invariant_config", "'checkpoint_storage'",
 				model.ExperimentType)
 			if err != nil {
 				return nil, fmt.Errorf("unable to fetch task config policies: %w", err)
 			}
+
 			if enforcedChkptConf != nil {
-				activeConfig.SetCheckpointStorage(*enforcedChkptConf)
+				enforcedSaveExpBest := enforcedChkptConf.RawSaveExperimentBest
+				enforcedSaveTrialBest := enforcedChkptConf.RawSaveTrialBest
+				enforcedSaveTrialLatest := enforcedChkptConf.RawSaveTrialLatest
+
+				if enforcedSaveExpBest != nil &&
+					int(newCheckpointStorage.SaveExperimentBest) != *enforcedSaveExpBest {
+					return nil,
+						fmt.Errorf("save_experiment_best is enforced as an invariant config policy of %d",
+							*enforcedSaveExpBest)
+				}
+				if enforcedSaveTrialBest != nil &&
+					int(newCheckpointStorage.SaveTrialBest) != *enforcedSaveTrialBest {
+					return nil,
+						fmt.Errorf("save_trial_best is enforced as an invariant config policy of %d",
+							*enforcedSaveTrialBest)
+				}
+				if enforcedSaveTrialLatest != nil &&
+					int(newCheckpointStorage.SaveTrialLatest) != *enforcedSaveTrialLatest {
+					return nil,
+						fmt.Errorf("save_trial_latest is enforced as an invariant config policy of %d",
+							*enforcedSaveTrialLatest)
+				}
 			}
 		}
 

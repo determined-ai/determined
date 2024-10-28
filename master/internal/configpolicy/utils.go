@@ -321,7 +321,7 @@ func CanSetMaxSlots(slotsReq *int, wkspID int) error {
 	}
 
 	if enforcedMaxSlots != nil && *slotsReq != *enforcedMaxSlots {
-		return fmt.Errorf(SlotsAlreadySetErr)
+		return fmt.Errorf(SlotsAlreadySetErr+":max_slots of %d is enforced", *enforcedMaxSlots)
 	}
 
 	maxSlotsLimit, err := GetConfigPolicyField[int](context.TODO(), &wkspID,

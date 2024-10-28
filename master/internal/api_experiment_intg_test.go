@@ -36,6 +36,7 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -47,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/test/olddata"
+	"github.com/determined-ai/determined/master/test/testutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -2369,5 +2371,236 @@ func TestGetWorkspaceByConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, *wkspName, w.Name)
+	})
+}
+
+func TestPatchExperiment(t *testing.T) {
+	mockRM := MockRM()
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
+	api, _, ctx := setupAPITest(t, nil, mockRM)
+	conf := `
+entrypoint: test
+searcher:
+  metric: loss
+  name: single
+  max_length: 10
+resources:
+  resource_pool: kubernetes
+checkpoint_storage:
+  type: shared_fs
+  host_path: /etc
+  storage_path: determined-integration-checkpoints
+`
+	createReq := &apiv1.CreateExperimentRequest{
+		ModelDefinition: []*utilv1.File{{Content: []byte{1}}},
+		Config:          conf,
+		ParentId:        0,
+		Activate:        false,
+		ProjectId:       1,
+	}
+
+	mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+	expResp, err := api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	// Create global invariant config policy with checkpoint storage.
+	_, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
+		WorkloadType: model.ExperimentType,
+		ConfigPolicies: `
+invariant_config:
+  checkpoint_storage:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: determined-integration-checkpoints
+
+    save_experiment_best: 10
+    save_trial_best: 11
+    save_trial_latest: 12
+`,
+	})
+	require.NoError(t, err)
+
+	t.Run("save exp best config differs", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				CheckpointStorage: &experimentv1.PatchExperiment_PatchCheckpointStorage{
+					SaveExperimentBest: 1,
+					SaveTrialBest:      11,
+					SaveTrialLatest:    12,
+				},
+			},
+		})
+		require.ErrorContains(t, err, "invariant config policy")
+	})
+
+	t.Run("save trial best config differs", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				CheckpointStorage: &experimentv1.PatchExperiment_PatchCheckpointStorage{
+					SaveExperimentBest: 10,
+					SaveTrialBest:      1,
+					SaveTrialLatest:    12,
+				},
+			},
+		})
+		require.ErrorContains(t, err, "invariant config policy")
+	})
+
+	t.Run("save trial latest config differs", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				CheckpointStorage: &experimentv1.PatchExperiment_PatchCheckpointStorage{
+					SaveExperimentBest: 10,
+					SaveTrialBest:      11,
+					SaveTrialLatest:    1,
+				},
+			},
+		})
+		require.ErrorContains(t, err, "invariant config policy")
+	})
+
+	t.Run("chkpt config matches invariant config", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				CheckpointStorage: &experimentv1.PatchExperiment_PatchCheckpointStorage{
+					SaveExperimentBest: 10,
+					SaveTrialBest:      11,
+					SaveTrialLatest:    12,
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	// Set global invariant config policy with resources.max_slots.
+	_, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
+		WorkloadType: model.ExperimentType,
+		ConfigPolicies: `
+invariant_config:
+  resources:
+    max_slots: 23
+`,
+	})
+	require.NoError(t, err)
+	t.Run("max slots differs", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					MaxSlots: ptrs.Ptr[int32](20),
+				},
+			},
+		})
+		require.ErrorContains(t, err, configpolicy.SlotsAlreadySetErr)
+	})
+
+	t.Run("max slots matches", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					MaxSlots: ptrs.Ptr[int32](23),
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	// Set global constraints policy with resources.max_slots.
+	_, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
+		WorkloadType: model.ExperimentType,
+		ConfigPolicies: `
+constraints:
+  resources:
+    max_slots: 23
+`,
+	})
+	require.NoError(t, err)
+
+	t.Run("max slots violates constraint", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					MaxSlots: ptrs.Ptr[int32](30),
+				},
+			},
+		})
+		require.ErrorContains(t, err, configpolicy.SlotsReqTooHighErr)
+	})
+
+	t.Run("max slots complies with constraint", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					MaxSlots: ptrs.Ptr[int32](10),
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	// Set global invariant config policy with resources.weight.
+	_, err = api.PutGlobalConfigPolicies(ctx, &apiv1.PutGlobalConfigPoliciesRequest{
+		WorkloadType: model.ExperimentType,
+		ConfigPolicies: `
+invariant_config:
+  resources:
+    weight: 23
+`,
+	})
+	require.NoError(t, err)
+
+	t.Run("weight config differs", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					Weight: ptrs.Ptr[float64](30),
+				},
+			},
+		})
+		require.ErrorContains(t, err, "invariant config policy")
+	})
+
+	t.Run("weight config matches", func(t *testing.T) {
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					Weight: ptrs.Ptr[float64](23),
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("no config policies", func(t *testing.T) {
+		_, err = api.DeleteGlobalConfigPolicies(ctx, &apiv1.DeleteGlobalConfigPoliciesRequest{
+			WorkloadType: model.ExperimentType,
+		})
+		require.NoError(t, err)
+
+		_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+			Experiment: &experimentv1.PatchExperiment{
+				Id: expResp.Experiment.Id,
+				Resources: &experimentv1.PatchExperiment_PatchResources{
+					MaxSlots: ptrs.Ptr[int32](5),
+					Weight:   ptrs.Ptr[float64](20),
+				},
+				CheckpointStorage: &experimentv1.PatchExperiment_PatchCheckpointStorage{
+					SaveExperimentBest: 1,
+					SaveTrialBest:      2,
+					SaveTrialLatest:    3,
+				},
+			},
+		})
+		require.NoError(t, err)
 	})
 }

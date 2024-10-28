@@ -664,8 +664,8 @@ func requireEqualTaskPolicy(t *testing.T, exp *model.TaskConfigPolicies, act *mo
 func TestGetEnforcedConfig(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
-	pgDB, _ := db.MustResolveNewPostgresDatabase(t)
-	// defer cleanup()
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 
 	user := db.RequireMockUser(t, pgDB)
@@ -683,18 +683,8 @@ func TestGetEnforcedConfig(t *testing.T) {
 	}
 }
 `
-	wkspConf := `
-{
-	"checkpoint_storage": {
-		"type": "shared_fs",
-		"host_path": "wksp_host_path",
-		"container_path": "wksp_container_path",
-		"checkpoint_path": "wksp_checkpoint_path"
-	}
-}
-`
 
-	t.Run("checkpoint storage config", func(t *testing.T) {
+	t.Run("checkpoint storage config just global", func(t *testing.T) {
 		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 			WorkloadType:    model.ExperimentType,
 			LastUpdatedBy:   user.ID,
@@ -702,6 +692,31 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		checkpointStorage, err := GetConfigPolicyField[expconf.CheckpointStorageConfig](ctx, &w.ID,
+			"invariant_config", "'checkpoint_storage'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, checkpointStorage)
+
+		// global config enforced?
+		require.Equal(t, expconf.CheckpointStorageConfigV0{
+			RawSharedFSConfig: &expconf.SharedFSConfigV0{
+				RawHostPath:      ptrs.Ptr("global_host_path"),
+				RawContainerPath: ptrs.Ptr("global_container_path"),
+			},
+		}, *checkpointStorage)
+	})
+
+	wkspConf := `
+	{
+		"checkpoint_storage": {
+			"type": "shared_fs",
+			"host_path": "wksp_host_path",
+			"container_path": "wksp_container_path",
+			"checkpoint_path": "wksp_checkpoint_path"
+		}
+	}
+	`
+	t.Run("checkpoint storage config global and wksp", func(t *testing.T) {
 		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 			WorkspaceID:     &w.ID,
 			WorkloadType:    model.ExperimentType,
@@ -767,16 +782,14 @@ func TestGetEnforcedConfig(t *testing.T) {
 		}
 	}
 `
-
 	wkspConstraints := `
-	{
-		"resources": {
-			"max_slots": 20
-		}
+{
+	"resources": {
+		"max_slots": 20
 	}
+}
 `
-
-	t.Run("max slots constraints", func(t *testing.T) {
+	t.Run("max slots constraints just global", func(t *testing.T) {
 		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 			WorkloadType:  model.ExperimentType,
 			LastUpdatedBy: user.ID,
@@ -812,7 +825,6 @@ func TestGetEnforcedConfig(t *testing.T) {
 		"priority_limit": 50
 	}
 `
-
 	t.Run("priority constraints", func(t *testing.T) {
 		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 			WorkloadType:  model.ExperimentType,

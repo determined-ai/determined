@@ -643,12 +643,12 @@ func TestCanSetMaxSlots(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("slots different than config higher", func(t *testing.T) {
-		err = CanSetMaxSlots(ptrs.Ptr(15), w.ID)
+		err := CanSetMaxSlots(ptrs.Ptr(15), w.ID)
 		require.ErrorContains(t, err, SlotsAlreadySetErr)
 	})
 
 	t.Run("slots different than config lower", func(t *testing.T) {
-		err = CanSetMaxSlots(ptrs.Ptr(10), w.ID)
+		err := CanSetMaxSlots(ptrs.Ptr(10), w.ID)
 		require.ErrorContains(t, err, SlotsAlreadySetErr)
 	})
 

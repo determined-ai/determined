@@ -1123,8 +1123,8 @@ func (e *internalExperiment) setWeight(weight float64) error {
 	if err != nil {
 		return fmt.Errorf("error checking against config policies: %w", err)
 	}
-	if enforcedWeight != nil {
-		weight = *enforcedWeight
+	if enforcedWeight != nil && weight != *enforcedWeight {
+		return fmt.Errorf("weight is enforced as an invariant config policy of %v", *enforcedWeight)
 	}
 
 	resources := e.activeConfig.Resources()
