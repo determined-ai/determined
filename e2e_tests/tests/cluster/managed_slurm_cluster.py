@@ -16,7 +16,7 @@ from tests.cluster import abstract_cluster, utils
 # restarted.
 class ManagedSlurmCluster(abstract_cluster.Cluster):
     def __init__(self) -> None:
-        self.is_circleci_job = False  # DNJ DEBUG os.getenv("CIRCLECI")
+        self.is_circleci_job = os.getenv("CIRCLECI")
         self.gcloud_zone = os.getenv("SLURM_GCLOUD_ZONE")
         self.gcloud_instance_name = os.getenv("SLURM_GCLOUD_INSTANCE_NAME")
         self.gcloud_project = os.getenv("SLURM_GCLOUD_PROJECT")

@@ -735,6 +735,7 @@ commands:
             - collect-task-logs:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
+          when: always
           path: /tmp/artifacts/logs
       - when:
           condition:
