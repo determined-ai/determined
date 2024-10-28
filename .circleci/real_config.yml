@@ -2104,10 +2104,6 @@ jobs:
             - not: <<parameters.force>>
           steps:
             - skip-if-only-docs
-      - when:
-          condition:
-            - not: <<parameters.force>>
-          steps:
             - skip-if-only-github
       - react-get-deps
       - run: |
