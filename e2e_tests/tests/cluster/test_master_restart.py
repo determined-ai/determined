@@ -91,7 +91,7 @@ def test_master_restart_ok_k8s(k8s_managed_cluster: managed_cluster_k8s.ManagedK
 
 
 # Test to ensure master restarts successfully.
-@pytest.mark.e2e_slurm
+@pytest.mark.e2e_slurm_restart
 def test_master_restart_ok_slurm(
     managed_slurm_cluster_restarts: managed_slurm_cluster.ManagedSlurmCluster,
 ) -> None:
@@ -145,7 +145,7 @@ def test_master_restart_reattach_recover_experiment_k8s(
 
 # Test to ensure that master can reattach to the experiment and resume it, after the determined
 # master has restarted.
-@pytest.mark.e2e_slurm
+@pytest.mark.e2e_slurm_restart
 @pytest.mark.parametrize("downtime", [0, 20])
 def test_master_restart_reattach_recover_experiment_slurm(
     managed_slurm_cluster_restarts: managed_slurm_cluster.ManagedSlurmCluster, downtime: int
@@ -547,7 +547,7 @@ def test_master_restart_cmd_k8s(
 
 # Test to ensure that master can recover and complete a command that was in running state
 # when the master has restarted.
-@pytest.mark.e2e_slurm
+@pytest.mark.e2e_slurm_restart
 @pytest.mark.parametrize("slots", [0, 1])
 @pytest.mark.parametrize("downtime", [0, 20])
 def test_master_restart_cmd_slurm(
