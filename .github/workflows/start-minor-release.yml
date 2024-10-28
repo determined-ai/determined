@@ -11,8 +11,8 @@ on: # yamllint disable-line rule:truthy
 jobs:
   start-minor-release:
     name: "Start minor release"
-    env:
-      GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
+    # env:
+    #   GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
