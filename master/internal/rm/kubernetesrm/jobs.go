@@ -432,7 +432,7 @@ func (j *jobsService) getMasterHostAndPort() error {
 	if err != nil {
 		return fmt.Errorf("failed to get master service: %w", err)
 	}
-	j.detMasterHost = fmt.Sprintf("%s.%s.svc.cluster.local", masterService.Namespace, masterService.Name)
+	j.detMasterHost = fmt.Sprintf("%s.%s.svc.cluster.local", masterService.Name, masterService.Namespace)
 	j.detMasterPort = masterService.Spec.Ports[0].Port
 	j.syslog.Infof("master URL set to %s:%d", j.detMasterHost, j.detMasterPort)
 	return nil
