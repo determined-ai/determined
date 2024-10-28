@@ -2898,6 +2898,9 @@ jobs:
             fi
       - store_test_results:
           path: /tmp/test-results/
+      - store_artifacts:
+          when: always
+          path: devcluster.log
 
   test-e2e-slurm:
     parameters:

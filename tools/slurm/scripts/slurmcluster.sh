@@ -247,4 +247,6 @@ export ALL_PROXY=socks5://localhost:${SOCKS5_PROXY_PORT}
 
 # Run devcluster.
 echo "Running cluster..."
-devcluster -c $TEMPYAML --oneshot
+devcluster -c $TEMPYAML --oneshot > devcluster.log 2>&1 &
+devcluster_pid=$(ps -A | grep devcluster | head -n 1 | awk '{print $1}')
+echo "devcluster started on pid: $devcluster_pid"
