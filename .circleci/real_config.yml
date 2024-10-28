@@ -102,8 +102,8 @@ release-dryrun: &release-dryrun
       - /v\d+\.\d+\.\d+\+dryrun/
 
 release-upgrade: &release-upgrade
-  - "release-0.34.0"
-  - "release-0.35.0"
+  # This value should be updated on every release to capture the updated supported upgrades.
+  - "release-0.37.0"
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
