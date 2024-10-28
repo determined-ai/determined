@@ -2090,14 +2090,25 @@ jobs:
       ee:
         type: boolean
         default: false
+      force:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:20.9.0
     resource_class: large
     steps:
       - checkout-with-sm
       - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
+      - when:
+          condition:
+            - not: force
+          steps:
+            - skip-if-only-docs
+      - when:
+          condition:
+            - not: force
+          steps:
+            - skip-if-only-github
       - react-get-deps
       - run: |
           if <<parameters.dev-mode>>; then
@@ -5539,6 +5550,7 @@ workflows:
       - build-proto:
           filters: *release-and-rc-filters
       - build-react:
+          force: true
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:
