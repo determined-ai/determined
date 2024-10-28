@@ -708,7 +708,7 @@ commands:
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             XDG_CONFIG_HOME=/tmp \
-            xargs pytest --capture=tee-sys -vv \
+            xargs pytest --capture=tee-sys -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
