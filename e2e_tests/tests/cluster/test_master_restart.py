@@ -14,12 +14,7 @@ from tests import command as cmd
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
-from tests.cluster import (
-    abstract_cluster,
-    managed_cluster,
-    managed_cluster_k8s,
-    utils,
-)
+from tests.cluster import abstract_cluster, managed_cluster, managed_cluster_k8s, utils
 from tests.experiment import noop
 from tests.task import task
 
