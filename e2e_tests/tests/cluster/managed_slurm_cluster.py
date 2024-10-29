@@ -15,7 +15,7 @@ from tests.cluster import abstract_cluster, utils
 # restarted.
 class ManagedSlurmCluster(abstract_cluster.Cluster):
     def __init__(self) -> None:
-        self.is_circleci_job = os.getenv("IS_CIRCLECI_JOB")
+        self.is_circleci_job = os.getenv("CI")
         self.dc = None
         return
 
