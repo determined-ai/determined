@@ -2698,6 +2698,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install git
+          command: |
+            sudo apt-get install git
+      - run:
           name: Set VERSION environment variable
           command: |
             echo "export VERSION=$(~/project/version.sh)" >> $BASH_ENV
