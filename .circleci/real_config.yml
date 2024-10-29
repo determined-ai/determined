@@ -9,7 +9,6 @@ orbs:
   kubernetes: circleci/kubernetes@0.11.0
   queue: eddiewebb/queue@2.2.1
   win: circleci/windows@5.0.0
-  python: circleci/python@2.2.0
 
 executors:
   python-38:
@@ -2698,8 +2697,11 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - python/install-packages:
-          packages: ['git']
+      - run:
+          name: Install git
+          command: |
+            apt update
+            apt install -y git
       - run:
           name: Set VERSION environment variable
           command: |
