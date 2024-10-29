@@ -343,16 +343,66 @@ test.describe('Experiment List', () => {
     //   // might want something like this
     //   // await authedPage.waitForURL(;
     // });
-    await test.step('Hyperparameter Search', async () => {
-      await row.experimentActionDropdown.hpSearch.pwLocator.click();
-      const hpSearchModal = row.experimentActionDropdown.hpSearchModal;
-      assert(hpSearchModal.page.title === 'searcher');
+  });
 
-      await hpSearchModal.page.adaptiveSearcher.pwLocator.click();
+  // Search Method
+  // When we select adaptive we can set limits
+  // Set max concurrent trials
+  // For random set Max and Max Concurrent
+  // Set Resource Pool
+  // Configure maximum trial length
+  // Check Key/Value, similar to Models
+  // Ensure we can remove HP as well
+  // When it’s invalid can’t hit Forward
+  // When it’s valid you can hit Forward and redirects you and changes your location
+  // Follow the different type of Searcher Flows
+  // Make sure Page URL is updated properly e.g. experiments/{digits}
+  // Validate different types of Searchers
+  // Check searcher Card
+  (
+    [{ searcherType: 'adaptive' }, { searcherType: 'random' }, { searcherType: 'grid' }] as const
+  ).forEach(({ searcherType }) => {
+    test(`DataGrid Action Hyperparameter Search ${searcherType}`, async () => {
+      const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+      await row.experimentActionDropdown.open();
+      await row.experimentActionDropdown.hpSearch.pwLocator.click(); // open modal
+
+      const hpSearchModal = row.experimentActionDropdown.hpSearchModal;
+      await expect(hpSearchModal.footer.submit.pwLocator).toHaveText('Select Hyperparameters');
+
+      await hpSearchModal.searcherPage[`${searcherType}Searcher`].pwLocator.click();
+
       const searchNameValue = safeName('HYPERPARAMETER_SEARCH_NAME');
-      await hpSearchModal.page.nameInput.pwLocator.fill(searchNameValue);
+      await hpSearchModal.searcherPage.nameInput.pwLocator.fill('');
+      await expect(hpSearchModal.footer.submit.pwLocator).toBeDisabled();
+      await hpSearchModal.searcherPage.nameInput.pwLocator.fill(searchNameValue);
+      await expect(hpSearchModal.footer.submit.pwLocator).toBeEnabled();
+
+      await hpSearchModal.searcherPage.poolInput.selectMenuOptionByIndex(0);
+      const maxSlots = parseFloat(
+        (await hpSearchModal.searcherPage.pwLocator.getByText('max slots').textContent()) ?? '',
+      );
+
+      await hpSearchModal.searcherPage.slotsInput.pwLocator.fill(
+        maxSlots === Infinity ? '1' : maxSlots.toString(),
+      );
+
+      switch (searcherType) {
+        // @ts-expect-error Cases fall through intentionally in order of narrowing config options
+        case 'adaptive':
+          await hpSearchModal.searcherPage.earlyStoppingInput.selectMenuOption('aggressive');
+          await hpSearchModal.searcherPage.stopOnceInput.pwLocator.click();
+        case 'random':
+          await hpSearchModal.searcherPage.maxRunsInput.pwLocator.fill('8');
+          break;
+        default:
+      }
+      await hpSearchModal.searcherPage.maxConcurrentRunsInput.pwLocator.fill('0');
 
       await hpSearchModal.footer.submit.pwLocator.click(); // switch to page 2
+      await expect(hpSearchModal.footer.submit.pwLocator).toHaveText('Run Experiment');
+
+      await hpSearchModal.footer.submit.pwLocator.click(); // submit search
     });
   });
 

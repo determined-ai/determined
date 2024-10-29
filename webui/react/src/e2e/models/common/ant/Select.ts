@@ -64,6 +64,7 @@ export class Select extends BaseComponent {
   }
 
   menuItem = this._menu.menuItem.bind(this._menu);
+  menuItemByIndex = this._menu.menuItemByIndex.bind(this._menu);
 
   /**
    * Selects a menu item with the specified title.
@@ -72,6 +73,15 @@ export class Select extends BaseComponent {
   async selectMenuOption(title: string): Promise<void> {
     await this.openMenu();
     await this.menuItem(title).pwLocator.click();
+    await this._menu.pwLocator.waitFor({ state: 'hidden' });
+  }
+  /**
+   * Selects a menu item at the specified index.
+   * @param {number} index - index of the item to select
+   */
+  async selectMenuOptionByIndex(index: number): Promise<void> {
+    await this.openMenu();
+    await (await this.menuItemByIndex(index))?.pwLocator.click();
     await this._menu.pwLocator.waitFor({ state: 'hidden' });
   }
 }
@@ -92,10 +102,17 @@ class selectionOverflowItem extends NamedComponent {
  * Represents a menu in the Select component
  */
 class SelectMenu extends BaseOverlay {
-  menuItems = new BaseComponent({
+  #menuItems = new BaseComponent({
     parent: this,
     selector: 'div.ant-select-item',
   });
+
+  get menuItems() {
+    return this.#menuItems.pwLocator
+      .all()
+      .then(async (items) => await Promise.all(items.flatMap((item) => item.textContent())))
+      .catch(() => []);
+  }
 
   /**
    * Returns a menuItem in the Select component
@@ -106,6 +123,16 @@ class SelectMenu extends BaseOverlay {
       parent: this,
       selector: `div.ant-select-item[title="${title}"]`,
     });
+  }
+
+  /**
+   * Returns a menuItem in the Select component
+   * @param {number} index - the index of the menu item
+   */
+  async menuItemByIndex(index: number): Promise<BaseComponent | undefined> {
+    const itemText = (await this.menuItems).at(index);
+    if (itemText === null || itemText === undefined) return undefined;
+    return this.menuItem(itemText);
   }
 
   /**
