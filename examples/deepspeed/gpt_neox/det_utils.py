@@ -1,18 +1,17 @@
 import logging
 import os
 
+import attrdict
 import numpy as np
-from attrdict import AttrMap
-from eval_tasks.eval_adapter import run_eval_harness
-from megatron.neox_arguments import NeoXArgs
-from torch.utils.tensorboard import SummaryWriter
+from eval_tasks import eval_adapter
+from megatron import neox_arguments
+from torch.utils import tensorboard
 
-from determined.pytorch import MetricReducer, PyTorchCallback
+from determined import pytorch
 
 
-def get_neox_args(context):
-    args = AttrMap(context.get_hparams())
-    exp_config = context.get_experiment_config()
+def get_neox_args(exp_config: dict, hparams: dict, trial_seed: int):
+    args = attrdict.AttrMap(hparams)
 
     # Gather overrides.
     overwrite_values = args.pop("overwrite_values", {})
@@ -30,19 +29,21 @@ def get_neox_args(context):
             "checkpoint_factor": exp_config["min_validation_period"]["batches"],
             "eval_interval": exp_config["min_validation_period"]["batches"],
             "hostfile": os.environ.get("DET_DEEPSPEED_HOSTFILE_PATH"),
-            "seed": context.get_trial_seed(),
+            "seed": trial_seed,
         }
     )
     for k, v in overwrite_values.items():
         logging.info(f"Setting neox_args.{k} to {v}")
 
     # Build neox args.
-    neox_args = NeoXArgs.process_parsed_deepy_args(args, overwrite_values=overwrite_values)
+    neox_args = neox_arguments.NeoXArgs.process_parsed_deepy_args(
+        args, overwrite_values=overwrite_values
+    )
     return neox_args
 
 
-class TensorboardWriter(PyTorchCallback):
-    def __init__(self, writer: SummaryWriter):
+class TensorboardWriter(pytorch.PyTorchCallback):
+    def __init__(self, writer: tensorboard.SummaryWriter):
         self.tb_writer = writer
 
     def on_validation_end(self, metrics):
@@ -53,7 +54,7 @@ class TensorboardWriter(PyTorchCallback):
         self.tb_writer.close()
 
 
-class EarlyStoppingCallback(PyTorchCallback):
+class EarlyStoppingCallback(pytorch.PyTorchCallback):
     def __init__(self, trial):
         self.trial = trial
 
@@ -62,7 +63,7 @@ class EarlyStoppingCallback(PyTorchCallback):
             self.trial.context.set_stop_requested(True)
 
 
-class LMReducers(MetricReducer):
+class LMReducers(pytorch.MetricReducer):
     def __init__(self, neox_args):
         self.char_level_ppl = neox_args.char_level_ppl
         self.token_count = 0
@@ -95,7 +96,7 @@ class LMReducers(MetricReducer):
         return metrics
 
 
-class EvalHarness(PyTorchCallback):
+class EvalHarness(pytorch.PyTorchCallback):
     def __init__(self, model, forward_step_fn, neox_args):
         self.model = model
         self.forward_step_fn = forward_step_fn
@@ -104,7 +105,7 @@ class EvalHarness(PyTorchCallback):
     def on_validation_end(self, metrics):
         # TODO: This hangs with pipeline parallel.
         metrics.update(
-            run_eval_harness(
+            eval_adapter.run_eval_harness(
                 self.model,
                 self.forward_step_fn,
                 self.neox_args,

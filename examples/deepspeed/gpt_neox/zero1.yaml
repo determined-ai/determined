@@ -43,5 +43,5 @@ entrypoint:
   - python3
   - -m
   - determined.launch.deepspeed
-  - --trial
-  - gpt2_trial:GPT2Trial
+  - python3
+  - trainer.py

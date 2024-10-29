@@ -3,41 +3,36 @@ import pathlib
 import traceback
 from datetime import datetime
 
+import attrdict
 import deepspeed
+import det_utils
 import megatron.training as megatron_train
 import megatron.utils as megatron_utils
 import torch
-from attrdict import AttrMap
-from det_utils import (
-    EarlyStoppingCallback,
-    EvalHarness,
-    LMReducers,
-    TensorboardWriter,
-    get_neox_args,
-)
-from megatron import mpu
-from megatron.checkpointing import load_checkpoint, save_checkpoint
-from megatron.data.data_utils import build_datasets_from_neox_args
+from megatron import checkpointing, mpu
+from megatron.data import data_utils
 
-from determined import LOG_FORMAT, InvalidHP
-from determined.pytorch import DataLoader
-from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnit
+import determined as det
+from determined import pytorch
+from determined.pytorch import deepspeed as det_ds
 
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
 
-class GPT2Trial(DeepSpeedTrial):
-    def __init__(self, context: DeepSpeedTrialContext) -> None:
+class GPT2Trial(det_ds.DeepSpeedTrial):
+    def __init__(
+        self, context: det_ds.DeepSpeedTrialContext, hparams: dict, trial_seed: int
+    ) -> None:
         self.context = context
-        self.exp_config = self.context.get_experiment_config()
-        self.args = AttrMap(self.context.get_hparams())
+        self.exp_config = context.get_experiment_config()
+        self.args = attrdict.AttrMap(hparams)
 
         # Initalize and get arguments, timers, and Tensorboard writer.
         try:
-            self.neox_args = get_neox_args(self.context)
+            self.neox_args = det_utils.get_neox_args(self.exp_config, hparams, trial_seed)
         except:
             traceback.print_exc()
-            raise InvalidHP("Could not parse neox_args.")
+            raise det.InvalidHP("Could not parse neox_args.")
         logging.info(self.neox_args)
         self.writer = self.context.get_tensorboard_writer()
         self.neox_args.tensorboard_writer = self.writer
@@ -60,7 +55,7 @@ class GPT2Trial(DeepSpeedTrial):
             ) = megatron_train.setup_model_and_optimizer(neox_args=self.neox_args)
         self.model = self.context.wrap_model_engine(model)
         self.context.set_mpu(
-            ModelParallelUnit(
+            det_ds.ModelParallelUnit(
                 mpu.get_data_parallel_rank(),
                 mpu.get_data_parallel_world_size(),
                 should_report_metrics=True,
@@ -77,7 +72,7 @@ class GPT2Trial(DeepSpeedTrial):
         # For tracking.
         if not self.args.search_world_size:
             self.reducer = self.context.wrap_reducer(
-                LMReducers(self.neox_args), for_training=False, for_validation=True
+                det_utils.LMReducers(self.neox_args), for_training=False, for_validation=True
             )
         self.report_memory_flag = True
         self.total_train_loss_dict = {}
@@ -98,13 +93,13 @@ class GPT2Trial(DeepSpeedTrial):
         return mpu.get_model_parallel_rank() == 0 and pipe_load
 
     def build_callbacks(self):
-        callbacks = {"tb": TensorboardWriter(self.writer)}
+        callbacks = {"tb": det_utils.TensorboardWriter(self.writer)}
         if self.neox_args.eval_tasks:
-            callbacks["eval_tasks"] = EvalHarness(
+            callbacks["eval_tasks"] = det_utils.EvalHarness(
                 self.model, megatron_train.forward_step, self.neox_args
             )
         if self.args.search_world_size:
-            callbacks["early_stopping"] = EarlyStoppingCallback(self)
+            callbacks["early_stopping"] = det_utils.EarlyStoppingCallback(self)
         return callbacks
 
     def train_batch(self, data_iterator, epoch_idx, batch_idx):
@@ -241,10 +236,10 @@ class GPT2Trial(DeepSpeedTrial):
             self.train_data,
             self.valid_data,
             self.test_data,
-        ) = build_datasets_from_neox_args(self.neox_args)
+        ) = data_utils.build_datasets_from_neox_args(self.neox_args)
         self.timers("train/valid/test data dataset").stop()
         self.timers.log(["train/valid/test data dataset"])
-        return DataLoader(
+        return pytorch.DataLoader(
             self.train_data,
             batch_size=self.neox_args.train_micro_batch_size_per_gpu,
             shuffle=True,
@@ -254,7 +249,7 @@ class GPT2Trial(DeepSpeedTrial):
         )
 
     def build_validation_data_loader(self):
-        return DataLoader(
+        return pytorch.DataLoader(
             self.valid_data,
             batch_size=self.neox_args.train_micro_batch_size_per_gpu,
             num_workers=self.neox_args.num_workers,
@@ -262,9 +257,9 @@ class GPT2Trial(DeepSpeedTrial):
             pin_memory=False,
         )
 
-    def save(self, context: DeepSpeedTrialContext, path: pathlib.Path) -> None:
+    def save(self, context: det_ds.DeepSpeedTrialContext, path: pathlib.Path) -> None:
         self.neox_args.save = str(path)
-        save_checkpoint(
+        checkpointing.save_checkpoint(
             neox_args=self.neox_args,
             iteration=self.neox_args.iteration,
             model=self.model,
@@ -272,9 +267,9 @@ class GPT2Trial(DeepSpeedTrial):
             lr_scheduler=self.lr_scheduler,
         )
 
-    def load(self, context: DeepSpeedTrialContext, path: pathlib.Path) -> None:
+    def load(self, context: det_ds.DeepSpeedTrialContext, path: pathlib.Path) -> None:
         self.neox_args.load = str(path)
-        self.neox_args.iteration = load_checkpoint(
+        self.neox_args.iteration = checkpointing.load_checkpoint(
             neox_args=self.neox_args,
             model=self.model,
             optimizer=self.optimizer,
