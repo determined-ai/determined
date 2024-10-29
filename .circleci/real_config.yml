@@ -677,12 +677,13 @@ commands:
             rm -f "<<parameters.junit-path>>"
             echo "Removed prior results"
             pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
+            echo "Relevant files:"
+            cat /tmp/all-relevant-files
             if [ ! -s /tmp/all-relevant-files ]; then
               echo 'No test files found!'
               exit 1
             fi
-            echo "Relevant files:"
-            cat /tmp/all-relevant-files
+            
             if nc -zv <<parameters.master-host>> <<parameters.master-port>> 2>/dev/null; then
               echo "Determined user list from master '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
               DET_MASTER_CERT_FILE=noverify DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
@@ -690,7 +691,7 @@ commands:
             else
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
-            
+
             echo "Found master, proceeeding with tests"
             tags="test.mark:<<parameters.mark>>,\
             ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
