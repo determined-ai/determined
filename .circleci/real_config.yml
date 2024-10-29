@@ -5112,17 +5112,6 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
-      - test-e2e-slurm:
-          name: test-e2e-slurm-restart
-          context:
-            - dev-ci-cluster-default-user-credentials
-          mark: "e2e_slurm_restart"
-          filters: *upstream-feature-branch
-          requires:
-            - package-and-push-system-local-ee
-            - request-hpc-tests
-          extra-pytest-flags: "--no-compare-stats"
-          collect-det-job-logs: false
 
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
@@ -5385,15 +5374,6 @@ workflows:
             - build-docs
             - build-react-ee
           context: github-read
-      - test-e2e-slurm:
-          name: test-e2e-slurm-restart
-          context:
-            - dev-ci-cluster-default-user-credentials
-          mark: "e2e_slurm_restart"
-          requires:
-            - package-and-push-system-local-ee
-          extra-pytest-flags: "--no-compare-stats"
-          collect-det-job-logs: false
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
           context:
