@@ -6,5 +6,9 @@ entrypoint: python3 2_checkpoints.py
 searcher:
    name: single
    metric: x
+   max_length: 14
+   smaller_is_better: true
+   source_checkpoint_uuid: null
+   source_trial_id: null
 
 max_restarts: 0
