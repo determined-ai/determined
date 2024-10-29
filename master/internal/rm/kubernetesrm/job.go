@@ -80,7 +80,7 @@ type podNodeInfo struct {
 type job struct {
 	// Configuration details. Set in initialization (the `newJob` constructor) and never modified after.
 	clusterID       string
-	masterIP        string
+	masterHost      string
 	masterPort      int32
 	masterScheme    string
 	masterTLSConfig model.TLSClientConfig
@@ -133,7 +133,7 @@ func newJob(
 	clusterID string,
 	clientSet k8sClient.Interface,
 	namespace string,
-	masterIP string,
+	masterHost string,
 	masterPort int32,
 	masterScheme string,
 	masterTLSConfig model.TLSClientConfig,
@@ -156,7 +156,7 @@ func newJob(
 		allocationID:          msg.allocationID,
 		clientSet:             clientSet,
 		namespace:             namespace,
-		masterIP:              masterIP,
+		masterHost:            masterHost,
 		masterPort:            masterPort,
 		masterScheme:          masterScheme,
 		masterTLSConfig:       masterTLSConfig,

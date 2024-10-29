@@ -185,23 +185,20 @@ func getConfig(configMap map[string]interface{}) (*config.Config, error) {
 }
 
 func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]interface{}, error) {
-	// Preemption timeout moved from __internal to task_container_defaults
-	if internalMap, ok := configMap["__internal"].(map[string]interface{}); ok {
-		if oldPreemptTimeout, ok := internalMap["preemption_timeout"]; ok && oldPreemptTimeout != nil {
-			if preemptionDuration, err := time.ParseDuration(oldPreemptTimeout.(string)); err == nil {
-				preemptionTimeoutSeconds := int(preemptionDuration.Seconds())
-				if taskContainerMap, ok := configMap["task_container_defaults"].(map[string]interface{}); ok {
-					// Only set task_container_defaults from __internal if nil
-					if taskContainerTimeout, ok := taskContainerMap["preemption_timeout"]; !ok || taskContainerTimeout == nil {
-						taskContainerMap["preemption_timeout"] = preemptionTimeoutSeconds
-						configMap["task_container_defaults"] = taskContainerMap
-					}
-				}
-			}
-		}
-		delete(internalMap, "preemption_timeout")
+	err := shimOldRMConfig(configMap)
+	if err != nil {
+		return nil, err
 	}
 
+	shimPreemptionTimeout(configMap)
+	shimDeterminedMasterIP(configMap)
+	return configMap, nil
+}
+
+// Ensure we use either the old schema or the new one.
+// Use configMap if RMs are not defined at all, or if they are defined using the new schema.
+// If use the old schema, convert it to the new one.
+func shimOldRMConfig(configMap map[string]interface{}) error {
 	const (
 		defaultVal    = "default"
 		agentVal      = "agent"
@@ -213,20 +210,17 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 	vScheduler, schedulerExisted := configMap["scheduler"]
 	vProvisioner, provisionerExisted := configMap["provisioner"]
 
-	// Ensure we use either the old schema or the new one.
 	oldRMConfig := schedulerExisted || provisionerExisted
 	newRMConfig := rmExisted || rpsExisted
 	if newRMConfig && oldRMConfig {
-		return nil, errors.New(
+		return errors.New(
 			"cannot use the old and the new configuration schema at the same time",
 		)
 	}
 	if !oldRMConfig {
-		// Use configMap if RMs are not defined at all, or if they are defined using the new schema.
-		return configMap, nil
+		return nil
 	}
 
-	// If use the old schema, convert it to the new one.
 	newScheduler := map[string]interface{}{
 		"type":           "priority",
 		"fitting_policy": "best",
@@ -237,38 +231,38 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 	if schedulerExisted {
 		schedulerMap, ok := vScheduler.(map[string]interface{})
 		if !ok {
-			return nil, errors.New("wrong type for scheduler field")
+			return errors.New("wrong type for scheduler field")
 		}
 
 		if vFit, ok := schedulerMap["fit"]; ok {
 			newScheduler["fitting_policy"], ok = vFit.(string)
 			if !ok {
-				return nil, errors.New("wrong type for scheduler.fit field")
+				return errors.New("wrong type for scheduler.fit field")
 			}
 		}
 		if vType, ok := schedulerMap["type"]; ok {
 			newScheduler["type"], ok = vType.(string)
 			if !ok {
-				return nil, errors.New("wrong type for scheduler.type field")
+				return errors.New("wrong type for scheduler.type field")
 			}
 		}
 		if vRP, ok := schedulerMap["resource_provider"]; ok {
 			rpMap, ok := vRP.(map[string]interface{})
 			if !ok {
-				return nil, errors.New("wrong type for scheduler.resource_provider field")
+				return errors.New("wrong type for scheduler.resource_provider field")
 			}
 
 			vRPType, ok := rpMap["type"]
 			if ok {
 				switch vRPTypeStr, ok := vRPType.(string); {
 				case !ok:
-					return nil, errors.New("wrong type for scheduler.resource_provider.type field")
+					return errors.New("wrong type for scheduler.resource_provider.type field")
 				case vRPTypeStr == defaultVal:
 					newRM["type"] = agentVal
 				case vRPTypeStr == kubernetesVal:
 					newRM["type"] = kubernetesVal
 				default:
-					return nil, errors.New("wrong value for scheduler.resource_provider.type field")
+					return errors.New("wrong value for scheduler.resource_provider.type field")
 				}
 			} else {
 				newRM["type"] = agentVal
@@ -298,18 +292,18 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 		if provisionerExisted {
 			provisionerMap, ok := vProvisioner.(map[string]interface{})
 			if !ok {
-				return nil, errors.New("wrong type for provisioner field")
+				return errors.New("wrong type for provisioner field")
 			}
 
 			newRP["provider"] = provisionerMap
 			if vProvider, ok := provisionerMap["provider"]; ok {
 				vProviderStr, ok := vProvider.(string)
 				if !ok {
-					return nil, errors.New("wrong type for provisioner.provider field")
+					return errors.New("wrong type for provisioner.provider field")
 				}
 
 				if vProviderStr != "aws" && vProviderStr != "gcp" {
-					return nil, errors.New("wrong value for provisioner.provider field")
+					return errors.New("wrong value for provisioner.provider field")
 				}
 
 				provisionerMap["type"] = provisionerMap["provider"]
@@ -321,6 +315,55 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 
 	delete(configMap, "scheduler")
 	delete(configMap, "provisioner")
+	return nil
+}
 
-	return configMap, nil
+// Preemption timeout moved from __internal to task_container_defaults
+// Only set task_container_defaults from __internal if nil.
+func shimPreemptionTimeout(configMap map[string]interface{}) {
+	if internalMap, ok := configMap["__internal"].(map[string]interface{}); ok {
+		if oldPreemptTimeout, ok := internalMap["preemption_timeout"]; ok && oldPreemptTimeout != nil {
+			if preemptionDuration, err := time.ParseDuration(oldPreemptTimeout.(string)); err == nil {
+				preemptionTimeoutSeconds := int(preemptionDuration.Seconds())
+				if taskContainerMap, ok := configMap["task_container_defaults"].(map[string]interface{}); ok {
+					if taskContainerTimeout, ok := taskContainerMap["preemption_timeout"]; !ok || taskContainerTimeout == nil {
+						taskContainerMap["preemption_timeout"] = preemptionTimeoutSeconds
+						configMap["task_container_defaults"] = taskContainerMap
+					}
+				}
+			}
+		}
+		delete(internalMap, "preemption_timeout")
+	}
+}
+
+// Rename from `determined_master_ip` to `determined_master_host` in old KubernetesRM configs.
+func shimDeterminedMasterIP(configMap map[string]interface{}) {
+	shimDeterminedMasterIPInRM := func(rm map[string]any) {
+		if rm["type"] != "kubernetes" {
+			return
+		}
+		if ip, ok := rm["determined_master_ip"]; ok {
+			if _, ok := rm["determined_master_host"]; !ok {
+				rm["determined_master_host"] = ip
+				delete(rm, "determined_master_ip")
+			} else {
+				log.Warn("ignoring duplicated configuration `determined_master_ip`")
+				delete(rm, "determined_master_ip")
+			}
+		}
+	}
+	if rmi, ok := configMap["resource_manager"]; ok {
+		if rm, ok := rmi.(map[string]any); ok {
+			shimDeterminedMasterIPInRM(rm)
+		}
+	}
+	if rmis, ok := configMap["additional_resource_managers"]; ok {
+		rms, ok := rmis.([]map[string]any)
+		if ok {
+			for _, rm := range rms {
+				shimDeterminedMasterIPInRM(rm)
+			}
+		}
+	}
 }
