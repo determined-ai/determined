@@ -3244,12 +3244,12 @@ jobs:
                       devcluster-config: <<parameters.devcluster-config>>
                       target-stage: <<parameters.target-stage>>
             - run-e2e-tests:
-              mark: <<parameters.mark>>
-              master-host: localhost
-              managed-devcluster: <<parameters.managed-devcluster>>
-              extra-pytest-flags: <<parameters.extra-pytest-flags>>
-              wait-for-master: <<parameters.wait-for-master>>
-              collect-det-job-logs: <<parameters.collect-det-job-logs>>
+                mark: <<parameters.mark>>
+                master-host: localhost
+                managed-devcluster: <<parameters.managed-devcluster>>
+                extra-pytest-flags: <<parameters.extra-pytest-flags>>
+                wait-for-master: <<parameters.wait-for-master>>
+                collect-det-job-logs: <<parameters.collect-det-job-logs>>
             - stop-devcluster
             - checkout
             - run: make -C master build
