@@ -2706,13 +2706,6 @@ jobs:
                 command: |
                   $version = & bash ./version.sh
                   setx VERSION $version
-                  $version
-                  $VERSION
-            - run:
-                name: Set VERSION environment variable
-                command: |
-                  $version
-                  $VERSION
       - unless:
           condition:
             equal: [ win/default, << parameters.executor-name >> ]
@@ -2726,7 +2719,16 @@ jobs:
       - run: python -m pip install --upgrade --user pip
       - run: pip install wheel setuptools build
       - run: cd harness; python -m build --wheel --outdir ../build
-      - run: pip install --find-links build determined==${VERSION}
+      - when:
+          condition:
+            equal: [ win/default, << parameters.executor-name >> ]
+          steps:
+            - run: pip install --find-links build determined==$env:VERSION
+      - unless:
+          condition:
+            equal: [ win/default, << parameters.executor-name >> ]
+          steps:
+            - run: pip install --find-links build determined==${VERSION}
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
