@@ -175,13 +175,15 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({
             </Fragment>
           );
         });
+        const title = c.displayName || c.column;
         const label = (
           <>
-            {c.displayName || c.column} {badges}
+            {title} {badges}
           </>
         );
         return {
           label,
+          title,
           value: c.column,
         };
       })}
