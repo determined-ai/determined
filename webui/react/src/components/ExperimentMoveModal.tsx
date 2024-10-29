@@ -179,6 +179,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true }]}>
           <Select
+            data-test="workspace"
             filterOption={(input, option) =>
               (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
             }
@@ -210,6 +211,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
               Failed: () => null, // Inform the user if this fails to load
               Loaded: (loadableProjects) => (
                 <Select
+                  data-test="project"
                   filterOption={(input, option) =>
                     (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                   }

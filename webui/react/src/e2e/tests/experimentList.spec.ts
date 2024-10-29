@@ -7,6 +7,7 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { V1Project } from 'services/api-ts-sdk';
 import { ExperimentBase } from 'types';
 
 dayjs.extend(utcPlugin);
@@ -594,5 +595,87 @@ test.describe('Experiment List', () => {
       { column: 'Trial count', direction: 'desc' },
       { column: 'Searcher Metric', direction: 'desc' },
     ]);
+  });
+
+  test.describe('Row Actions', () => {
+    let destinationProject: V1Project;
+    let experimentId: number;
+
+    // create a new project, workspace and experiment
+    test.beforeAll(
+      async ({
+        backgroundApiProject,
+        newProject: {
+          response: { project },
+        },
+      }) => {
+        destinationProject = (
+          await backgroundApiProject.createProject(
+            project.workspaceId,
+            backgroundApiProject.new({ projectProps: { workspaceId: project.workspaceId } }),
+          )
+        ).project;
+
+        const expId = Number(
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
+          ).split(' ')[2],
+        ); // returns in the format "Created experiment <exp_id>"
+
+        if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
+
+        experimentId = expId;
+      },
+    );
+
+    // cleanup
+    test.afterAll(async ({ backgroundApiProject }) => {
+      if (experimentId !== undefined) {
+        detExecSync(`experiment kill ${experimentId}`);
+        detExecSync(`experiment delete ${experimentId} --y`);
+      }
+
+      await backgroundApiProject.deleteProject(destinationProject.id);
+    });
+
+    test('move experiment', async ({
+      newWorkspace: {
+        response: { workspace },
+      },
+    }) => {
+      if (experimentId === undefined) throw new Error('No experiment ID was found');
+
+      const newExperimentRow =
+        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+          'ID',
+          experimentId.toString(),
+        );
+
+      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
+
+      await experimentActionDropdown.menuItem('Move').pwLocator.click();
+      await experimentActionDropdown.moveModal.destinationWorkspace.selectMenuOption(
+        workspace.name,
+      );
+      await experimentActionDropdown.moveModal.destinationProject.pwLocator.waitFor({
+        state: 'visible',
+      });
+      await experimentActionDropdown.moveModal.destinationProject.selectMenuOption(
+        destinationProject.name,
+      );
+      await experimentActionDropdown.moveModal.footer.submit.pwLocator.click();
+      await experimentActionDropdown.moveModal.pwLocator.waitFor({ state: 'hidden' });
+
+      await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
+
+      await projectDetailsPage.gotoProject(destinationProject.id);
+      const grid = projectDetailsPage.f_experimentList.dataGrid;
+      await grid.setColumnHeight();
+      await grid.headRow.setColumnDefs();
+      const newProjectRows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(() =>
+        Promise.resolve(true),
+      );
+      await expect(newProjectRows.length).toBe(1);
+    });
   });
 });
