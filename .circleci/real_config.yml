@@ -2704,8 +2704,15 @@ jobs:
             - run:
                 name: Set VERSION environment variable
                 command: |
-                  $version = & ~/project/version.sh
-                  [System.Environment]::SetEnvironmentVariable('VERSION', $version, [System.EnvironmentVariableTarget]::Process)
+                  $version = & bash ./version.sh
+                  setx VERSION $version
+                  $version
+                  $VERSION
+            - run:
+                name: Set VERSION environment variable
+                command: |
+                  $version
+                  $VERSION
       - unless:
           condition:
             equal: [ win/default, << parameters.executor-name >> ]
