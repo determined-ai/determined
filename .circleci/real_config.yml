@@ -676,7 +676,10 @@ commands:
             # Remove prior test results
             rm -f "<<parameters.junit-path>>"
             echo "Removed prior results"
-            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/'
+            pytest --setup-plan -vv -m '<<parameters.mark>>' || true
+            pytest --setup-plan -vv -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/debug-files || true
+            echo "Debug files:"
+            cat /tmp/debug-files
             pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
             echo "Relevant files:"
             cat /tmp/all-relevant-files
