@@ -15,8 +15,8 @@ dayjs.extend(utcPlugin);
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
-  const waitTableStable = async (timeout = 2_000) =>
-    await projectDetailsPage._page.waitForTimeout(timeout);
+  const waitTableStable = async () =>
+    await projectDetailsPage._page.waitForTimeout(2_000);
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
@@ -601,6 +601,7 @@ test.describe('Experiment List', () => {
   test.describe('Row Actions', () => {
     let destinationProject: V1Project;
     let experimentId: number;
+    let killExperiment: number;
 
     // create a new project, workspace and experiment
     test.beforeAll(
@@ -617,15 +618,18 @@ test.describe('Experiment List', () => {
           )
         ).project;
 
-        const expId = Number(
+        experimentId = Number(
           detExecSync(
             `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
           ).split(' ')[2],
         ); // returns in the format "Created experiment <exp_id>"
+        killExperiment = Number(
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --paused --project_id ${project.id}`,
+          ).split(' ')[2],
+        ); // returns in the format "Created experiment <exp_id>"
 
-        if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
-
-        experimentId = expId;
+        if (Number.isNaN(experimentId) || Number.isNaN(killExperiment)) throw new Error('No experiment ID was found');
       },
     );
 
@@ -635,87 +639,9 @@ test.describe('Experiment List', () => {
         detExecSync(`experiment kill ${experimentId}`);
         detExecSync(`experiment delete ${experimentId} --y`);
       }
-
-      await backgroundApiProject.deleteProject(destinationProject.id);
-    });
-
-    test('move experiment', async ({
-      newWorkspace: {
-        response: { workspace },
-      },
-    }) => {
-      if (experimentId === undefined) throw new Error('No experiment ID was found');
-
-      const newExperimentRow =
-        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
-          'ID',
-          experimentId.toString(),
-        );
-
-      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
-
-      await experimentActionDropdown.menuItem('Move').pwLocator.click();
-      await experimentActionDropdown.moveModal.destinationWorkspace.selectMenuOption(
-        workspace.name,
-      );
-      await experimentActionDropdown.moveModal.destinationProject.pwLocator.waitFor({
-        state: 'visible',
-      });
-      await experimentActionDropdown.moveModal.destinationProject.selectMenuOption(
-        destinationProject.name,
-      );
-      await experimentActionDropdown.moveModal.footer.submit.pwLocator.click();
-      await experimentActionDropdown.moveModal.pwLocator.waitFor({ state: 'hidden' });
-
-      await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
-
-      await projectDetailsPage.gotoProject(destinationProject.id);
-      const grid = projectDetailsPage.f_experimentList.dataGrid;
-      await grid.setColumnHeight();
-      await grid.headRow.setColumnDefs();
-      const newProjectRows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(() =>
-        Promise.resolve(true),
-      );
-      await expect(newProjectRows.length).toBe(1);
-    });
-  });
-
-  test.describe('Row Actions', () => {
-    let destinationProject: V1Project;
-    let experimentId: number;
-
-    // create a new project, workspace and experiment
-    test.beforeAll(
-      async ({
-        backgroundApiProject,
-        newProject: {
-          response: { project },
-        },
-      }) => {
-        destinationProject = (
-          await backgroundApiProject.createProject(
-            project.workspaceId,
-            backgroundApiProject.new({ projectProps: { workspaceId: project.workspaceId } }),
-          )
-        ).project;
-
-        const expId = Number(
-          detExecSync(
-            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
-          ).split(' ')[2],
-        ); // returns in the format "Created experiment <exp_id>"
-
-        if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
-
-        experimentId = expId;
-      },
-    );
-
-    // cleanup
-    test.afterAll(async ({ backgroundApiProject }) => {
-      if (experimentId !== undefined) {
-        detExecSync(`experiment kill ${experimentId}`);
-        detExecSync(`experiment delete ${experimentId} --y`);
+      if (killExperiment !== undefined) {
+        detExecSync(`experiment kill ${killExperiment}`);
+        detExecSync(`experiment delete ${killExperiment} --y`);
       }
 
       await backgroundApiProject.deleteProject(destinationProject.id);
@@ -761,24 +687,13 @@ test.describe('Experiment List', () => {
       await expect(newProjectRows.length).toBe(1);
     });
 
-    test('kill experiment', async ({
-      newProject: {
-        response: { project },
-      },
-    }) => {
-      const expId = Number(
-        detExecSync(
-          `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --project_id ${project.id}`,
-        ).split(' ')[2],
-      );
-      if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
-
-      await waitTableStable(10_000);
+    test('kill experiment', async () => {
+      if (Number.isNaN(killExperiment)) throw new Error('No experiment ID was found');
 
       const newExperimentRow =
         await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
           'ID',
-          expId.toString(),
+          killExperiment.toString(),
         );
 
       const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
@@ -794,10 +709,6 @@ test.describe('Experiment List', () => {
 
       // eslint-disable-next-line no-console
       console.log((await newExperimentRow.getCellByColumnName('State')).pwLocator.innerText());
-      if (expId !== undefined) {
-        detExecSync(`experiment kill ${expId}`);
-        detExecSync(`experiment delete ${expId} --y`);
-      }
 
       expect(true).toBe(true);
     });
