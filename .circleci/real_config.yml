@@ -2698,17 +2698,27 @@ jobs:
     steps:
       - checkout
       - unless:
-          condition: << parameters.executor-name >> == "win/default"
+          condition:
+            equal: [ << parameters.executor-name >>, "win/default" ]
           steps:
             - run:
                 name: Install git
                 command: |
                   apt update
                   apt install -y git
-      - run:
-          name: Set VERSION environment variable
-          command: |
-            echo "export VERSION=$(cd ~/project && ./version.sh)" >> $BASH_ENV
+            - run:
+                name: Set VERSION environment variable
+                command: |
+                  echo "export VERSION=$(cd ~/project && ./version.sh)" >> $BASH_ENV
+      - when:
+          condition:
+            equal: [ << parameters.executor-name >>, "win/default" ]
+            steps:
+              - run:
+                  name: Set VERSION environment variable
+                  command: |
+                    $version = & ~/project/version.sh
+                    [System.Environment]::SetEnvironmentVariable('VERSION', $version, [System.EnvironmentVariableTarget]::Process)
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
