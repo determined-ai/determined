@@ -31,7 +31,7 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
         if self.is_circleci_job:
             # Use the pre-installed determined master service when running the tests as part of a
             # CircleCI job.
-            subprocess.run(shlex.split("sudo systemctl stop determined-master"))
+            subprocess.run(shlex.split("zzsudo systemctl stop determined-master"))
         else:
             # Use the local instance of devcluster.
             if self.dc:
@@ -52,7 +52,7 @@ class ManagedSlurmCluster(abstract_cluster.Cluster):
             if self.is_circleci_job:
                 # Use the pre-installed determined master service when running the tests as part
                 # of a CircleCI job.
-                subprocess.run(shlex.split("sudo systemctl start determined-master"))
+                subprocess.run(shlex.split("zzsudo systemctl start determined-master"))
             else:
                 # Use a local instance of the devcluster.
                 master_config_file = os.getenv("MASTER_CONFIG_FILE")
