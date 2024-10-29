@@ -3182,7 +3182,7 @@ jobs:
       k8s-version:
         type: string
         default: "1.29.5"
-      upgrade-branch:
+      upgrade-from-branch:
         type: string
         default: ""
     machine:
@@ -3205,17 +3205,6 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-      
-      - when:
-          condition: <<parameters.upgrade-branch>>
-          steps:
-            - run: 
-                name: Get Determined version branch commits.
-                command: |
-                  git fetch origin <<parameters.upgrade-branch>> && git checkout --track origin/<<parameters.upgrade-branch>>
-            - license-gen
-            - run: make -C master build
-            - run: make -C agent build
 
       - when:
           condition: <<parameters.run-minikubes>>
@@ -3236,9 +3225,17 @@ jobs:
                   - run:
                       name: Start additionalrm minikube
                       command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
+
       - when:
-          condition: <<parameters.upgrade-branch>>
+          condition: <<parameters.upgrade-from-branch>>
           steps:
+            - run: 
+                name: Get Determined version branch commits.
+                command: |
+                  git fetch origin <<parameters.upgrade-from-branch>> && git checkout --track origin/<<parameters.upgrade-from-branch>>
+            - license-gen
+            - run: make -C master build
+            - run: make -C agent build
             - install-devcluster
             - unless:
                 condition: <<parameters.managed-devcluster>>
@@ -3246,7 +3243,14 @@ jobs:
                   - start-devcluster:
                       devcluster-config: <<parameters.devcluster-config>>
                       target-stage: <<parameters.target-stage>>
-                  - stop-devcluster
+            - run-e2e-tests:
+              mark: <<parameters.mark>>
+              master-host: localhost
+              managed-devcluster: <<parameters.managed-devcluster>>
+              extra-pytest-flags: <<parameters.extra-pytest-flags>>
+              wait-for-master: <<parameters.wait-for-master>>
+              collect-det-job-logs: <<parameters.collect-det-job-logs>>
+            - stop-devcluster
             - checkout
             - run: make -C master build
             - run: make -C agent build
@@ -4790,7 +4794,7 @@ workflows:
           mark: e2e_cpu
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -4807,7 +4811,7 @@ workflows:
           devcluster-config: double-priority.devcluster.yaml
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-oauth
@@ -4822,7 +4826,7 @@ workflows:
           target-stage: agent1
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4840,7 +4844,7 @@ workflows:
           multi-k8s: true
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-single-k8s
@@ -4856,7 +4860,7 @@ workflows:
           run-minikubes: true
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -4871,7 +4875,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-elastic
@@ -4887,7 +4891,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
@@ -4903,7 +4907,7 @@ workflows:
           postgres-version: "10"
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -4919,7 +4923,7 @@ workflows:
           postgres-version: "14"
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -4934,7 +4938,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
               agent-version: ["0.17.10"]
 
       - test-e2e:
@@ -4953,7 +4957,7 @@ workflows:
           collect-det-job-logs: false
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-saml
@@ -4968,7 +4972,7 @@ workflows:
           mark: e2e_saml
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
       
       - test-e2e:
           name: test-e2e-rbac
@@ -4982,7 +4986,7 @@ workflows:
           devcluster-config: single-rbac.devcluster.yaml
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
@@ -4997,7 +5001,7 @@ workflows:
           target-stage: agent1
           matrix:
             parameters:
-              upgrade-branch: *release-upgrade
+              upgrade-from-branch: *release-upgrade
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
