@@ -13,10 +13,10 @@ orbs:
 executors:
   python-38:
     docker:
-      - image: python:3.8-slim-bookworm
+      - image: cimg/python:3.8
   python-39:
     docker:
-      - image: python:3.9-slim-bookworm
+      - image: cimg/python:3.9
 
 parameters:
   docker-image:
@@ -2697,28 +2697,12 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - unless:
-          condition:
-            equal: [ << parameters.executor-name >>, "win/default" ]
-          steps:
-            - run:
-                name: Install git
-                command: |
-                  apt update
-                  apt install -y git
-            - run:
-                name: Set VERSION environment variable
-                command: |
-                  echo "export VERSION=$(cd ~/project && ./version.sh)" >> $BASH_ENV
-      - when:
-          condition:
-            equal: [ << parameters.executor-name >>, "win/default" ]
-            steps:
-              - run:
-                  name: Set VERSION environment variable
-                  command: |
-                    $version = & ~/project/version.sh
-                    [System.Environment]::SetEnvironmentVariable('VERSION', $version, [System.EnvironmentVariableTarget]::Process)
+      - run:
+          name: Set VERSION environment variable
+          command: |
+            echo "export VERSION=$(cd ~/project && ./version.sh)" >> $BASH_ENV
+            # $version = & ~/project/version.sh
+            # [System.Environment]::SetEnvironmentVariable('VERSION', $version, [System.EnvironmentVariableTarget]::Process)
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
