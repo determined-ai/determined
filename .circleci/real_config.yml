@@ -19,9 +19,6 @@ executors:
       - image: python:3.9-slim-bookworm
 
 parameters:
-  det-version:
-    type: string
-    default: ""
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -391,18 +388,17 @@ commands:
 
   install-wheel:
     parameters:
-      package-name:
-        type: string
       package-location:
         type: string
     steps:
       - run:
-          name: Install <<parameters.package-name>>
+          name: Install determined
           working_directory: <<parameters.package-location>>
           command: |
+            VERSION=$(./version.sh)
             make build
-            pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
-            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
+            pip install --find-links dist determined==${VERSION}
+            pip install --no-deps --force-reinstall --find-links dist determined==${VERSION}
 
   setup-python-venv:
     description: Set up and create Python venv.
@@ -507,7 +503,6 @@ commands:
                 name: Install pypa builder
                 command: python3 -m pip install build
             - install-wheel:
-                package-name: determined
                 package-location: ./harness
       - run:
           name: Install <<parameters.extras-requires>>
@@ -2700,16 +2695,18 @@ jobs:
       executor-name:
         type: string
     executor: << parameters.executor-name >>
-    environment:
-      VERSION: "<< pipeline.parameters.det-version >>"
     steps:
       - checkout
+      - run:
+          name: Set VERSION environment variable
+          command: |
+            echo "export VERSION=$(./version.sh)" >> $BASH_ENV
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
       - run: pip install wheel setuptools build
       - run: cd harness; python -m build --wheel --outdir ../build
-      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
+      - run: pip install --find-links build determined==${VERSION}
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
