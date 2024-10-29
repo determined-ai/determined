@@ -141,10 +141,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     ):
         raise cli.CliError("If a CPU or GPU environment image is specified, both should be.")
 
-    if (
-        args.deployment_type != constants.deployment_types.SIMPLE
-        or args.deployment_type != constants.deployment_types.SIMPLE_RDS
-    ):
+    if args.deployment_type != constants.deployment_types.SIMPLE_RDS:
         if args.agent_subnet_id is not None:
             raise ValueError(
                 f"The agent-subnet-id can only be set if the deployment-type=simple. "
