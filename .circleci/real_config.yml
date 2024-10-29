@@ -2697,12 +2697,23 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - run:
-          name: Set VERSION environment variable
-          command: |
-            echo "export VERSION=$(cd ~/project && ./version.sh)" >> $BASH_ENV
-            # $version = & ~/project/version.sh
-            # [System.Environment]::SetEnvironmentVariable('VERSION', $version, [System.EnvironmentVariableTarget]::Process)
+      - when:
+          condition:
+            equal: [ win/default, << parameters.executor-name >> ]
+          steps:
+            - run:
+                name: Set VERSION environment variable
+                command: |
+                  $version = & ~/project/version.sh
+                  [System.Environment]::SetEnvironmentVariable('VERSION', $version, [System.EnvironmentVariableTarget]::Process)
+      - unless:
+          condition:
+            equal: [ win/default, << parameters.executor-name >> ]
+          steps:
+            - run:
+                name: Set VERSION environment variable
+                command: |
+                  echo "export VERSION=$(cd ~/project && ./version.sh)" >> $BASH_ENV
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
