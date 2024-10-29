@@ -54,13 +54,67 @@ type User struct {
 	LastAuthAt    *time.Time  `db:"last_auth_at" json:"last_auth_at"`
 }
 
+// TokenID is the type for token IDs.
+type TokenID int
+
+// TokenType is the type of a token.
+type TokenType string
+
+const (
+	// TokenTypeUserSession is the "USER_SESSION" token type for the enum public.token_type in Postgres.
+	TokenTypeUserSession TokenType = "USER_SESSION"
+	// TokenTypeAccessToken is the "ACCESS_TOKEN" token type for the enum public.token_type in Postgres.
+	TokenTypeAccessToken TokenType = "ACCESS_TOKEN"
+)
+
+// Proto returns the proto representation of the token type.
+func (tt TokenType) Proto() userv1.TokenType {
+	switch tt {
+	case TokenTypeUserSession:
+		return userv1.TokenType_TOKEN_TYPE_USER_SESSION
+	case TokenTypeAccessToken:
+		return userv1.TokenType_TOKEN_TYPE_ACCESS_TOKEN
+	default:
+		panic("unknown token type")
+	}
+}
+
+// TokenTypeFromProto maps a userv1.TokenType to TokenType.
+func TokenTypeFromProto(t userv1.TokenType) TokenType {
+	switch t {
+	case userv1.TokenType_TOKEN_TYPE_USER_SESSION:
+		return TokenTypeUserSession
+	case userv1.TokenType_TOKEN_TYPE_ACCESS_TOKEN:
+		return TokenTypeAccessToken
+	default:
+		panic("unknown token type")
+	}
+}
+
 // UserSession corresponds to a row in the "user_sessions" DB table.
 type UserSession struct {
 	bun.BaseModel   `bun:"table:user_sessions"`
 	ID              SessionID         `db:"id" json:"id"`
 	UserID          UserID            `db:"user_id" json:"user_id"`
 	Expiry          time.Time         `db:"expiry" json:"expiry"`
+	CreatedAt       time.Time         `db:"created_at" json:"created_at"`
+	TokenType       TokenType         `db:"token_type" json:"token_type"`
+	RevokedAt       null.Time         `db:"revoked_at" json:"revoked_at"`
+	Description     null.String       `db:"description" json:"description"`
 	InheritedClaims map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
+}
+
+// Proto returns the protobuf representation of User_Sessions table.
+func (s UserSession) Proto() *userv1.TokenInfo {
+	return &userv1.TokenInfo{
+		Id:          int32(s.ID),
+		UserId:      int32(s.UserID),
+		Expiry:      timestamppb.New(s.Expiry),
+		CreatedAt:   timestamppb.New(s.CreatedAt),
+		TokenType:   s.TokenType.Proto(),
+		Revoked:     !s.RevokedAt.IsZero(), // Revoked if RevokedAt is non-zero
+		Description: s.Description.ValueOrZero(),
+	}
 }
 
 // A FullUser is a User joined with any other user relations.

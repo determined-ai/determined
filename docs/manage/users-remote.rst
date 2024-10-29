@@ -51,6 +51,7 @@ enable user auto-provisioning and the remote management of any information attac
              client_secret: "xx0xx0"
              auto_provision_users: true
              always_redirect: true
+             posix_user_claim: "preferred_username"
              display_name_attribute_name: "XYZ"
              agent_uid_attribute_name: "user_id_key"
              agent_gid_attribute_name: "group_id_key"
@@ -81,6 +82,7 @@ enable user auto-provisioning and the remote management of any information attac
              idp_metadata_path: "https://myorg.okta.com/app/.../sso/saml/metadata"
              auto_provision_users: true
              always_redirect: true
+             posix_user_attribute: "uid"
              agent_uid_attribute_name: "user_id_key"
              agent_gid_attribute_name: "group_id_key"
              agent_user_name_attribute_name: "agent_user_key"

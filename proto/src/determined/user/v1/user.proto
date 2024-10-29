@@ -96,3 +96,34 @@ enum EntityType {
   // Represents a project.
   ENTITY_TYPE_PROJECT = 1;
 }
+
+// Token type.
+enum TokenType {
+  // Default token type.
+  TOKEN_TYPE_UNSPECIFIED = 0;
+  // User Session token.
+  TOKEN_TYPE_USER_SESSION = 1;
+  // Access token.
+  TOKEN_TYPE_ACCESS_TOKEN = 2;
+}
+
+// TokenInfo represents a token entry in the database.
+message TokenInfo {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "user_id" ] }
+  };
+  // The token ID.
+  int32 id = 1;
+  // The id of the user the token belongs to.
+  int32 user_id = 2;
+  // Timestamp of when the token expires.
+  google.protobuf.Timestamp expiry = 3;
+  // Tiemstamp of when the token was created.
+  google.protobuf.Timestamp created_at = 4;
+  // Type of token this entry represents.
+  TokenType token_type = 5;
+  // Flag denoting if this token is revoked.
+  bool revoked = 6;
+  // Description of the token.
+  string description = 7;
+}

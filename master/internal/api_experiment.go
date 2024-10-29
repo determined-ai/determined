@@ -251,85 +251,6 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return experiment.GetExperimentAndCheckCanDoActions(ctx, expID, actions...)
 }
 
-func (a *apiServer) GetSearcherEvents(
-	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
-) (*apiv1.GetSearcherEventsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	exp, err := a.getExperiment(ctx, *curUser, int(req.ExperimentId))
-	if err != nil {
-		return nil, err
-	}
-	if !isActiveExperimentState(exp.State) {
-		return &apiv1.GetSearcherEventsResponse{
-			SearcherEvents: []*experimentv1.SearcherEvent{{
-				Id: -1,
-				Event: &experimentv1.SearcherEvent_ExperimentInactive{
-					ExperimentInactive: &experimentv1.ExperimentInactive{
-						ExperimentState: exp.State,
-					},
-				},
-			}},
-		}, nil
-	}
-
-	e, ok := experiment.ExperimentRegistry.Load(int(req.ExperimentId))
-	if !ok {
-		return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(req.ExperimentId)), true)
-	}
-	w, err := e.GetSearcherEventsWatcher()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"failed to get searcher events: long polling %v", err)
-	}
-	defer func() {
-		if err := e.UnwatchEvents(w.ID); err != nil {
-			log.WithError(err).Errorf("error unwatching searcher events")
-		}
-	}()
-
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
-	defer cancel()
-
-	select {
-	case events := <-w.C:
-		return &apiv1.GetSearcherEventsResponse{
-			SearcherEvents: events,
-		}, nil
-	case <-ctx.Done():
-		return &apiv1.GetSearcherEventsResponse{
-			SearcherEvents: nil,
-		}, nil
-	}
-}
-
-func (a *apiServer) PostSearcherOperations(
-	ctx context.Context,
-	req *apiv1.PostSearcherOperationsRequest,
-) (
-	resp *apiv1.PostSearcherOperationsResponse, err error,
-) {
-	_, _, err = a.getExperimentAndCheckCanDoActions(
-		ctx, int(req.ExperimentId), experiment.AuthZProvider.Get().CanRunCustomSearch,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "fetching experiment from database")
-	}
-
-	e, ok := experiment.ExperimentRegistry.Load(int(req.ExperimentId))
-	if !ok {
-		return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(req.ExperimentId)), true)
-	}
-	if err := e.PerformSearcherOperations(req); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
-	}
-
-	log.Infof("posted operations %v", req.SearcherOperations)
-	return &apiv1.PostSearcherOperationsResponse{}, nil
-}
-
 func (a *apiServer) GetExperiment(
 	ctx context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
@@ -494,15 +415,16 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return err
 			}
-			if len(checkpoints) > 0 {
-				if err := runCheckpointGCForCheckpoints(
-					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
-					&taskSpec, exp.ID, exp.Config, checkpoints,
-					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
-				); err != nil {
-					log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-					return err
-				}
+
+			// Unfortunately we can't be clever and not run if there aren't checkpoints since we can't
+			// know if there are tensorboards to GC or not.
+			if err := runCheckpointGCForCheckpoints(
+				a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+				&taskSpec, exp.ID, exp.Config, checkpoints,
+				[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+			); err != nil {
+				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+				return err
 			}
 
 			// delete jobs per experiment
@@ -912,44 +834,14 @@ func (a *apiServer) PreviewHPSearch(
 		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	sm := searcher.NewSearchMethod(sc)
-	s := searcher.NewSearcher(req.Seed, sm, hc)
-	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, sc.Metric())
+	sim, err := searcher.Simulate(sc, hc)
 	if err != nil {
 		return nil, err
 	}
-	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
-	indexes := make(map[string]int, len(sim.Results))
-	toProto := func(op searcher.ValidateAfter) ([]*experimentv1.RunnableOperation, error) {
-		return []*experimentv1.RunnableOperation{
-			{
-				Type:   experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-				Length: op.Length,
-			},
-			{
-				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-			},
-		}, nil
-	}
-	for _, result := range sim.Results {
-		var operations []*experimentv1.RunnableOperation
-		for _, msg := range result {
-			ops, err := toProto(msg)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error converting msg in simultion result %s", msg)
-			}
-			operations = append(operations, ops...)
-		}
-		hash := fmt.Sprint(operations)
-		if i, ok := indexes[hash]; ok {
-			protoSim.Trials[i].Occurrences++
-		} else {
-			protoSim.Trials = append(protoSim.Trials,
-				&experimentv1.TrialSimulation{Operations: operations, Occurrences: 1})
-			indexes[hash] = len(protoSim.Trials) - 1
-		}
-	}
-	return &apiv1.PreviewHPSearchResponse{Simulation: protoSim}, nil
+
+	return &apiv1.PreviewHPSearchResponse{
+		Summary: sim.Proto(),
+	}, nil
 }
 
 func (a *apiServer) ActivateExperiment(
@@ -1217,6 +1109,7 @@ func (a *apiServer) PatchExperiment(
 			}
 			activeConfig.SetResources(resources)
 		}
+
 		newCheckpointStorage := req.Experiment.CheckpointStorage
 
 		if newCheckpointStorage != nil {
@@ -1230,6 +1123,23 @@ func (a *apiServer) PatchExperiment(
 			storage.SetSaveTrialBest(int(newCheckpointStorage.SaveTrialBest))
 			storage.SetSaveTrialLatest(int(newCheckpointStorage.SaveTrialLatest))
 			activeConfig.SetCheckpointStorage(storage)
+
+			// Only allow checkpoint storage changes if it is not specified as an invariant config.
+			w, err := getWorkspaceByConfig(activeConfig)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("failed to get workspace %s",
+					activeConfig.Workspace()))
+			}
+
+			enforcedChkptConf, err := configpolicy.GetConfigPolicyField[expconf.CheckpointStorageConfig](
+				ctx, &w.ID, "invariant_config", "checkpoint_storage",
+				model.ExperimentType)
+			if err != nil {
+				return nil, fmt.Errorf("unable to fetch task config policies: %w", err)
+			}
+			if enforcedChkptConf != nil {
+				activeConfig.SetCheckpointStorage(*enforcedChkptConf)
+			}
 		}
 
 		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
@@ -1443,14 +1353,6 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 
 	providedConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(overrideConfig))
 	if err != nil {
-		// Add a helpful error message if a user just submits
-		// searcher.max_length.batches = 2. They would also need
-		// searcher.name = "single", which all experiments will always be here.
-		if strings.Contains(err.Error(), `unknown field "max_length"`) {
-			return nil, false, status.Errorf(codes.InvalidArgument,
-				`unknown field "max_length", you might also need to specify searcher.name=single`)
-		}
-
 		return nil, false, status.Errorf(codes.InvalidArgument,
 			fmt.Errorf("parsing override config: %w", err).Error())
 	}
@@ -1469,20 +1371,16 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
 
-	// Determine which workspace the experiment is in.
-	wkspName := activeConfig.Workspace()
-	if wkspName == "" {
-		wkspName = model.DefaultWorkspaceName
-	}
-	ctx := context.TODO()
-	w, err := workspace.WorkspaceByName(ctx, wkspName)
+	// Merge the config with the optionally specified invariant config specified by task config
+	// policies.
+	w, err := getWorkspaceByConfig(activeConfig)
 	if err != nil {
 		return nil, false, status.Errorf(codes.Internal,
 			fmt.Sprintf("failed to get workspace %s", activeConfig.Workspace()))
 	}
-	// Merge the config with the optionally specified invariant config specified by task config
-	// policies.
-	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
+
+	configWithInvariantDefaults, err := configpolicy.MergeWithInvariantExperimentConfigs(
+		context.TODO(),
 		w.ID, mergedConfig)
 	if err != nil {
 		return nil, false,
@@ -1496,6 +1394,15 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	}
 
 	return bytes.([]byte), isSingle, nil
+}
+
+func getWorkspaceByConfig(config expconf.ExperimentConfig) (*model.Workspace, error) {
+	wkspName := config.Workspace()
+	if wkspName == "" {
+		wkspName = model.DefaultWorkspaceName
+	}
+	ctx := context.TODO()
+	return workspace.WorkspaceByName(ctx, wkspName)
 }
 
 var errContinueHPSearchCompleted = status.Error(codes.FailedPrecondition,
@@ -2169,7 +2076,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
 	var metricMeasurements []db.MetricMeasurements
-	xAxisLabelMetrics := []string{"epoch"}
 
 	trial.TrialId = trialID
 
@@ -2188,7 +2094,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
 		[]string{metricName},
-		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		startBatches, endBatches, maxDatapoints,
 		"batches", nil, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
@@ -2740,7 +2646,7 @@ func (a *apiServer) SearchExperiments(
 		Column("searcher_metric_value").
 		Column("trials.external_trial_id").
 		ColumnExpr("nullif(trials.metadata, 'null') as metadata").
-		ColumnExpr("NULL as log_signal").
+		ColumnExpr("NULL as log_policy_matched").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

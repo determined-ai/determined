@@ -148,8 +148,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     baseConfig.searcher.name = fields.searcher;
     baseConfig.searcher.max_trials =
       fields.searcher === SEARCH_METHODS.Grid.id ? undefined : fields.max_trials;
-    baseConfig.searcher.max_length = {};
-    baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 16;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.resources.slots_per_trial = fields.slots_per_trial;
@@ -297,13 +295,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     [resourcePool],
   );
 
-  const [maxLengthUnit, maxLength] = useMemo(() => {
-    return (Object.entries(experiment?.config?.searcher.max_length ?? { batches: 1 })[0] ?? [
-      'batches',
-      1,
-    ]) as ['batches' | 'records' | 'epochs', number];
-  }, [experiment?.config?.searcher.max_length]);
-
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
     setResourcePool(resourcePools[0]);
@@ -339,8 +330,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         pool,
         slots_per_trial,
         max_trials,
-        max_length,
-        length_units,
         mode,
         stop_once,
         max_concurrent_trials,
@@ -349,7 +338,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       const validName = validateLength(name ?? '');
       const validSlotsPerTrial =
         slots_per_trial != null && slots_per_trial >= 0 && slots_per_trial <= maxSlots;
-      const validMaxLength = max_length != null && max_length > 0;
       const validMaxConcurrentTrials = max_concurrent_trials != null && max_concurrent_trials >= 0;
       const validMaxTrials =
         searcher === SEARCH_METHODS.Grid.id || (max_trials != null && max_trials > 0);
@@ -358,11 +346,9 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         !(
           validName &&
           validSlotsPerTrial &&
-          validMaxLength &&
           validMaxConcurrentTrials &&
           validMaxTrials &&
           pool != null &&
-          length_units != null &&
           (searcher !== SEARCH_METHODS.ASHA.id || (mode != null && isBoolean(stop_once)))
         ),
       );
@@ -515,26 +501,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <h2 className={css.sectionTitle}>Configure Trials</h2>
         <div className={css.inputRow}>
           <Form.Item
-            initialValue={maxLength}
-            label="Max length"
-            name="max_length"
-            rules={[{ min: 1, required: true, type: 'number' }]}>
-            <InputNumber min={1} precision={0} />
-          </Form.Item>
-          <Form.Item
-            initialValue={maxLengthUnit}
-            label="Units"
-            name="length_units"
-            rules={[{ required: true }]}>
-            <Select>
-              <Option value="records">records</Option>
-              <Option value="batches">batches</Option>
-              {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
-                <Option value="epochs">epochs</Option>
-              )}
-            </Select>
-          </Form.Item>
-          <Form.Item
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
             label={`Slots per ${entityCopy.trial}`}
             name="slots_per_trial"
@@ -609,7 +575,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   }, [
     entityCopy,
     experiment?.config?.searcher.max_trials,
-    experiment.configRaw?.records_per_epoch,
     experiment.configRaw?.resources?.slots_per_trial,
     experiment.configRaw.searcher.max_concurrent_trials,
     experiment.configRaw.searcher?.mode,
@@ -618,8 +583,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     formValues?.slots_per_trial,
     handleSelectPool,
     handleSelectSearcher,
-    maxLength,
-    maxLengthUnit,
     maxSlots,
     modalError,
     resourcePool?.name,

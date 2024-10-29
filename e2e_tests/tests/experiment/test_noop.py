@@ -269,7 +269,6 @@ def test_experiment_config_override() -> None:
                 searcher:
                     name: single
                     metric: x
-                    max_length: 1
                 entrypoint: echo yo dawg
             """
             )

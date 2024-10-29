@@ -54,7 +54,7 @@ func CheckNTSCConstraints(
 	}
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
-		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, workloadConfig.Resources.Slots,
+		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, &workloadConfig.Resources.Slots,
 			workloadConfig.Resources.MaxSlots); err != nil {
 			return err
 		}
@@ -88,10 +88,19 @@ func CheckExperimentConstraints(
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
 		// users cannot specify number of slots for an experiment
-		slotsRequest := *constraints.ResourceConstraints.MaxSlots
-		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, slotsRequest,
-			workloadConfig.Resources().MaxSlots()); err != nil {
-			return err
+		if workloadConfig.RawResources != nil {
+			slotsRequest := workloadConfig.RawResources.RawSlotsPerTrial
+			if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots,
+				slotsRequest,
+				workloadConfig.Resources().MaxSlots()); err != nil {
+				return err
+			}
+			slotsRequest = workloadConfig.RawResources.RawMaxSlots
+			if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots,
+				slotsRequest,
+				workloadConfig.Resources().MaxSlots()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -121,10 +130,12 @@ func checkPriorityConstraint(smallerHigher bool, priorityLimit *int, priorityReq
 	return nil
 }
 
-func checkSlotsConstraint(slotsLimit int, slotsRequest int, maxSlotsRequest *int) error {
-	if slotsLimit < slotsRequest {
-		return fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
-			slotsRequest, slotsLimit, errResourceConstraintFailure)
+func checkSlotsConstraint(slotsLimit int, slotsRequest *int, maxSlotsRequest *int) error {
+	if slotsRequest != nil {
+		if slotsLimit < *slotsRequest {
+			return fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
+				slotsRequest, slotsLimit, errResourceConstraintFailure)
+		}
 	}
 
 	if maxSlotsRequest != nil {
@@ -217,6 +228,8 @@ func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
 	if !reflect.DeepEqual(originalConfig, config) {
 		log.Warnf("some fields were overridden by admin %s config policies", scope)
 	}
+
+	config = schemas.WithDefaults(config)
 	return &config, nil
 }
 
@@ -246,8 +259,8 @@ func findAllowedPriority(scope *int, workloadType string) (limit int, exists boo
 			if err != nil {
 				return 0, false, fmt.Errorf("unable to unmarshal task config policies: %w", err)
 			}
-			if configs.Resources().Priority() != nil {
-				adminPriority := *configs.Resources().Priority()
+			if configs.RawResources != nil && configs.RawResources.RawPriority != nil {
+				adminPriority := *configs.RawResources.RawPriority
 				return adminPriority, false,
 					fmt.Errorf("priority set by invariant config: %w", errPriorityImmutable)
 			}

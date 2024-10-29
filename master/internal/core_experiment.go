@@ -358,11 +358,6 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	// Lastly, apply any json-schema-defined defaults.
 	config = schemas.WithDefaults(config)
 
-	// Make sure the experiment config has all eventuallyRequired fields.
-	if err = schemas.IsComplete(config); err != nil {
-		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
-	}
-
 	// Merge the config with the optionally specified invariant config specified by task config
 	// policies.
 	configWithInvariantOverrides, err := configpolicy.MergeWithInvariantExperimentConfigs(ctx,
@@ -373,6 +368,11 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 
 	config = *configWithInvariantOverrides
+	// Make sure the experiment config has all eventuallyRequired fields.
+	if err = schemas.IsComplete(config); err != nil {
+		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
 		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")

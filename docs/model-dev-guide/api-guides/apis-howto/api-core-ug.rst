@@ -332,8 +332,10 @@ settings in our experiment configuration file:
 -  ``smaller_is_better``: ``True`` (This is equivalent to minimization vs. maximization of
    objective.)
 -  ``max_trials``: 500 (This is the maximum number of trials the searcher should run.)
--  ``max_length``: 20 epochs (The max length of a trial. For more information, visit Adaptive ASHA
-   in the :ref:`Experiment Configuration Reference <experiment-configuration>`.
+-  ``time_metric``: ``epochs`` (This is the name of the "time" metric which we report in validation
+   metrics).
+-  ``max_time``: 20 (The max number of epochs a trial will report. For more information, visit
+   Adaptive ASHA in the :ref:`Experiment Configuration Reference <experiment-configuration>`.
 
 In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
 between the ``minval`` and ``maxval`` for each hyperparameter for each trial.

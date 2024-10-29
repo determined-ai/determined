@@ -70,8 +70,8 @@ our multi-trial search. Finally, we'll run a remote distributed training job.
 
       #. Open a terminal window and navigate to the directory where you extracted the tar file.
 
-         The ``const.yaml`` file is a YAML-formatted :ref:`experiment configuration
-         <experiment-config-reference>` file that corresponds to an example experiment.
+         The ``const.yaml`` file is a YAML-formatted configuration file that corresponds to an
+         example experiment.
 
       #. Create an experiment that specifies the ``const.yaml`` configuration file by typing the
          following :ref:`CLI <cli-ug>` command.
@@ -158,8 +158,6 @@ our multi-trial search. Finally, we'll run a remote distributed training job.
                  name: random
                  metric: validation_loss
                  max_trials: 20
-                 max_length:
-                   batches: 1000
                  smaller_is_better: true
 
                entrypoint: python3 train.py

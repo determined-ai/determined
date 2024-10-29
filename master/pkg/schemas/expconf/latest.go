@@ -11,7 +11,6 @@ type (
 	CategoricalHyperparameter = CategoricalHyperparameterV0
 	CheckpointStorageConfig   = CheckpointStorageConfigV0
 	ConstHyperparameter       = ConstHyperparameterV0
-	CustomConfig              = CustomConfigV0
 	Device                    = DeviceV0
 	DevicesConfig             = DevicesConfigV0
 	DirectoryConfig           = DirectoryConfigV0
@@ -31,8 +30,6 @@ type (
 	LogPoliciesConfig         = LogPoliciesConfigV0
 	LogPolicy                 = LogPolicyV0
 	LogAction                 = LogActionV0
-	LogActionCancelRetries    = LogActionCancelRetriesV0
-	LogActionExcludeNode      = LogActionExcludeNodeV0
 	LogHyperparameter         = LogHyperparameterV0
 	OptimizationsConfig       = OptimizationsConfigV0
 	PbsConfig                 = PbsConfigV0

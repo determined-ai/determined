@@ -8,17 +8,24 @@ STREAM_TS_CLIENT = ../webui/react/src/services/stream/wire.ts
 MOCK_INPUTS = Makefile ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
-export VERSION := $(shell cat ../VERSION)
+export VERSION := $(shell ../version.sh)
+export VERSION_TAG:=$(shell ../version.sh -t)
+export VERSION_DOCKER := $(shell ../version.sh -d)
+
 export GO111MODULE := on
+
+# The Docker Hub organization.
 export DOCKER_REPO ?= determinedai
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-master
+PROJECT_NAME_DRYRUN = determined-master-dryrun
 EE_PROJECT_NAME = hpe-mlde-master
 ARCHS = amd64 arm64
 ARCH_SMALL = amd64-shared-cluster
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+MULTI_ARCH_IMAGES_DRYRUN = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(FULL_COMMIT)-$$arch; done)
 EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 SHARED_CLUSTER_IMAGE=$(shell echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$(ARCH_SMALL))
 
@@ -28,6 +35,11 @@ PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
+
+PUB_MANIFESTS_DRYRUN = \
+	$(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(SHORT_COMMIT) \
+	$(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(VERSION)
 
 EE_PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT) \
@@ -227,34 +239,50 @@ packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
-package: export GORELEASER_CURRENT_TAG := $(VERSION)
+package: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
 package: gen buildx
-	$(GORELEASER) --snapshot --rm-dist 
+	$(GORELEASER) --snapshot --rm-dist
+
+.PHONY: package-dryrun
+package-dryrun: export DET_SEGMENT_MASTER_KEY ?=
+package-dryrun: export DET_SEGMENT_WEBUI_KEY ?=
+package-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+package-dryrun: gen buildx
+	$(GORELEASER) --snapshot --rm-dist ./.goreleaser_dryrun.yml
 
 .PHONY: package-ee
 package-ee: export DET_SEGMENT_MASTER_KEY ?=
 package-ee: export DET_SEGMENT_WEBUI_KEY ?=
 package-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
 package-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-package-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
 package-ee: gen buildx
 	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_ee.yml
 
 .PHONY: package-small
 package-small: export DET_SEGMENT_MASTER_KEY ?=
 package-small: export DET_SEGMENT_WEBUI_KEY ?=
-package-small: export GORELEASER_CURRENT_TAG := $(VERSION)
+package-small: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
 package-small: gen buildx-small
 	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_sharedcluster.yml
 
 .PHONY: release
 release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=
-release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
+release: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release: gen buildx
 	$(GORELEASER) --rm-dist
 	make publish-nvcr
+
+.PHONY: release-dryrun
+release-dryrun: export DET_SEGMENT_MASTER_KEY ?=
+release-dryrun: export DET_SEGMENT_WEBUI_KEY ?=
+release-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+# We intentionally do not invoke `make publish-nvcr(-dryrun)` here.
+release-dryrun: gen buildx
+	$(GORELEASER) --rm-dist -f ./.goreleaser_dryrun.yml
 
 .PHONY: release-ee
 release-ee: export DET_SEGMENT_MASTER_KEY ?=
@@ -262,7 +290,7 @@ release-ee: export DET_SEGMENT_WEBUI_KEY ?=
 release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
 release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
 release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
 release-ee: gen buildx
 	$(GORELEASER) --rm-dist -f ./.goreleaser_ee.yml
 
@@ -292,6 +320,12 @@ publish-dev-small:
 .PHONY: publish
 publish:
 	@$(call manifest_publish, $(PUB_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-dryrun
+# Build and upload production images to the determinedai/determined-dryrun
+# repository.
+publish-dryrun:
+	@$(call manifest_publish, $(PUB_MANIFESTS_DRYRUN), $(MULTI_ARCH_IMAGES_DRYRUN))
 
 .PHONY: publish-ee
 publish-ee:

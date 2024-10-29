@@ -8,15 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SingleConfigV0) MaxLength() LengthV0 {
-	if s.RawMaxLength == nil {
-		panic("You must call WithDefaults on SingleConfigV0 before .MaxLength")
-	}
-	return *s.RawMaxLength
+func (s SingleConfigV0) MaxLength() *LengthV0 {
+	return s.RawMaxLength
 }
 
-func (s *SingleConfigV0) SetMaxLength(val LengthV0) {
-	s.RawMaxLength = &val
+func (s *SingleConfigV0) SetMaxLength(val *LengthV0) {
+	s.RawMaxLength = val
 }
 
 func (s SingleConfigV0) ParsedSchema() interface{} {

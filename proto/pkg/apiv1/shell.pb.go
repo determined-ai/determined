@@ -570,7 +570,7 @@ type LaunchShellRequest struct {
 	TemplateName string `protobuf:"bytes,2,opt,name=template_name,json=templateName,proto3" json:"template_name,omitempty"`
 	// The files to run with the command.
 	Files []*utilv1.File `protobuf:"bytes,3,rep,name=files,proto3" json:"files,omitempty"`
-	// Additional data.
+	// Deprecated: Do not use.
 	Data []byte `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
 	// Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
 	WorkspaceId int32 `protobuf:"varint,5,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`

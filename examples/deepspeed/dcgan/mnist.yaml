@@ -1,0 +1,33 @@
+name: dcgan_deepspeed_mnist
+data:
+  dataroot: /data
+  dataset: mnist
+  image_size: 64
+hyperparameters:
+  deepspeed_config: ds_config.json
+  noise_length: 100
+  generator_width_base: 64
+  discriminator_width_base: 64
+  data_workers: 16
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+  image: determinedai/pytorch-ngc-dev:0736b6d
+bind_mounts:
+  - host_path: /tmp
+    container_path: /data
+resources:
+  slots_per_trial: 2
+searcher:
+  name: single
+  metric: no_validation_metric
+min_validation_period:
+  batches: 0
+entrypoint:
+  - python3
+  - -m
+  - determined.launch.deepspeed
+  - python3
+  - trainer.py
+max_restarts: 0

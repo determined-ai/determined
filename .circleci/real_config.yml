@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.37.1-dev0
+    default: ""
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -32,8 +32,6 @@ parameters:
     type: string
     default: linux-cuda-12:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
-  # Inject here as a parameter so that it is updated by bumpversion, and can
-  # be referenced by --ee testing.
   default-pt-gpu-hpc-image:
     type: string
     default: determinedai/pytorch-ngc-dev:e960eae
@@ -70,8 +68,8 @@ release-and-rc-filters: &release-and-rc-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      # Tags like: v2.5.0, v3.0.1-rc2
+      - /v\d+\.\d+\.\d+(-rc\d+)?/
 
 rc-filters: &rc-filters
   branches:
@@ -79,7 +77,8 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      # Tags like: v2.5.0-rc3
+      - /v\d+\.\d+\.\d+-rc\d+/
 
 release-filters: &release-filters
   branches:
@@ -87,7 +86,17 @@ release-filters: &release-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
+      # Tags like: v2.1.2
+      - /v\d+\.\d+\.\d+/
+
+release-dryrun: &release-dryrun
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      # Tags like: v3.1.3+dryrun
+      - /v\d+\.\d+\.\d+\+dryrun/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
@@ -299,7 +308,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.8.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
@@ -1432,12 +1441,21 @@ commands:
             - run: make -C agent check
 
   make-package:
+    parameters:
+      dryrun:
+        type: boolean
+        default: false
     steps:
       - attach_workspace:
           at: .
       - run:
           no_output_timeout: 30m
-          command: make package
+          command: |
+            if <<parameters.dryrun>>; then
+              make package-dryrun
+            else
+              make package
+            fi
 
   make-package-ee:
     steps:
@@ -1468,6 +1486,31 @@ commands:
       - run:
           command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>> || circleci-agent step halt
           background: true
+
+  make-component:
+    description: "Basic parameterized version of make for building Determined components."
+    parameters:
+      component:
+        type: string
+        default: ""
+      target:
+        type: string
+        default: ""
+      dryrun:
+        type: boolean
+        default: false
+      no_output_timeout:
+        type: string
+        default: "10m"
+    steps:
+      - run:
+          no_output_timeout: <<parameters.no_output_timeout>>
+          command: |
+            if <<parameters.dryrun>>; then
+              make -C <<parameters.component>> <<parameters.target>>-dryrun
+            else
+              make -C <<parameters.component>> <<parameters.target>>
+            fi
 
 jobs:
   build-helm:
@@ -1556,7 +1599,7 @@ jobs:
       ee:
         type: boolean
         default: false
-      dry-run:
+      dryrun:
         type: boolean
         default: false
     docker:
@@ -1568,7 +1611,7 @@ jobs:
       - run: apk add make curl py3-pip
       - run: pip install --break-system-packages awscli  # used in the terraform apply
       - run: |
-          if <<parameters.dry-run>>; then
+          if <<parameters.dryrun>>; then
             echo 'Doing a dry run!'
             if <<parameters.ee>>; then
               export DET_VARIANT=EE
@@ -1743,6 +1786,10 @@ jobs:
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
   package-and-push-system-rc:
+    parameters:
+      dryrun:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -1763,9 +1810,16 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - make-package
-      - run: make -C master publish
-      - run: make -C agent publish
+      - make-package:
+          dryrun: <<parameters.dryrun>>
+      - make-component:
+          component: master
+          target: publish
+          dryrun: <<parameters.dryrun>>
+      - make-component:
+          component: agent
+          target: publish
+          dryrun: <<parameters.dryrun>>
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1794,6 +1848,10 @@ jobs:
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
   package-and-push-system-release:
+    parameters:
+      dryrun:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -1814,12 +1872,14 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - run:
-          no_output_timeout: 30m
-          command: make -C master release
-      - run:
-          no_output_timeout: 30m
-          command: make -C agent release
+      - make-component:
+          component: master
+          target: release
+          no_output_timeout: "30m"
+      - make-component:
+          component: agent
+          target: release
+          no_output_timeout: "30m"
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1850,9 +1910,26 @@ jobs:
           command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
+  publish-helm-gh-rc:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - make-component:
+          component: helm
+          target: release-gh-rc
+
   publish-helm-gh:
     parameters:
       ee:
+        type: boolean
+        default: false
+      dryrun:
         type: boolean
         default: false
     docker:
@@ -1864,12 +1941,19 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
-      - run: make -C helm release-gh
       - run: |
           if <<parameters.ee>>; then
-            make -C helm release-gh-ee
+            if <<parameters.dryrun>>; then
+              make -C helm release-gh-ee-dryrun
+            else
+              make -C helm release-gh-ee
+            fi
           else
-            make -C helm release-gh
+            if <<parameters.dryrun>>; then
+              make -C helm release-gh-dryrun
+            else
+              make -C helm release-gh
+            fi
           fi
 
   publish-python-package:
@@ -1877,6 +1961,9 @@ jobs:
       path:
         type: string
       ee:
+        type: boolean
+        default: false
+      dryrun:
         type: boolean
         default: false
     docker:
@@ -1888,11 +1975,21 @@ jobs:
           extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
+        # The following run step is right about at the point where it should be
+        # split off into its own shell script.
       - run: |
           if <<parameters.ee>>; then
-            make -C <<parameters.path>> publish-ee
+            if <<parameters.dryrun>>; then
+              make -C <<parameters.path>> publish-ee-dryrun
+            else
+              make -C <<parameters.path>> publish-ee
+            fi
           else
-            make -C <<parameters.path>> publish
+            if <<parameters.dryrun>>; then
+              make -C <<parameters.path>> publish-dryrun
+            else
+              make -C <<parameters.path>> publish
+            fi
           fi
 
   check-ts-bindings:
@@ -1993,14 +2090,21 @@ jobs:
       ee:
         type: boolean
         default: false
+      force:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:20.9.0
     resource_class: large
     steps:
       - checkout-with-sm
       - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
+      - when:
+          condition:
+            not: <<parameters.force>>
+          steps:
+            - skip-if-only-docs
+            - skip-if-only-github
       - react-get-deps
       - run: |
           if <<parameters.dev-mode>>; then
@@ -2019,6 +2123,12 @@ jobs:
 
   test-e2e-react:
     parameters:
+      devcluster-config:
+        type: enum
+        enum:
+          - react.devcluster.yaml
+          - react-rbac.devcluster.yaml
+          - react-sso.devcluster.yaml
       ee:
         type: boolean
         default: false
@@ -2051,7 +2161,7 @@ jobs:
       - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster:
-          devcluster-config: react.devcluster.yaml
+          devcluster-config: <<parameters.devcluster-config>>
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
@@ -2520,6 +2630,7 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
+      - run: make -C harness install
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2589,13 +2700,15 @@ jobs:
       executor-name:
         type: string
     executor: << parameters.executor-name >>
+    environment:
+      VERSION: "<< pipeline.parameters.det-version >>"
     steps:
       - checkout
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
-      - run: pip install wheel setuptools
-      - run: cd harness; python setup.py bdist_wheel -d ../build
+      - run: pip install wheel setuptools build
+      - run: cd harness; python -m build --wheel --outdir ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
@@ -2742,7 +2855,7 @@ jobs:
             sudo apt-get install gettext
             sudo apt-get install iproute2
             yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster \
-              FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-user\\\"}'" \
+              FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-users\\\"}'" \
               TF_LOCK=false | tee output.log || circleci-agent step halt
           background: true
 
@@ -4012,6 +4125,7 @@ workflows:
           dev-mode: true
       - test-e2e-react:
           name: test-e2e-react-oss
+          devcluster-config: react.devcluster.yaml
           requires:
             - build-go-oss
           context:
@@ -4101,6 +4215,7 @@ workflows:
       - test-e2e-react:
           name: test-e2e-react-ee
           ee: true
+          devcluster-config: react-rbac.devcluster.yaml
           requires:
             - build-go-ee
           context:
@@ -4108,6 +4223,19 @@ workflows:
             - github-read
             - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
+      # this will be used once sso tests are prioritized (after rbac tests)
+      # - test-e2e-react:
+      #     name: test-e2e-react-ee-sso
+      #     ee: true
+      #     devcluster-config: react-sso.devcluster.yaml
+      #     playwright-options: "-g sso"
+      #     requires:
+      #       - build-go-ee
+      #     context:
+      #       - playwright
+      #       - github-read
+      #       - dev-ci-cluster-default-user-credentials
+      #     filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
@@ -5267,14 +5395,6 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
       - test-e2e-slurm:
-          name: test-e2e-slurm-preemption
-          context:
-            - dev-ci-cluster-default-user-credentials
-          mark: "e2e_slurm_preemption"
-          requires:
-            - package-and-push-system-local-ee
-          extra-pytest-flags: "--no-compare-stats"
-      - test-e2e-slurm:
           name: test-e2e-slurm-znode
           context:
             - dev-ci-cluster-default-user-credentials
@@ -5351,6 +5471,7 @@ workflows:
           context: github-read
       - test-e2e-react:
           ee: << pipeline.parameters.ee >>
+          devcluster-config: react.devcluster.yaml
           playwright-options: << pipeline.parameters.e2e-react >>
           requires:
             - build-go
@@ -5359,6 +5480,65 @@ workflows:
             - github-read
             - dev-ci-cluster-default-user-credentials
 
+  release-dryrun:
+    jobs:
+      - build-helm:
+          filters: *release-dryrun
+
+      - build-proto:
+          filters: *release-dryrun
+
+      - build-react:
+          context: determined-production
+          filters: *release-dryrun
+
+      - build-docs:
+          context: determined-production
+          filters: *release-dryrun
+          requires:
+            - build-helm
+            - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - package-and-push-system-release:
+          dryrun: true
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-python-package:
+          name: publish-python-package-release
+          matrix:
+            parameters:
+              path: ["harness"]
+              dryrun: [true]
+          context: determined-dryrun
+          filters: *release-dryrun
+          requires:
+            - package-and-push-system-release
+
+      - publish-docs:
+          dryrun: true
+          name: publish-docs
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-helm-gh:
+          dryrun: true
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-dryrun
+
   release:
     jobs:
       - build-helm:
@@ -5366,6 +5546,7 @@ workflows:
       - build-proto:
           filters: *release-and-rc-filters
       - build-react:
+          force: true
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:
@@ -5421,7 +5602,7 @@ workflows:
           name: publish-docs-rc
           matrix:
             parameters:
-              dry-run: [true]
+              dryrun: [true]
           requires:
             - build-docs
           context: determined-production
@@ -5438,6 +5619,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-filters
+
+      - publish-helm-gh-rc:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *rc-filters
 
       - upload-try-now-template:
           context: determined-production

@@ -1,6 +1,7 @@
 import json
 import logging
 import pathlib
+import warnings
 from typing import List, Optional, cast
 
 import tensorflow as tf
@@ -34,7 +35,24 @@ def load_model_from_checkpoint_path(
         tags (list string, optional): Specifies which tags are loaded from
             the TensorFlow SavedModel. See documentation for `tf.compat.v1.saved_model.load_v2
             <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
+
+    .. warning::
+
+        load_model_from_checkpoint_path has been deprecated in Determined 0.38.0 and will be removed
+        in a future version.  This function is designed to work with TFKerasTrial, which is also
+        deprecated.  Please use the new :class:`~determined.keras.DeterminedCallback` for
+        training instead, which allows you to use ``model.load_weights()`` to restore from
+        checkpoints.
     """
+
+    warnings.warn(
+        "load_model_from_checkpoint_path has been deprecated in Determined 0.38.0 and will be "
+        "removedin a future version.  This function is designed to work with TFKerasTrial, which "
+        "is alsodeprecated.  Please use the new det.keras.DeterminedCallback fortraining instead, "
+        "which allows you to use ``model.load_weights()`` to restore fromcheckpoints.",
+        FutureWarning,
+        stacklevel=2,
+    )
 
     ckpt_dir = pathlib.Path(path)
     load_data_path = ckpt_dir.joinpath("load_data.json")

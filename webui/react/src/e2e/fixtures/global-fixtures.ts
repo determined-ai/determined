@@ -14,6 +14,7 @@ import {
 import { ApiArgsFixture } from './api';
 import { ApiAuthFixture } from './api.auth.fixture';
 import { ApiProjectFixture } from './api.project.fixture';
+import { ApiRoleFixture } from './api.roles.fixture';
 import { ApiSearchFixture } from './api.search.fixture';
 import { ApiUserFixture } from './api.user.fixture';
 import { ApiWorkspaceFixture } from './api.workspace.fixture';
@@ -41,6 +42,7 @@ type CustomWorkerFixtures = {
   newProject: { request: V1PostProjectRequest; response: V1PostProjectResponse };
   backgroundApiAuth: ApiAuthFixture;
   backgroundApiUser: ApiUserFixture;
+  backgroundApiRole: ApiRoleFixture;
   backgroundApiWorkspace: ApiWorkspaceFixture;
   backgroundApiProject: ApiProjectFixture;
   backgroundAuthedPage: Page;
@@ -158,7 +160,13 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     },
     { scope: 'worker' },
   ],
-
+  backgroundApiRole: [
+    async ({ backgroundApiAuth }, use) => {
+      const backgroundApiRole = new ApiRoleFixture(backgroundApiAuth);
+      await use(backgroundApiRole);
+    },
+    { scope: 'worker' },
+  ],
   backgroundApiSearches: [
     async ({ backgroundApiWorkspace, backgroundApiProject, backgroundApiArgs }, use) => {
       // TODO: save everyone some time by having new call the create api
@@ -173,7 +181,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
       );
       await use(new ApiSearchFixture(backgroundApiArgs, project.project.id));
       await backgroundApiWorkspace.deleteWorkspace(workspace.workspace.id);
-    },
+      },
     { scope: 'worker' },
   ],
   /**
@@ -229,7 +237,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
    * Creates an admin and logs in as that admin for the duraction of the test suite
    */
   newAdmin: [
-    async ({ backgroundApiUser }, use, workerInfo) => {
+    async ({ backgroundApiUser, backgroundApiRole }, use, workerInfo) => {
       const request = backgroundApiUser.new({
         userProps: {
           user: {
@@ -240,6 +248,11 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
         },
       });
       const adminUser = await backgroundApiUser.createUser(request);
+      await backgroundApiRole.createAssignment({
+        userRoleAssignments: [
+          { roleAssignment: { role: { roleId: 1 } }, userId: adminUser.user!.id! },
+        ],
+      });
       await use({ request, response: adminUser });
       await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
     },

@@ -261,8 +261,6 @@ fixed values for the model's hyperparameters:
 .. code:: yaml
 
    name: mnist_pytorch_const
-   data:
-     url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
    hyperparameters:
      learning_rate: 1.0
      global_batch_size: 64
@@ -273,15 +271,8 @@ fixed values for the model's hyperparameters:
    searcher:
      name: single
      metric: validation_loss
-     max_length:
-       epochs: 1
      smaller_is_better: true
-   entrypoint: model_def:MNistTrial
-
-The ``entrypoint`` specifies the name of the trial class to use. This is useful if the model code
-contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNistTrial``
-because our trial class is named ``MNistTrial`` and it is defined in a Python file named
-``model_def.py``.
+   entrypoint: python3 train.py --epochs 1
 
 For more information on experiment configuration, see the :ref:`experiment configuration reference
 <experiment-configuration>`.

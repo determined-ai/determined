@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -470,11 +471,6 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		  "read_only": true,
 		  "propagation": "cluster-wide"
 		}
-	  ],
-	   "log_policies": [
-		{
-		  "pattern": "nonrepeat"
-		}
 	  ]
 }`
 
@@ -486,7 +482,6 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 	err = json.Unmarshal([]byte(wkspDefaultConfig), &wkspInvariantConfig)
 	require.NoError(t, err)
 
-	wkspConfigNoDefaults := wkspInvariantConfig
 	// We assign the config name because it is otherwise auto-generated randomly (and this will not
 	// be equal to defaultConfig Name).
 	wkspInvariantConfig.RawName = defaultConfig.RawName
@@ -606,7 +601,10 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		conf, err := MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
 			expconf.ExperimentConfigV0{})
 		require.NoError(t, err)
-		require.Equal(t, wkspConfigNoDefaults, *conf)
+
+		conf.SetName(wkspInvariantConfig.Name())
+		conf.RawReproducibility = wkspInvariantConfig.RawReproducibility
+		require.Equal(t, wkspInvariantConfig, *conf)
 	})
 
 	t.Run("test invalid workspace id", func(t *testing.T) {
@@ -614,22 +612,10 @@ func TestMergeWithInvariantExperimentConfigs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, defaultConfig, *conf)
 	})
-
-	testMergeSlicesAndMaps(t)
 }
 
-func testMergeSlicesAndMaps(t *testing.T) {
-	t.Run("test merge slices and maps", func(t *testing.T) {
-		require.NoError(t, etc.SetRootPath(db.RootFromDB))
-		pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
-		defer cleanup()
-		db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
-
-		user := db.RequireMockUser(t, pgDB)
-		ctx := context.Background()
-		w := createWorkspaceWithUser(ctx, t, user.ID)
-
-		userPartialConfig := `{
+func TestMergeSlicesAndMaps(t *testing.T) {
+	userPartialConfig := `{
 		"description": "random description workspace",
 		"raw_data": { "1" : "data point 1" },
 		  "resources": {
@@ -672,13 +658,14 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		}
 	  ]
 	}
 	`
 
-		adminPartialConfig := `{
+	adminPartialConfig := `{
 	  "raw_data": { "2" : "data point 2" },
 	  "resources": {
 		"devices": [
@@ -711,12 +698,13 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"
 		}
 	  ]
 	}`
 
-		mergedWkspConfig := `
+	mergedWkspConfig := `
 	{
 	  "raw_data": { 
 			  "1" : "data point 1",
@@ -778,16 +766,18 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		},
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"    
 		}
 	  ]
 	}
 	`
 
-		globalPartialConfig := `{
+	globalPartialConfig := `{
 	  "raw_data": { "3" : "data point 3" },
 	  "resources": {
 		"devices": [
@@ -820,12 +810,13 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "global repeat policy",
 		  "pattern": "gloablrepeat"
 		}
 	  ]
 	}`
 
-		mergedGlobalConfig := `
+	mergedGlobalConfig := `
 	{
 	  "raw_data": { 
 			  "1" : "data point 1",
@@ -903,17 +894,30 @@ func testMergeSlicesAndMaps(t *testing.T) {
 	  },
 	  "log_policies": [
 		{
+		  "name": "nonrepeat policy",
 		  "pattern": "nonrepeat"
 		},
 		{
+		  "name": "repeat policy",
 		  "pattern": "repeat"    
 		},
 		{
+		  "name": "global repeat policy",
 		  "pattern": "gloablrepeat"
 		}
 	  ]
 	}
-	`
+`
+	t.Run("test merge slices and maps", func(t *testing.T) {
+		require.NoError(t, etc.SetRootPath(db.RootFromDB))
+		pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+		defer cleanup()
+		db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+		user := db.RequireMockUser(t, pgDB)
+		ctx := context.Background()
+		w := createWorkspaceWithUser(ctx, t, user.ID)
+
 		var adminPartialInvariantConfig expconf.ExperimentConfigV0
 		err := json.Unmarshal([]byte(adminPartialConfig), &adminPartialInvariantConfig)
 		require.NoError(t, err)
@@ -946,7 +950,24 @@ func testMergeSlicesAndMaps(t *testing.T) {
 			userPartialInvariantConfig)
 
 		require.NoError(t, err)
-		require.Equal(t, mergedWkspInvariantConfig, *res)
+		require.ElementsMatch(t, mergedWkspInvariantConfig.Data(), res.Data())
+		require.Equal(t, mergedWkspInvariantConfig.Description(), res.Description())
+		require.Equal(t, mergedWkspInvariantConfig.Resources().Slots(), res.Resources().Slots())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.Resources().Devices(),
+			res.Resources().Devices())
+		require.Equal(t, mergedWkspInvariantConfig.PreemptionTimeout(),
+			res.PreemptionTimeout())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.BindMounts(), res.BindMounts())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.Environment().EnvironmentVariables().CPU(),
+			res.Environment().EnvironmentVariables().CPU())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.Environment().EnvironmentVariables().CUDA(),
+			res.Environment().EnvironmentVariables().CUDA())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.Environment().EnvironmentVariables().ROCM(),
+			res.Environment().EnvironmentVariables().ROCM())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.BindMounts(), res.BindMounts())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.Environment().ProxyPorts(),
+			res.Environment().ProxyPorts())
+		require.ElementsMatch(t, mergedWkspInvariantConfig.LogPolicies(), res.LogPolicies())
 
 		// Merge user-submitted config with workspace and global config policies.
 		setConfigPolicies(ctx, t, &w.ID, &model.TaskConfigPolicies{
@@ -975,8 +996,89 @@ func testMergeSlicesAndMaps(t *testing.T) {
 			userPartialInvariantConfig)
 
 		require.NoError(t, err)
-		require.Equal(t, mergedGlobalInvariantConfig, *res)
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.Data(), res.Data())
+		require.Equal(t, mergedGlobalInvariantConfig.Description(), res.Description())
+		require.Equal(t, mergedGlobalInvariantConfig.Resources().Slots(), res.Resources().Slots())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.Resources().Devices(),
+			res.Resources().Devices())
+		require.Equal(t, mergedGlobalInvariantConfig.PreemptionTimeout(),
+			res.PreemptionTimeout())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.BindMounts(), res.BindMounts())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.Environment().EnvironmentVariables().CPU(),
+			res.Environment().EnvironmentVariables().CPU())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.Environment().EnvironmentVariables().CUDA(),
+			res.Environment().EnvironmentVariables().CUDA())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.Environment().EnvironmentVariables().ROCM(),
+			res.Environment().EnvironmentVariables().ROCM())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.BindMounts(), res.BindMounts())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.Environment().ProxyPorts(),
+			res.Environment().ProxyPorts())
+		require.ElementsMatch(t, mergedGlobalInvariantConfig.LogPolicies(), res.LogPolicies())
 	})
+}
+
+func TestSchemaCompleteAfterMerge(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+	user := db.RequireMockUser(t, pgDB)
+	ctx := context.Background()
+	w := createWorkspaceWithUser(ctx, t, user.ID)
+
+	// Config with incomplete bind_mounts
+	incompleteConfig := `
+{
+  "invariant_config": {
+    "bind_mounts": [
+      {
+        "host_path": "/tmp/userbindmounts",
+        "container_path": "/tmp/userbindmounts",
+        "read_only": true
+      }
+    ]
+  }
+}
+`
+	// Our user-submitted config must have at least `checkpoint_storage` and `searcher` specified
+	// (checkpoint storage is typically populated by either the workspace's or the master's storage
+	// config, and searchers are typically specified in the user-submitted experiment config).
+	configWithStorageAndSearcher := expconf.ExperimentConfig{
+		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
+			RawSharedFSConfig: &expconf.SharedFSConfigV0{RawHostPath: ptrs.Ptr("host_path")},
+		},
+		RawSearcher: &expconf.SearcherConfigV0{
+			RawSingleConfig: &expconf.SingleConfigV0{
+				RawMaxLength: &expconf.LengthV0{Unit: expconf.Batches, Units: 5},
+			},
+			RawMetric: ptrs.Ptr("training"),
+		},
+	}
+	policies, err := UnmarshalConfigPolicy[ExperimentConfigPolicies](incompleteConfig,
+		InvalidExperimentConfigPolicyErr)
+	require.NoError(t, err)
+	require.NotNil(t, policies.InvariantConfig)
+
+	// Verify the config fails the completeness check.
+	err = schemas.IsComplete(*policies.InvariantConfig)
+	require.Error(t, err)
+
+	// Set global the incomplete config as a global invariant config policy.
+	setConfigPolicies(ctx, t, &w.ID, nil, &model.TaskConfigPolicies{
+		WorkloadType:    model.ExperimentType,
+		LastUpdatedBy:   user.ID,
+		InvariantConfig: &incompleteConfig,
+	})
+
+	completeConfig, err := MergeWithInvariantExperimentConfigs(context.Background(), w.ID,
+		configWithStorageAndSearcher)
+	require.NoError(t, err)
+	require.NotNil(t, completeConfig)
+
+	// The final merged config should pass the completeness validation check.
+	err = schemas.IsComplete(*completeConfig)
+	require.NoError(t, err)
 }
 
 func setConfigPolicies(ctx context.Context, t *testing.T, wID *int, workspaceTCPs,

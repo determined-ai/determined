@@ -4,7 +4,5 @@ resources:
 searcher:
   name: single
   metric: error
-  max_length:
-    batches: 1000
 max_restarts: 0
 entrypoint: failures:FailureTrial

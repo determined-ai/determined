@@ -1,66 +1,40 @@
+import os
+import subprocess
+
 import setuptools
 
-# open README.md from parent folder and read it into a string
-with open("../README.md", "r") as readme:
-    markdown_description = "".join(readme.readlines())
+
+def readme() -> str:
+    with open("../README.md", "r") as fd:
+        return fd.read()
+
+
+def version() -> str:
+    def get_version_from_sh() -> str:
+        try:
+            # This feels more disgusting than it is. Numpy does something similar,
+            # although they generate a version.py file from their Meson build file
+            # that returns a static version string. I'm not thrilled about calling a
+            # shell script during Determined's __init__.py (i.e. on import), but I'm
+            # running out of ideas to make editable installs work comfortably, and
+            # this shouldn't ever run for end users anyway.
+            output = subprocess.run(["../version.sh"], capture_output=True, shell=True)
+        except subprocess.CalledProcessError:
+            # version.sh failed for whatever reason. Return an unknown version with
+            # epoch set to 1 so at least pip dependency resolution should succeed.
+            return "1!0.0.0+unknown"
+        else:
+            # version.sh succeeded. Collect the output.
+            return output.stdout.decode("utf-8")
+
+    return os.environ.get("VERSION", get_version_from_sh())
+
 
 setuptools.setup(
-    name="determined",
-    version="0.37.1-dev0",
-    author="Determined AI",
-    author_email="ai-open-source@hpe.com",
-    url="https://determined.ai/",
-    description="Determined AI: The fastest and easiest way to build deep learning models.",
-    long_description=markdown_description,
+    # We can't seem to use pyproject.toml to include the Determined README
+    # relative to pyproject.toml. But that's okay, because we can still keep
+    # setup.py for this.
+    long_description=readme(),
     long_description_content_type="text/markdown",
-    license="Apache License 2.0",
-    classifiers=["License :: OSI Approved :: Apache Software License"],
-    # Use find_namespace_packages because it will include data-only packages (that is, directories
-    # containing only non-python files, like our gcp terraform directory).
-    packages=setuptools.find_namespace_packages(include=["determined*"]),
-    # Technically, we haven't supported 3.6 or tested against it since it went EOL. But some users
-    # are still using it successfully so there's hardly a point in breaking them.
-    python_requires=">=3.8",
-    include_package_data=True,
-    install_requires=[
-        "matplotlib",
-        "packaging",
-        "numpy>=1.16.2",
-        "psutil",
-        "pyzmq>=18.1.0",
-        # Common:
-        "certifi",
-        "docker>=7.1.0",
-        "filelock",
-        "google-cloud-storage",
-        "lomond>=0.3.3",
-        "pathspec>=0.6.0",
-        "azure-core",
-        "azure-storage-blob",
-        "termcolor>=1.1.0",
-        "boto3",
-        "oschmod;platform_system=='Windows'",
-        # CLI:
-        "argcomplete>=1.9.4",
-        "gitpython>=3.1.3",
-        "pyOpenSSL>= 19.1.0",
-        "python-dateutil",
-        "pytz",
-        "tabulate>=0.8.3",
-        "ruamel.yaml",
-        # Deploy
-        "docker[ssh]>=3.7.3",
-        "google-api-python-client>=1.12.1",
-        "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
-        "tqdm",
-        "appdirs",
-        # Telemetry
-        "analytics-python",
-    ],
-    zip_safe=False,
-    entry_points={
-        "console_scripts": [
-            "det = determined.cli.__main__:main",
-        ]
-    },
+    version=version(),
 )

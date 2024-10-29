@@ -23,6 +23,10 @@
     {
       "name": "Models",
       "description": "Manage models"
+    },
+    {
+      "name": "Tokens",
+      "description": "Manage tokens"
     }
   ],
   "paths": {},
@@ -67,20 +71,6 @@
         }
       },
       "description": "https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"
-    },
-    "v1CompleteValidateAfterOperation": {
-        "properties": {
-            "searcherMetric": {
-                "type": null
-            }
-        }
-    },
-    "v1ValidationCompleted": {
-        "properties": {
-            "metric": {
-                "type": null
-            }
-        }
     }
   }
 }

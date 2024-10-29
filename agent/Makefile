@@ -1,16 +1,21 @@
 .DEFAULT_GOAL := build
 SHELL := bash
 
-export VERSION:=$(shell cat ../VERSION)
+export VERSION:=$(shell ../version.sh)
+export VERSION_TAG:=$(shell ../version.sh -t)
+export VERSION_DOCKER := $(shell ../version.sh -d)
+
 export GO111MODULE := on
 export DOCKER_REPO ?= determinedai
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-agent
+PROJECT_NAME_DRYRUN = determined-agent-dryrun
 EE_PROJECT_NAME = hpe-mlde-agent
 ARCHS = amd64 arm64
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+MULTI_ARCH_IMAGES_DRYRUN = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)$(PROJECT_NAME_DRYRUN):$(FULL_COMMIT)-$$arch; done)
 EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 
 NVCR_REPO ?= nvcr.io/isv-ngc-partner/determined
@@ -19,6 +24,11 @@ PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
+
+PUB_MANIFESTS_DRYRUN = \
+	$(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(SHORT_COMMIT) \
+	$(DOCKER_REPO)/$(PROJECT_NAME_DRYRUN):$(VERSION)
 
 EE_PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT) \
@@ -102,25 +112,37 @@ packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py agent $@
 
 .PHONY: package
-package: export GORELEASER_CURRENT_TAG := $(VERSION)
+package: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
 package: packaging/LICENSE buildx
 	goreleaser --snapshot --rm-dist
 
+.PHONY: package-dryrun
+package-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+package-dryrun: packaging/LICENSE buildx
+	goreleaser --snapshot --rm-dist -f ./.goreleaser_dryrun.yml
+
 .PHONY: package-ee
-package-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
 package-ee: packaging/LICENSE buildx
 	goreleaser --snapshot --rm-dist -f ./.goreleaser_ee.yml
 
 .PHONY: release
-release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
+release: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release: packaging/LICENSE buildx
 	goreleaser --rm-dist
 	make publish-nvcr
 
+.PHONY: release-dryrun
+release-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+# We intentionally do not invoke `make publish-nvcr(-dryrun)` here.
+release-dryrun: packaging/LICENSE buildx
+	goreleaser --rm-dist -f ./.goreleaser_dryrun.yml
+
 .PHONY: release-ee
-release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
 release-ee: packaging/LICENSE buildx
 	goreleaser --rm-dist -f ./.goreleaser_ee.yml
 
@@ -146,6 +168,10 @@ publish-dev-ee:
 .PHONY: publish
 publish:
 	@$(call manifest_publish, $(PUB_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-dryrun
+publish-dryrun:
+	@$(call manifest_publish, $(PUB_MANIFESTS_DRYRUN), $(MULTI_ARCH_IMAGES_DRYRUN))
 
 .PHONY: publish-ee
 publish-ee:

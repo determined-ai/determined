@@ -104,6 +104,10 @@ useNodePortForMaster: false
   # authz option (EE-only) sets the authorization mode.
   # authz:
   #   type: rbac
+  # access token option (EE-Only) allows to authenticate in automated workflows.
+  # token:
+  #   max_lifespan_days: -1
+  #   default_lifespan_days: 30
 
 # oidc (EE-only) enables OpenID Connect Integration, which is only available if enterpriseEdition
 # is true. It allows users to use single sign-on with their organization’s identity provider.
@@ -374,12 +378,51 @@ telemetry:
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default
+## To set up multiple resource pools for Determined on your Kubernetes cluster
+## with custom pod spec or node selectors:
+# resourcePools:
+#   - pool_name: prod_pool
+#     kubernetes_namespace: default
+#     task_container_defaults:
+#       gpu_pod_spec:
+#         apiVersion: v1
+#         kind: Pod
+#         spec:
+#           tolerations:
+#             - key: "pool_taint"
+#               operator: "Equal"
+#               value: "prod"
+#               effect: "NoSchedule"
+#             affinity:
+#             # Define an example node selector label.
+#                nodeSelectorTerms:
+#                   kubernetes.io/hostname: "foo"
+#             # Define an example node affinity.
+#                nodeAffinity:
+#                requiredDuringSchedulingIgnoredDuringExecution:
+#                   nodeSelectorTerms:
+#                      - matchExpressions:
+#                      - key: topology.kubernetes.io/zone
+#                         operator: In
+#                         values:
+#                         - antarctica-west1
+#                         - antarctica-east1
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
 ## Configure the initial user password for the cluster
 # initialUserPassword:
 
+# determinedMasterHost configures the hostname that tasks launched by the primary resource manager use when
+# communicating with our API server. This is useful when installations span multiple Kubernetes clusters and when there
+# are proxies in between tasks and the master. It defaults to `<det_namespace>.<det_service_name>.svc.cluster.local`.
+# determinedMasterHost:
+# determinedMasterPort configures the port for the host above. It defaults to `masterPort` specified elsewhere. Must
+# be used with determinedMasterHost or it is ineffective.
+# determinedMasterPort:
+# determinedMasterScheme configures the scheme for the host and port above. It defaults to `https` if our API server
+# is deployed with TLS, else `http`. Must be used with determinedMasterHost or it is ineffective.
+# determinedMasterScheme:
 # additional_resource_managers:
 #   - resource_manager:
 #       type: kubernetes
@@ -388,7 +431,7 @@ resourcePools:
 #       default_namespace: default
 #       kubeconfig_secret_name: additionalrm
 #       kubeconfig_secret_value: config
-#       determined_master_ip: 10.11.12.13
+#       determined_master_host: 10.11.12.13
 #       determined_master_port: 8080
 #     resource_pools:
 #       - pool_name: additional_pool

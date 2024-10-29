@@ -96,7 +96,7 @@ func New(
 		config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 		k.poolsConfig,
 		k.taskContainerDefaults,
-		k.config.DetMasterIP,
+		k.config.DetMasterHost,
 		k.config.DetMasterPort,
 		k.config.DetMasterScheme,
 		k.config.KubeconfigPath,
@@ -171,11 +171,6 @@ func (k *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.Resource
 func (ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error) {
 	// For now, there is nothing to clean up in k8s.
 	return sproto.EmptyDeleteJobResponse(), nil
-}
-
-// ExternalPreemptionPending implements rm.ResourceManager.
-func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error {
-	return rmerrors.ErrNotSupported
 }
 
 // HealthCheck tries to call the KubeAPI.
