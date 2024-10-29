@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Iterator
 
 import docker
 import pytest
@@ -19,7 +18,6 @@ from tests.cluster import (
     abstract_cluster,
     managed_cluster,
     managed_cluster_k8s,
-    managed_slurm_cluster,
     utils,
 )
 from tests.experiment import noop
