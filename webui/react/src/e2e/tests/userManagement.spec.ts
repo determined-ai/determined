@@ -300,6 +300,16 @@ test.describe('User Management', () => {
         Object.assign(listTestUsers[index], updated);
       };
 
+      const getTableUsernames = async (userManagementPage: UserManagement) => {
+        return await Promise.all(
+          (await userManagementPage.table.table.rows.username.pwLocator.all()).map(
+            async (username) => {
+              return await username.textContent();
+            },
+          ),
+        );
+      };
+
       test.beforeAll(async ({ backgroundApiUser }) => {
         const testDisplayName = safeName('0-test-display-name');
 
@@ -308,13 +318,7 @@ test.describe('User Management', () => {
         await updateUser(NAME_UPDATE_INDEX, { displayName: testDisplayName }, backgroundApiUser);
       });
 
-      test.afterAll(async ({ backgroundApiUser }) => {
-        await updateUser(ADMIN_UPDATE_INDEX, { admin: true }, backgroundApiUser);
-        await updateUser(STATUS_UPDATE_INDEX, { active: true }, backgroundApiUser);
-        await updateUser(NAME_UPDATE_INDEX, { displayName: '' }, backgroundApiUser);
-      });
-
-      test('Sort', async ({ page }) => {
+      test.beforeEach(async ({ page }) => {
         const userManagementPage = new UserManagement(page);
 
         const pagination = userManagementPage.table.table.pagination;
@@ -332,26 +336,30 @@ test.describe('User Management', () => {
         ).toPass({ timeout: 25_000 });
 
         await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
+      });
+
+      test.afterAll(async ({ backgroundApiUser }) => {
+        await updateUser(ADMIN_UPDATE_INDEX, { admin: true }, backgroundApiUser);
+        await updateUser(STATUS_UPDATE_INDEX, { active: true }, backgroundApiUser);
+        await updateUser(NAME_UPDATE_INDEX, { displayName: '' }, backgroundApiUser);
+      });
+
+      test('Sort', async ({ page }) => {
+        const userManagementPage = new UserManagement(page);
 
         const validateSort = async (
           sortBy: 'name' | 'admin' | 'active' | 'modifiedAt',
           order: 'asc' | 'desc',
         ) => {
-          const tableUsernames = await Promise.all(
-            (await userManagementPage.table.table.rows.username.pwLocator.all()).map(
-              async (username) => {
-                return await username.textContent();
-              },
-            ),
-          );
-
           const sortedListTestUsers = orderBy(
             listTestUsers,
             sortBy === 'name' ? (u) => u.displayName || u.username : sortBy,
             order,
           );
 
-          expect(tableUsernames).toEqual(sortedListTestUsers.slice(0, 10).map((u) => u.username));
+          expect(await getTableUsernames(userManagementPage)).toEqual(
+            sortedListTestUsers.slice(0, 10).map((u) => u.username),
+          );
         };
 
         const testSort = async (
@@ -403,6 +411,72 @@ test.describe('User Management', () => {
 
         await test.step('Sort by last modified', async () => {
           await testSort('modified', 'modifiedAt');
+        });
+      });
+
+      test('Filter', async ({ page }) => {
+        const userManagementPage = new UserManagement(page);
+
+        const validateFilter = async (filterFn: (user: V1User) => boolean) => {
+          // TODO: better way to make sure table has updated:
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          expect((await getTableUsernames(userManagementPage)).sort()).toEqual(
+            listTestUsers
+              .filter(filterFn)
+              .map((u) => u.username)
+              .sort(),
+          );
+        };
+
+        const resetFilters = async () => {
+          await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
+
+          await userManagementPage.filterRole.openMenu();
+          await userManagementPage.filterRole.allRoles.pwLocator.click();
+
+          await userManagementPage.filterStatus.openMenu();
+          await userManagementPage.filterStatus.allStatuses.pwLocator.click();
+        };
+
+        await test.step('Filter by display name', async () => {
+          await resetFilters();
+
+          await userManagementPage.search.pwLocator.fill(
+            listTestUsers[NAME_UPDATE_INDEX].displayName ?? '',
+          );
+
+          await validateFilter(
+            (u) => u.displayName === listTestUsers[NAME_UPDATE_INDEX].displayName,
+          );
+        });
+
+        await test.step('Filter by role', async () => {
+          await resetFilters();
+
+          await userManagementPage.filterRole.openMenu();
+          await userManagementPage.filterRole.admin.pwLocator.click();
+
+          await validateFilter((u) => !!u.admin);
+
+          await userManagementPage.filterRole.openMenu();
+          await userManagementPage.filterRole.nonAdmin.pwLocator.click();
+
+          await validateFilter((u) => !u.admin);
+        });
+
+        await test.step('Filter by status', async () => {
+          await resetFilters();
+
+          await userManagementPage.filterStatus.openMenu();
+          await userManagementPage.filterStatus.activeUsers.pwLocator.click();
+
+          await validateFilter((u) => !!u.active);
+
+          await userManagementPage.filterStatus.openMenu();
+          await userManagementPage.filterStatus.deactivatedUsers.pwLocator.click();
+
+          await validateFilter((u) => !u.active);
         });
       });
     });
