@@ -61,7 +61,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       }}
       title="Confirm Stop"
       onClose={onClose}>
-      <div>
+      <div data-test="experiment">
         Are you sure you want to {actionCopy} {experimentId}?
       </div>
       <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>

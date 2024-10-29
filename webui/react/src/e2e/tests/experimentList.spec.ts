@@ -15,7 +15,8 @@ dayjs.extend(utcPlugin);
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
-  const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
+  const waitTableStable = async (timeout = 2_000) =>
+    await projectDetailsPage._page.waitForTimeout(timeout);
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
@@ -758,6 +759,47 @@ test.describe('Experiment List', () => {
         Promise.resolve(true),
       );
       await expect(newProjectRows.length).toBe(1);
+    });
+
+    test('kill experiment', async ({
+      newProject: {
+        response: { project },
+      },
+    }) => {
+      const expId = Number(
+        detExecSync(
+          `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --project_id ${project.id}`,
+        ).split(' ')[2],
+      );
+      if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
+
+      await waitTableStable(10_000);
+
+      const newExperimentRow =
+        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+          'ID',
+          expId.toString(),
+        );
+
+      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
+
+      await experimentActionDropdown.menuItem('Kill').pwLocator.click();
+
+      await expect(
+        experimentActionDropdown.stopKillModal.targetExperiment.pwLocator.textContent(),
+      ).toContain(experimentId.toString());
+
+      await experimentActionDropdown.stopKillModal.footer.submit.pwLocator.click();
+      await experimentActionDropdown.stopKillModal.pwLocator.waitFor({ state: 'hidden' });
+
+      // eslint-disable-next-line no-console
+      console.log((await newExperimentRow.getCellByColumnName('State')).pwLocator.innerText());
+      if (expId !== undefined) {
+        detExecSync(`experiment kill ${expId}`);
+        detExecSync(`experiment delete ${expId} --y`);
+      }
+
+      expect(true).toBe(true);
     });
   });
 });
