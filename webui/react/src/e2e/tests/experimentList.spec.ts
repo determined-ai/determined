@@ -343,7 +343,17 @@ test.describe('Experiment List', () => {
     //   // might want something like this
     //   // await authedPage.waitForURL(;
     // });
-    // await test.step('Hyperparameter Search', async () => {});
+    await test.step('Hyperparameter Search', async () => {
+      await row.experimentActionDropdown.hpSearch.pwLocator.click();
+      const hpSearchModal = row.experimentActionDropdown.hpSearchModal;
+      assert(hpSearchModal.page.title === 'searcher');
+
+      await hpSearchModal.page.adaptiveSearcher.pwLocator.click();
+      const searchNameValue = safeName('HYPERPARAMETER_SEARCH_NAME');
+      await hpSearchModal.page.nameInput.pwLocator.fill(searchNameValue);
+
+      await hpSearchModal.footer.submit.pwLocator.click(); // switch to page 2
+    });
   });
 
   test('DataGrid Action Pause', async () => {

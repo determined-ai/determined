@@ -380,7 +380,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     const emptyHP: Hyperparameter = { type: 'const' };
     // We always render the form regardless of mode to provide a reference to it.
     return (
-      <div className={css.base}>
+      <div className={css.base} id="hyperparameter-page">
         {modalError && <Alert message={modalError} type="error" />}
         <div className={css.labelWithLink}>
           <p>
@@ -450,7 +450,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   const searcherPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
-      <div className={css.base}>
+      <div className={css.base} id="searcher-page">
         {modalError && <Alert message={modalError} type="error" />}
         <Form.Item
           initialValue={searcher.id}
@@ -561,7 +561,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
             initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 16}
             label={
               <div className={css.labelWithTooltip}>
-                Max concurrent trials
+                Max concurrent {entityCopy.trial}s
                 <Icon name="info" showTooltip title="Use 0 for max possible parallelism" />
               </div>
             }
@@ -600,7 +600,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       <>
         {currentPage > 0 && <Button onClick={handleBack}>Back</Button>}
         <div className={css.spacer} />
-        <Row>
+        <Row gap={0}>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button
             disabled={validationError || isSubmitting}
