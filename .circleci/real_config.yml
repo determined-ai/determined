@@ -395,7 +395,7 @@ commands:
           name: Install determined
           working_directory: <<parameters.package-location>>
           command: |
-            VERSION=$(./version.sh)
+            VERSION=$(~/project/version.sh)
             make build
             pip install --find-links dist determined==${VERSION}
             pip install --no-deps --force-reinstall --find-links dist determined==${VERSION}
@@ -2700,7 +2700,7 @@ jobs:
       - run:
           name: Set VERSION environment variable
           command: |
-            echo "export VERSION=$(./version.sh)" >> $BASH_ENV
+            echo "export VERSION=$(~/project/version.sh)" >> $BASH_ENV
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
