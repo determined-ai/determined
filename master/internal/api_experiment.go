@@ -1241,7 +1241,7 @@ func (a *apiServer) PatchExperiment(
 			}
 
 			enforcedChkptConf, err := configpolicy.GetConfigPolicyField[expconf.CheckpointStorageConfig](
-				ctx, &w.ID, "invariant_config", "'checkpoint_storage'",
+				ctx, &w.ID, []string{"checkpoint_storage"}, "invariant_config",
 				model.ExperimentType)
 			if err != nil {
 				return nil, fmt.Errorf("unable to fetch task config policies: %w", err)
@@ -1306,7 +1306,6 @@ func (a *apiServer) PatchExperiment(
 			}
 		}
 
-		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
 		if err := a.m.db.SaveExperimentConfig(modelExp.ID, activeConfig); err != nil {
 			return nil, errors.Wrapf(err, "patching experiment %d", modelExp.ID)
 		}

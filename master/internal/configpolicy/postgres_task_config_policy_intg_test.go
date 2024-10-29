@@ -693,7 +693,7 @@ func TestGetEnforcedConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		checkpointStorage, err := GetConfigPolicyField[expconf.CheckpointStorageConfig](ctx, &w.ID,
-			"invariant_config", "'checkpoint_storage'", model.ExperimentType)
+			[]string{"checkpoint_storage"}, "invariant_config", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, checkpointStorage)
 
@@ -726,7 +726,7 @@ func TestGetEnforcedConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		checkpointStorage, err := GetConfigPolicyField[expconf.CheckpointStorageConfig](ctx, &w.ID,
-			"invariant_config", "'checkpoint_storage'", model.ExperimentType)
+			[]string{"checkpoint_storage"}, "invariant_config", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, checkpointStorage)
 
@@ -766,8 +766,8 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID, "invariant_config",
-			"'resources' -> 'max_slots'", model.ExperimentType)
+		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID,
+			[]string{"resources", "max_slots"}, "invariant_config", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, maxSlots)
 
@@ -805,8 +805,8 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
-			"'resources' -> 'max_slots'", model.ExperimentType)
+		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID,
+			[]string{"resources", "max_slots"}, "constraints", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, maxSlots)
 
@@ -841,8 +841,8 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		priority, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
-			"'priority_limit'", model.ExperimentType)
+		priority, err := GetConfigPolicyField[int](ctx, &w.ID,
+			[]string{"priority_limit"}, "constraints", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, priority)
 
@@ -863,8 +863,8 @@ func TestGetEnforcedConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		priority, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
-			"'priority_limit'", model.ExperimentType)
+		priority, err := GetConfigPolicyField[int](ctx, &w.ID, []string{"priority_limit"},
+			"constraints", model.ExperimentType)
 		require.NoError(t, err)
 		require.NotNil(t, priority)
 
@@ -873,22 +873,22 @@ func TestGetEnforcedConfig(t *testing.T) {
 	})
 
 	t.Run("field not set in config", func(t *testing.T) {
-		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID, "invariant_config",
-			"'max_restarts'", model.ExperimentType)
+		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID,
+			[]string{"max_restarts"}, "invariant_config", model.ExperimentType)
 		require.NoError(t, err)
 		require.Nil(t, maxRestarts)
 	})
 
 	t.Run("nonexistent constraints field", func(t *testing.T) {
-		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
-			"'max_restarts'", model.ExperimentType)
+		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID,
+			[]string{"max_restarts"}, "constraints", model.ExperimentType)
 		require.NoError(t, err)
 		require.Nil(t, maxRestarts)
 	})
 
 	t.Run("invalid policy type", func(t *testing.T) {
-		_, err := GetConfigPolicyField[int](ctx, &w.ID, "bad policy",
-			"'debug'", model.ExperimentType)
+		_, err := GetConfigPolicyField[int](ctx, &w.ID,
+			[]string{"debug"}, "bad policy", model.ExperimentType)
 		require.ErrorContains(t, err, invalidPolicyTypeErr)
 	})
 }

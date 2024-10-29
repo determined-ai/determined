@@ -1118,8 +1118,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		return fmt.Errorf("error getting workspace: %w", err)
 	}
 	enforcedWeight, err := configpolicy.GetConfigPolicyField[float64](context.TODO(), &w.ID,
-		"invariant_config",
-		"'resources' -> 'weight'", model.ExperimentType)
+		[]string{"resources", "weight"}, "invariant_config", model.ExperimentType)
 	if err != nil {
 		return fmt.Errorf("error checking against config policies: %w", err)
 	}
