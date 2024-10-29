@@ -2698,11 +2698,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install git
-          command: |
-            apt update
-            apt install -y git
-      - run:
           name: Set VERSION environment variable
           command: |
             echo "export VERSION=$(~/project/version.sh)" >> $BASH_ENV
@@ -4034,12 +4029,19 @@ workflows:
     <<: *do-not-run-on-manual-trigger
     jobs:
       - test-cli:
+          pre-steps:
+            - run:
+                name: Install git
+                command: |
+                  apt update
+                  apt install -y git
           matrix:
             parameters:
               executor-name:
                 - "python-38"
                 - "python-39"
-                - "win/default"
+      - test-cli:
+          executor-name: "win/default"
   test-unit:
     <<: *do-not-run-on-manual-trigger
     jobs:
