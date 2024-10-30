@@ -5,7 +5,6 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
   metric: none
-  max_length: 5 # Number of times the generation pipeline is called, per-worker.
 resources:
   slots_per_trial: 2 # Also equal to the number of unique initial seeds which will be used.
   max_slots: 4
