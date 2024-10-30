@@ -387,16 +387,22 @@ def deploy_stack(
                 print()
 
                 prompt_needed = True
-            elif tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:
-                print("Value of --deployment-type has changed!")
-                prompt_needed = True
+            else:
+                if tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:
+                    print("Value of --deployment-type has changed!")
+                    prompt_needed = True
+
+                if tags[constants.deployment_types.TYPE_TAG_KEY] == "simple":
+                    print()
+                    print("Previous value of --deployment-type was 'simple'. This deployment type was")
+                    print("removed in 0.38.0 because AWS Aurora V1 is EoL. Please follow this guide")
+                    print("to migrate to RDS:")
+                    print("\thttps://gist.github.com/rb-determined-ai/bfa10182e53968e00a3c88df624e777e\n")
+                    print()
 
             if prompt_needed:
                 val = input(
                     "If --deployment-type has changed, updating the stack may erase the database.\n"
-                    "If you previously used --deployment-type simple or no value and upgraded\n"
-                    "to 0.38.0, you need to follow this guide to manually migrate Aurora V1:\n"
-                    "\thttps://gist.github.com/rb-determined-ai/bfa10182e53968e00a3c88df624e777e\n"
                     "Are you sure you want to proceed? [y/N]\n"
                 )
                 if val.lower() != "y":
