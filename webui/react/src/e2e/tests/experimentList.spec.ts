@@ -327,6 +327,7 @@ test.describe('Experiment List', () => {
       await waitTableStable();
       await expect.soft((await row.getCellByColumnName('Name')).pwLocator).toHaveText(editedValue);
     });
+
     // await test.step('Stop', async () => {
     //   // what happens if the experiment is already stopped?
     // });
@@ -344,6 +345,38 @@ test.describe('Experiment List', () => {
     //   // await authedPage.waitForURL(;
     // });
     // await test.step('Hyperparameter Search', async () => {});
+  });
+
+  test('DataGrid Action Stop', async ({ apiSearches, newProject }) => {
+    const search = await apiSearches.new({}, { projectId: newProject.response.project.id });
+    await test.step('filter to experiment', async () => {
+      const tableFilter =
+        await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
+      await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
+      await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
+      await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill(
+        search.id.toString(),
+      );
+
+      await expect(projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator).toHaveText(
+        /^1 /,
+      );
+      await tableFilter.close();
+    });
+    await test.step('stop experiment', async () => {
+      const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+      await row.experimentActionDropdown.open();
+      await row.experimentActionDropdown.pwLocator.getByRole('menuitem', { name: 'Stop' }).click();
+      await expect((await row.getCellByColumnName('State')).pwLocator).toHaveText('canceled');
+    });
+    await test.step('stop menu item should be gone', async () => {
+      const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+      await row.experimentActionDropdown.open();
+      await expect(row.experimentActionDropdown.pwLocator).toBeVisible();
+      await expect(
+        row.experimentActionDropdown.pwLocator.getByRole('menuitem', { name: 'Stop' }),
+      ).toHaveCount(0);
+    });
   });
 
   test('DataGrid Action Pause', async () => {
