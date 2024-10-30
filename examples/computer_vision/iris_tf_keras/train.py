@@ -112,11 +112,12 @@ def main(core_context, strategy, checkpoint, continue_id, hparams, epochs):
         callbacks=[det_cb, tb_cb],
     )
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=100, help="how long to train for")
+    parser.add_argument("--epochs", type=int, default=500, help="how long to train for")
     args = parser.parse_args()
 
     info = det.get_cluster_info()

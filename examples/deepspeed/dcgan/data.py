@@ -21,9 +21,10 @@ CHANNELS_BY_DATASET = {
 
 def get_dataset(data_config: dict) -> torch.utils.data.Dataset:
     if data_config.get("dataroot", None) is None:
-        if str(data_config.get("dataset"),"").lower() != "fake":
-            raise ValueError('`dataroot` parameter is required for dataset "%s"'
-                            % data_config.get("dataset", ""))
+        if str(data_config.get("dataset"), "").lower() != "fake":
+            raise ValueError(
+                '`dataroot` parameter is required for dataset "%s"' % data_config.get("dataset", "")
+            )
         else:
             context = contextlib.nullcontext()
     else:
