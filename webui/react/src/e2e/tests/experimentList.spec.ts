@@ -399,6 +399,19 @@ test.describe('Experiment List', () => {
     });
   });
 
+  test('Archive/Unarchive an experiment', async () => {
+    projectDetailsPage._page.setDefaultTimeout(60_000);
+
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+
+    const experimentActionDropdown = await row.experimentActionDropdown.open();
+    await expect((await row.getCellByColumnName('State')).pwLocator).toHaveText('canceled');
+    await experimentActionDropdown.menuItem('Archive').pwLocator.click();
+    await expect(experimentActionDropdown.menuItem('Unarchive').pwLocator).toBeVisible();
+    await experimentActionDropdown.menuItem('Unarchive').pwLocator.click();
+    await expect(experimentActionDropdown.menuItem('Archive').pwLocator).toBeVisible();
+  });
+
   test.describe('Experiment List Pagination', () => {
     test.beforeAll(({ newProject }) => {
       Array(51)
@@ -676,36 +689,6 @@ test.describe('Experiment List', () => {
         Promise.resolve(true),
       );
       await expect(newProjectRows.length).toBe(1);
-    });
-
-    test('Archive an experiment', async () => {
-      if (experimentId === undefined) throw new Error('No experiment ID was found');
-
-      const newExperimentRow =
-        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
-          'ID',
-          experimentId.toString(),
-        );
-
-      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
-
-      await experimentActionDropdown.menuItem('Archive').pwLocator.click();
-      await expect(experimentActionDropdown.menuItem('Unarchive').pwLocator).toBeVisible();
-    });
-
-    test('Unarchive an experiment', async () => {
-      if (experimentId === undefined) throw new Error('No experiment ID was found');
-
-      const newExperimentRow =
-        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
-          'ID',
-          experimentId.toString(),
-        );
-
-      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
-
-      await experimentActionDropdown.menuItem('Unarchive').pwLocator.click();
-      await expect(experimentActionDropdown.menuItem('Archive').pwLocator).toBeVisible();
     });
   });
 });
