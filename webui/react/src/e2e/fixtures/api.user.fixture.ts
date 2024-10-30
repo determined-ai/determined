@@ -11,14 +11,9 @@ import {
   V1User,
 } from 'services/api-ts-sdk/api';
 
-import { ApiAuthFixture } from './api.auth.fixture';
+import { apiFixture } from './api';
 
-export class ApiUserFixture {
-  readonly apiAuth: ApiAuthFixture;
-  constructor(apiAuth: ApiAuthFixture) {
-    this.apiAuth = apiAuth;
-  }
-
+export class ApiUserFixture extends apiFixture(UsersApi) {
   new({ userProps = {}, usernamePrefix = 'test-user' } = {}): V1PostUserRequest {
     const defaults = {
       isHashed: false,
@@ -35,21 +30,6 @@ export class ApiUserFixture {
     };
   }
 
-  private static normalizeUrl(url: string): string {
-    if (url.endsWith('/')) {
-      return url.substring(0, url.length - 1);
-    }
-    return url;
-  }
-
-  private async startUserRequest(): Promise<UsersApi> {
-    return new UsersApi(
-      { apiKey: await this.apiAuth.getBearerToken() },
-      ApiUserFixture.normalizeUrl(this.apiAuth.baseURL),
-      fetch,
-    );
-  }
-
   /**
    * Creates a user with the given parameters via the API.
    * @param {V1PostUserRequest} req the user request with the config for the new user.
@@ -59,16 +39,14 @@ export class ApiUserFixture {
    * strict superset of the Response, so no info is lost.
    */
   async createUser(req: V1PostUserRequest): Promise<V1PostUserResponse> {
-    const userResp = await (await this.startUserRequest())
-      .postUser(req, {})
-      .catch(async function (error) {
-        const respBody = await streamConsumers.text(error.body);
-        throw new Error(
-          `Create User Request failed. Status: ${error.status} Request: ${JSON.stringify(
-            req,
-          )} Response: ${respBody}`,
-        );
-      });
+    const userResp = await this.api.postUser(req, {}).catch(async function (error) {
+      const respBody = await streamConsumers.text(error.body);
+      throw new Error(
+        `Create User Request failed. Status: ${error.status} Request: ${JSON.stringify(
+          req,
+        )} Response: ${respBody}`,
+      );
+    });
     return _.merge(req, userResp);
   }
 
@@ -81,16 +59,14 @@ export class ApiUserFixture {
    * does not include some fields like password.
    */
   async patchUser(id: number, user: V1PatchUser): Promise<V1User> {
-    const userResp = await (await this.startUserRequest())
-      .patchUser(id, user)
-      .catch(async function (error) {
-        const respBody = await streamConsumers.text(error.body);
-        throw new Error(
-          `Patch User Request failed. Status: ${error.status} Request: ${JSON.stringify(
-            user,
-          )} Response: ${respBody}`,
-        );
-      });
+    const userResp = await this.api.patchUser(id, user).catch(async function (error) {
+      const respBody = await streamConsumers.text(error.body);
+      throw new Error(
+        `Patch User Request failed. Status: ${error.status} Request: ${JSON.stringify(
+          user,
+        )} Response: ${respBody}`,
+      );
+    });
     return userResp.user;
   }
 }

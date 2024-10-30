@@ -11,11 +11,11 @@ import {
   V1PostWorkspaceResponse,
 } from 'services/api-ts-sdk/api';
 
-// eslint-disable-next-line no-restricted-imports
-
+import { ApiArgsFixture } from './api';
 import { ApiAuthFixture } from './api.auth.fixture';
 import { ApiProjectFixture } from './api.project.fixture';
 import { ApiRoleFixture } from './api.roles.fixture';
+import { ApiSearchFixture } from './api.search.fixture';
 import { ApiUserFixture } from './api.user.fixture';
 import { ApiWorkspaceFixture } from './api.workspace.fixture';
 import { AuthFixture } from './auth.fixture';
@@ -31,6 +31,8 @@ type CustomFixtures = {
   apiWorkspace: ApiWorkspaceFixture;
   apiProject: ApiProjectFixture;
   authedPage: Page;
+  apiArgs: ApiArgsFixture;
+  apiSearches: ApiSearchFixture;
 };
 
 type CustomWorkerFixtures = {
@@ -44,10 +46,21 @@ type CustomWorkerFixtures = {
   backgroundApiWorkspace: ApiWorkspaceFixture;
   backgroundApiProject: ApiProjectFixture;
   backgroundAuthedPage: Page;
+  backgroundApiArgs: ApiArgsFixture;
+  backgroundApiSearches: ApiSearchFixture;
+};
+
+const makeApiArgs = async (auth: ApiAuthFixture): Promise<ApiArgsFixture> => {
+  const { baseURL } = auth;
+  const normalizedURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+  return [{ apiKey: await auth.getBearerToken() }, normalizedURL, fetch];
 };
 
 // https://playwright.dev/docs/test-fixtures
 export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
+  apiArgs: async ({ apiAuth }, use) => {
+    await use(await makeApiArgs(apiAuth));
+  },
   // get the auth but allow yourself to log in through the api manually.
   apiAuth: async ({ playwright, browser, newAdmin, devSetup }, use) => {
     const apiAuth = new ApiAuthFixture(playwright.request, browser, apiUrl(), devSetup);
@@ -71,18 +84,28 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     await use(apiAuth);
   },
 
-  apiProject: async ({ apiAuth }, use) => {
-    const apiProject = new ApiProjectFixture(apiAuth);
+  apiProject: async ({ apiArgs }, use) => {
+    const apiProject = new ApiProjectFixture(apiArgs);
     await use(apiProject);
   },
 
-  apiUser: async ({ apiAuth }, use) => {
-    const apiUser = new ApiUserFixture(apiAuth);
+  apiSearches: async ({ apiWorkspace, apiProject, apiArgs }, use) => {
+    // TODO: save everyone some time by having new call the create api
+    const workspaceProps = apiWorkspace.new();
+    const workspace = await apiWorkspace.createWorkspace(workspaceProps);
+    const projectProps = apiProject.new({ projectProps: { workspaceId: workspace.workspace.id } });
+    const project = await apiProject.createProject(projectProps.workspaceId, projectProps);
+    await use(new ApiSearchFixture(apiArgs, project.project.id));
+    await apiWorkspace.deleteWorkspace(workspace.workspace.id);
+  },
+
+  apiUser: async ({ apiArgs }, use) => {
+    const apiUser = new ApiUserFixture(apiArgs);
     await use(apiUser);
   },
 
-  apiWorkspace: async ({ apiAuth }, use) => {
-    const apiWorkspace = new ApiWorkspaceFixture(apiAuth);
+  apiWorkspace: async ({ apiArgs }, use) => {
+    const apiWorkspace = new ApiWorkspaceFixture(apiArgs);
     await use(apiWorkspace);
   },
 
@@ -96,6 +119,13 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     await apiAuth.loginBrowser(apiAuth.page);
     await use(apiAuth.page);
   },
+
+  backgroundApiArgs: [
+    async ({ backgroundApiAuth }, use) => {
+      await use(await makeApiArgs(backgroundApiAuth));
+    },
+    { scope: 'worker' },
+  ],
 
   /**
    * Does not require the pre-existing Playwright page and does not login so this can be called in beforeAll.
@@ -124,8 +154,8 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   ],
 
   backgroundApiProject: [
-    async ({ backgroundApiAuth }, use) => {
-      const backgroundApiProject = new ApiProjectFixture(backgroundApiAuth);
+    async ({ backgroundApiArgs }, use) => {
+      const backgroundApiProject = new ApiProjectFixture(backgroundApiArgs);
       await use(backgroundApiProject);
     },
     { scope: 'worker' },
@@ -137,6 +167,23 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     },
     { scope: 'worker' },
   ],
+  backgroundApiSearches: [
+    async ({ backgroundApiWorkspace, backgroundApiProject, backgroundApiArgs }, use) => {
+      // TODO: save everyone some time by having new call the create api
+      const workspaceProps = backgroundApiWorkspace.new();
+      const workspace = await backgroundApiWorkspace.createWorkspace(workspaceProps);
+      const projectProps = backgroundApiProject.new({
+        projectProps: { workspaceId: workspace.workspace.id },
+      });
+      const project = await backgroundApiProject.createProject(
+        projectProps.workspaceId,
+        projectProps,
+      );
+      await use(new ApiSearchFixture(backgroundApiArgs, project.project.id));
+      await backgroundApiWorkspace.deleteWorkspace(workspace.workspace.id);
+    },
+    { scope: 'worker' },
+  ],
   /**
    * Allows calling the user api without a page so that it can run in beforeAll(). You will need to get a bearer
    * token by calling backgroundApiUser.apiAuth.loginAPI(). This will also provision a page in the background which
@@ -144,15 +191,15 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
    * then login() again, since setServerAddress logs out as a side effect.
    */
   backgroundApiUser: [
-    async ({ backgroundApiAuth }, use) => {
-      const backgroundApiUser = new ApiUserFixture(backgroundApiAuth);
+    async ({ backgroundApiArgs }, use) => {
+      const backgroundApiUser = new ApiUserFixture(backgroundApiArgs);
       await use(backgroundApiUser);
     },
     { scope: 'worker' },
   ],
   backgroundApiWorkspace: [
-    async ({ backgroundApiAuth }, use) => {
-      const backgroundApiWorkspace = new ApiWorkspaceFixture(backgroundApiAuth);
+    async ({ backgroundApiArgs }, use) => {
+      const backgroundApiWorkspace = new ApiWorkspaceFixture(backgroundApiArgs);
       await use(backgroundApiWorkspace);
     },
     { scope: 'worker' },
