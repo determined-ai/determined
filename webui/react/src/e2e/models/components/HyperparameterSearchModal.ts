@@ -38,7 +38,7 @@ class SearcherPage extends BaseComponent {
   });
   readonly poolInput = new Select({
     parent: this,
-    selector: 'input[id="pool"]',
+    selector: '[data-test="pool"]',
   });
   readonly slotsInput = new BaseComponent({
     parent: this,
@@ -46,7 +46,7 @@ class SearcherPage extends BaseComponent {
   });
   readonly earlyStoppingInput = new Select({
     parent: this,
-    selector: 'input[id="mode"]',
+    selector: '[data-test="mode"]',
   });
   readonly stopOnceInput = new BaseComponent({
     parent: this,

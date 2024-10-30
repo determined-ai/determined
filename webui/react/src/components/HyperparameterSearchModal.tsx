@@ -482,13 +482,13 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           rules={[{ required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
-        <div className={css.poolContainer}>
+        <div className={css.poolContainer} data-test="pool">
           <Form.Item
             initialValue={resourcePool?.name}
             label="Resource pool"
             name="pool"
             rules={[{ required: true }]}>
-            <Select onChange={handleSelectPool}>
+            <Select attachDropdownToContainer={true} onChange={handleSelectPool}>
               {resourcePools.map((pool) => (
                 <Option key={pool.name} value={pool.name}>
                   {pool.name}
@@ -514,26 +514,28 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           </Form.Item>
         </div>
         {searcher.id === 'adaptive_asha' && (
-          <Form.Item
-            initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
-            label={
-              <div className={css.labelWithTooltip}>
-                Early stopping mode
-                <Icon
-                  name="info"
-                  showTooltip
-                  title="How aggressively to perform early stopping of underperforming trials"
-                />
-              </div>
-            }
-            name="mode"
-            rules={[{ required: true }]}>
-            <Select>
-              <Option value="aggressive">Aggressive</Option>
-              <Option value="standard">Standard</Option>
-              <Option value="conservative">Conservative</Option>
-            </Select>
-          </Form.Item>
+          <div data-test="mode">
+            <Form.Item
+              initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
+              label={
+                <div className={css.labelWithTooltip}>
+                  Early stopping mode
+                  <Icon
+                    name="info"
+                    showTooltip
+                    title="How aggressively to perform early stopping of underperforming trials"
+                  />
+                </div>
+              }
+              name="mode"
+              rules={[{ required: true }]}>
+              <Select attachDropdownToContainer={true}>
+                <Option value="aggressive">Aggressive</Option>
+                <Option value="standard">Standard</Option>
+                <Option value="conservative">Conservative</Option>
+              </Select>
+            </Form.Item>
+          </div>
         )}
         {searcher.id === 'adaptive_asha' && (
           <Form.Item
@@ -715,21 +717,28 @@ const HyperparameterRow: React.FC<RowProps> = ({
           <Input aria-labelledby="name" onChange={validateValue} />
         </Form.Item>
       </div>
-      <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
-        <Select aria-labelledby="type" ref={typeRef} width={'100%'} onChange={handleTypeChange}>
-          {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
-            (type) => (
-              <Option
-                disabled={HyperparameterType[type] === HyperparameterType.Categorical}
-                key={HyperparameterType[type]}
-                value={HyperparameterType[type]}>
-                {type}
-                {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
-              </Option>
-            ),
-          )}
-        </Select>
-      </Form.Item>
+      <div data-test={`${name}_type`}>
+        <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
+          <Select
+            aria-labelledby="type"
+            attachDropdownToContainer={true}
+            ref={typeRef}
+            width={'100%'}
+            onChange={handleTypeChange}>
+            {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
+              (type) => (
+                <Option
+                  disabled={HyperparameterType[type] === HyperparameterType.Categorical}
+                  key={HyperparameterType[type]}
+                  value={HyperparameterType[type]}>
+                  {type}
+                  {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
+                </Option>
+              ),
+            )}
+          </Select>
+        </Form.Item>
+      </div>
       <Form.Item
         initialValue={hyperparameter.val}
         name={[name, 'value']}
