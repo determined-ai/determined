@@ -677,5 +677,35 @@ test.describe('Experiment List', () => {
       );
       await expect(newProjectRows.length).toBe(1);
     });
+
+    test('Archive an experiment', async () => {
+      if (experimentId === undefined) throw new Error('No experiment ID was found');
+
+      const newExperimentRow =
+        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+          'ID',
+          experimentId.toString(),
+        );
+
+      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
+
+      await experimentActionDropdown.menuItem('Archive').pwLocator.click();
+      await expect(experimentActionDropdown.menuItem('Unarchive').pwLocator).toBeVisible();
+    });
+
+    test('Unarchive an experiment', async () => {
+      if (experimentId === undefined) throw new Error('No experiment ID was found');
+
+      const newExperimentRow =
+        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+          'ID',
+          experimentId.toString(),
+        );
+
+      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
+
+      await experimentActionDropdown.menuItem('Unarchive').pwLocator.click();
+      await expect(experimentActionDropdown.menuItem('Archive').pwLocator).toBeVisible();
+    });
   });
 });
