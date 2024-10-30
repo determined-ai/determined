@@ -4894,38 +4894,6 @@ workflows:
               upgrade-from-branch: *release-upgrade
 
       - test-e2e:
-          name: test-e2e-postgres10-with-ssl
-          context:
-            - dev-ci-cluster-default-user-credentials
-            - github-read
-          requires:
-            - build-go-ee
-          parallelism: 1
-          mark: e2e_cpu_postgres
-          devcluster-config: postgres-with-ssl.devcluster.yaml
-          target-stage: agent
-          postgres-version: "10"
-          matrix:
-            parameters:
-              upgrade-from-branch: *release-upgrade
-
-      - test-e2e:
-          name: test-e2e-postgres14-with-ssl
-          context:
-            - dev-ci-cluster-default-user-credentials
-            - github-read
-          requires:
-            - build-go-ee
-          parallelism: 1
-          mark: e2e_cpu_postgres
-          devcluster-config: postgres-with-ssl.devcluster.yaml
-          target-stage: agent
-          postgres-version: "14"
-          matrix:
-            parameters:
-              upgrade-from-branch: *release-upgrade
-
-      - test-e2e:
           name: test-e2e-old-agent-versions
           context:
             - dev-ci-cluster-default-user-credentials
