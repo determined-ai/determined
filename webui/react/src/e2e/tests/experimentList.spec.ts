@@ -390,7 +390,7 @@ test.describe('Experiment List', () => {
       switch (searcherType) {
         // @ts-expect-error Cases fall through intentionally in order of narrowing config options
         case 'adaptive':
-          await hpSearchModal.searcherPage.earlyStoppingInput.selectMenuOption('aggressive');
+          await hpSearchModal.searcherPage.earlyStoppingInput.selectMenuOptionByIndex(0);
           await hpSearchModal.searcherPage.stopOnceInput.pwLocator.click();
         case 'random':
           await hpSearchModal.searcherPage.maxRunsInput.pwLocator.fill('8');
@@ -402,7 +402,16 @@ test.describe('Experiment List', () => {
       await hpSearchModal.footer.submit.pwLocator.click(); // switch to page 2
       await expect(hpSearchModal.footer.submit.pwLocator).toHaveText('Run Experiment');
 
+      // handle hp types and values
+      // create some sort of helper function to handle rows
+
+      if (searcherType === 'grid') {
+        // handle grid count cells
+      }
+
       await hpSearchModal.footer.submit.pwLocator.click(); // submit search
+
+      // handle checking whether exp is created correctly
     });
   });
 
