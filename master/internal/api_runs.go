@@ -178,7 +178,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
 }
 
-func sortRuns(sortString *string, runQuery *bun.SelectQuery, useId bool) error {
+func sortRuns(sortString *string, runQuery *bun.SelectQuery, useID bool) error {
 	if sortString == nil {
 		return nil
 	}
@@ -262,7 +262,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery, useId bool) error {
 				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
 	}
-	if !hasIDSort && useId {
+	if !hasIDSort && useID {
 		runQuery.OrderExpr("id ASC")
 	}
 	return nil
@@ -1127,12 +1127,12 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 		query.OrderExpr("group_name ASC")
 	}
 
-	group_name, err := runColumnNameToSQL(req.Group)
+	groupName, err := runColumnNameToSQL(req.Group)
 	if err != nil {
 		return nil, err
 	}
-	query.Group(group_name)
-	query.ColumnExpr(fmt.Sprintf("%s AS group_name", group_name))
+	query.Group(groupName)
+	query.ColumnExpr(fmt.Sprintf("%s AS group_name", groupName))
 	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
