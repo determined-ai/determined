@@ -394,7 +394,10 @@ def deploy_stack(
             if prompt_needed:
                 val = input(
                     "If --deployment-type has changed, updating the stack may erase the database.\n"
-                    "Are you sure you want to proceed? [y/N]"
+                    "If you previously used --deployment-type simple or no value and upgraded\n"
+                    "to 0.38.0, you need to follow this guide to manually migrate Aurora V1:\n"
+                    "\thttps://gist.github.com/rb-determined-ai/bfa10182e53968e00a3c88df624e777e\n"
+                    "Are you sure you want to proceed? [y/N]\n"
                 )
                 if val.lower() != "y":
                     print("Update canceled.")
