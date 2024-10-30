@@ -61,7 +61,6 @@ or CLI.
    It is recommended that administrators save their configuration policies for each scope in
    separate YAML or JSON files. This provides an easy way to back up and restore policies if needed.
 
-
 .. note::
 
    Checkpoint storage can be configured for workspaces and in experiment invariant configs, but 
