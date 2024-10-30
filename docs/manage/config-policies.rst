@@ -61,6 +61,13 @@ or CLI.
    It is recommended that administrators save their configuration policies for each scope in
    separate YAML or JSON files. This provides an easy way to back up and restore policies if needed.
 
+.. note::
+
+   Checkpoint storage can be configured for workspaces and in experiment invariant configs, but they
+   have different functions. Workspace checkpoint storage serves as a default that can be overridden
+   by experiment configuration, while any experiment invariant config is fixed and will override
+   both workspace defaults and user-defined configuration.
+
 WebUI
 =====
 
