@@ -8,15 +8,14 @@ import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
 import { V1Project } from 'services/api-ts-sdk';
-import { ExperimentBase } from 'types';
+import { ExperimentBase, RunState } from 'types';
 
 dayjs.extend(utcPlugin);
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
-  const waitTableStable = async () =>
-    await projectDetailsPage._page.waitForTimeout(2_000);
+  const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
@@ -623,13 +622,8 @@ test.describe('Experiment List', () => {
             `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
           ).split(' ')[2],
         ); // returns in the format "Created experiment <exp_id>"
-        killExperiment = Number(
-          detExecSync(
-            `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --paused --project_id ${project.id}`,
-          ).split(' ')[2],
-        ); // returns in the format "Created experiment <exp_id>"
 
-        if (Number.isNaN(experimentId) || Number.isNaN(killExperiment)) throw new Error('No experiment ID was found');
+        if (Number.isNaN(experimentId)) throw new Error('No experiment ID was found');
       },
     );
 
@@ -640,7 +634,6 @@ test.describe('Experiment List', () => {
         detExecSync(`experiment delete ${experimentId} --y`);
       }
       if (killExperiment !== undefined) {
-        detExecSync(`experiment kill ${killExperiment}`);
         detExecSync(`experiment delete ${killExperiment} --y`);
       }
 
@@ -687,9 +680,24 @@ test.describe('Experiment List', () => {
       await expect(newProjectRows.length).toBe(1);
     });
 
-    test('kill experiment', async () => {
+    test('kill experiment', async ({
+      newProject: {
+        response: { project },
+      },
+      newWorkspace: {
+        response: { workspace },
+      },
+    }) => {
+      killExperiment = Number(
+        detExecSync(
+          `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --project_id ${project.id}`,
+        ).split(' ')[2],
+      );
       if (Number.isNaN(killExperiment)) throw new Error('No experiment ID was found');
 
+      const grid = projectDetailsPage.f_experimentList.dataGrid;
+      await grid.setColumnHeight();
+      await grid.headRow.setColumnDefs();
       const newExperimentRow =
         await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
           'ID',
@@ -700,17 +708,18 @@ test.describe('Experiment List', () => {
 
       await experimentActionDropdown.menuItem('Kill').pwLocator.click();
 
-      await expect(
-        experimentActionDropdown.stopKillModal.targetExperiment.pwLocator.textContent(),
-      ).toContain(experimentId.toString());
-
-      await experimentActionDropdown.stopKillModal.footer.submit.pwLocator.click();
+      await experimentActionDropdown.stopKillModal.pwLocator.waitFor({ state: 'visible' });
+      await experimentActionDropdown.stopKillModal.footer.pwLocator.getByText('Kill').click();
       await experimentActionDropdown.stopKillModal.pwLocator.waitFor({ state: 'hidden' });
 
       // eslint-disable-next-line no-console
       console.log((await newExperimentRow.getCellByColumnName('State')).pwLocator.innerText());
-
-      expect(true).toBe(true);
+      const experiments: ExperimentBase[] = JSON.parse(
+        detExecSync(`project list-experiments --json ${workspace.name} ${project.name}`),
+      );
+      const killedExperiment = experiments.find(({ id }) => id === killExperiment);
+      await expect(killedExperiment).not.toBeUndefined();
+      await expect(killedExperiment?.state).toContain(RunState.Canceled);
     });
   });
 });
