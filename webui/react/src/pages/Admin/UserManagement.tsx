@@ -494,15 +494,17 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
             width={'100%'}
             onChange={handleNameSearchApply}
           />
-          <Select
-            data-testid="roleSelect"
-            options={roleOptions}
-            placeholder="Role"
-            searchable={false}
-            value={roleFilter}
-            width={'100%'}
-            onChange={handleRoleFilterApply}
-          />
+          {!rbacEnabled && (
+            <Select
+              data-testid="roleSelect"
+              options={roleOptions}
+              placeholder="Role"
+              searchable={false}
+              value={roleFilter}
+              width={'100%'}
+              onChange={handleRoleFilterApply}
+            />
+          )}
           <Select
             data-testid="statusSelect"
             options={statusOptions}

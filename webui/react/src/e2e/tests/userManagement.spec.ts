@@ -6,6 +6,7 @@ import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { safeName, sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { isRbacEnabled } from 'e2e/utils/rbac';
 import { TestUser } from 'e2e/utils/users';
 import { V1User } from 'services/api-ts-sdk';
 
@@ -401,9 +402,11 @@ test.describe('User Management', () => {
           await testSort('user', 'name');
         });
 
-        await test.step('Sort by role', async () => {
-          await testSort('role', 'admin');
-        });
+        if (!isRbacEnabled()) {
+          await test.step('Sort by role', async () => {
+            await testSort('role', 'admin');
+          });
+        }
 
         await test.step('Sort by status', async () => {
           await testSort('status', 'active');
@@ -432,8 +435,10 @@ test.describe('User Management', () => {
         const resetFilters = async () => {
           await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
 
-          await userManagementPage.filterRole.openMenu();
-          await userManagementPage.filterRole.allRoles.pwLocator.click();
+          if (!isRbacEnabled()) {
+            await userManagementPage.filterRole.openMenu();
+            await userManagementPage.filterRole.allRoles.pwLocator.click();
+          }
 
           await userManagementPage.filterStatus.openMenu();
           await userManagementPage.filterStatus.allStatuses.pwLocator.click();
@@ -451,19 +456,21 @@ test.describe('User Management', () => {
           );
         });
 
-        await test.step('Filter by role', async () => {
-          await resetFilters();
+        if (!isRbacEnabled()) {
+          await test.step('Filter by role', async () => {
+            await resetFilters();
 
-          await userManagementPage.filterRole.openMenu();
-          await userManagementPage.filterRole.admin.pwLocator.click();
+            await userManagementPage.filterRole.openMenu();
+            await userManagementPage.filterRole.admin.pwLocator.click();
 
-          await validateFilter((u) => !!u.admin);
+            await validateFilter((u) => !!u.admin);
 
-          await userManagementPage.filterRole.openMenu();
-          await userManagementPage.filterRole.nonAdmin.pwLocator.click();
+            await userManagementPage.filterRole.openMenu();
+            await userManagementPage.filterRole.nonAdmin.pwLocator.click();
 
-          await validateFilter((u) => !u.admin);
-        });
+            await validateFilter((u) => !u.admin);
+          });
+        }
 
         await test.step('Filter by status', async () => {
           await resetFilters();
