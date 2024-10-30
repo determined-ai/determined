@@ -290,7 +290,7 @@ func (a *apiServer) PostModel(
 
 	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
 		return nil,
-			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
+			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-sensitive)")
 	}
 	return &apiv1.PostModelResponse{Model: m},
 		errors.Wrapf(err, "error creating model %q in database", req.Name)
@@ -426,7 +426,7 @@ func (a *apiServer) PatchModel(
 
 	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
 		return nil,
-			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
+			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-sensitive)")
 	}
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %q in database", currModel.Name)
