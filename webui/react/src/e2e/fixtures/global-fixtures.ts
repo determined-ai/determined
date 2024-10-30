@@ -181,7 +181,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
       );
       await use(new ApiSearchFixture(backgroundApiArgs, project.project.id));
       await backgroundApiWorkspace.deleteWorkspace(workspace.workspace.id);
-      },
+    },
     { scope: 'worker' },
   ],
   /**
