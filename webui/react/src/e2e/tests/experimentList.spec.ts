@@ -1,10 +1,16 @@
+import dayjs from 'dayjs';
+import utcPlugin from 'dayjs/plugin/utc';
+
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ExperimentRow } from 'e2e/models/components/F_ExperimentList';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { V1Project } from 'services/api-ts-sdk';
 import { ExperimentBase } from 'types';
+
+dayjs.extend(utcPlugin);
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
@@ -13,7 +19,7 @@ test.describe('Experiment List', () => {
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
-    if (count === null) throw new Error('Count is null');
+    if (count === null) return 0;
     return parseInt(count);
   };
 
@@ -56,11 +62,14 @@ test.describe('Experiment List', () => {
       timeout: 10_000,
     });
     await test.step('Deselect', async () => {
-      try {
-        await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
-      } catch (e) {
-        // close the dropdown by clicking elsewhere
-        await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.click();
+      const count = await getCount();
+      if (count !== 0) {
+        await grid.headRow.clickSelectHeader();
+        const isClearSelectionVisible =
+          await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.isVisible();
+        if (isClearSelectionVisible) {
+          await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.click();
+        }
       }
     });
     await test.step('Reset Columns', async () => {
@@ -296,11 +305,6 @@ test.describe('Experiment List', () => {
     await test.step('Read Cell Value', async () => {
       await expect.soft((await row.getCellByColumnName('ID')).pwLocator).toHaveText(/\d+/);
     });
-    await test.step('Select 5', async () => {
-      await (
-        await projectDetailsPage.f_experimentList.dataGrid.headRow.selectDropdown.open()
-      ).select5.pwLocator.click();
-    });
     await test.step('Experiment Overview Navigation', async () => {
       await projectDetailsPage.f_experimentList.dataGrid.scrollLeft();
       const textContent = await (await row.getCellByColumnName('ID')).pwLocator.textContent();
@@ -442,67 +446,108 @@ test.describe('Experiment List', () => {
     });
   });
   test.describe('Experiment List Multi-sort', () => {
-    const runScenarioAndValidation = (projectDetailsPage: ProjectDetails) => {
-      const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
-      const validateByColumn = async (
-        rows: ExperimentRow[],
-        colKey: string,
-        descending: boolean,
-      ) => {
-        const valuesToCompare = await Promise.all(
-          rows.map(async (r) => (await r.getCellByColumnName(colKey)).pwLocator.innerText()),
-        );
-        // eslint-disable-next-line no-console
-        console.log(valuesToCompare[0]);
+    type sort = { column: string; direction: 'asc' | 'desc' };
 
-        const expectedValues = [...valuesToCompare].sort();
-        if (descending) {
-          expectedValues.reverse();
-        }
-        expect(valuesToCompare).toEqual(expectedValues);
-      };
-      const checkTableOrder = async (firstKey: string, secondKey: string, descending = false) => {
-        const rows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(
-          async () => await true,
-        );
-        await validateByColumn(rows, firstKey, descending);
-        await validateByColumn(rows, secondKey, descending);
-      };
-      const sortingScenario = async (
-        firstSortBy: string,
-        firstSortOrder: string,
-        secondSortBy: string,
-        secondSortOrder: string,
-        scenario: () => Promise<void>,
-      ): Promise<void> => {
-        await test.step(`Sort by ${firstSortBy} and ${secondSortBy}`, async () => {
+    // best-effort column text parsing -- may need to read the actual column defs to be perfect
+    const parseColumnText = (text: string) => {
+      if (text === '-') {
+        return null;
+      }
+      const num = Number(text);
+      if (!Number.isNaN(num)) {
+        return num;
+      }
+      const date = dayjs.utc(text);
+      if (date.isValid()) {
+        return date;
+      }
+      return text;
+    };
+    const testSorts = (sorts: sort[]) => {
+      const lastSort = sorts[sorts.length - 1];
+      const sortTextList = sorts
+        .slice(0, -1)
+        .map((s) => `${s.column} ${s.direction}`)
+        .join(', ');
+
+      return test(`Sort by ${sortTextList} and ${lastSort.column} ${lastSort.direction}`, async () => {
+        await test.step('Set Up Sorts', async () => {
+          const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
           await multiSortMenu.open();
           await multiSortMenu.multiSort.reset.pwLocator.click();
+          // weirdness alert: reset closes the sort menu normally, but doesn't
+          // in playwright locally. in ci the locators become unstable
           await multiSortMenu.close();
           await multiSortMenu.open();
 
-          const firstRow = multiSortMenu.multiSort.rows.nth(0);
-          await firstRow.column.selectMenuOption(firstSortBy);
-          await firstRow.order.selectMenuOption(firstSortOrder);
-
-          await multiSortMenu.multiSort.add.pwLocator.click();
-
-          const secondRow = multiSortMenu.multiSort.rows.nth(1);
-          await secondRow.column.selectMenuOption(secondSortBy);
-          await secondRow.order.selectMenuOption(secondSortOrder);
-
+          for (let i = 0; i < sorts.length; i++) {
+            const sort = sorts[i];
+            const sortRow = multiSortMenu.multiSort.rows.nth(i);
+            await sortRow.column.selectMenuOption(sort.column);
+            // select order menu item by value not label
+            await sortRow.order.openMenu();
+            await sortRow.order._menu.pwLocator
+              .locator(`[data-select-value="${sort.direction}"]`)
+              .click();
+            if (i < sorts.length - 1) {
+              await multiSortMenu.multiSort.add.pwLocator.click();
+            }
+          }
           await multiSortMenu.close();
           await waitTableStable();
-          await scenario();
         });
-      };
 
-      return { checkTableOrder, sortingScenario };
+        await test.step('Verify Order', async () => {
+          const rows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(() =>
+            Promise.resolve(true),
+          );
+          const getValuesForRow = async (r: ExperimentRow) => {
+            const rowColumnValues = await Promise.all(
+              sorts.map(async ({ column }) => ({
+                [column]: await (await r.getCellByColumnName(column)).pwLocator.innerText(),
+              })),
+            );
+            return Object.assign({}, ...rowColumnValues);
+          };
+          const rowValues = await Promise.all(rows.map(getValuesForRow));
+          // sorting all values at the same time to make reported failures easier to decipher
+          // it'd be nice to use _.orderBy, but it's harder to suss out the null placement logic
+          const expectedOrder = [...rowValues].sort((rowA, rowB) => {
+            for (const sort of sorts) {
+              const isAscending = sort.direction === 'asc';
+              const valueA = parseColumnText(rowA[sort.column]);
+              const valueB = parseColumnText(rowB[sort.column]);
+              // nulls are always last
+              if (valueA === null && valueB !== null) {
+                return 1;
+              }
+              if (valueB === null && valueA !== null) {
+                return -1;
+              }
+              if (typeof valueA === 'string' && typeof valueB === 'string' && valueA !== valueB) {
+                const cmpValue = valueA < valueB ? -1 : 1;
+                return isAscending ? cmpValue : cmpValue * -1;
+              }
+              if (typeof valueA === 'number' && typeof valueB === 'number' && valueA !== valueB) {
+                const cmpValue = valueA - valueB;
+                return isAscending ? cmpValue : cmpValue * -1;
+              }
+              if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB) && !valueA.isSame(valueB)) {
+                const cmpValue = valueA.isBefore(valueB) ? -1 : 1;
+                return isAscending ? cmpValue : cmpValue * -1;
+              }
+              // if types are different or values are same, skip the column
+            }
+            return 0;
+          });
+          expect(rowValues).toEqual(expectedOrder);
+        });
+      });
     };
 
-    test.beforeAll(async ({ newProject }) => {
+    test.beforeAll(({ newProject }) => {
       // create a new experiment for comparing Searcher Metric and Trial Count
-      await detExecSync(
+      detExecSync(
         `experiment create ${fullPath('examples/tutorials/core_api_pytorch_mnist/checkpoints.yaml')} --paused --project_id ${newProject.response.project.id}`,
       );
     });
@@ -531,32 +576,106 @@ test.describe('Experiment List', () => {
       await projectDetailsPage.f_experimentList.dataGrid.headRow.setColumnDefs();
     });
 
-    test('sort with ID as 0 → 9 and Searcher as A → Z', async () => {
-      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
-      await sortingScenario('ID', '0 → 9', 'Searcher', 'A → Z', async () => {
-        await checkTableOrder('ID', 'Searcher');
-      });
+    testSorts([
+      { column: 'ID', direction: 'asc' },
+      { column: 'Searcher', direction: 'asc' },
+    ]);
+
+    testSorts([
+      { column: 'ID', direction: 'desc' },
+      { column: 'Searcher', direction: 'desc' },
+    ]);
+
+    testSorts([
+      { column: 'Trial count', direction: 'asc' },
+      { column: 'Searcher Metric', direction: 'asc' },
+    ]);
+
+    testSorts([
+      { column: 'Trial count', direction: 'desc' },
+      { column: 'Searcher Metric', direction: 'desc' },
+    ]);
+  });
+
+  test.describe('Row Actions', () => {
+    let destinationProject: V1Project;
+    let experimentId: number;
+
+    // create a new project, workspace and experiment
+    test.beforeAll(
+      async ({
+        backgroundApiProject,
+        newProject: {
+          response: { project },
+        },
+      }) => {
+        destinationProject = (
+          await backgroundApiProject.createProject(
+            project.workspaceId,
+            backgroundApiProject.new({ projectProps: { workspaceId: project.workspaceId } }),
+          )
+        ).project;
+
+        const expId = Number(
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${project.id}`,
+          ).split(' ')[2],
+        ); // returns in the format "Created experiment <exp_id>"
+
+        if (Number.isNaN(expId)) throw new Error('No experiment ID was found');
+
+        experimentId = expId;
+      },
+    );
+
+    // cleanup
+    test.afterAll(async ({ backgroundApiProject }) => {
+      if (experimentId !== undefined) {
+        detExecSync(`experiment kill ${experimentId}`);
+        detExecSync(`experiment delete ${experimentId} --y`);
+      }
+
+      await backgroundApiProject.deleteProject(destinationProject.id);
     });
 
-    test('sort with ID as 9 → 0 and Searcher as Z → A', async () => {
-      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
-      await sortingScenario('ID', '9 → 0', 'Searcher', 'Z → A', async () => {
-        await checkTableOrder('ID', 'Searcher', true);
-      });
-    });
+    test('move experiment', async ({
+      newWorkspace: {
+        response: { workspace },
+      },
+    }) => {
+      if (experimentId === undefined) throw new Error('No experiment ID was found');
 
-    test('sort with Trial count as 0 → 0 and Searcher Metric as A → Z', async () => {
-      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
-      await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
-        await checkTableOrder('Trial count', 'Searcher Metric');
-      });
-    });
+      const newExperimentRow =
+        await projectDetailsPage.f_experimentList.dataGrid.getRowByColumnValue(
+          'ID',
+          experimentId.toString(),
+        );
 
-    test('sort with Trial count as 9 → 0 and Searcher Metric as Z → A', async () => {
-      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
-      await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'Z → A', async () => {
-        await checkTableOrder('Trial count', 'Searcher Metric', true);
+      const experimentActionDropdown = await newExperimentRow.experimentActionDropdown.open();
+
+      await experimentActionDropdown.menuItem('Move').pwLocator.click();
+      await experimentActionDropdown.moveModal.destinationWorkspace.selectMenuOption(
+        workspace.name,
+      );
+      await experimentActionDropdown.moveModal.destinationProject.pwLocator.waitFor({
+        state: 'visible',
       });
+      await experimentActionDropdown.moveModal.destinationProject.selectMenuOption(
+        destinationProject.name,
+      );
+      await experimentActionDropdown.moveModal.footer.submit.pwLocator.click();
+      await experimentActionDropdown.moveModal.pwLocator.waitFor({ state: 'hidden' });
+
+      await newExperimentRow.pwLocator.waitFor({ state: 'hidden' });
+
+      await projectDetailsPage.gotoProject(destinationProject.id);
+      const grid = projectDetailsPage.f_experimentList.dataGrid;
+      await grid.setColumnHeight();
+      await grid.headRow.setColumnDefs();
+      const newProjectRows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(() =>
+        Promise.resolve(true),
+      );
+      await expect(newProjectRows.length).toBe(1);
     });
   });
 });

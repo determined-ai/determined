@@ -478,7 +478,7 @@ func TestHPSearchContinueProvideConfigError(t *testing.T) {
 	_, err := db.Bun().NewUpdate().Table("experiments").
 		Set("state = ?", model.CompletedState).
 		Set("config = jsonb_set(config, '{searcher}', "+
-			`'{"name": "random", "metric": "loss", "max_trials": 5, "max_length": 5}', false)`).
+			`'{"name": "random", "metric": "loss", "max_trials": 5}', false)`).
 		Where("id = ?", trial.ExperimentID).
 		Exec(ctx)
 	require.NoError(t, err)
@@ -497,7 +497,7 @@ func TestHPSearchContinueCompletedError(t *testing.T) {
 	_, err := db.Bun().NewUpdate().Table("experiments").
 		Set("state = ?", model.CompletedState).
 		Set("config = jsonb_set(config, '{searcher}', "+
-			`'{"name": "random", "metric": "loss", "max_trials": 5, "max_length": 5}', false)`).
+			`'{"name": "random", "metric": "loss", "max_trials": 5}', false)`).
 		Where("id = ?", trial.ExperimentID).
 		Exec(ctx)
 	require.NoError(t, err)
@@ -605,26 +605,9 @@ workspace: test
 
 	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
 searcher:
-    max_length:
-        batches: 10
-`)
-	require.ErrorContains(t, err, "you might also need to specify searcher.name=single")
-
-	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
-searcher:
-  max_length:
-    batches: 10
-  name: single
-`)
-	require.NoError(t, err)
-
-	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
-searcher:
   name: random
   metric: accuracy
   max_trials: 5
-  max_length:
-    batches: 1000
 `)
 	require.ErrorContains(t, err,
 		"override config must have single searcher type got 'random' instead")
@@ -640,8 +623,6 @@ searcher:
   smaller_is_better: true
   name: random
   max_trials: 3
-  max_length:
-    batches: 10
 resources:
   resource_pool: kubernetes`
 	createReq := &apiv1.CreateExperimentRequest{
@@ -664,8 +645,6 @@ searcher:
   name: random
   metric: accuracy
   max_trials: 5
-  max_length:
-    batches: 1000
 `)
 	require.ErrorContains(t, err,
 		"override config is provided and experiment is not single searcher, got 'random' instead")
@@ -685,7 +664,6 @@ entrypoint: test
 searcher:
   metric: loss
   name: single
-  max_length: 10
 resources:
   resource_pool: kubernetes`
 	createReq := &apiv1.CreateExperimentRequest{
@@ -1443,7 +1421,6 @@ func createTestExpWithActiveConfig(
 		Config:    activeConfig.AsLegacy(),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
-
 	// Get experiment as our API mostly will to make it easier to mock.
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
@@ -2346,4 +2323,28 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 	t.Error("expected experiments to delete after 15 seconds and they did not")
+}
+
+func TestGetWorkspaceByConfig(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+	})
+	require.NoError(t, err)
+	wkspName := &resp.Workspace.Name
+
+	t.Run("no workspace name", func(t *testing.T) {
+		w, err := getWorkspaceByConfig(expconf.ExperimentConfig{RawWorkspace: ptrs.Ptr("")})
+		require.NoError(t, err)
+
+		// Verify we get the Uncategorized workspace.
+		require.Equal(t, 1, w.ID)
+	})
+	t.Run("has workspace name", func(t *testing.T) {
+		w, err := getWorkspaceByConfig(expconf.ExperimentConfig{
+			RawWorkspace: wkspName,
+		})
+		require.NoError(t, err)
+		require.Equal(t, *wkspName, w.Name)
+	})
 }

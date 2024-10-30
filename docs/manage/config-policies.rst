@@ -56,6 +56,11 @@ or CLI.
    both the invariant config and constraints for a given scope are updated together. It is not
    possible to update only one of these components independently.
 
+.. note::
+
+   It is recommended that administrators save their configuration policies for each scope in
+   separate YAML or JSON files. This provides an easy way to back up and restore policies if needed.
+
 WebUI
 =====
 
@@ -90,7 +95,7 @@ Administrators can set Config Policies at both the cluster and workspace levels.
 CLI
 ===
 
-Use the following command to manage workspace-level Config Policies via CLI:
+Use the following command to manage Config Policies via CLI:
 
 .. code:: bash
 

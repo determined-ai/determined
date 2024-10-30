@@ -242,25 +242,16 @@ Clear the message with the following command:
 
       det master cluster-message clear
 
-********************************
- Viewing and Filtering Metadata
-********************************
+****************************
+ Viewing Log Search Results
+****************************
 
-You can use the WebUI to view and filter experiment runs based on logged metadata. For a tutorial on
-how to log metadata, visit :ref:`metadata-logging-tutorial`.
+To perform a log search:
 
--  In the Overview tab of the experiment, you can filter and sort runs based on metadata values
-   using the filter menu.
--  In the experiment's Runs view, metadata columns are displayed alongside other experiment
-   information.
--  On the Run details page, you'll find the "Metadata" section under the "Overview" tab, displaying
-   all logged metadata for that run.
--  To download the metadata in JSON format, click the "Download" button.
+#. Navigate to your run in the WebUI.
+#. In the Logs tab, start typing in the search box to open the search pane.
+#. To use regex search, click the "Regex" checkbox in the search pane.
+#. Click on a search result to view it in context, with logs before and after visible.
+#. Scroll up and down to fetch new logs.
 
-To filter runs based on metadata:
-
-#. In the Runs view, click on the filter icon.
-#. Select a metadata field from the dropdown menu.
-#. Choose a condition (is, is not, or contains) and enter a value.
-
-Note: Array-type metadata can be viewed but cannot be used for sorting or filtering.
+Note: Search results are not auto-updating. You may need to refresh to see new logs.

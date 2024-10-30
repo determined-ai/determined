@@ -1,6 +1,5 @@
 import abc
 import contextlib
-import enum
 import inspect
 import json
 import logging
@@ -10,7 +9,6 @@ import random
 import sys
 import time
 import warnings
-from collections import abc as col_abc
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -40,153 +38,14 @@ def dataloader_next(dataloader_iter: Iterator) -> Iterator:
         yield batch
 
 
-class TrainUnit:
-    """
-    TrainUnit is the base class for the supported training units (Batch, Epoch) containing
-    the value of unit, where the value can be an int or an implementable collections.abc.Container.
-
-    TrainUnits are used to define periodic training behavior such as checkpointing and validating.
-
-    int values are treated as periods, e.g. Batch(100) will checkpoint/validate every 100 batches.
-    collections.abc.Container values are treated as schedules, e.g. Batch(1,5,10) will
-    checkpoint/validate on batches 1, 5, and 10.
-    """
-
-    def __init__(self, value: Union[int, col_abc.Container]):
-        self.value = value
-
-    @staticmethod
-    def _from_searcher_unit(
-        length: int, unit: Optional[core.Unit], global_batch_size: Optional[int] = None
-    ) -> "TrainUnit":
-        if unit == core.Unit.EPOCHS:
-            return Epoch(length)
-        elif unit == core.Unit.RECORDS:
-            if global_batch_size is None:
-                raise ValueError("global_batch_size required for searcher unit Records.")
-            return Batch._from_records(length, global_batch_size)
-        elif unit == core.Unit.BATCHES:
-            return Batch(length)
-        else:
-            raise ValueError(f"unrecognized searcher unit {unit}")
-
-    def _to_searcher_unit(self) -> core.Unit:
-        if isinstance(self, Batch):
-            return core.Unit.BATCHES
-        return core.Unit.EPOCHS
-
-    @staticmethod
-    def _from_values(
-        batches: Optional[int] = None,
-        records: Optional[int] = None,
-        epochs: Optional[int] = None,
-        global_batch_size: Optional[int] = None,
-    ) -> "TrainUnit":
-        if sum((batches is not None, records is not None, epochs is not None)) != 1:
-            raise ValueError(f"invalid config: batches={batches} records={records} epochs={epochs}")
-        if batches is not None:
-            if batches < 1:
-                batches = sys.maxsize
-            return Batch(batches)
-        if records is not None:
-            assert global_batch_size, "global_batch_size is required for RECORD units."
-            if records < 1:
-                records = sys.maxsize
-            return Batch._from_records(records, global_batch_size)
-        if epochs is not None:
-            if epochs < 1:
-                epochs = sys.maxsize
-            return Epoch(epochs)
-
-        # Make mypy happy
-        raise ValueError("invalid values")
-
-    def should_stop(self, step_num: int) -> bool:
-        if isinstance(self.value, int):
-            return self._divides(step_num)
-        assert isinstance(self.value, col_abc.Container)
-        return step_num in self.value
-
-    def _divides(self, steps: int) -> bool:
-        assert isinstance(steps, int) and isinstance(
-            self.value, int
-        ), "_divides can only be called on int types."
-        # Treat <= 0 values as always step
-        if self.value < 1:
-            return True
-        if steps == 0:
-            return False
-        return steps % self.value == 0
-
-
-class Epoch(TrainUnit):
-    """
-    Epoch step type (e.g. Epoch(1) defines 1 epoch)
-    """
-
-    pass
-
-
-class Batch(TrainUnit):
-    """
-    Batch step type (e.g. Batch(1) defines 1 batch)
-    """
-
-    @staticmethod
-    def _from_records(records: int, global_batch_size: int) -> "Batch":
-        return Batch(max(records // global_batch_size, 1))
-
-
-class _TrainBoundaryType(enum.Enum):
-    CHECKPOINT = "CHECKPOINT"
-    REPORT = "REPORT"
-    VALIDATE = "VALIDATE"
-    TRAIN = "TRAIN"
-
-
-class _TrainBoundary:
-    def __init__(self, step_type: _TrainBoundaryType, unit: TrainUnit):
-        self.step_type = step_type
-        self.unit = unit
-        self.limit_reached = False
-
-
-class ShouldExit(Exception):
-    """
-    ShouldExit breaks out of the top-level train loop from inside function calls.
-    """
-
-    def __init__(self, skip_exit_checkpoint: bool = False):
-        self.skip_exit_checkpoint = skip_exit_checkpoint
-
-
-class _TrialState:
-    def __init__(
-        self,
-        trial_id: int = 0,
-        last_ckpt: int = 0,
-        step_id: int = 0,
-        last_val: int = 0,
-        batches_trained: int = 0,
-        epochs_trained: int = 0,
-    ) -> None:
-        # Store TrialID to distinguish between e.g. pause/restart and continue training.
-        self.trial_id = trial_id
-        self.last_ckpt = last_ckpt
-        self.step_id = step_id
-        self.last_val = last_val
-        self.batches_trained = batches_trained
-        self.epochs_trained = epochs_trained
-
-
 class _PyTorchTrialController:
     def __init__(
         self,
         trial_inst: det.LegacyTrial,
         context: pytorch.PyTorchTrialContext,
-        checkpoint_period: TrainUnit,
-        validation_period: TrainUnit,
-        reporting_period: TrainUnit,
+        checkpoint_period: pytorch.TrainUnit,
+        validation_period: pytorch.TrainUnit,
+        reporting_period: pytorch.TrainUnit,
         smaller_is_better: bool,
         steps_completed: int,
         latest_checkpoint: Optional[str],
@@ -195,7 +54,7 @@ class _PyTorchTrialController:
         searcher_metric_name: Optional[str],
         checkpoint_policy: str,
         step_zero_validation: bool,
-        max_length: Optional[TrainUnit],
+        max_length: pytorch.TrainUnit,
         global_batch_size: Optional[int],
         profiling_enabled: Optional[bool],
     ) -> None:
@@ -219,21 +78,10 @@ class _PyTorchTrialController:
         self.reporting_period = reporting_period
 
         # Training loop state
-        if local_training:
-            self.trial_id = 0
-            assert self.max_length, "max_length must be specified for local-training mode."
-            self.searcher_unit = self.max_length._to_searcher_unit()
-        else:
-            self.trial_id = self.core_context.train._trial_id
-            configured_units = self.core_context.searcher.get_configured_units()
-            if configured_units is None:
-                raise ValueError(
-                    "Searcher units must be configured for training with PyTorchTrial."
-                )
-            self.searcher_unit = configured_units
+        self.trial_id = 0 if local_training else self.core_context.train._trial_id
 
         # Don't initialize the state here because it will be invalid until we load a checkpoint.
-        self.state = None  # type: Optional[_TrialState]
+        self.state = None  # type: Optional[pytorch._TrialState]
         self.start_from_batch = steps_completed
         self.val_from_previous_run = self.core_context.train._get_last_validation()
         self.step_zero_validation = step_zero_validation
@@ -246,10 +94,6 @@ class _PyTorchTrialController:
         self.smaller_is_better = smaller_is_better
         self.global_batch_size = global_batch_size
         self.profiling_enabled = profiling_enabled
-
-        if self.searcher_unit == core.Unit.RECORDS:
-            if self.global_batch_size is None:
-                raise ValueError("global_batch_size required for searcher unit RECORDS.")
 
         self.callbacks = self.trial.build_callbacks()
         for callback in self.callbacks.values():
@@ -352,6 +196,11 @@ class _PyTorchTrialController:
                 batch_metrics,
             )
 
+        # We report "batch" and "epoch" only if these keys are not already reported in user
+        # metrics.
+        avg_metrics["batches"] = avg_metrics.get("batches", self.state.batches_trained)
+        avg_metrics["epochs"] = avg_metrics.get("epochs", self.state.epochs_trained)
+
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.batches_trained,
             metrics=avg_metrics,
@@ -409,7 +258,7 @@ class _PyTorchTrialController:
         except det.InvalidHP:
             if not already_exiting:
                 self.core_context.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
-                raise ShouldExit(skip_exit_checkpoint=True)
+                raise pytorch._ShouldExit(skip_exit_checkpoint=True)
             raise
 
     def _check_evaluate_implementation(self) -> None:
@@ -509,21 +358,22 @@ class _PyTorchTrialController:
 
     def _stop_requested(self) -> None:
         if self.core_context.preempt.should_preempt():
-            raise ShouldExit()
+            raise pytorch._ShouldExit()
         if self.context.get_stop_requested():
-            raise ShouldExit()
+            raise pytorch._ShouldExit()
 
-    def _report_searcher_progress(
-        self, op: core.SearcherOperation, unit: Optional[core.Unit]
-    ) -> None:
+    def _report_training_progress(self) -> None:
         assert self.state
-        if unit == core.Unit.BATCHES:
-            op.report_progress(self.state.batches_trained)
-        elif unit == core.Unit.RECORDS:
-            assert self.global_batch_size, "global_batch_size must be specified for RECORDS"
-            op.report_progress(self.global_batch_size * self.state.batches_trained)
-        elif unit == core.Unit.EPOCHS:
-            op.report_progress(self.state.epochs_trained)
+        assert isinstance(self.max_length.value, int)
+
+        if isinstance(self.max_length, pytorch.Batch):
+            progress = self.state.batches_trained / self.max_length.value
+        elif isinstance(self.max_length, pytorch.Epoch):
+            progress = self.state.epochs_trained / self.max_length.value
+        else:
+            raise ValueError(f"unexpected train unit type {type(self.max_length)}")
+
+        self.core_context.train.report_progress(progress=progress)
 
     def _checkpoint_is_current(self) -> bool:
         assert self.state
@@ -535,12 +385,12 @@ class _PyTorchTrialController:
         # State persists validation step in batches
         return self.state.last_val == self.state.batches_trained
 
-    def _steps_until_complete(self, train_unit: TrainUnit) -> int:
+    def _steps_until_complete(self, train_unit: pytorch.TrainUnit) -> int:
         assert isinstance(train_unit.value, int), "invalid length type"
         assert self.state
-        if isinstance(train_unit, Batch):
+        if isinstance(train_unit, pytorch.Batch):
             return train_unit.value - self.state.batches_trained
-        elif isinstance(train_unit, Epoch):
+        elif isinstance(train_unit, pytorch.Epoch):
             return train_unit.value - self.state.epochs_trained
         else:
             raise ValueError(f"Unrecognized train unit {train_unit}")
@@ -597,7 +447,7 @@ class _PyTorchTrialController:
                     self._load(load_path)
             else:
                 # If we are not loading, initialize a fresh state.
-                self.state = _TrialState(trial_id=self.trial_id)
+                self.state = pytorch._TrialState(trial_id=self.trial_id)
 
             if self.context.distributed.size > 1 and self.use_horovod:
                 hvd = horovod.hvd
@@ -615,7 +465,6 @@ class _PyTorchTrialController:
             self._run()
 
     def _run(self) -> None:
-        ops: Iterator[det.core.SearcherOperation]
         assert self.state
 
         try:
@@ -626,48 +475,27 @@ class _PyTorchTrialController:
             ):
                 self._validate()
 
-            if self.local_training:
-                assert self.max_length and isinstance(self.max_length.value, int)
-                ops = iter(
-                    [
-                        det.core.DummySearcherOperation(
-                            length=self.max_length.value, is_chief=self.is_chief
-                        )
-                    ]
-                )
-            else:
-                ops = self.core_context.searcher.operations()
-
-            for op in ops:
-                if self.local_training:
-                    train_unit = self.max_length
-                else:
-                    train_unit = TrainUnit._from_searcher_unit(
-                        op.length, self.searcher_unit, self.global_batch_size
-                    )
-                assert train_unit
-
-                self._train_for_op(
-                    op=op,
-                    train_boundaries=[
-                        _TrainBoundary(
-                            step_type=_TrainBoundaryType.TRAIN,
-                            unit=train_unit,
-                        ),
-                        _TrainBoundary(
-                            step_type=_TrainBoundaryType.VALIDATE, unit=self.validation_period
-                        ),
-                        _TrainBoundary(
-                            step_type=_TrainBoundaryType.CHECKPOINT,
-                            unit=self.checkpoint_period,
-                        ),
-                        # Scheduling unit is always configured in batches
-                        _TrainBoundary(
-                            step_type=_TrainBoundaryType.REPORT, unit=self.reporting_period
-                        ),
-                    ],
-                )
-        except ShouldExit as e:
+            self._train(
+                length=pytorch.Batch(1) if self.test_mode else self.max_length,
+                train_boundaries=[
+                    pytorch._TrainBoundary(
+                        step_type=pytorch._TrainBoundaryType.TRAIN,
+                        unit=self.max_length,
+                    ),
+                    pytorch._TrainBoundary(
+                        step_type=pytorch._TrainBoundaryType.VALIDATE, unit=self.validation_period
+                    ),
+                    pytorch._TrainBoundary(
+                        step_type=pytorch._TrainBoundaryType.CHECKPOINT,
+                        unit=self.checkpoint_period,
+                    ),
+                    # Scheduling unit is always configured in batches
+                    pytorch._TrainBoundary(
+                        step_type=pytorch._TrainBoundaryType.REPORT, unit=self.reporting_period
+                    ),
+                ],
+            )
+        except pytorch._ShouldExit as e:
             # Checkpoint unsaved work and exit.
             if not e.skip_exit_checkpoint and not self._checkpoint_is_current():
                 self._checkpoint(already_exiting=True)
@@ -679,8 +507,8 @@ class _PyTorchTrialController:
         return
 
     def _train_with_boundaries(
-        self, training_enumerator: Iterator, train_boundaries: List[_TrainBoundary]
-    ) -> Tuple[List[_TrainBoundary], List]:
+        self, training_enumerator: Iterator, train_boundaries: List[pytorch._TrainBoundary]
+    ) -> Tuple[List[pytorch._TrainBoundary], List]:
         training_metrics = []
 
         # Start of train step: tell core API and set model mode
@@ -711,19 +539,19 @@ class _PyTorchTrialController:
 
             # Batch complete: check if any training periods have been reached and exit if any
             for step in train_boundaries:
-                if isinstance(step.unit, Batch):
+                if isinstance(step.unit, pytorch.Batch):
                     if step.unit.should_stop(batch_idx + 1):
                         step.limit_reached = True
 
                 # True epoch based training not supported, detect last batch of epoch to calculate
                 # fully-trained epochs
-                if isinstance(step.unit, Epoch):
+                if isinstance(step.unit, pytorch.Epoch):
                     if step.unit.should_stop(epoch_idx + 1):
                         if batch_in_epoch_idx == epoch_len - 1:
                             step.limit_reached = True
 
                 # Break early after one batch for test mode
-                if step.step_type == _TrainBoundaryType.TRAIN and self.test_mode:
+                if step.step_type == pytorch._TrainBoundaryType.TRAIN and self.test_mode:
                     step.limit_reached = True
 
             # Exit if any train step limits have been reached
@@ -733,20 +561,10 @@ class _PyTorchTrialController:
         # True epoch end
         return train_boundaries, training_metrics
 
-    def _train_for_op(
-        self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
+    def _train(
+        self, length: pytorch.TrainUnit, train_boundaries: List[pytorch._TrainBoundary]
     ) -> None:
-        if self.test_mode:
-            train_length = Batch(1)
-        elif self.local_training:
-            train_length = self.max_length  # type: ignore
-        else:
-            train_length = TrainUnit._from_searcher_unit(
-                op.length, self.searcher_unit, self.global_batch_size
-            )  # type: ignore
-        assert train_length
-
-        while self._steps_until_complete(train_length) > 0:
+        while self._steps_until_complete(length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
             )
@@ -766,18 +584,18 @@ class _PyTorchTrialController:
                     continue
 
                 # Train step limits reached, proceed accordingly.
-                if train_boundary.step_type == _TrainBoundaryType.TRAIN:
-                    if not op._completed and self.is_chief and not step_reported:
-                        self._report_searcher_progress(op, self.searcher_unit)
+                if train_boundary.step_type == pytorch._TrainBoundaryType.TRAIN:
+                    if self.is_chief and not step_reported:
+                        self._report_training_progress()
                         step_reported = True
-                elif train_boundary.step_type == _TrainBoundaryType.REPORT:
-                    if not op._completed and self.is_chief and not step_reported:
-                        self._report_searcher_progress(op, self.searcher_unit)
+                elif train_boundary.step_type == pytorch._TrainBoundaryType.REPORT:
+                    if self.is_chief and not step_reported:
+                        self._report_training_progress()
                         step_reported = True
-                elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
+                elif train_boundary.step_type == pytorch._TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
-                        self._validate(op)
-                elif train_boundary.step_type == _TrainBoundaryType.CHECKPOINT:
+                        self._validate()
+                elif train_boundary.step_type == pytorch._TrainBoundaryType.CHECKPOINT:
                     if not self._checkpoint_is_current():
                         self._checkpoint(already_exiting=False)
 
@@ -789,19 +607,11 @@ class _PyTorchTrialController:
                     self._upload_tb_files()
                 self._stop_requested()
 
-        # Finished training for op. Perform final checkpoint/validation if necessary.
+        # Finished training. Perform final checkpoint/validation if necessary.
         if not self._validation_is_current():
-            self._validate(op)
+            self._validate()
         if not self._checkpoint_is_current():
             self._checkpoint(already_exiting=False)
-
-        # Test mode will break after one batch despite not completing op.
-        if self.is_chief and not self.test_mode:
-            # The only case where op isn't reported as completed is if we restarted but
-            # op.length was already trained for and validated on; in that case just raise
-            # ShouldExit; we have nothing to do.
-            if not op._completed:
-                raise ShouldExit(skip_exit_checkpoint=True)
 
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
         if self.searcher_metric_name not in val_metrics:
@@ -913,7 +723,7 @@ class _PyTorchTrialController:
         return training_metrics
 
     @torch.no_grad()
-    def _validate(self, searcher_op: Optional[core.SearcherOperation] = None) -> Dict[str, Any]:
+    def _validate(self) -> Dict[str, Any]:
         # Report a validation step is starting.
         if self.is_chief:
             self.core_context.train.set_status("validating")
@@ -1049,24 +859,14 @@ class _PyTorchTrialController:
             # Get best validation before reporting metrics.
             best_validation_before = self.core_context.train.get_experiment_best_validation()
 
-            self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
+            # We report "batch" and "epoch" only if these keys are not already reported in user
+            # metrics.
+            metrics["batches"] = metrics.get("batches", self.state.batches_trained)
+            metrics["epochs"] = metrics.get("epochs", self.state.epochs_trained)
 
-        searcher_metric = None
-
-        # Report searcher status.
-        if self.is_chief and searcher_op:
-            if self.local_training:
-                searcher_length = self.max_length
-            else:
-                searcher_length = TrainUnit._from_searcher_unit(
-                    searcher_op.length, self.searcher_unit, self.global_batch_size
-                )
-            if self.searcher_metric_name:
-                searcher_metric = self._check_searcher_metric(metrics)
-
-            assert searcher_length
-            if self._steps_until_complete(searcher_length) < 1 and not searcher_op._completed:
-                searcher_op.report_completed(searcher_metric)
+            self.core_context.train.report_validation_metrics(
+                steps_completed=self.state.batches_trained, metrics=metrics
+            )
 
         should_checkpoint = False
 
@@ -1079,6 +879,7 @@ class _PyTorchTrialController:
                     assert (
                         self.searcher_metric_name
                     ), "checkpoint policy 'best' but searcher metric name not defined"
+                    searcher_metric = self._check_searcher_metric(metrics)
                     assert searcher_metric is not None
 
                     if self._is_best_validation(now=searcher_metric, before=best_validation_before):
@@ -1250,10 +1051,10 @@ class _PyTorchTrialController:
         # If the trial_id doesn't match our current trial id, we're continuing training a previous
         # trial and should start from a fresh state.
         if state.get("trial_id") != self.trial_id:
-            self.state = _TrialState(trial_id=self.trial_id)
+            self.state = pytorch._TrialState(trial_id=self.trial_id)
             return
 
-        self.state = _TrialState(**state)
+        self.state = pytorch._TrialState(**state)
         assert self.state
 
         # Detect the case where the final validation we made was against this exact checkpoint.  In
@@ -1266,10 +1067,10 @@ class _PyTorchTrialController:
 
     def _load_wlsq_state(self, state: Any) -> None:
         if state.get("trial_id") != self.trial_id:
-            self.state = _TrialState(trial_id=self.trial_id)
+            self.state = pytorch._TrialState(trial_id=self.trial_id)
             return
 
-        self.state = _TrialState(
+        self.state = pytorch._TrialState(
             trial_id=state.get("trial_id"),
             last_ckpt=state.get("last_ckpt"),
             last_val=state.get("last_val"),

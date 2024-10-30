@@ -323,8 +323,8 @@ The ``adaptive_asha`` search method and maximum number of trials, max_trials` ar
      metric: validation_loss
      smaller_is_better: true
      max_trials: 16
-     max_length:
-       batches: 937
+     time_metric: batch
+     max_time: 937
 
 This example uses a fixed batch size and searches on dropout size, filters, and learning rate. The
 ``max_trials`` setting of ``16`` indicates how many model configurations to explore.
@@ -351,16 +351,6 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
    resources become available. For 16 trials, it should take about 10 minutes to train with at least
    one trial performing at about 98 percent validation accuracy. The hyperparameter search halts
    poorly performing trials.
-
-*************************
- Logging Custom Metadata
-*************************
-
-Determined also supports logging custom metadata during a trial run. This feature allows you to
-capture additional context and information about your experiments beyond standard metrics.
-
-To learn more about how to use metadata logging in your experiments, please refer to the
-:ref:`metadata-logging-tutorial`.
 
 ************
  Learn More

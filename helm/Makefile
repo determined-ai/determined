@@ -20,15 +20,28 @@ clean:
 
 .PHONY: release-gh
 release-gh: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
-release-gh: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-gh: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release-gh:
+	go install github.com/goreleaser/goreleaser@v1.14.1
+	git clean -df
+	goreleaser --rm-dist
+
+.PHONY: release-gh-rc
+release-gh-rc: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+# The following line lists all tags by creation date, finds the current tag and
+# the next line after, then prints that second line, which should be the most
+# recent previous tag. This works if the previous tag is both a minor release,
+# or an rc release. Also, this is a separate make target because it makes it
+# easier to compute tag diffs for release notes.
+release-gh-rc: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-gh-rc:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df
 	goreleaser --rm-dist
 
 .PHONY: release-gh-dryrun
 release-gh-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
-release-gh-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-gh-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release-gh-dryrun:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df
@@ -36,7 +49,7 @@ release-gh-dryrun:
 
 .PHONY: release-gh-ee
 release-gh-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-gh-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-gh-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
 release-gh-ee:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df

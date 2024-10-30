@@ -15,6 +15,7 @@ import (
 	"github.com/o1egl/paseto"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -54,8 +55,7 @@ func TestCreateAccessToken(t *testing.T) {
 	require.NotNil(t, tokenID)
 
 	restoredToken := restoreTokenInfo(token, t)
-
-	expLifespan := DefaultTokenLifespan
+	expLifespan := config.DefaultTokenLifespanDays * 24 * time.Hour
 	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
 	require.Equal(t, expLifespan, actLifespan)
 
@@ -78,7 +78,7 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
-	expLifespan := DefaultTokenLifespan * 3
+	expLifespan := config.DefaultTokenLifespanDays * 24 * time.Hour
 	token, tokenID, err := CreateAccessToken(context.TODO(), testUser.ID,
 		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)
@@ -117,7 +117,7 @@ func TestUpdateAccessToken(t *testing.T) {
 
 	// Test before updating Access token
 	description := "description"
-	require.True(t, accessToken.RevokedAt.IsZero())
+	require.False(t, accessToken.Proto().Revoked)
 	require.NotEqual(t, description, accessToken.Description)
 
 	opt := AccessTokenUpdateOptions{Description: &description, SetRevoked: true}
@@ -125,7 +125,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test after updating access token
-	require.False(t, tokenInfo.RevokedAt.IsZero())
+	require.True(t, tokenInfo.Proto().Revoked)
 	require.Contains(t, description, tokenInfo.Description.String)
 
 	// Delete from DB by UserID for cleanup
@@ -228,8 +228,8 @@ func getAccessToken(ctx context.Context, userID model.UserID) ([]model.UserSessi
 	err := db.Bun().NewSelect().
 		Table("user_sessions").
 		Where("user_id = ?", userID).
-		Where("revoked_at IS NULL").
 		Where("token_type = ?", model.TokenTypeAccessToken).
+		Where("revoked_at IS NULL").
 		Scan(ctx, &tokenInfos)
 	if err != nil {
 		return nil, err

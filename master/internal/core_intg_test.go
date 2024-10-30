@@ -121,7 +121,7 @@ func TestRun(t *testing.T) {
 						DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 					},
 				},
-				taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},
+				taskSpec: &tasks.TaskSpec{SSHConfig: config.SSHConfig{KeyType: "ED25519"}},
 			}
 			require.NoError(t, m.config.Resolve())
 			m.config.DB = config.DBConfig{

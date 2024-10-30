@@ -934,11 +934,11 @@ export interface Trialv1Trial {
      */
     metadata?: any;
     /**
-     * The log signals.
+     * Log Policy Matched.
      * @type {string}
      * @memberof Trialv1Trial
      */
-    logSignal?: string;
+    logPolicyMatched?: string;
 }
 /**
  * 
@@ -1855,6 +1855,44 @@ export interface V1CancelExperimentsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
+ * Cancel searches.
+ * @export
+ * @interface V1CancelSearchesRequest
+ */
+export interface V1CancelSearchesRequest {
+    /**
+     * The ids of the searches being canceled. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1CancelSearchesRequest
+     */
+    searchIds?: Array<number>;
+    /**
+     * Project id of the searches being canceled.
+     * @type {number}
+     * @memberof V1CancelSearchesRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1CancelSearchesRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to CancelSearchesRequest.
+ * @export
+ * @interface V1CancelSearchesResponse
+ */
+export interface V1CancelSearchesResponse {
+    /**
+     * Details on success or error for each search.
+     * @type {Array<V1SearchActionResult>}
+     * @memberof V1CancelSearchesResponse
+     */
+    results: Array<V1SearchActionResult>;
+}
+/**
  * Checkpoint a collection of files saved by a task.
  * @export
  * @interface V1Checkpoint
@@ -2047,19 +2085,6 @@ export interface V1CleanupLogsResponse {
     removedCount: string;
 }
 /**
- * Close a trial with given ID.
- * @export
- * @interface V1CloseTrialOperation
- */
-export interface V1CloseTrialOperation {
-    /**
-     * The ID of the trial to close.
-     * @type {string}
-     * @memberof V1CloseTrialOperation
-     */
-    requestId?: string;
-}
-/**
  * Active notice from the server admin.
  * @export
  * @interface V1ClusterMessage
@@ -2213,32 +2238,6 @@ export interface V1CompareTrialsResponse {
      * @memberof V1CompareTrialsResponse
      */
     trials: Array<V1ComparableTrial>;
-}
-/**
- * 
- * @export
- * @interface V1CompleteTrialSearcherValidationResponse
- */
-export interface V1CompleteTrialSearcherValidationResponse {
-}
-/**
- * Used to complete a ValidateAfterOperation.
- * @export
- * @interface V1CompleteValidateAfterOperation
- */
-export interface V1CompleteValidateAfterOperation {
-    /**
-     * The ValidateAfterOperation being completed.
-     * @type {V1ValidateAfterOperation}
-     * @memberof V1CompleteValidateAfterOperation
-     */
-    op?: V1ValidateAfterOperation;
-    /**
-     * The value of searcher metric associated with this completed operation. The metric provided should be the metric used to guide HP search.
-     * @type {any}
-     * @memberof V1CompleteValidateAfterOperation
-     */
-    searcherMetric?: any;
 }
 /**
  * The config to be patched into Master Config.
@@ -2507,25 +2506,6 @@ export interface V1CreateGroupResponse {
      * @memberof V1CreateGroupResponse
      */
     group: V1GroupDetails;
-}
-/**
- * Create a trial with given hyperparameters.
- * @export
- * @interface V1CreateTrialOperation
- */
-export interface V1CreateTrialOperation {
-    /**
-     * The ID of the trial to create.
-     * @type {string}
-     * @memberof V1CreateTrialOperation
-     */
-    requestId?: string;
-    /**
-     * A JSON object representing the hyperparameters.
-     * @type {string}
-     * @memberof V1CreateTrialOperation
-     */
-    hyperparams?: string;
 }
 /**
  * Create a trial.
@@ -2824,7 +2804,7 @@ export interface V1DeleteSearchesRequest {
     filter?: string;
 }
 /**
- * Response to DeleteSearchesResponse.
+ * Response to DeleteSearchesRequest.
  * @export
  * @interface V1DeleteSearchesResponse
  */
@@ -3369,44 +3349,6 @@ export interface V1ExperimentActionResult {
     id: number;
 }
 /**
- * ExperimentInactive is a searcher event triggered when an experiment is no longer active.
- * @export
- * @interface V1ExperimentInactive
- */
-export interface V1ExperimentInactive {
-    /**
-     * Current state of the experiment.
-     * @type {Experimentv1State}
-     * @memberof V1ExperimentInactive
-     */
-    experimentState: Experimentv1State;
-}
-/**
- * ExperimentSimulation holds the configuration and results of simulated run of a searcher.
- * @export
- * @interface V1ExperimentSimulation
- */
-export interface V1ExperimentSimulation {
-    /**
-     * The simulated experiment config.
-     * @type {any}
-     * @memberof V1ExperimentSimulation
-     */
-    config?: any;
-    /**
-     * The searcher simulation seed.
-     * @type {number}
-     * @memberof V1ExperimentSimulation
-     */
-    seed?: number;
-    /**
-     * The list of trials in the simulation.
-     * @type {Array<V1TrialSimulation>}
-     * @memberof V1ExperimentSimulation
-     */
-    trials?: Array<V1TrialSimulation>;
-}
-/**
  * Response to ExpMetricNamesRequest.
  * @export
  * @interface V1ExpMetricNamesResponse
@@ -3706,11 +3648,11 @@ export interface V1FlatRun {
      */
     localId?: string;
     /**
-     * Log signal.
+     * Log policy matched.
      * @type {string}
      * @memberof V1FlatRun
      */
-    logSignal?: string;
+    logPolicyMatched?: string;
 }
 /**
  * 
@@ -4019,25 +3961,6 @@ export interface V1GetCommandsResponse {
      * @memberof V1GetCommandsResponse
      */
     pagination?: V1Pagination;
-}
-/**
- * 
- * @export
- * @interface V1GetCurrentTrialSearcherOperationResponse
- */
-export interface V1GetCurrentTrialSearcherOperationResponse {
-    /**
-     * The current searcher operation.
-     * @type {V1TrialOperation}
-     * @memberof V1GetCurrentTrialSearcherOperationResponse
-     */
-    op?: V1TrialOperation;
-    /**
-     * The status of the searcher operation.
-     * @type {boolean}
-     * @memberof V1GetCurrentTrialSearcherOperationResponse
-     */
-    completed?: boolean;
 }
 /**
  * Response to GetExperimentCheckpointsRequest.
@@ -4930,19 +4853,6 @@ export interface V1GetRunMetadataResponse {
     metadata?: any;
 }
 /**
- * Response to GetSearcherEventsRequest.
- * @export
- * @interface V1GetSearcherEventsResponse
- */
-export interface V1GetSearcherEventsResponse {
-    /**
-     * The list of events in the queue.
-     * @type {Array<V1SearcherEvent>}
-     * @memberof V1GetSearcherEventsResponse
-     */
-    searcherEvents?: Array<V1SearcherEvent>;
-}
-/**
  * Response to GetShellRequest.
  * @export
  * @interface V1GetShellResponse
@@ -5637,19 +5547,6 @@ export interface V1IdleNotebookRequest {
 export interface V1IdleNotebookResponse {
 }
 /**
- * InitialOperations is a searcher event signaling the creation of an experiment.
- * @export
- * @interface V1InitialOperations
- */
-export interface V1InitialOperations {
-    /**
-     * Cannot have an empty message type.
-     * @type {number}
-     * @memberof V1InitialOperations
-     */
-    placeholder?: number;
-}
-/**
  * Int32 filters.
  * @export
  * @interface V1Int32FieldFilter
@@ -5994,7 +5891,7 @@ export interface V1KillSearchesRequest {
     filter?: string;
 }
 /**
- * Response to KillSearchesResponse.
+ * Response to KillSearchesRequest.
  * @export
  * @interface V1KillSearchesResponse
  */
@@ -6188,7 +6085,7 @@ export interface V1LaunchShellRequest {
      */
     files?: Array<V1File>;
     /**
-     * Additional data.
+     * Deprecated: Do not use.
      * @type {string}
      * @memberof V1LaunchShellRequest
      */
@@ -6296,6 +6193,74 @@ export interface V1LaunchTensorboardResponse {
      * List of any related warnings.
      * @type {Array<V1LaunchWarning>}
      * @memberof V1LaunchTensorboardResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+/**
+ * Request to launch a tensorboard using searches matching a filter.
+ * @export
+ * @interface V1LaunchTensorboardSearchesRequest
+ */
+export interface V1LaunchTensorboardSearchesRequest {
+    /**
+     * Targets all searches matching filter expression. Leave empty if using IDs.
+     * @type {string}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    filter?: string;
+    /**
+     * Tensorboard config (JSON).
+     * @type {any}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    config?: any;
+    /**
+     * Tensorboard template name.
+     * @type {string}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    templateName?: string;
+    /**
+     * The files to run with the command.
+     * @type {Array<V1File>}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    files?: Array<V1File>;
+    /**
+     * Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
+     * @type {number}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    workspaceId?: number;
+    /**
+     * Target search IDs. Leave empty if using filter.
+     * @type {Array<number>}
+     * @memberof V1LaunchTensorboardSearchesRequest
+     */
+    searchIds?: Array<number>;
+}
+/**
+ * Response to LaunchTensorboardSearchesRequest.
+ * @export
+ * @interface V1LaunchTensorboardSearchesResponse
+ */
+export interface V1LaunchTensorboardSearchesResponse {
+    /**
+     * The requested tensorboard.
+     * @type {V1Tensorboard}
+     * @memberof V1LaunchTensorboardSearchesResponse
+     */
+    tensorboard: V1Tensorboard;
+    /**
+     * The config;
+     * @type {any}
+     * @memberof V1LaunchTensorboardSearchesResponse
+     */
+    config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchTensorboardSearchesResponse
      */
     warnings?: Array<V1LaunchWarning>;
 }
@@ -8624,38 +8589,6 @@ export interface V1PostRunMetadataResponse {
     metadata?: any;
 }
 /**
- * Request for sending operations from a custom search method.
- * @export
- * @interface V1PostSearcherOperationsRequest
- */
-export interface V1PostSearcherOperationsRequest {
-    /**
-     * The experiment ID.
-     * @type {number}
-     * @memberof V1PostSearcherOperationsRequest
-     */
-    experimentId?: number;
-    /**
-     * List of operations to submit.
-     * @type {Array<V1SearcherOperation>}
-     * @memberof V1PostSearcherOperationsRequest
-     */
-    searcherOperations?: Array<V1SearcherOperation>;
-    /**
-     * The event that triggered the client to send these operations to the master.
-     * @type {V1SearcherEvent}
-     * @memberof V1PostSearcherOperationsRequest
-     */
-    triggeredByEvent?: V1SearcherEvent;
-}
-/**
- * Response to PostSearcherOperationsResponse.
- * @export
- * @interface V1PostSearcherOperationsResponse
- */
-export interface V1PostSearcherOperationsResponse {
-}
-/**
  * Request to PostTaskLogs.
  * @export
  * @interface V1PostTaskLogsRequest
@@ -8944,11 +8877,11 @@ export interface V1PreviewHPSearchRequest {
  */
 export interface V1PreviewHPSearchResponse {
     /**
-     * The resulting simulation.
-     * @type {V1ExperimentSimulation}
+     * The resulting summary.
+     * @type {V1SearchSummary}
      * @memberof V1PreviewHPSearchResponse
      */
-    simulation?: V1ExperimentSimulation;
+    summary?: V1SearchSummary;
 }
 /**
  * Project is a named collection of experiments.
@@ -10637,36 +10570,6 @@ export interface V1RunActionResult {
     id: number;
 }
 /**
- * RunnableOperation represents a single runnable operation emitted by a searcher.
- * @export
- * @interface V1RunnableOperation
- */
-export interface V1RunnableOperation {
-    /**
-     * This is the type of the operation.
-     * @type {V1RunnableType}
-     * @memberof V1RunnableOperation
-     */
-    type?: V1RunnableType;
-    /**
-     * If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-     * @type {string}
-     * @memberof V1RunnableOperation
-     */
-    length?: string;
-}
-/**
- * RunnableType defines the type of operation that should be executed by trial runners.   - RUNNABLE_TYPE_UNSPECIFIED: Denotes an unknown runnable type.  - RUNNABLE_TYPE_TRAIN: Signals to a trial runner that it should run a train.  - RUNNABLE_TYPE_VALIDATE: Signals to a trial runner it should compute validation metrics.
- * @export
- * @enum {string}
- */
-export const V1RunnableType = {
-    UNSPECIFIED: 'RUNNABLE_TYPE_UNSPECIFIED',
-    TRAIN: 'RUNNABLE_TYPE_TRAIN',
-    VALIDATE: 'RUNNABLE_TYPE_VALIDATE',
-} as const
-export type V1RunnableType = ValueOf<typeof V1RunnableType>
-/**
  * Request to prepare to start reporting to a run.
  * @export
  * @interface V1RunPrepareForReportingRequest
@@ -10750,98 +10653,6 @@ export interface V1SearchActionResult {
      * @memberof V1SearchActionResult
      */
     id: number;
-}
-/**
- * SearcherEvent is a message from master to a client-driven custom searcher informing it of relevant changes in the state of an experiment.
- * @export
- * @interface V1SearcherEvent
- */
-export interface V1SearcherEvent {
-    /**
-     * Incremental ID of the event.
-     * @type {number}
-     * @memberof V1SearcherEvent
-     */
-    id: number;
-    /**
-     * An experiment has just been created.
-     * @type {V1InitialOperations}
-     * @memberof V1SearcherEvent
-     */
-    initialOperations?: V1InitialOperations;
-    /**
-     * A trial has been created.
-     * @type {V1TrialCreated}
-     * @memberof V1SearcherEvent
-     */
-    trialCreated?: V1TrialCreated;
-    /**
-     * Validation has completed.
-     * @type {V1ValidationCompleted}
-     * @memberof V1SearcherEvent
-     */
-    validationCompleted?: V1ValidationCompleted;
-    /**
-     * Trial has finished.
-     * @type {V1TrialClosed}
-     * @memberof V1SearcherEvent
-     */
-    trialClosed?: V1TrialClosed;
-    /**
-     * Trial exited early.
-     * @type {V1TrialExitedEarly}
-     * @memberof V1SearcherEvent
-     */
-    trialExitedEarly?: V1TrialExitedEarly;
-    /**
-     * Trial progress.
-     * @type {V1TrialProgress}
-     * @memberof V1SearcherEvent
-     */
-    trialProgress?: V1TrialProgress;
-    /**
-     * Experiment is inactive.
-     * @type {V1ExperimentInactive}
-     * @memberof V1SearcherEvent
-     */
-    experimentInactive?: V1ExperimentInactive;
-}
-/**
- * SearcherOperation is an operation issued by the custom searcher.
- * @export
- * @interface V1SearcherOperation
- */
-export interface V1SearcherOperation {
-    /**
-     * TrialOperation is issued to tell an existing trial to do something.
-     * @type {V1TrialOperation}
-     * @memberof V1SearcherOperation
-     */
-    trialOperation?: V1TrialOperation;
-    /**
-     * CreateTrialOperation is issued to create a trial.
-     * @type {V1CreateTrialOperation}
-     * @memberof V1SearcherOperation
-     */
-    createTrial?: V1CreateTrialOperation;
-    /**
-     * CloseTrialOperation is issued to close a trial.
-     * @type {V1CloseTrialOperation}
-     * @memberof V1SearcherOperation
-     */
-    closeTrial?: V1CloseTrialOperation;
-    /**
-     * ShutDownOperation is issued to shut down the custom search method.
-     * @type {V1ShutDownOperation}
-     * @memberof V1SearcherOperation
-     */
-    shutDown?: V1ShutDownOperation;
-    /**
-     * SetSearcherProgressOperation is issued to set the progress of the custom search method.
-     * @type {V1SetSearcherProgressOperation}
-     * @memberof V1SearcherOperation
-     */
-    setSearcherProgress?: V1SetSearcherProgressOperation;
 }
 /**
  * 
@@ -11019,6 +10830,50 @@ export interface V1SearchRunsResponse {
     pagination: V1Pagination;
 }
 /**
+ * SearchSummary contains the estimated trials and training lengths that a search plans to execute.
+ * @export
+ * @interface V1SearchSummary
+ */
+export interface V1SearchSummary {
+    /**
+     * The searcher config from which the summary is generated.
+     * @type {any}
+     * @memberof V1SearchSummary
+     */
+    config: any;
+    /**
+     * A list of planned number of trials to their training lengths.
+     * @type {Array<V1TrialSummary>}
+     * @memberof V1SearchSummary
+     */
+    trials?: Array<V1TrialSummary>;
+}
+/**
+ * SearchUnit describes a length unit used by some searchers to manage training.
+ * @export
+ * @interface V1SearchUnit
+ */
+export interface V1SearchUnit {
+    /**
+     * Name of the length unit (if max_length is false).
+     * @type {string}
+     * @memberof V1SearchUnit
+     */
+    name?: string;
+    /**
+     * Value of the length unit (if max_length is false).
+     * @type {number}
+     * @memberof V1SearchUnit
+     */
+    value?: number;
+    /**
+     * Bool indicating whether the training length is defined in code.
+     * @type {boolean}
+     * @memberof V1SearchUnit
+     */
+    maxLength: boolean;
+}
+/**
  * Set the cluster-wide message.
  * @export
  * @interface V1SetClusterMessageRequest
@@ -11145,19 +11000,6 @@ export interface V1SetResourceQuotasRequest {
  * @interface V1SetResourceQuotasResponse
  */
 export interface V1SetResourceQuotasResponse {
-}
-/**
- * SetSearcherProgressOperation informs the master of the progress of the custom searcher.
- * @export
- * @interface V1SetSearcherProgressOperation
- */
-export interface V1SetSearcherProgressOperation {
-    /**
-     * Experiment progress as a float between 0.0 and 1.0.
-     * @type {number}
-     * @memberof V1SetSearcherProgressOperation
-     */
-    progress?: number;
 }
 /**
  * Set the priority of the requested shell.
@@ -11370,25 +11212,6 @@ export interface V1Shell {
      * @memberof V1Shell
      */
     workspaceId: number;
-}
-/**
- * Shut down custom searcher method.
- * @export
- * @interface V1ShutDownOperation
- */
-export interface V1ShutDownOperation {
-    /**
-     * Defines whether the Searcher was cancelled
-     * @type {boolean}
-     * @memberof V1ShutDownOperation
-     */
-    cancel?: boolean;
-    /**
-     * Defines whether the Searcher failed
-     * @type {boolean}
-     * @memberof V1ShutDownOperation
-     */
-    failure?: boolean;
 }
 /**
  * Slot wraps a single device on the agent.
@@ -12037,32 +11860,6 @@ export const V1TokenType = {
 } as const
 export type V1TokenType = ValueOf<typeof V1TokenType>
 /**
- * TrialClosed is a searcher event triggered when a trial has successfully finished.
- * @export
- * @interface V1TrialClosed
- */
-export interface V1TrialClosed {
-    /**
-     * UUID identifying the trial to the searcher.
-     * @type {string}
-     * @memberof V1TrialClosed
-     */
-    requestId: string;
-}
-/**
- * TrialCreated is a searcher event signaling the creation of a trial.
- * @export
- * @interface V1TrialCreated
- */
-export interface V1TrialCreated {
-    /**
-     * UUID identifying the trial to the searcher.
-     * @type {string}
-     * @memberof V1TrialCreated
-     */
-    requestId: string;
-}
-/**
  * Signals to the experiment the trial early exited.
  * @export
  * @interface V1TrialEarlyExit
@@ -12086,37 +11883,6 @@ export const V1TrialEarlyExitExitedReason = {
     INITINVALIDHP: 'EXITED_REASON_INIT_INVALID_HP',
 } as const
 export type V1TrialEarlyExitExitedReason = ValueOf<typeof V1TrialEarlyExitExitedReason>
-/**
- * TrialExitedEarly is a searcher event triggered when a trial exited prematurely.
- * @export
- * @interface V1TrialExitedEarly
- */
-export interface V1TrialExitedEarly {
-    /**
-     * UUID identifying the trial to the searcher.
-     * @type {string}
-     * @memberof V1TrialExitedEarly
-     */
-    requestId: string;
-    /**
-     * The reason for the exit.
-     * @type {V1TrialExitedEarlyExitedReason}
-     * @memberof V1TrialExitedEarly
-     */
-    exitedReason: V1TrialExitedEarlyExitedReason;
-}
-/**
- * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop, from code.  - EXITED_REASON_USER_CANCELED: Indicates the trial exited due to a user requested stop, from the CLI or UI.
- * @export
- * @enum {string}
- */
-export const V1TrialExitedEarlyExitedReason = {
-    UNSPECIFIED: 'EXITED_REASON_UNSPECIFIED',
-    INVALIDHP: 'EXITED_REASON_INVALID_HP',
-    USERREQUESTEDSTOP: 'EXITED_REASON_USER_REQUESTED_STOP',
-    USERCANCELED: 'EXITED_REASON_USER_CANCELED',
-} as const
-export type V1TrialExitedEarlyExitedReason = ValueOf<typeof V1TrialExitedEarlyExitedReason>
 /**
  * Response to TrialLogFieldsRequest.
  * @export
@@ -12265,19 +12031,6 @@ export interface V1TrialMetrics {
     metrics: V1Metrics;
 }
 /**
- * TrialOperation is any operation that a trial can perform while it is active.
- * @export
- * @interface V1TrialOperation
- */
-export interface V1TrialOperation {
-    /**
-     * ValidateAfter means a trial is currently training and will later validate.
-     * @type {V1ValidateAfterOperation}
-     * @memberof V1TrialOperation
-     */
-    validateAfter?: V1ValidateAfterOperation;
-}
-/**
  * 
  * @export
  * @interface V1TrialProfilerMetricLabels
@@ -12346,25 +12099,6 @@ export interface V1TrialProfilerMetricsBatch {
     labels: V1TrialProfilerMetricLabels;
 }
 /**
- * TrialProgress is a searcher event that tells you the number of batches completed in the trial.
- * @export
- * @interface V1TrialProgress
- */
-export interface V1TrialProgress {
-    /**
-     * UUID identifying the trial to the searcher.
-     * @type {string}
-     * @memberof V1TrialProgress
-     */
-    requestId: string;
-    /**
-     * partial_units represent partial epochs, batches or records where the Unit is implied.
-     * @type {number}
-     * @memberof V1TrialProgress
-     */
-    partialUnits: number;
-}
-/**
  * The metadata pertaining to the current running task for a trial.
  * @export
  * @interface V1TrialRunnerMetadata
@@ -12376,25 +12110,6 @@ export interface V1TrialRunnerMetadata {
      * @memberof V1TrialRunnerMetadata
      */
     state: string;
-}
-/**
- * TrialSimulation is a specific sequence of workloads that were run before the trial was completed.
- * @export
- * @interface V1TrialSimulation
- */
-export interface V1TrialSimulation {
-    /**
-     * The list of operations that were run before the trial was completed.
-     * @type {Array<V1RunnableOperation>}
-     * @memberof V1TrialSimulation
-     */
-    operations?: Array<V1RunnableOperation>;
-    /**
-     * The number of times that this trial configuration has occurred during the simulation.
-     * @type {number}
-     * @memberof V1TrialSimulation
-     */
-    occurrences?: number;
 }
 /**
  * 
@@ -12537,6 +12252,25 @@ export interface V1TrialsSnapshotResponseTrial {
      * @memberof V1TrialsSnapshotResponseTrial
      */
     batchesProcessed: number;
+}
+/**
+ * TrialSummary describes the runs that are estimated to train for a certain length.
+ * @export
+ * @interface V1TrialSummary
+ */
+export interface V1TrialSummary {
+    /**
+     * Number of trials.
+     * @type {number}
+     * @memberof V1TrialSummary
+     */
+    count: number;
+    /**
+     * Training length for the trials.
+     * @type {V1SearchUnit}
+     * @memberof V1TrialSummary
+     */
+    unit: V1SearchUnit;
 }
 /**
  * 
@@ -12976,50 +12710,6 @@ export interface V1UserWebSetting {
      * @memberof V1UserWebSetting
      */
     value?: string;
-}
-/**
- * ValidateAfterOperation means the trial should train and validate after training the given length.
- * @export
- * @interface V1ValidateAfterOperation
- */
-export interface V1ValidateAfterOperation {
-    /**
-     * The ID of the trial that should train.
-     * @type {string}
-     * @memberof V1ValidateAfterOperation
-     */
-    requestId?: string;
-    /**
-     * The length to train before reporting a validation.
-     * @type {string}
-     * @memberof V1ValidateAfterOperation
-     */
-    length?: string;
-}
-/**
- * ValidationCompleted is a searcher event triggered when a validation has been completed.
- * @export
- * @interface V1ValidationCompleted
- */
-export interface V1ValidationCompleted {
-    /**
-     * UUID identifying the trial to the searcher.
-     * @type {string}
-     * @memberof V1ValidationCompleted
-     */
-    requestId: string;
-    /**
-     * Value of the validation metric used to direct the search.
-     * @type {any}
-     * @memberof V1ValidationCompleted
-     */
-    metric: any;
-    /**
-     * Length from ValidateAfterOperation.
-     * @type {string}
-     * @memberof V1ValidationCompleted
-     */
-    validateAfterLength: string;
 }
 /**
  * ValidationHistoryEntry is a single entry for a validation history for an experiment.
@@ -17505,42 +17195,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get the list of custom searcher events with long polling.
-         * @param {number} experimentId The ID of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -17944,50 +17598,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/projects/{projectId}/experiments/pause`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Submit operations to a custom searcher.
-         * @param {number} experimentId The experiment ID.
-         * @param {V1PostSearcherOperationsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling postSearcherOperations.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling postSearcherOperations.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_operations`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -18889,25 +18499,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get the list of custom searcher events with long polling.
-         * @param {number} experimentId The ID of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -19097,26 +18688,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiments(projectId, body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Submit operations to a custom searcher.
-         * @param {number} experimentId The experiment ID.
-         * @param {V1PostSearcherOperationsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(experimentId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19584,16 +19155,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get the list of custom searcher events with long polling.
-         * @param {number} experimentId The ID of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getSearcherEvents(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -19702,17 +19263,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options?: any) {
             return ExperimentsApiFp(configuration).pauseExperiments(projectId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Submit operations to a custom searcher.
-         * @param {number} experimentId The experiment ID.
-         * @param {V1PostSearcherOperationsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).postSearcherOperations(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20131,18 +19681,6 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get the list of custom searcher events with long polling.
-     * @param {number} experimentId The ID of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getSearcherEvents(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial's id.
      * @param {*} [options] Override http request option.
@@ -20270,19 +19808,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).pauseExperiments(projectId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Submit operations to a custom searcher.
-     * @param {number} experimentId The experiment ID.
-     * @param {V1PostSearcherOperationsRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).postSearcherOperations(experimentId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20882,6 +20407,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Cancel searches.
+         * @param {V1CancelSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelSearches(body: V1CancelSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling cancelSearches.');
+            }
+            const localVarPath = `/api/v1/searches/cancel`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Cleanup task logs according to the retention policy.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20904,50 +20467,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Reports to the searcher that the trial has completed the given searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {V1CompleteValidateAfterOperation} body The completed operation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling completeTrialSearcherValidation.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling completeTrialSearcherValidation.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/searcher/completed_operation`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -21350,42 +20869,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the current searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCurrentTrialSearcherOperation(trialId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getCurrentTrialSearcherOperation.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22347,6 +21830,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling killSearches.');
             }
             const localVarPath = `/api/v1/searches/kill`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Launch a tensorboard for one or more searches using bulk search filters.
+         * @param {V1LaunchTensorboardSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling launchTensorboardSearches.');
+            }
+            const localVarPath = `/api/v1/searches/tensorboards`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -24454,12 +23975,13 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Cleanup task logs according to the retention policy.
+         * @summary Cancel searches.
+         * @param {V1CancelSearchesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cleanupLogs(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CleanupLogsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).cleanupLogs(options);
+        cancelSearches(body: V1CancelSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).cancelSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24472,14 +23994,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Reports to the searcher that the trial has completed the given searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {V1CompleteValidateAfterOperation} body The completed operation.
+         * @summary Cleanup task logs according to the retention policy.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).completeTrialSearcherValidation(trialId, body, options);
+        cleanupLogs(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CleanupLogsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).cleanupLogs(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24690,25 +24210,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getBestSearcherValidationMetric(experimentId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the current searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25173,6 +24674,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         killSearches(body: V1KillSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillSearchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killSearches(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Launch a tensorboard for one or more searches using bulk search filters.
+         * @param {V1LaunchTensorboardSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardSearchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).launchTensorboardSearches(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26169,23 +25689,22 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Cancel searches.
+         * @param {V1CancelSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelSearches(body: V1CancelSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).cancelSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Cleanup task logs according to the retention policy.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         cleanupLogs(options?: any) {
             return InternalApiFp(configuration).cleanupLogs(options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Reports to the searcher that the trial has completed the given searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {V1CompleteValidateAfterOperation} body The completed operation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
-            return InternalApiFp(configuration).completeTrialSearcherValidation(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26297,16 +25816,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getBestSearcherValidationMetric(experimentId: number, options?: any) {
             return InternalApiFp(configuration).getBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the current searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCurrentTrialSearcherOperation(trialId: number, options?: any) {
-            return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
         },
         /**
          * 
@@ -26564,6 +26073,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         killSearches(body: V1KillSearchesRequest, options?: any) {
             return InternalApiFp(configuration).killSearches(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Launch a tensorboard for one or more searches using bulk search filters.
+         * @param {V1LaunchTensorboardSearchesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options?: any) {
+            return InternalApiFp(configuration).launchTensorboardSearches(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -27187,6 +26706,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Cancel searches.
+     * @param {V1CancelSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public cancelSearches(body: V1CancelSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).cancelSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Cleanup task logs according to the retention policy.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -27194,19 +26725,6 @@ export class InternalApi extends BaseAPI {
      */
     public cleanupLogs(options?: any) {
         return InternalApiFp(this.configuration).cleanupLogs(options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Reports to the searcher that the trial has completed the given searcher operation.
-     * @param {number} trialId The id of the trial.
-     * @param {V1CompleteValidateAfterOperation} body The completed operation.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
-        return InternalApiFp(this.configuration).completeTrialSearcherValidation(trialId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27340,18 +26858,6 @@ export class InternalApi extends BaseAPI {
      */
     public getBestSearcherValidationMetric(experimentId: number, options?: any) {
         return InternalApiFp(this.configuration).getBestSearcherValidationMetric(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the current searcher operation.
-     * @param {number} trialId The id of the trial.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27655,6 +27161,18 @@ export class InternalApi extends BaseAPI {
      */
     public killSearches(body: V1KillSearchesRequest, options?: any) {
         return InternalApiFp(this.configuration).killSearches(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Launch a tensorboard for one or more searches using bulk search filters.
+     * @param {V1LaunchTensorboardSearchesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public launchTensorboardSearches(body: V1LaunchTensorboardSearchesRequest, options?: any) {
+        return InternalApiFp(this.configuration).launchTensorboardSearches(body, options)(this.fetch, this.basePath)
     }
     
     /**

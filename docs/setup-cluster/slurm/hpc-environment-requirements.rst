@@ -91,7 +91,7 @@ The following software components are required:
 | Podman                 | >= 4.0.0                         | Admin            |
 +------------------------+----------------------------------+------------------+
 | PostgreSQL             | 10 (RHEL 8), 13 (RHEL 9), 14     | Admin            |
-|                        | (Ubuntu 22.04) or newer          |                  |
+|                        | (Ubuntu 22.04) or later          |                  |
 +------------------------+----------------------------------+------------------+
 | HPC client packages    | Same as login nodes              | Admin            |
 +------------------------+----------------------------------+------------------+
@@ -109,7 +109,8 @@ The following software components are required:
 Database Requirements
 =====================
 
-The solution requires PostgreSQL 10 or newer, which will be installed on the admin node. The
+The solution requires PostgreSQL 13 or later, which will be installed on the admin node. We
+recommend using the latest available version of PostgreSQL for optimal support and security. The
 required disk space for the database is estimated as follows:
 
 -  200 GB on small systems (less than 15 workers) or big systems if the experiment logs are sent to

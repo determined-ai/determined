@@ -72,7 +72,7 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
                 break
 
 
-def test(args, model, device, test_loader, epoch, core_context, steps_completed):
+def test(args, model, device, test_loader, core_context, steps_completed):
     model.eval()
     test_loss = 0
     correct = 0
@@ -229,7 +229,6 @@ def main(core_context):
             model,
             device,
             test_loader,
-            epoch_idx,
             core_context,
             steps_completed=steps_completed,
         )

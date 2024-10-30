@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/stretchr/testify/require"
 )
@@ -658,4 +659,224 @@ func requireEqualTaskPolicy(t *testing.T, exp *model.TaskConfigPolicies, act *mo
 		require.NoError(t, err)
 		require.Equal(t, expJSONMap, actJSONMap)
 	}
+}
+
+func TestGetEnforcedConfig(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, _ := db.MustResolveNewPostgresDatabase(t)
+	// defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+
+	user := db.RequireMockUser(t, pgDB)
+
+	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+	_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
+	require.NoError(t, err)
+
+	globalConf := `
+{
+	"checkpoint_storage": {
+		"type": "shared_fs",
+		"host_path": "global_host_path",
+		"container_path": "global_container_path"
+	}
+}
+`
+	wkspConf := `
+{
+	"checkpoint_storage": {
+		"type": "shared_fs",
+		"host_path": "wksp_host_path",
+		"container_path": "wksp_container_path",
+		"checkpoint_path": "wksp_checkpoint_path"
+	}
+}
+`
+
+	t.Run("checkpoint storage config", func(t *testing.T) {
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   user.ID,
+			InvariantConfig: &globalConf,
+		})
+		require.NoError(t, err)
+
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:     &w.ID,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   user.ID,
+			InvariantConfig: &wkspConf,
+		})
+		require.NoError(t, err)
+
+		checkpointStorage, err := GetConfigPolicyField[expconf.CheckpointStorageConfig](ctx, &w.ID,
+			"invariant_config", "'checkpoint_storage'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, checkpointStorage)
+
+		// global config enforced?
+		require.Equal(t, expconf.CheckpointStorageConfigV0{
+			RawSharedFSConfig: &expconf.SharedFSConfigV0{
+				RawHostPath:      ptrs.Ptr("global_host_path"),
+				RawContainerPath: ptrs.Ptr("global_container_path"),
+			},
+		}, *checkpointStorage)
+	})
+
+	globalConf = `{
+	"debug": true
+}`
+	wkspConf = `
+	{
+		"resources": {
+			"max_slots": 15
+		}
+	}
+`
+
+	t.Run("max slots config", func(t *testing.T) {
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   user.ID,
+			InvariantConfig: &globalConf,
+		})
+		require.NoError(t, err)
+
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:     &w.ID,
+			WorkloadType:    model.ExperimentType,
+			LastUpdatedBy:   user.ID,
+			InvariantConfig: &wkspConf,
+		})
+		require.NoError(t, err)
+
+		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID, "invariant_config",
+			"'resources' -> 'max_slots'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, maxSlots)
+
+		// workspace config enforced?
+		require.Equal(t, 15, *maxSlots)
+	})
+
+	globalConstraints := `
+	{
+		"resources": {
+			"max_slots": 25
+		}
+	}
+`
+
+	wkspConstraints := `
+	{
+		"resources": {
+			"max_slots": 20
+		}
+	}
+`
+
+	t.Run("max slots constraints", func(t *testing.T) {
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints:   &globalConstraints,
+		})
+		require.NoError(t, err)
+
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:   &w.ID,
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints:   &wkspConstraints,
+		})
+		require.NoError(t, err)
+
+		maxSlots, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
+			"'resources' -> 'max_slots'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, maxSlots)
+
+		// global constraint enforced?
+		require.Equal(t, 25, *maxSlots)
+	})
+
+	globalConstraints = `
+	{
+		"priority_limit": 40
+	}
+`
+
+	wkspConstraints = `
+	{
+		"priority_limit": 50
+	}
+`
+
+	t.Run("priority constraints", func(t *testing.T) {
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints:   &globalConstraints,
+		})
+		require.NoError(t, err)
+
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:   &w.ID,
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints:   &wkspConstraints,
+		})
+		require.NoError(t, err)
+
+		priority, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
+			"'priority_limit'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, priority)
+
+		// global constraint enforced?
+		require.Equal(t, 40, *priority)
+	})
+
+	t.Run("priority constraints wksp", func(t *testing.T) {
+		// delete global config policies
+		err = DeleteConfigPolicies(ctx, nil, model.ExperimentType)
+		require.NoError(t, err)
+
+		err = SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+			WorkspaceID:   &w.ID,
+			WorkloadType:  model.ExperimentType,
+			LastUpdatedBy: user.ID,
+			Constraints:   &wkspConstraints,
+		})
+		require.NoError(t, err)
+
+		priority, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
+			"'priority_limit'", model.ExperimentType)
+		require.NoError(t, err)
+		require.NotNil(t, priority)
+
+		// workspace constraint enforced?
+		require.Equal(t, 50, *priority)
+	})
+
+	t.Run("field not set in config", func(t *testing.T) {
+		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID, "invariant_config",
+			"'max_restarts'", model.ExperimentType)
+		require.NoError(t, err)
+		require.Nil(t, maxRestarts)
+	})
+
+	t.Run("nonexistent constraints field", func(t *testing.T) {
+		maxRestarts, err := GetConfigPolicyField[int](ctx, &w.ID, "constraints",
+			"'max_restarts'", model.ExperimentType)
+		require.NoError(t, err)
+		require.Nil(t, maxRestarts)
+	})
+
+	t.Run("invalid policy type", func(t *testing.T) {
+		_, err := GetConfigPolicyField[int](ctx, &w.ID, "bad policy",
+			"'debug'", model.ExperimentType)
+		require.ErrorContains(t, err, invalidPolicyTypeErr)
+	})
 }

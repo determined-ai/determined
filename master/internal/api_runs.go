@@ -170,7 +170,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
 		ColumnExpr("rm.metadata AS metadata").
-		ColumnExpr("r.log_signal AS log_signal").
+		ColumnExpr("r.log_policy_matched AS log_policy_matched").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
@@ -548,7 +548,6 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 
 	type killRunOKResult struct {
 		ID         int32
-		RequestID  *string
 		IsTerminal bool
 	}
 
@@ -557,7 +556,6 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		Model(&killCandidatees).
 		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Column("r.id").
-		ColumnExpr("t.request_id").
 		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Where("r.project_id = ?", req.ProjectId)
 
@@ -590,13 +588,6 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		case cand.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    cand.ID,
-			})
-		// This should be impossible in the current system but we will leave this check here
-		// to cover a possible error in integration tests
-		case cand.RequestID == nil:
-			results = append(results, &apiv1.RunActionResult{
-				Error: "Run has no associated request id.",
 				Id:    cand.ID,
 			})
 		default:

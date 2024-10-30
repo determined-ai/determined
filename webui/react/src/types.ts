@@ -456,10 +456,6 @@ export const ContinuableNonSingleSearcherName = new Set<ExperimentSearcherName>(
 
 const Searcher = t.intersection([
   t.partial({
-    max_length: t.record(
-      t.union([t.literal('batches'), t.literal('records'), t.literal('epochs')]),
-      t.number,
-    ),
     max_trials: t.number,
     sourceTrialId: t.number,
   }),
@@ -710,7 +706,7 @@ export interface TrialItem extends StartEndTimes {
   logRetentionDays?: number;
   taskId?: string;
   metadata?: JsonObject;
-  logSignal?: string;
+  logPolicyMatched?: string;
 }
 
 export interface TrialDetails extends TrialItem {
@@ -1298,7 +1294,7 @@ export interface FlatRun {
   archived: boolean;
   parentArchived: boolean;
   experiment?: FlatRunExperiment;
-  logSignal?: string;
+  logPolicyMatched?: string;
 }
 
 export interface FlatRunExperiment {

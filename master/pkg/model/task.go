@@ -91,7 +91,8 @@ type Task struct {
 
 	Config *string `db:"config"`
 
-	NoPause *bool `db:"no_pause"`
+	NoPause          *bool   `db:"no_pause"`
+	LogPolicyMatched *string `db:"log_policy_matched"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form

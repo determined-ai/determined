@@ -1,6 +1,7 @@
 import { Page } from '@playwright/test';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
+import { DefaultRoute } from 'e2e/models/pages/DefaultRoute';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { password, username } from 'e2e/utils/envVars';
 
@@ -18,7 +19,7 @@ export class AuthFixture {
   }
 
   async login({
-    expectedURL = /dashboard/,
+    expectedURL,
     username = this.#USERNAME,
     password = this.#PASSWORD,
   }: {
@@ -35,7 +36,9 @@ export class AuthFixture {
     await detAuth.username.pwLocator.fill(username);
     await detAuth.password.pwLocator.fill(password);
     await detAuth.submit.pwLocator.click();
-    await this.#page.waitForURL(expectedURL);
+
+    const defaultPage = new DefaultRoute(this.#page);
+    await this.#page.waitForURL(expectedURL ?? defaultPage.url);
   }
 
   async logout(): Promise<void> {

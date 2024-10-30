@@ -68,8 +68,8 @@ release-and-rc-filters: &release-and-rc-filters
       - /.*/
   tags:
     only:
-      # Tags like: v2.5.0, v3.0.1+rc2
-      - /v\d+\.\d+\.\d+(rc\d+)?/
+      # Tags like: v2.5.0, v3.0.1-rc2
+      - /v\d+\.\d+\.\d+(-rc\d+)?/
 
 rc-filters: &rc-filters
   branches:
@@ -77,8 +77,8 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
-      # Tags like: v2.5.0rc3
-      - /v\d+\.\d+\.\d+rc\d+/
+      # Tags like: v2.5.0-rc3
+      - /v\d+\.\d+\.\d+-rc\d+/
 
 release-filters: &release-filters
   branches:
@@ -308,7 +308,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.8.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
@@ -1507,9 +1507,9 @@ commands:
           no_output_timeout: <<parameters.no_output_timeout>>
           command: |
             if <<parameters.dryrun>>; then
-              make -C <<parameters.component>> <<parameters.target>>
-            else
               make -C <<parameters.component>> <<parameters.target>>-dryrun
+            else
+              make -C <<parameters.component>> <<parameters.target>>
             fi
 
 jobs:
@@ -1910,6 +1910,20 @@ jobs:
           command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
+  publish-helm-gh-rc:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - make-component:
+          component: helm
+          target: release-gh-rc
+
   publish-helm-gh:
     parameters:
       ee:
@@ -2076,14 +2090,21 @@ jobs:
       ee:
         type: boolean
         default: false
+      force:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:20.9.0
     resource_class: large
     steps:
       - checkout-with-sm
       - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
+      - when:
+          condition:
+            not: <<parameters.force>>
+          steps:
+            - skip-if-only-docs
+            - skip-if-only-github
       - react-get-deps
       - run: |
           if <<parameters.dev-mode>>; then
@@ -2102,6 +2123,12 @@ jobs:
 
   test-e2e-react:
     parameters:
+      devcluster-config:
+        type: enum
+        enum:
+          - react.devcluster.yaml
+          - react-rbac.devcluster.yaml
+          - react-sso.devcluster.yaml
       ee:
         type: boolean
         default: false
@@ -2134,7 +2161,7 @@ jobs:
       - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster:
-          devcluster-config: react.devcluster.yaml
+          devcluster-config: <<parameters.devcluster-config>>
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
@@ -2603,6 +2630,7 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
+      - run: make -C harness install
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -4097,6 +4125,7 @@ workflows:
           dev-mode: true
       - test-e2e-react:
           name: test-e2e-react-oss
+          devcluster-config: react.devcluster.yaml
           requires:
             - build-go-oss
           context:
@@ -4186,6 +4215,7 @@ workflows:
       - test-e2e-react:
           name: test-e2e-react-ee
           ee: true
+          devcluster-config: react-rbac.devcluster.yaml
           requires:
             - build-go-ee
           context:
@@ -4193,6 +4223,19 @@ workflows:
             - github-read
             - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
+      # this will be used once sso tests are prioritized (after rbac tests)
+      # - test-e2e-react:
+      #     name: test-e2e-react-ee-sso
+      #     ee: true
+      #     devcluster-config: react-sso.devcluster.yaml
+      #     playwright-options: "-g sso"
+      #     requires:
+      #       - build-go-ee
+      #     context:
+      #       - playwright
+      #       - github-read
+      #       - dev-ci-cluster-default-user-credentials
+      #     filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
@@ -5428,6 +5471,7 @@ workflows:
           context: github-read
       - test-e2e-react:
           ee: << pipeline.parameters.ee >>
+          devcluster-config: react.devcluster.yaml
           playwright-options: << pipeline.parameters.e2e-react >>
           requires:
             - build-go
@@ -5502,6 +5546,7 @@ workflows:
       - build-proto:
           filters: *release-and-rc-filters
       - build-react:
+          force: true
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:
@@ -5574,6 +5619,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-filters
+
+      - publish-helm-gh-rc:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *rc-filters
 
       - upload-try-now-template:
           context: determined-production

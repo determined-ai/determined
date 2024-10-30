@@ -1242,7 +1242,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            config.GetCertPEM(cert),
-		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
+		SSHConfig:             m.config.Security.SSH,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 		LogRetentionDays:      m.config.RetentionPolicy.LogRetentionDays,
@@ -1511,9 +1511,6 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	checkpointsGroup := m.echo.Group("/checkpoints")
 	checkpointsGroup.GET("/:checkpoint_uuid", m.getCheckpoint)
-
-	searcherGroup := m.echo.Group("/searcher")
-	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
 
 	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)

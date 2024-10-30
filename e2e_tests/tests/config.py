@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 from determined.common import api, util
 
@@ -70,10 +70,6 @@ def deepspeed_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/deepspeed", path)
 
 
-def deepspeed_autotune_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/deepspeed_autotune", path)
-
-
 def hf_trainer_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/hf_trainer_api", path)
 
@@ -98,14 +94,6 @@ def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("resources", {})
     config["resources"]["slots_per_trial"] = slots
-    return config
-
-
-def set_max_length(
-    config: Dict[Any, Any], max_length: Union[Dict[str, int], int]
-) -> Dict[Any, Any]:
-    config = config.copy()
-    config["searcher"]["max_length"] = max_length
     return config
 
 

@@ -9,13 +9,9 @@ import (
 	"github.com/uptrace/bun"
 	"gopkg.in/guregu/null.v3"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-)
-
-const (
-	// DefaultTokenLifespan is how long a newly created access token is valid.
-	DefaultTokenLifespan = 30 * 24 * time.Hour
 )
 
 // AccessTokenOption modifies a model.UserSession to apply optional settings to the AccessToken
@@ -43,14 +39,16 @@ func WithTokenDescription(description string) AccessTokenOption {
 // CreateAccessToken creates a new access token and store in
 // user_sessions db.
 func CreateAccessToken(
-	ctx context.Context, userID model.UserID, opts ...AccessTokenOption,
+	ctx context.Context,
+	userID model.UserID,
+	opts ...AccessTokenOption,
 ) (string, model.TokenID, error) {
 	now := time.Now().UTC()
 	// Populate the default values in the model.
 	accessToken := &model.UserSession{
 		UserID:      userID,
 		CreatedAt:   now,
-		Expiry:      now.Add(DefaultTokenLifespan),
+		Expiry:      now.Add(config.DefaultTokenLifespanDays * 24 * time.Hour),
 		TokenType:   model.TokenTypeAccessToken,
 		Description: null.StringFromPtr(nil),
 		RevokedAt:   null.Time{},

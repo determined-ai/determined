@@ -4,6 +4,7 @@ from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
 from tests import experiment as exp
+from tests.cluster import utils
 from tests.experiment import noop
 
 
@@ -152,3 +153,33 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
         )  # Job fails to start up the second restart since all nodes are excluded.
     else:
         assert times_ran == 2
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize("should_match", [True, False])
+def test_log_policy_matched(should_match: bool) -> None:
+    sess = api_utils.user_session()
+    regex = r"executing.*action.*exit.*code.*7"
+    if not should_match:
+        regex = r"(.*) this should not match (.*)"
+
+    expected_policy = "Test"
+    config = {
+        "log_policies": [{"name": expected_policy, "pattern": regex}],
+    }
+
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
+
+    searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
+    runPolicyMatched = searchRes.runs[0].logPolicyMatched
+
+    trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
+    trialPolicyMatched = trialRes.trial.logPolicyMatched
+
+    if should_match:
+        assert runPolicyMatched == expected_policy
+        assert trialPolicyMatched == expected_policy
+    else:
+        assert runPolicyMatched is None
+        assert trialPolicyMatched is None

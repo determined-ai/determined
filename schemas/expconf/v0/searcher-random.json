@@ -9,7 +9,6 @@
     ],
     "eventuallyRequired": [
         "max_trials",
-        "max_length",
         "metric"
     ],
     "properties": {

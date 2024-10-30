@@ -29,7 +29,7 @@ func TestMigrateTrials(t *testing.T) {
 		}
 		// get all trial info, excluding additional fields added after the transition to runs.
 		require.NoError(t, db.Bun().NewSelect().Table("trials").
-			ColumnExpr("to_jsonb(trials.*)-'metadata'-'log_signal' AS trial_data").
+			ColumnExpr("to_jsonb(trials.*)-'metadata'-'log_policy_matched' AS trial_data").
 			Order("id").
 			Scan(ctx, &currentTrialsViewData),
 		)

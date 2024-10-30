@@ -1,6 +1,9 @@
 package ssh
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -8,10 +11,13 @@ import (
 
 	"github.com/pkg/errors"
 	sshlib "golang.org/x/crypto/ssh"
+
+	"github.com/determined-ai/determined/master/internal/config"
 )
 
 const (
-	trialPEMBlockType = "RSA PRIVATE KEY"
+	rsaPEMBlockType   = "RSA PRIVATE KEY"
+	ecdsaPEMBlockType = "EC PRIVATE KEY"
 )
 
 // PrivateAndPublicKeys contains a private and public key.
@@ -21,40 +27,93 @@ type PrivateAndPublicKeys struct {
 }
 
 // GenerateKey returns a private and public SSH key.
-func GenerateKey(rsaKeySize int, passphrase *string) (PrivateAndPublicKeys, error) {
+func GenerateKey(conf config.SSHConfig) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
+	switch conf.KeyType {
+	case config.KeyTypeRSA:
+		return generateRSAKey(conf.RsaKeySize)
+	case config.KeyTypeECDSA:
+		return generateECDSAKey()
+	case config.KeyTypeED25519:
+		return generateED25519Key()
+	default:
+		return generatedKeys, errors.New("Invalid crypto system")
+	}
+}
+
+func generateRSAKey(rsaKeySize int) (PrivateAndPublicKeys, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, rsaKeySize)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate private key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate RSA private key")
 	}
 
 	if err = privateKey.Validate(); err != nil {
-		return generatedKeys, err
+		return PrivateAndPublicKeys{}, err
 	}
 
 	block := &pem.Block{
-		Type:  trialPEMBlockType,
+		Type:  rsaPEMBlockType,
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	}
-
-	if passphrase != nil {
-		// TODO: Replace usage of deprecated x509.EncryptPEMBlock.
-		block, err = x509.EncryptPEMBlock( //nolint: staticcheck
-			rand.Reader, block.Type, block.Bytes, []byte(*passphrase), x509.PEMCipherAES256)
-		if err != nil {
-			return generatedKeys, errors.Wrap(err, "unable to encrypt private key")
-		}
 	}
 
 	publicKey, err := sshlib.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate public key")
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate RSA public key")
 	}
 
-	generatedKeys = PrivateAndPublicKeys{
+	return PrivateAndPublicKeys{
 		PrivateKey: pem.EncodeToMemory(block),
 		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
+	}, nil
+}
+
+func generateECDSAKey() (PrivateAndPublicKeys, error) {
+	// Curve size currently not configurable, using the NIST recommendation.
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ECDSA private key")
 	}
 
-	return generatedKeys, nil
+	privateKeyBytes, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to marshal ECDSA private key")
+	}
+
+	block := &pem.Block{
+		Type:  ecdsaPEMBlockType,
+		Bytes: privateKeyBytes,
+	}
+
+	publicKey, err := sshlib.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ECDSA public key")
+	}
+
+	return PrivateAndPublicKeys{
+		PrivateKey: pem.EncodeToMemory(block),
+		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
+	}, nil
+}
+
+func generateED25519Key() (PrivateAndPublicKeys, error) {
+	ed25519PublicKey, privateKey, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ED25519 private key")
+	}
+
+	// Before OpenSSH 9.6, for ED25519 keys, only the OpenSSH private key format was supported.
+	block, err := sshlib.MarshalPrivateKey(privateKey, "")
+	if err != nil {
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to marshal ED25519 private key")
+	}
+
+	publicKey, err := sshlib.NewPublicKey(ed25519PublicKey)
+	if err != nil {
+		return PrivateAndPublicKeys{}, errors.Wrap(err, "unable to generate ED25519 public key")
+	}
+
+	return PrivateAndPublicKeys{
+		PrivateKey: pem.EncodeToMemory(block),
+		PublicKey:  sshlib.MarshalAuthorizedKey(publicKey),
+	}, nil
 }

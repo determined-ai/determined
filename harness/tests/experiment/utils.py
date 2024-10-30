@@ -2,7 +2,7 @@ import importlib
 import os
 import pathlib
 import re
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, Union
 from unittest import mock
 
 import mypy_extensions
@@ -480,3 +480,122 @@ def get_mock_distributed_context(
     mock_distributed_context.allgather.return_value = all_gather_return_value
     mock_distributed_context.gather.return_value = gather_return_value
     return mock_distributed_context
+
+
+class Events:
+    """
+    Events is basically just a list of (event_string, data) pairs, but where you can add a hook to
+    the .append() method.
+
+    See assert_events_match for motivation.
+    """
+
+    def __init__(self, items: Optional[List[Tuple[str, Any]]] = None) -> None:
+        self.items = items if items is not None else []
+        self.hook: Optional[Callable[[str, Any], None]] = None
+
+    def append(self, item: Tuple[str, Any]) -> None:
+        self.items.append(item)
+        self.hook and self.hook(*item)
+
+    def __str__(self) -> str:
+        return " - " + "\n - ".join(summary for summary, data in self.items)
+
+
+def assert_events_match(events: Events, *patterns: Union[str, Tuple[str, str]]) -> Dict[str, Any]:
+    """
+    Make sure the events from one a run of training loop match a set of patterns.
+
+    This is a tool for testing the overall behavior of callback-based integrations with third party
+    training loops.  The idea is that we have a bunch of individual hooks, probably with each one
+    being pretty trivial.  The features we promise depend on a series of two or more hooks working
+    together to deliver, say, preemption with a save-at-the-end feature.  Testing the individual
+    hooks does not guarantee that our hooks work together with the 3rd-party training loop to
+    accomplish the feature.  Also, since we don't own the 3rd-paty training loop, testing individual
+    hooks does not detect if the training loop changes in a way that breaks us.
+
+    So instead, we log what happens in a full run of the training loop by mocks and subclassing to
+    log events to an Events() object.  See keras/test_callback.py or transformers/test_callback.py
+    for an example.
+
+    Events are just pairs of (str, Any) where the string should uniquely identify the event and the
+    extra data can be anything you might need to extract from a matched event.
+
+    Then we test the overall log of events against a set of positive and negative regex patterns
+    that specify an order of required events (positive patterns) and any unallowed events between
+    them (negative patterns).
+
+    For example, to test that training metrics are reported at steps_completed=5 and 10, but no
+    validation metrics, training metrics, or checkpoint occurs between them, you could use this
+    sequence of patterns:
+
+      - report_metrics:training:5
+      - !report_metrics
+      - !report_checkpoint
+      - report_metrics:training:10
+
+    Note that the ! at the beginning of a pattern marks it as a negative pattern.  Also note that
+    the negative patterns apply to the events after the previous positive match and before the next
+    postive match.
+
+    A positive pattern may be specified as a Tuple of (pattern, name), in which case the data
+    associated with the matched event will be returned under the `name` key.
+
+    Returns a dict containing the requested matched data.
+    """
+    matched_data = {}
+
+    def iter_patterns() -> Iterator[Tuple[List[re.Pattern], Optional[re.Pattern], Optional[str]]]:
+        negatives = []
+        for p in patterns:
+            if isinstance(p, str):
+                # Plain string pattern.
+                pattern = p
+                name = None
+            else:
+                # (pattern, name) case.
+                pattern, name = p
+            # Gather up chunks of negative patterns until the next positive pattern.
+            if pattern.startswith("!"):
+                negatives.append(re.compile(pattern[1:]))
+            else:
+                positive = re.compile(pattern)
+                yield negatives, positive, name
+                negatives = []
+        # Possibly yield a final chunk of just negative patterns.
+        yield negatives, None, None
+
+    event_iter = iter(events.items)
+    for negatives, positive, name in iter_patterns():
+        for event, data in event_iter:
+            # If this is the positive match, don't bother checking negatives.  That way, you can
+            # have a broad negative check like "!report_metrics:training" that applies until some
+            # specific check like "report_metrics:training:10", meaning "no training metrics until
+            # steps_completed equals 10".
+            if positive and positive.search(event):
+                if name:
+                    matched_data[name] = data
+                break
+            # Negatives must not match.
+            matches = [n.pattern for n in negatives if n.search(event)]
+            if matches:
+                if positive:
+                    raise AssertionError(
+                        f"negative pattern (!{matches[0]}) matched to event ({event}) before "
+                        f"{positive.pattern} was found\nevents were:\n{events}"
+                    )
+                else:
+                    raise AssertionError(
+                        f"negative pattern (!{matches[0]}) matched to event ({event}) "
+                        f"after final postive pattern\nevents were:\n{events}"
+                    )
+        else:
+            # End of events... did we match all of our postives?
+            if positive is None:
+                return matched_data
+            raise AssertionError(
+                f"did not match positive expression ({positive.pattern})\n"
+                f"events were:\n{events}"
+            )
+    # Out of patterns.
+    return matched_data

@@ -8,17 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (a AdaptiveASHAConfigV0) MaxLength() LengthV0 {
-	if a.RawMaxLength == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .MaxLength")
-	}
-	return *a.RawMaxLength
-}
-
-func (a *AdaptiveASHAConfigV0) SetMaxLength(val LengthV0) {
-	a.RawMaxLength = &val
-}
-
 func (a AdaptiveASHAConfigV0) MaxTrials() int {
 	if a.RawMaxTrials == nil {
 		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .MaxTrials")
@@ -82,15 +71,36 @@ func (a *AdaptiveASHAConfigV0) SetMaxConcurrentTrials(val int) {
 	a.RawMaxConcurrentTrials = &val
 }
 
-func (a AdaptiveASHAConfigV0) StopOnce() bool {
-	if a.RawStopOnce == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .StopOnce")
-	}
-	return *a.RawStopOnce
+func (a AdaptiveASHAConfigV0) MaxTime() *int {
+	return a.RawMaxTime
 }
 
-func (a *AdaptiveASHAConfigV0) SetStopOnce(val bool) {
-	a.RawStopOnce = &val
+func (a *AdaptiveASHAConfigV0) SetMaxTime(val *int) {
+	a.RawMaxTime = val
+}
+
+func (a AdaptiveASHAConfigV0) TimeMetric() *string {
+	return a.RawTimeMetric
+}
+
+func (a *AdaptiveASHAConfigV0) SetTimeMetric(val *string) {
+	a.RawTimeMetric = val
+}
+
+func (a AdaptiveASHAConfigV0) MaxLength() *LengthV0 {
+	return a.RawMaxLength
+}
+
+func (a *AdaptiveASHAConfigV0) SetMaxLength(val *LengthV0) {
+	a.RawMaxLength = val
+}
+
+func (a AdaptiveASHAConfigV0) StopOnce() *bool {
+	return a.RawStopOnce
+}
+
+func (a *AdaptiveASHAConfigV0) SetStopOnce(val *bool) {
+	a.RawStopOnce = val
 }
 
 func (a AdaptiveASHAConfigV0) ParsedSchema() interface{} {

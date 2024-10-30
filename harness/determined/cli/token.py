@@ -86,8 +86,10 @@ def create_token(args: argparse.Namespace) -> None:
 
         # convert days into hours Go duration format
         expiration_in_hours = None
-        if args.expiration_days:
-            expiration_in_hours = str(24 * args.expiration_days) + "h"
+        if args.expiration_days is not None:
+            expiration_in_hours = (
+                "-1" if args.expiration_days == -1 else f"{24 * args.expiration_days}h"
+            )
 
         request = bindings.v1PostAccessTokenRequest(
             userId=user.id, lifespan=expiration_in_hours, description=args.description

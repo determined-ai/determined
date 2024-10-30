@@ -435,17 +435,31 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 
 	policies, err := ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Empty(t, policies)
+	require.NotEmpty(t, policies)
+	expected := expconf.LogPoliciesConfig{
+		expconf.LogPolicy{
+			RawName:    ptrs.Ptr(expconf.CUDAOOM),
+			RawPattern: ptrs.Ptr(expconf.CUDAOOMPattern),
+		},
+		expconf.LogPolicy{
+			RawName:    ptrs.Ptr(expconf.ECCError),
+			RawPattern: ptrs.Ptr(expconf.ECCErrorPattern),
+		},
+	}
+
+	require.Equal(t, expected, policies)
 
 	activeConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
 	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawAction: expconf.LogAction{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: expconf.LogAction{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
+		expconf.LogPolicy{
+			RawPattern: ptrs.Ptr(`\d{5}$`),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode},
+		},
+		expconf.LogPolicy{
+			RawPattern: ptrs.Ptr("sub"),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries},
+		},
 	}
 
 	v, err := json.Marshal(activeConfig)
@@ -757,12 +771,12 @@ func TestDeleteExperiments(t *testing.T) {
 		// Create experiment snapshot
 		//nolint:exhaustruct
 		config := expconf.SearcherConfig{
-			RawCustomConfig: &expconf.CustomConfig{},
+			RawSingleConfig: &expconf.SingleConfigV0{},
 		}
 		searcher1 := searcher.NewSearcher(3, searcher.NewSearchMethod(config), nil)
-		_, err := searcher1.InitialOperations()
+		_, err := searcher1.InitialTrials()
 		require.NoError(t, err)
-		_, err = searcher1.TrialExitedEarly(model.RequestID(uuid.New()), model.Errored)
+		_, err = searcher1.TrialExitedEarly(model.RequestID{}, model.Errored)
 		require.NoError(t, err)
 
 		snapshot, err := searcher1.Snapshot()

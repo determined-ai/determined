@@ -17,84 +17,6 @@ example:
 
    det experiment create config-file.yaml model-directory
 
-****************
- Training Units
-****************
-
-Some configuration settings, such as searcher training lengths and budgets,
-``min_validation_period``, and ``min_checkpoint_period``, can be expressed in terms of a few
-training units: records, batches, or epochs.
-
--  ``records``: A *record* is a single labeled example (sometimes called a sample).
--  ``batches``: A *batch* is a group of records. The number of records in a batch is configured via
-   the ``global_batch_size`` hyperparameter.
--  ``epoch``: An *epoch* is a single copy of the entire training data set.
-
-For example, to specify the ``max_length`` for a searcher in terms of batches, the configuration
-would read as shown below.
-
-.. code:: yaml
-
-   max_length:
-     batches: 900
-
-To express it in terms of records or epochs, ``records`` or ``epochs`` would be specified in place
-of ``batches``. For :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-:class:`~determined.keras.TFKerasTrial`, :ref:`records_per_epoch <config-records-per-epoch>` must
-also be specified if using epochs. Below is an example that configures a ``single`` searcher to
-train a model for 64 epochs.
-
-.. code:: yaml
-
-   records_per_epoch: 50000
-   searcher:
-     name: single
-     metric: validation_error
-     max_length:
-       epochs: 64
-     smaller_is_better: true
-
-The configured :ref:`records_per_epoch <config-records-per-epoch>` is only used for interpreting
-configuration fields that are expressed in epochs. Actual epoch boundaries are still determined by
-the dataset itself (specifically, the end of an epoch occurs when the training data loader runs out
-of records).
-
-.. note::
-
-   When the amount of training data for a model is specified using records or epochs, and the batch
-   size does not evenly divide the configured number of inputs, the remaining "partial batch" of
-   data will be dropped (ignored). For example, if an experiment is configured to train a single
-   model on 10 records with a batch size of 3, the model will be trained on only 9 records of data.
-   In the special case where a trial is configured to train on less than a single batch of data, a
-   single complete batch will be used instead.
-
-Training Unit Conversion Limitations (Caveats)
-==============================================
-
-In most cases, values expressed in one type of training unit can be converted to another type while
-maintaining the same behavior. However, there are some limitations to consider:
-
--  Since training units must be positive integers, it is not always possible to convert between
-   different types of units. For example, converting 50 ``records`` into batches is not possible if
-   the batch size is 64.
-
--  When performing a hyperparameter search over a range of values for ``global_batch_size``, the
-   specified ``batches`` cannot be converted to a fixed number of records or epochs and hence cause
-   different behaviors in different trials of the search.
-
--  When using :ref:`adaptive_asha <experiment-configuration-searcher-adaptive>`, a single training
-   unit is treated as atomic (unable to be divided into fractional parts) when dividing
-   ``max_length`` into the series of rounds (or rungs) by which we early-stop underperforming
-   trials. This rounding may result in unexpected behavior when configuring ``max_length`` with a
-   small number of large epochs or batches.
-
-To verify your search is working as intended before committing to a full run, you can use the CLI's
-"preview search" feature:
-
-.. code::
-
-   det preview-search <configuration.yaml>
-
 **********
  Metadata
 **********
@@ -200,30 +122,31 @@ field is empty.
 Arbitrary Script
 ----------------
 
-Required. An arbitrary entrypoint script name.
+Required. An arbitrary entrypoint script with args.
 
 Example:
 
 .. code:: yaml
 
-   entrypoint: ./hello.sh
+   entrypoint: ./hello.sh args...
 
 Preconfigured Launch Module with Script
 ---------------------------------------
 
-Required. The name of a preconfigured launch module and script name.
+Required. The name of a preconfigured launch module and script with args.
 
 Example:
 
 .. code:: yaml
 
-   entrypoint: python3 -m (LAUNCH_MODULE) train.py
+   entrypoint: python3 -m (LAUNCH_MODULE) train.py args...
 
 ``LAUNCH_MODULE`` options:
 
 -  Horovod (determined.launch.horovod)
 -  PyTorch (determined.launch.torch_distributed)
 -  Deepspeed (determined.launch.deepspeed)
+-  TensorFlow (determined.launch.tensorflow)
 
 Preconfigured Launch Module with Legacy Trial Definition
 --------------------------------------------------------
@@ -273,20 +196,6 @@ preemption, in the unit of batches. The number of records in a batch is controll
 -  As a rule of thumb, it should be set to the number of batches that can be trained in roughly
    60--180 seconds.
 
-.. _config-records-per-epoch:
-
-``records_per_epoch``
-=====================
-
-Optional. The number of records in the training data set. It must be configured if you want to
-specify ``min_validation_period``, ``min_checkpoint_period``, and ``searcher.max_length`` in units
-of ``epochs``.
-
-.. note::
-
-   For :class:`~determined.pytorch.PyTorchTrial`, epoch length is automatically determined using the
-   chief worker's dataset length, and this value will be ignored.
-
 .. _max-restarts:
 
 ``max_restarts``
@@ -304,38 +213,69 @@ if at least one of its trials completes without errors. The default value for ``
 ``log_policies``
 ================
 
-Optional. Defines actions in response to trial logs matching specified regex patterns (Go language
-syntax). For more information about the syntax, you can visit this `RE2 reference page
-<https://github.com/google/re2/wiki/Syntax>`__. Actions include:
+Optional. Defines actions and labels in response to trial logs matching specified regex patterns (Go
+language syntax). For more information about the syntax, you can visit this `RE2 reference page
+<https://github.com/google/re2/wiki/Syntax>`__. Each log policy can have the following fields:
 
--  ``exclude_node``: Excludes a failed trial's restart attempts (due to its ``max_restarts`` policy)
-   from being scheduled on nodes with matched error logs. This is useful for bypassing nodes with
-   hardware issues, like uncorrectable GPU ECC errors.
+-  ``name``: Required. The name of the log policy, displayed as a label in the WebUI when a log
+   policy match occurs.
 
-   Note: This option is not supported on PBS systems.
+-  ``pattern``: Optional. Defines a regex pattern to match log entries. If not specified, this
+   policy is disabled.
 
-   For the agent resource manager, if a trial becomes unschedulable due to enough node exclusions,
-   and ``launch_error`` in the master config is true (default), the trial fails.
+-  ``action``: Optional. The action to take when the pattern is matched. Actions include:
 
--  ``cancel_retries``: Prevents a trial from restarting if a trial reports a log that matches the
-   pattern, even if it has remaining ``max_restarts``. This avoids using resources for retrying a
-   trial that encounters certain failures that won't be fixed by retrying the trial, such as CUDA
-   memory issues.
+   -  ``exclude_node``: Excludes a failed trial's restart attempts (due to its ``max_restarts``
+      policy) from being scheduled on nodes with matched error logs. This is useful for bypassing
+      nodes with hardware issues, such as uncorrectable GPU ECC errors.
+
+      .. note::
+
+         This option is not supported on PBS systems.
+
+      For the agent resource manager, if a trial becomes unschedulable due to enough node
+      exclusions, and ``launch_error`` in the master config is set to true (default), the trial will
+      fail.
+
+   -  ``cancel_retries``: Prevents a trial from restarting if a log matches the pattern, even if the
+      trial has remaining max_restarts. This avoids using resources retrying a trial that encounters
+      failures unlikely to be resolved by retrying, such as CUDA memory issues.
 
 Example configuration:
 
 .. code:: yaml
 
    log_policies:
-      - pattern: ".*uncorrectable ECC error encountered.*"
-        action:
-          type: exclude_node
-      - pattern: ".*CUDA out of memory.*"
-        action:
-          type: cancel_retries
+     - name: ECC Error
+       pattern: ".*uncorrectable ECC error encountered.*"
+       action: exclude_node
+     - name: CUDA OOM
+       pattern: ".*CUDA out of memory.*"
+       action: cancel_retries
+
+When a log policy matches, its name appears as a label in the WebUI, making it easy to identify
+specific issues during a run. These labels are shown in both the run table and run detail views.
 
 These settings may also be specified at the cluster or resource pool level through task container
 defaults.
+
+Default policies:
+
+.. code:: yaml
+
+   log_policies:
+     - name: CUDA OOM
+       pattern: ".*CUDA out of memory.*"
+     - name: ECC Error
+       pattern: ".*uncorrectable ECC error encountered.*"
+
+To disable showing labels from the default policies:
+
+.. code:: yaml
+
+   log_policies:
+     - name: CUDA OOM
+     - name: ECC Error
 
 .. _log-retention-days:
 
@@ -395,8 +335,8 @@ Optional. Specifies the minimum frequency at which validation should be run for 
       epochs: 2
 
 -  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
+   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs, ``records_per_epoch``
+   must be specified.
 
 .. _experiment-config-perform-initial-validation:
 
@@ -437,7 +377,7 @@ Optional. Specifies the minimum frequency for running checkpointing for each tri
 
 -  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
    :class:`~determined.keras.TFKerasTrial`: If the unit is in epochs, you must also specify
-   :ref:`records_per_epoch <config-records-per-epoch>`.
+   ``records_per_epoch``.
 
 ``checkpoint_policy``
 =====================
@@ -884,8 +824,6 @@ example, to configure a ``random`` hyperparameter search that trains 5 trials fo
      name: random
      metric: accuracy
      max_trials: 5
-     max_length:
-       batches: 1000
 
 For details on using Determined to perform hyperparameter search, refer to
 :ref:`hyperparameter-tuning`. For more information on the search methods supported by Determined,
@@ -908,23 +846,6 @@ Required. The name of the validation metric used to evaluate the performance of 
 configuration.
 
 .. _experiment-configuration_single-searcher-max-length:
-
-``max_length``
---------------
-
-Required. The length of the trial.
-
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
-
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -968,23 +889,6 @@ configuration.
 
 Required. The number of trials, i.e., hyperparameter configurations, to evaluate.
 
-``max_length``
---------------
-
-Required. The length of each trial.
-
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
-
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
-
 **Optional Fields**
 
 ``smaller_is_better``
@@ -1004,12 +908,12 @@ Optional. The maximum number of trials that can be worked on simultaneously. The
 
 Optional. If specified, the weights of *every* trial in the search will be initialized to the most
 recent checkpoint of the given trial ID. This will fail if the source trial's model architecture is
-inconsistent with the model architecture of any of the trials in this experiment.
+incompatible with the model architecture of any of the trials in this experiment.
 
 ``source_checkpoint_uuid``
 --------------------------
 
-Optional. Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize
+Optional. Like ``source_trial_id`` but specifies an arbitrary checkpoint from which to initialize
 weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
 
 Grid
@@ -1024,23 +928,6 @@ specified via the ``hyperparameters`` field. For more details see the
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
-
-``max_length``
---------------
-
-Required. The length of each trial.
-
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
-
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -1069,6 +956,76 @@ the model architecture of this experiment.
 Optional. Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize
 weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
 
+.. _experiment-configuration-searcher-asha:
+
+Asynchronous Halving (ASHA)
+===========================
+
+The ``async_halving`` search performs a version of the asynchronous successive halving algorithm
+(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_) that stops trials early if there is enough evidence
+to terminate training. Once trials are stopped, they will not be resumed.
+
+``metric``
+----------
+
+Required. The name of the validation metric used to evaluate the performance of a hyperparameter
+configuration.
+
+``time_metric``
+---------------
+
+Required. The name of the validation metric used to evaluate the progress of a given trial.
+
+``max_time``
+------------
+
+Required. The maximum value that ``time_metric`` should take when a trial finishes training. Early
+stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
+value.
+
+``max_trials``
+--------------
+
+Required. The number of trials, i.e., hyperparameter configurations, to evaluate.
+
+``num_rungs``
+-------------
+
+Required. The number of rounds of successive halving to perform.
+
+``smaller_is_better``
+---------------------
+
+Optional. Whether to minimize or maximize the metric defined above. The default value is ``true``
+(minimize).
+
+``divisor``
+-----------
+
+Optional. The fraction of trials to keep at each rung, and also determines the training length for
+each rung. The default setting is ``4``; only advanced users should consider changing this value.
+
+``max_concurrent_trials``
+-------------------------
+
+Optional. The maximum number of trials that can be worked on simultaneously. The default value is
+``16``, and we set reasonable values depending on ``max_trials`` and the number of rungs in the
+brackets. This is akin to controlling the degree of parallelism of the experiment. If this value is
+less than the number of brackets produced by the adaptive algorithm, it will be rounded up.
+
+``source_trial_id``
+-------------------
+
+Optional. If specified, the weights of *every* trial in the search will be initialized to the most
+recent checkpoint of the given trial ID. This will fail if the source trial's model architecture is
+inconsistent with the model architecture of any of the trials in this experiment.
+
+``source_checkpoint_uuid``
+--------------------------
+
+Optional. Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize
+weights. At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
+
 .. _experiment-configuration-searcher-adaptive:
 
 Adaptive ASHA
@@ -1084,25 +1041,17 @@ experiments with hundreds or thousands of trials.
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
 
-``max_length``
---------------
+``time_metric``
+---------------
 
-Required. The maximum training length of any one trial. The vast majority of trials will be stopped
-early, and thus only a small fraction of trials will actually be trained for this long. This
-quantity is domain-specific and should roughly reflect the length of training needed for the model
-to converge on the data set.
+Required. The name of the validation metric used to evaluate the progress of a given trial.
 
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
+``max_time``
+------------
 
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
+Required. The maximum value that ``time_metric`` should take when a trial finishes training. Early
+stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
+value.
 
 ``max_trials``
 --------------
@@ -1127,14 +1076,6 @@ hyperparameter configurations, but at the risk of discarding a configuration too
 end of the spectrum, ``conservative`` mode performs significantly less downsampling, but as a
 consequence does not explore as many configurations given the same budget. We recommend using either
 ``aggressive`` or ``standard`` mode.
-
-``stop_once``
--------------
-
-Optional. If ``stop_once`` is set to ``true``, we will use a variant of ASHA that will not resume
-trials once stopped. This variant defaults to continuing training and will only stop trials if there
-is enough evidence to terminate training. We recommend using this version of ASHA when training a
-trial for the max length as fast as possible is important or when fault tolerance is too expensive.
 
 ``divisor``
 -----------
@@ -1654,11 +1595,3 @@ If :ref:`gres_supported <cluster-configuration-slurm>` is set to ``false``, spec
 to ensure that ``slots_per_node`` GPUs will be available on the nodes selected for the job using
 other configurations such as targeting a specific resource pool with only ``slots_per_node`` GPU
 nodes or specifying a PBS constraint in the experiment configuration.
-
-******************
- Metadata Logging
-******************
-
-Determined supports logging arbitrary metadata for experiments. This feature allows users to store
-additional context and information about their runs. To learn how to log custom metadata, visit
-:ref:`the tutorial <metadata-logging-tutorial>`.

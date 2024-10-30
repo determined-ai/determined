@@ -20,8 +20,6 @@ You must have a running Determined cluster with the CLI installed.
 -  To set up a remote cluster, visit the :ref:`Installation Guide <installation-guide>` where you'll
    find options for On Prem, AWS, GCP, Kubernetes, and Slurm.
 
-.. _qs-webui-concepts:
-
 **********
  Concepts
 **********
@@ -160,8 +158,6 @@ our multi-trial search. Finally, we'll run a remote distributed training job.
                  name: random
                  metric: validation_loss
                  max_trials: 20
-                 max_length:
-                   batches: 1000
                  smaller_is_better: true
 
                entrypoint: python3 train.py

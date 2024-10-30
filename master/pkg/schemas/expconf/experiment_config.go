@@ -52,11 +52,6 @@ type ExperimentConfigV0 struct {
 	RawPreemptionTimeout        *int                        `json:"preemption_timeout"`
 }
 
-// Unit implements the model.InUnits interface.
-func (e *ExperimentConfigV0) Unit() Unit {
-	return e.RawSearcher.Unit()
-}
-
 // Value implements the driver.Valuer interface.
 func (e ExperimentConfigV0) Value() (driver.Value, error) {
 	// Validate the object before passing it to the database.
@@ -144,11 +139,6 @@ func (d Name) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON marshals makes the Name container transparent to unmarshaling.
 func (d *Name) UnmarshalJSON(bytes []byte) error {
 	return json.Unmarshal(bytes, &d.RawString)
-}
-
-// InUnits is describes a type that is in terms of a specific unit.
-type InUnits interface {
-	Unit() Unit
 }
 
 // LabelsV0 holds the set of labels on the experiment.

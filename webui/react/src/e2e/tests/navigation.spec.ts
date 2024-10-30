@@ -7,9 +7,8 @@ test.describe('Navigation', () => {
     // we need any page to access the sidebar, and i haven't modeled the homepage yet
     const userManagementPage = new UserManagement(authedPage);
 
-    await test.step('Login steps', async () => {
-      await expect(authedPage).toHaveDeterminedTitle('Home');
-      await expect(authedPage).toHaveURL(/dashboard/);
+    await test.step('Load page', async () => {
+      await userManagementPage.goto();
     });
 
     await test.step('Uncategorized', async () => {

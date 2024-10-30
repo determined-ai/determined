@@ -10,11 +10,18 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/token"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+)
+
+var errAccessTokenRequiresEE = status.Error(
+	codes.FailedPrecondition,
+	"users cannot log in with an access token without a valid Enterprise Edition license set up.",
 )
 
 // PostAccessToken takes user id and optional lifespan, description and creates an
@@ -22,11 +29,14 @@ import (
 func (a *apiServer) PostAccessToken(
 	ctx context.Context, req *apiv1.PostAccessTokenRequest,
 ) (*apiv1.PostAccessTokenResponse, error) {
+	if !license.IsEE() {
+		return nil, errAccessTokenRequiresEE
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
@@ -36,14 +46,31 @@ func (a *apiServer) PostAccessToken(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	tokenExpiration := token.DefaultTokenLifespan
-	if req.Lifespan != "" {
-		d, err := time.ParseDuration(req.Lifespan)
-		if err != nil || d < 0 {
-			return nil, status.Error(codes.InvalidArgument,
-				"Lifespan must be a Go-formatted duration string with a positive value")
+	maxTokenLifespan := a.m.config.Security.Token.MaxLifespan()
+	tokenExpiration := a.m.config.Security.Token.DefaultLifespan()
+	if req.Lifespan != nil {
+		if *req.Lifespan == config.InfiniteTokenLifespanString {
+			tokenExpiration = maxTokenLifespan
+		} else {
+			d, err := time.ParseDuration(*req.Lifespan)
+			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"failed to parse lifespan %s: %s", *req.Lifespan, err)
+			} else if d < 0 {
+				return nil, status.Error(codes.InvalidArgument,
+					"lifespan must be a Go-formatted duration string with a positive value")
+			}
+			tokenExpiration = d
 		}
-		tokenExpiration = d
+	}
+
+	// Ensure the token lifespan does not exceed the maximum allowed or minimum -1 value.
+	if tokenExpiration > maxTokenLifespan {
+		return nil, status.Error(codes.InvalidArgument, "token Lifespan must be less than max token lifespan")
+	}
+	if tokenExpiration < 0 {
+		return nil, status.Error(codes.InvalidArgument, "token lifespan must be greater than 0 days,"+
+			" unless set to -1 for infinite lifespan")
 	}
 
 	token, tokenID, err := token.CreateAccessToken(
@@ -58,6 +85,10 @@ func (a *apiServer) PostAccessToken(
 func (a *apiServer) GetAccessTokens(
 	ctx context.Context, req *apiv1.GetAccessTokensRequest,
 ) (*apiv1.GetAccessTokensResponse, error) {
+	if !license.IsEE() {
+		return nil, errAccessTokenRequiresEE
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -161,6 +192,10 @@ func (a *apiServer) GetAccessTokens(
 func (a *apiServer) PatchAccessToken(
 	ctx context.Context, req *apiv1.PatchAccessTokenRequest,
 ) (*apiv1.PatchAccessTokenResponse, error) {
+	if !license.IsEE() {
+		return nil, errAccessTokenRequiresEE
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err

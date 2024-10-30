@@ -219,12 +219,14 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
 	require.NoError(t, err)
 	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawAction: expconf.LogAction{
-			RawCancelRetries: &expconf.LogActionCancelRetries{},
-		}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: expconf.LogAction{
-			RawExcludeNode: &expconf.LogActionExcludeNode{},
-		}},
+		expconf.LogPolicy{
+			RawPattern: ptrs.Ptr("sub"),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeCancelRetries},
+		},
+		expconf.LogPolicy{
+			RawPattern: ptrs.Ptr(`\d{5}$`),
+			RawAction:  &expconf.LogActionV0{Type: expconf.LogActionTypeExcludeNode},
+		},
 	}
 
 	v, err := json.Marshal(activeConfig)
@@ -442,4 +444,75 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 		aID1.String(), "failed to get the correct allocation's accelerator data")
 	require.Equal(t, resp.AcceleratorData[0].ResourcePool,
 		a1.ResourcePool, "failed to get the correct allocation's resource pool data")
+}
+
+func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
+	require.NoError(t, err)
+
+	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
+		expconf.LogPolicy{
+			RawName:    ptrs.Ptr("test"),
+			RawPattern: ptrs.Ptr("sub"),
+		},
+	}
+
+	v, err := json.Marshal(activeConfig)
+	require.NoError(t, err)
+
+	var m map[string]any
+	require.NoError(t, json.Unmarshal(v, &m))
+
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Where("id = ?", trial.ExperimentID).
+		Set("config = ?", m).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "stringsubstring",
+			},
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "12345",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	runsOut := struct {
+		bun.BaseModel    `bun:"table:runs"`
+		LogPolicyMatched *string `db:"log_policy_matched"`
+	}{}
+
+	err = db.Bun().NewSelect().Model(&runsOut).
+		Where("id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, runsOut)
+	require.NotNil(t, runsOut.LogPolicyMatched)
+
+	require.Equal(t, "test", *runsOut.LogPolicyMatched)
+
+	tasksOut := struct {
+		bun.BaseModel    `bun:"table:tasks"`
+		LogPolicyMatched *string `db:"log_policy_matched"`
+	}{}
+	err = db.Bun().NewSelect().Model(&tasksOut).
+		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
+		Where("run_id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, tasksOut)
+	require.NotNil(t, tasksOut.LogPolicyMatched)
+
+	require.Equal(t, "test", *tasksOut.LogPolicyMatched)
 }

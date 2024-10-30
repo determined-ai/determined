@@ -4,6 +4,8 @@ package searcher
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -25,194 +27,63 @@ func TestBracketMaxConcurrentTrials(t *testing.T) {
 	assert.DeepEqual(t, getBracketMaxConcurrentTrials(0, 4., []int{40, 10}), []int{10, 10})
 }
 
-func modePtr(x expconf.AdaptiveMode) *expconf.AdaptiveMode {
-	return &x
-}
-
-func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
-	conf := expconf.AdaptiveASHAConfig{
-		RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(6400)),
-		RawMaxTrials: ptrs.Ptr(128),
-	}
-	conf = schemas.WithDefaults(conf)
-	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, true) }
-	checkReproducibility(t, gen, nil, defaultMetric)
-}
-
-func TestAdaptiveASHASearchMethod(t *testing.T) {
-	testCases := []valueSimulationTestCase{
+func TestMakeBrackets(t *testing.T) {
+	cases := []struct {
+		conf        expconf.AdaptiveASHAConfig
+		expBrackets []bracket
+	}{
 		{
-			name: "smaller is better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.4),
-				newConstantPredefinedTrial(toOps("900B"), 0.5),
+			conf: expconf.AdaptiveASHAConfig{
+				RawMode:                ptrs.Ptr(expconf.StandardMode),
+				RawMaxTime:             ptrs.Ptr(100),
+				RawTimeMetric:          ptrs.Ptr("batches"),
+				RawMaxConcurrentTrials: ptrs.Ptr(2),
+				RawMaxTrials:           ptrs.Ptr(10),
 			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(true),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
+			expBrackets: []bracket{
+				{
+					numRungs:            2,
+					maxTrials:           7,
+					maxConcurrentTrials: 1,
+				},
+				{
+					numRungs:            1,
+					maxTrials:           3,
+					maxConcurrentTrials: 1,
 				},
 			},
 		},
 		{
-			name: "early exit -- smaller is better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
-				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.4),
-				newConstantPredefinedTrial(toOps("900B"), 0.5),
+			conf: expconf.AdaptiveASHAConfig{
+				RawMode:                ptrs.Ptr(expconf.ConservativeMode),
+				RawMaxTime:             ptrs.Ptr(1000),
+				RawTimeMetric:          ptrs.Ptr("batches"),
+				RawDivisor:             ptrs.Ptr(3.0),
+				RawMaxConcurrentTrials: ptrs.Ptr(5),
+				RawMaxTrials:           ptrs.Ptr(10),
 			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(true),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
+			expBrackets: []bracket{
+				{
+					numRungs:            3,
+					maxTrials:           7,
+					maxConcurrentTrials: 2,
 				},
-			},
-		},
-		{
-			name: "smaller is not better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.5),
-				newConstantPredefinedTrial(toOps("300B"), 0.4),
-				newConstantPredefinedTrial(toOps("300B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.2),
-				newConstantPredefinedTrial(toOps("900B"), 0.1),
-			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(false),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
+				{
+					numRungs:            2,
+					maxTrials:           2,
+					maxConcurrentTrials: 2,
 				},
-			},
-		},
-		{
-			name: "early exit -- smaller is not better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.5),
-				newEarlyExitPredefinedTrial(toOps("300B"), 0.4),
-				newConstantPredefinedTrial(toOps("300B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.2),
-				newConstantPredefinedTrial(toOps("900B"), 0.1),
-			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(false),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
+				{
+					numRungs:            1,
+					maxTrials:           1,
+					maxConcurrentTrials: 1,
 				},
 			},
 		},
 	}
-
-	runValueSimulationTestCases(t, testCases)
-}
-
-func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
-	testCases := []valueSimulationTestCase{
-		{
-			name: "smaller is better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.4),
-				newConstantPredefinedTrial(toOps("900B"), 0.5),
-			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(true),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
-					RawStopOnce:  ptrs.Ptr(true),
-				},
-			},
-		},
-		{
-			name: "early exit -- smaller is better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
-				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.4),
-				newConstantPredefinedTrial(toOps("900B"), 0.5),
-			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(true),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
-					RawStopOnce:  ptrs.Ptr(true),
-				},
-			},
-		},
-		{
-			name: "smaller is not better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.4),
-				newConstantPredefinedTrial(toOps("900B"), 0.5),
-			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(false),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
-					RawStopOnce:  ptrs.Ptr(true),
-				},
-			},
-		},
-		{
-			name: "early exit -- smaller is not better",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
-				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B 900B"), 0.3),
-				newConstantPredefinedTrial(toOps("900B"), 0.4),
-				newConstantPredefinedTrial(toOps("900B"), 0.5),
-			},
-			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.Ptr(false),
-				RawAdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
-					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(900)),
-					RawMaxTrials: ptrs.Ptr(5),
-					RawMode:      modePtr(expconf.StandardMode),
-					RawMaxRungs:  ptrs.Ptr(2),
-					RawDivisor:   ptrs.Ptr[float64](3),
-					RawStopOnce:  ptrs.Ptr(true),
-				},
-			},
-		},
+	for _, c := range cases {
+		brackets := makeBrackets(schemas.WithDefaults(c.conf))
+		require.Equal(t, len(c.expBrackets), len(brackets))
+		require.Equal(t, c.expBrackets, brackets)
 	}
-
-	runValueSimulationTestCases(t, testCases)
 }

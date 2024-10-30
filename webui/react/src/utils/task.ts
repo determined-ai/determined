@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
-import { LaunchTensorBoardParams } from 'services/types';
+import { LaunchTensorBoardParams, LaunchTensorBoardSearchesParams } from 'services/types';
 import * as Type from 'types';
 import { CommandState, RunState, State } from 'types';
 
@@ -214,6 +214,23 @@ export const tensorBoardMatchesSource = (
     tensorBoard.misc?.trialIds?.sort();
 
     if (_.isEqual(tensorBoard.misc?.trialIds, source.trialIds)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+// Checks whether tensorboard source matches a given source list.
+export const tensorBoardSearchesMatchesSource = (
+  tensorBoard: Type.CommandTask,
+  source: LaunchTensorBoardSearchesParams,
+): boolean => {
+  if (source.searchIds) {
+    source.searchIds?.sort();
+    tensorBoard.misc?.experimentIds?.sort();
+
+    if (_.isEqual(tensorBoard.misc?.experimentIds, source.searchIds)) {
       return true;
     }
   }

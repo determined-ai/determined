@@ -1209,28 +1209,6 @@ service Determined {
     };
   }
 
-  // Get the current searcher operation.
-  rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
-      returns (GetCurrentTrialSearcherOperationResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/trials/{trial_id}/searcher/operation"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-  // Reports to the searcher that the trial has completed the given searcher
-  // operation.
-  rpc CompleteTrialSearcherValidation(CompleteTrialSearcherValidationRequest)
-      returns (CompleteTrialSearcherValidationResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/trials/{trial_id}/searcher/completed_operation"
-      body: "completed_operation"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
   // Reports to the searcher that the trial has completed the current
   // requested amount of training with the given searcher validation
   // metric.
@@ -1640,6 +1618,17 @@ service Determined {
       tags: "Tensorboards"
     };
   }
+  // Launch a tensorboard for one or more searches using bulk search filters.
+  rpc LaunchTensorboardSearches(LaunchTensorboardSearchesRequest)
+      returns (LaunchTensorboardSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/tensorboards"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Delete tensorboard files.
   rpc DeleteTensorboardFiles(DeleteTensorboardFilesRequest)
       returns (DeleteTensorboardFilesResponse) {
@@ -1898,29 +1887,6 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]
-    };
-  }
-
-  // Get the list of custom searcher events with long polling.
-  rpc GetSearcherEvents(GetSearcherEventsRequest)
-      returns (GetSearcherEventsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/experiments/{experiment_id}/searcher_events"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
-    };
-  }
-
-  // Submit operations to a custom searcher.
-  rpc PostSearcherOperations(PostSearcherOperationsRequest)
-      returns (PostSearcherOperationsResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/experiments/{experiment_id}/searcher_operations"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
     };
   }
 
@@ -2893,6 +2859,17 @@ service Determined {
   rpc MoveSearches(MoveSearchesRequest) returns (MoveSearchesResponse) {
     option (google.api.http) = {
       post: "/api/v1/searches/move"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Cancel searches.
+  rpc CancelSearches(CancelSearchesRequest) returns (CancelSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/cancel"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
