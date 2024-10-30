@@ -129,8 +129,29 @@ test.describe('User Management', () => {
   });
 
   test.describe('User Management List', () => {
-    const usernamePrefix = 'test-user-list';
+    type PageCountOption = 'perPage10' | 'perPage20' | 'perPage50' | 'perPage100';
+    const USERNAME_PREFIX = 'test-user-list';
     const listTestUsers: V1User[] = [];
+
+    const setPageCount = async (
+      userManagementPage: UserManagement,
+      pageCountOption: PageCountOption,
+    ) => {
+      await expect(
+        repeatWithFallback(
+          async () => {
+            await userManagementPage.table.table.pagination.perPage.openMenu();
+            await userManagementPage.table.table.pagination.perPage[
+              pageCountOption
+            ].pwLocator.click();
+          },
+          async () => {
+            // BUG [ET-233]
+            await userManagementPage.goto();
+          },
+        ),
+      ).toPass({ timeout: 25_000 });
+    };
 
     test.beforeAll(async ({ backgroundApiUser }) => {
       await test.step('Create test users', async () => {
@@ -138,7 +159,7 @@ test.describe('User Management', () => {
         for (let i = 0; i < 11; i++) {
           const userResponse = await backgroundApiUser.createUser(
             // adding index prefix allows more specific testing of sorting:
-            backgroundApiUser.new({ usernamePrefix: `${i}-${usernamePrefix}` }),
+            backgroundApiUser.new({ usernamePrefix: `${i}-${USERNAME_PREFIX}` }),
           );
           if (userResponse.user?.id) {
             testUserIds.push(userResponse.user.id);
@@ -153,23 +174,11 @@ test.describe('User Management', () => {
       });
     });
 
-    test('[ET-233] Bulk Actions', async ({ page, user, playwright }) => {
+    test('Bulk Actions', async ({ page, user, playwright }) => {
       const userManagementPage = new UserManagement(page);
 
       await test.step('Setup Table Filters', async () => {
-        // set pagination to 10
-        await expect(
-          repeatWithFallback(
-            async () => {
-              await userManagementPage.table.table.pagination.perPage.openMenu();
-              await userManagementPage.table.table.pagination.perPage.perPage10.pwLocator.click();
-            },
-            async () => {
-              // BUG [ET-233]
-              await userManagementPage.goto();
-            },
-          ),
-        ).toPass({ timeout: 15_000 });
+        await setPageCount(userManagementPage, 'perPage10');
         // filter by active users
         await userManagementPage.filterStatus.openMenu();
         await userManagementPage.filterStatus.activeUsers.pwLocator.click();
@@ -181,7 +190,7 @@ test.describe('User Management', () => {
           ).toHaveLength(10);
         }).toPass({ timeout: 10_000 });
         // search for users created this session and wait for table stable
-        await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
+        await userManagementPage.search.pwLocator.fill(USERNAME_PREFIX + sessionRandomHash);
         await expect(async () => {
           expect(await userManagementPage.table.table.rows.pwLocator.all()).toHaveLength(10);
         }).toPass({ timeout: 10_000 });
@@ -235,38 +244,26 @@ test.describe('User Management', () => {
         return Number(match[1]);
       };
 
-      const pagination = userManagementPage.table.table.pagination;
-      for await (const { name, paginationOption } of [
+      for await (const { name, pageCountOption } of [
         {
           name: '10',
-          paginationOption: pagination.perPage.perPage10,
+          pageCountOption: 'perPage10',
         },
         {
           name: '20',
-          paginationOption: pagination.perPage.perPage20,
+          pageCountOption: 'perPage20',
         },
         {
           name: '50',
-          paginationOption: pagination.perPage.perPage50,
+          pageCountOption: 'perPage50',
         },
         {
           name: '100',
-          paginationOption: pagination.perPage.perPage100,
+          pageCountOption: 'perPage100',
         },
       ]) {
         await test.step(`Compare Table Rows With Pagination ${name}`, async () => {
-          await expect(
-            repeatWithFallback(
-              async () => {
-                await pagination.perPage.openMenu();
-                await paginationOption.pwLocator.click();
-              },
-              async () => {
-                // BUG [ET-233]
-                await userManagementPage.goto();
-              },
-            ),
-          ).toPass({ timeout: 25_000 });
+          await setPageCount(userManagementPage, pageCountOption as PageCountOption);
           await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
           const paginationSelection = Number(name);
           await expect(
@@ -322,21 +319,9 @@ test.describe('User Management', () => {
       test.beforeEach(async ({ page }) => {
         const userManagementPage = new UserManagement(page);
 
-        const pagination = userManagementPage.table.table.pagination;
-        await expect(
-          repeatWithFallback(
-            async () => {
-              await pagination.perPage.openMenu();
-              await pagination.perPage.perPage10.pwLocator.click();
-            },
-            async () => {
-              // BUG [ET-233]
-              await userManagementPage.goto();
-            },
-          ),
-        ).toPass({ timeout: 25_000 });
+        await setPageCount(userManagementPage, 'perPage10');
 
-        await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
+        await userManagementPage.search.pwLocator.fill(USERNAME_PREFIX + sessionRandomHash);
       });
 
       test.afterAll(async ({ backgroundApiUser }) => {
@@ -421,19 +406,18 @@ test.describe('User Management', () => {
         const userManagementPage = new UserManagement(page);
 
         const validateFilter = async (filterFn: (user: V1User) => boolean) => {
-          // TODO: better way to make sure table has updated:
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          expect((await getTableUsernames(userManagementPage)).sort()).toEqual(
-            listTestUsers
-              .filter(filterFn)
-              .map((u) => u.username)
-              .sort(),
-          );
+          await expect(async () => {
+            expect((await getTableUsernames(userManagementPage)).sort()).toEqual(
+              listTestUsers
+                .filter(filterFn)
+                .map((u) => u.username)
+                .sort(),
+            );
+          }).toPass({ timeout: 10_000 });
         };
 
         const resetFilters = async () => {
-          await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
+          await userManagementPage.search.pwLocator.fill(USERNAME_PREFIX + sessionRandomHash);
 
           if (!isRbacEnabled()) {
             await userManagementPage.filterRole.openMenu();
