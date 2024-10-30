@@ -394,10 +394,13 @@ def deploy_stack(
 
                 if tags[constants.deployment_types.TYPE_TAG_KEY] == "simple":
                     print()
-                    print("Previous value of --deployment-type was 'simple'. This deployment type was")
-                    print("removed in 0.38.0 because AWS Aurora V1 is EoL. Please follow this guide")
-                    print("to migrate to RDS:")
-                    print("\thttps://gist.github.com/rb-determined-ai/bfa10182e53968e00a3c88df624e777e\n")
+                    print(
+                        "Previous value of --deployment-type was 'simple'. This deployment type\n"
+                        "was removed in 0.38.0 because AWS Aurora V1 is EoL. Please follow this\n"
+                        "guide to migrate to RDS:\n"
+                        "\thttps://gist.github.com/rb-determined-ai/"
+                        "bfa10182e53968e00a3c88df624e777e"
+                    )
                     print()
 
             if prompt_needed:
