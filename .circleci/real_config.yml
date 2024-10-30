@@ -2855,8 +2855,11 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
+            if [ <<parameters.container-run-type>> = "enroot" ]; then
+              gpu_param="-g nvidia-tesla-t4:1"
+            fi
             yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster \
-              FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-users\\\"}'" \
+              FLAGS="${gpu_param} -c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-users\\\"}'" \
               TF_LOCK=false | tee output.log || circleci-agent step halt
           background: true
 
