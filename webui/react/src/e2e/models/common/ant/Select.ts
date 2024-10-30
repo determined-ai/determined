@@ -58,7 +58,7 @@ export class Select extends BaseComponent {
         // it's fine if this fails, we are just ensuring they are all closed.
       }
     }
-    await this._menu.open();
+    await this.pwLocator.click(); // open menu
     await this.root._page.waitForTimeout(500); // ant/Select - menus may reset input shortly after opening [ET-283]
     return this;
   }
