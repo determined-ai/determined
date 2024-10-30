@@ -6355,6 +6355,33 @@ class v1GetRolesByIDResponse(Printable):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
 
+class v1GetRunGroupsResponse(Printable):
+    """Response to GetRunGroupsRequest."""
+
+    def __init__(
+        self,
+        *,
+        groups: "typing.Sequence[v1RunGroup]",
+        pagination: "v1Pagination",
+    ):
+        self.groups = groups
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRunGroupsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "groups": [v1RunGroup.from_json(x) for x in obj["groups"]],
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "groups": [x.to_json(omit_unset) for x in self.groups],
+            "pagination": self.pagination.to_json(omit_unset),
+        }
+        return out
+
 class v1GetRunMetadataResponse(Printable):
     """Response to get the metadata of a run."""
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -13988,6 +14015,109 @@ class v1RunActionResult(Printable):
         }
         return out
 
+class v1RunGroup(Printable):
+    """Flat run respresentation. Used for the rows of the Run Table."""
+    duration: "typing.Optional[int]" = None
+    endTime: "typing.Optional[str]" = None
+    groupName: "typing.Optional[str]" = None
+    resourcePools: "typing.Optional[typing.Sequence[str]]" = None
+    runCount: "typing.Optional[int]" = None
+    searcherMetricValue: "typing.Optional[float]" = None
+    searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
+    searcherTypes: "typing.Optional[typing.Sequence[str]]" = None
+    userIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        checkpointCount: float,
+        checkpointSize: float,
+        startTime: str,
+        duration: "typing.Union[int, None, Unset]" = _unset,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
+        groupName: "typing.Union[str, None, Unset]" = _unset,
+        resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        runCount: "typing.Union[int, None, Unset]" = _unset,
+        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
+        searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        searcherTypes: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        userIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.checkpointCount = checkpointCount
+        self.checkpointSize = checkpointSize
+        self.startTime = startTime
+        if not isinstance(duration, Unset):
+            self.duration = duration
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
+        if not isinstance(groupName, Unset):
+            self.groupName = groupName
+        if not isinstance(resourcePools, Unset):
+            self.resourcePools = resourcePools
+        if not isinstance(runCount, Unset):
+            self.runCount = runCount
+        if not isinstance(searcherMetricValue, Unset):
+            self.searcherMetricValue = searcherMetricValue
+        if not isinstance(searcherMetrics, Unset):
+            self.searcherMetrics = searcherMetrics
+        if not isinstance(searcherTypes, Unset):
+            self.searcherTypes = searcherTypes
+        if not isinstance(userIds, Unset):
+            self.userIds = userIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RunGroup":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": float(obj["checkpointCount"]),
+            "checkpointSize": float(obj["checkpointSize"]),
+            "startTime": obj["startTime"],
+        }
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
+        if "groupName" in obj:
+            kwargs["groupName"] = obj["groupName"]
+        if "resourcePools" in obj:
+            kwargs["resourcePools"] = obj["resourcePools"]
+        if "runCount" in obj:
+            kwargs["runCount"] = obj["runCount"]
+        if "searcherMetricValue" in obj:
+            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
+        if "searcherMetrics" in obj:
+            kwargs["searcherMetrics"] = obj["searcherMetrics"]
+        if "searcherTypes" in obj:
+            kwargs["searcherTypes"] = obj["searcherTypes"]
+        if "userIds" in obj:
+            kwargs["userIds"] = obj["userIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": dump_float(self.checkpointCount),
+            "checkpointSize": dump_float(self.checkpointSize),
+            "startTime": self.startTime,
+        }
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
+        if not omit_unset or "groupName" in vars(self):
+            out["groupName"] = self.groupName
+        if not omit_unset or "resourcePools" in vars(self):
+            out["resourcePools"] = self.resourcePools
+        if not omit_unset or "runCount" in vars(self):
+            out["runCount"] = self.runCount
+        if not omit_unset or "searcherMetricValue" in vars(self):
+            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
+        if not omit_unset or "searcherMetrics" in vars(self):
+            out["searcherMetrics"] = self.searcherMetrics
+        if not omit_unset or "searcherTypes" in vars(self):
+            out["searcherTypes"] = self.searcherTypes
+        if not omit_unset or "userIds" in vars(self):
+            out["userIds"] = self.userIds
+        return out
+
 class v1RunPrepareForReportingRequest(Printable):
     """Request to prepare to start reporting to a run."""
     checkpointStorage: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -20715,6 +20845,47 @@ def post_GetRolesByID(
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
 
+def get_GetRunGroups(
+    session: "api.BaseSession",
+    *,
+    filter: "typing.Optional[str]" = None,
+    group: "typing.Optional[str]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+    sort: "typing.Optional[str]" = None,
+) -> "v1GetRunGroupsResponse":
+    """Get runs in a project, grouped by a provided column.
+
+    - filter: Filter expression.
+    - group: Column to group the runs by.
+    - limit: How many results to show.
+    - offset: How many experiments to skip before including in the results.
+    - projectId: ID of the project to look at.
+    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+    """
+    _params = {
+        "filter": filter,
+        "group": group,
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+        "sort": sort,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/runs/groups",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRunGroupsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetRunGroups", _resp)
+
 def get_GetRunMetadata(
     session: "api.BaseSession",
     *,
@@ -25279,6 +25450,7 @@ Paginated = typing.Union[
     v1GetModelsResponse,
     v1GetNotebooksResponse,
     v1GetResourcePoolsResponse,
+    v1GetRunGroupsResponse,
     v1GetShellsResponse,
     v1GetTemplatesResponse,
     v1GetTensorboardsResponse,

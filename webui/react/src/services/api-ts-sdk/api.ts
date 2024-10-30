@@ -4807,6 +4807,25 @@ export interface V1GetRolesByIDResponse {
     roles?: Array<V1RoleWithAssignments>;
 }
 /**
+ * Response to GetRunGroupsRequest.
+ * @export
+ * @interface V1GetRunGroupsResponse
+ */
+export interface V1GetRunGroupsResponse {
+    /**
+     * The list of returned groups.
+     * @type {Array<V1RunGroup>}
+     * @memberof V1GetRunGroupsResponse
+     */
+    groups: Array<V1RunGroup>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetRunGroupsResponse
+     */
+    pagination: V1Pagination;
+}
+/**
  * Response to get the metadata of a run.
  * @export
  * @interface V1GetRunMetadataResponse
@@ -10285,6 +10304,85 @@ export interface V1RunActionResult {
      * @memberof V1RunActionResult
      */
     id: number;
+}
+/**
+ * Flat run respresentation. Used for the rows of the Run Table.
+ * @export
+ * @interface V1RunGroup
+ */
+export interface V1RunGroup {
+    /**
+     * Name of the grouping category.
+     * @type {string}
+     * @memberof V1RunGroup
+     */
+    groupName?: string;
+    /**
+     * The time the run was started.
+     * @type {Date | DateString}
+     * @memberof V1RunGroup
+     */
+    startTime: Date | DateString;
+    /**
+     * The time the run ended.
+     * @type {Date | DateString}
+     * @memberof V1RunGroup
+     */
+    endTime?: Date | DateString;
+    /**
+     * The total size of checkpoints.
+     * @type {number}
+     * @memberof V1RunGroup
+     */
+    checkpointSize: number;
+    /**
+     * The count of checkpoints.
+     * @type {number}
+     * @memberof V1RunGroup
+     */
+    checkpointCount: number;
+    /**
+     * Signed searcher metrics value.
+     * @type {number}
+     * @memberof V1RunGroup
+     */
+    searcherMetricValue?: number;
+    /**
+     * The id of the user who created the run.
+     * @type {Array<number>}
+     * @memberof V1RunGroup
+     */
+    userIds?: Array<number>;
+    /**
+     * Time in seconds which the run ran or has been running.
+     * @type {number}
+     * @memberof V1RunGroup
+     */
+    duration?: number;
+    /**
+     * The type of searcher for the experiment.
+     * @type {Array<string>}
+     * @memberof V1RunGroup
+     */
+    searcherTypes?: Array<string>;
+    /**
+     * The searcher metric name for the experiment.
+     * @type {Array<string>}
+     * @memberof V1RunGroup
+     */
+    searcherMetrics?: Array<string>;
+    /**
+     * The resource pool the experiment was created in.
+     * @type {Array<string>}
+     * @memberof V1RunGroup
+     */
+    resourcePools?: Array<string>;
+    /**
+     * The number of runs in the group.
+     * @type {number}
+     * @memberof V1RunGroup
+     */
+    runCount?: number;
 }
 /**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
@@ -21316,6 +21414,66 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get runs in a project, grouped by a provided column.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {string} [group] Column to group the runs by.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRunGroups(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, group?: string, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/runs/groups`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
+            }
+            
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
+            }
+            
+            if (group !== undefined) {
+                localVarQueryParameter['group'] = group
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get run metadata.
          * @param {number} runId The ID of the run to get metadata for.
          * @param {*} [options] Override http request option.
@@ -24170,6 +24328,30 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get runs in a project, grouped by a provided column.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {string} [group] Column to group the runs by.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRunGroups(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, group?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRunGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getRunGroups(projectId, offset, limit, sort, filter, group, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get run metadata.
          * @param {number} runId The ID of the run to get metadata for.
          * @param {*} [options] Override http request option.
@@ -25545,6 +25727,21 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get runs in a project, grouped by a provided column.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {string} [group] Column to group the runs by.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRunGroups(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, group?: string, options?: any) {
+            return InternalApiFp(configuration).getRunGroups(projectId, offset, limit, sort, filter, group, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get run metadata.
          * @param {number} runId The ID of the run to get metadata for.
          * @param {*} [options] Override http request option.
@@ -26535,6 +26732,23 @@ export class InternalApi extends BaseAPI {
      */
     public getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
         return InternalApiFp(this.configuration).getResourcePools(offset, limit, unbound, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get runs in a project, grouped by a provided column.
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+     * @param {string} [filter] Filter expression.
+     * @param {string} [group] Column to group the runs by.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getRunGroups(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, group?: string, options?: any) {
+        return InternalApiFp(this.configuration).getRunGroups(projectId, offset, limit, sort, filter, group, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -116,7 +116,7 @@ func (a *apiServer) SearchRuns(
 	}
 
 	if req.Sort != nil {
-		err = sortRuns(req.Sort, query)
+		err = sortRuns(req.Sort, query, true)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +178,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
 }
 
-func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
+func sortRuns(sortString *string, runQuery *bun.SelectQuery, useID bool) error {
 	if sortString == nil {
 		return nil
 	}
@@ -262,7 +262,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
 	}
-	if !hasIDSort {
+	if !hasIDSort && useID {
 		runQuery.OrderExpr("id ASC")
 	}
 	return nil
@@ -1080,4 +1080,84 @@ func (a *apiServer) PostRunMetadata(
 		return nil, errors.Wrapf(err, "error updating metadata on run(%d)", req.RunId)
 	}
 	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(result)}, nil
+}
+
+func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsRequest,
+) (*apiv1.GetRunGroupsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	resp := &apiv1.GetRunGroupsResponse{}
+	var groups []*runv1.RunGroup
+	query := db.Bun().NewSelect().
+		Model(&groups).
+		ModelTableExpr("runs AS r").
+		Apply(getRunsGroupsColumns)
+
+	var proj *projectv1.Project
+	if req.ProjectId != nil {
+		proj, err = a.GetProjectByID(ctx, *req.ProjectId, *curUser)
+		if err != nil {
+			return nil, err
+		}
+
+		query = query.Where("r.project_id = ?", req.ProjectId)
+	}
+	if query, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, proj, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+		); err != nil {
+		return nil, err
+	}
+	if req.Filter != nil {
+		query, err = filterRunQuery(query, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Sort != nil {
+		err = sortRuns(req.Sort, query, false)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		query.OrderExpr("group_name ASC")
+	}
+
+	groupName, err := runColumnNameToSQL(req.Group)
+	if err != nil {
+		return nil, err
+	}
+	query.Group(groupName)
+	query.ColumnExpr(fmt.Sprintf("%s AS group_name", groupName))
+	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
+	if err != nil {
+		return nil, err
+	}
+	resp.Pagination = pagination
+	resp.Groups = groups
+	return resp, nil
+}
+
+func getRunsGroupsColumns(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
+		ColumnExpr("proto_time(min(r.start_time)) AS start_time").
+		ColumnExpr("proto_time(max(r.end_time)) AS end_time").
+		ColumnExpr("avg(r.checkpoint_size) AS checkpoint_size").
+		ColumnExpr("avg(r.checkpoint_count) AS checkpoint_count").
+		ColumnExpr("avg(COALESCE(r.searcher_metric_value)) AS searcher_metric_value").
+		ColumnExpr("extract(epoch FROM coalesce(max(r.end_time), now()) - min(r.start_time))::int AS duration").
+		ColumnExpr("json_agg(distinct e.owner_id) AS user_ids").
+		ColumnExpr("json_agg(distinct e.config->'resources'->>'resource_pool') as resource_pools").
+		ColumnExpr("json_agg(distinct e.config->'searcher'->>'name') as searcher_types").
+		ColumnExpr("json_agg(distinct e.config->'searcher'->>'metric') as searcher_metrics").
+		ColumnExpr("COUNT(*) AS run_count").
+		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
+		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
+		Join("LEFT JOIN users u ON e.owner_id = u.id").
+		Join("LEFT JOIN projects p ON r.project_id = p.id").
+		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
 }
