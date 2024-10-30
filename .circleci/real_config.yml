@@ -675,7 +675,8 @@ commands:
 
             # Remove prior test results
             rm -f "<<parameters.junit-path>>"
-
+            # DNJ DEBUG, print tests
+            pytest --setup-plan -m '<<parameters.mark>>'
             pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
             if [ ! -s /tmp/all-relevant-files ]; then
               echo 'No test files found!'
