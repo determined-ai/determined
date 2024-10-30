@@ -64,8 +64,8 @@ or CLI.
 
 .. note::
 
-   Both workspaces and experiment invariant configs can set checkpoint storage, but the two settings 
-   are applied differently. Checkpoint storage set for a workspace is a default that can be overridden 
+   Checkpoint storage can be set for workspaces and in experiment invariant config but the two 
+   settings are applied differently. Checkpoint storage set for a workspace is a default that can be overridden 
    by specifying checkpoint storage in experiment configuration. Experiment invariant config is 
    non-overridable and will replace any workspace defaults as well as user-submitted experiment configs.
 
