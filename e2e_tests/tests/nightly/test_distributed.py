@@ -114,6 +114,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
     config["hyperparameters"]["num_batches"] = 2
     prompt_vals = config["hyperparameters"]["call_kwargs"]["prompt"]["vals"]
     config["hyperparameters"]["call_kwargs"]["guidance_scale"] = 7.5
+    config["max_restarts"] = 0
     while len(prompt_vals) > 1:
         prompt_vals.pop()
 
