@@ -4357,7 +4357,7 @@ workflows:
             parameters:
               name: [test-e2e-slurm-enroot-gcp-gpu]
               container-run-type: ["enroot"]
-              mark: ["e2e_slurm and not parallel and gpu_required"]
+              mark: ["e2e_slurm and not parallel and e2e_gpu"]
               environment-gpu-enabled: ["1"]
           requires:
             - build-go-ee
@@ -5269,9 +5269,9 @@ workflows:
             - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
-              name: [test-e2e-slurm-enroot-gcp]
+              name: [test-e2e-slurm-enroot-gcp-gpu]
               container-run-type: ["enroot"]
-              mark: ["e2e_slurm and not parallel and gpu_required"]
+              mark: ["e2e_slurm and not parallel and e2e_gpu"]
               environment-gpu-enabled: ["1"]
           requires:
             - build-go

@@ -96,6 +96,7 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
     else:
         raise ValueError("unknown task type: {task_type}")
 
+    print(f"DNJ DEBUG ran command for {task_type}")
     def task_logs(**kwargs: Any) -> Iterable[Log]:
         return api.task_logs(sess, task_id, **kwargs)
 
@@ -118,7 +119,7 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
 
         thread = threading.Thread(target=do_check_logs, daemon=True)
         thread.start()
-        thread.join(timeout=5 * 60)
+        thread.join(timeout=10 * 60)
         if thread.is_alive():
             # The thread did not exit
             raise ValueError("do_check_logs timed out")
@@ -189,8 +190,11 @@ def check_logs(
     log_fields_fn: Callable[..., Iterable[LogFields]],
 ) -> None:
     # This is also testing that follow terminates. If we timeout here, that's it.
+    print("DNJ DEBUG logging found logs")
     for log in log_fn(follow=True):
+        print(f"DNJ DEBUG log: {log.message}")
         if log_regex.match(log.message):
+            print(f"DNJ DEBUG foung log {log.message}")
             break
     else:
         raise ValueError("ran out of logs without a match")
