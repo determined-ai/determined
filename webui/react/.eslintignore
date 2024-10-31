@@ -4,3 +4,4 @@ src/vendor/notebook/notebook.js
 !.eslintrc.js
 !.stylelintrc.js
 node_modules
+generated
