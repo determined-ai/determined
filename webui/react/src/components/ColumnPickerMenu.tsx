@@ -1,3 +1,4 @@
+import Badge from 'hew/Badge';
 import Button from 'hew/Button';
 import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
 import Dropdown from 'hew/Dropdown';
@@ -10,9 +11,11 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { V1LocationType } from 'services/api-ts-sdk';
+import { runColumns } from 'pages/FlatRuns/columns';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
+import { formatColumnKey, removeColumnTypePrefix } from 'utils/flatRun';
 
 import css from './ColumnPickerMenu.module.scss';
 
@@ -75,7 +78,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   onVisibleColumnChange,
   onHeatmapSelectionRemove,
 }) => {
-  const checkedColumns = useMemo(
+  const checkedColumnNames = useMemo(
     () => (compare ? new Set(columnState.slice(0, pinnedColumnsCount)) : new Set(columnState)),
     [columnState, compare, pinnedColumnsCount],
   );
@@ -95,18 +98,21 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns.every((col) => columnState.includes(col.column));
+    return filteredColumns.every((col) => columnState.includes(formatColumnKey(col)));
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce(
-      (acc, col) => ({ ...acc, [col.column]: columnState.includes(col.column) }),
+      (acc, col) => ({
+        ...acc,
+        [formatColumnKey(col)]: columnState.includes(formatColumnKey(col)),
+      }),
       {},
     );
 
     const newColumns = allFilteredColumnsChecked
       ? columnState.filter((col) => !filteredColumnMap[col])
-      : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
+      : [...new Set([...columnState, ...filteredColumns.map((col) => formatColumnKey(col))])];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
         newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
@@ -123,32 +129,34 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
   const handleColumnChange = useCallback(
     (event: CheckboxChangeEvent) => {
-      const { id, checked } = event.target;
-      if (id === undefined) return;
+      const { id: targetCol, checked } = event.target;
+
+      if (targetCol === undefined) return;
+
       if (compare) {
         // pin or unpin column
-        const newColumns = columnState.filter((c) => c !== id);
+        const newColumns = columnState.filter((c) => c !== targetCol);
         let pinnedCount = pinnedColumnsCount;
         if (checked) {
-          newColumns.splice(pinnedColumnsCount, 0, id);
+          newColumns.splice(pinnedColumnsCount, 0, targetCol);
           pinnedCount = Math.max(pinnedColumnsCount + 1, 0);
         } else {
-          newColumns.splice(pinnedColumnsCount - 1, 0, id);
+          newColumns.splice(pinnedColumnsCount - 1, 0, targetCol);
           pinnedCount = Math.max(pinnedColumnsCount - 1, 0);
         }
         onVisibleColumnChange?.(newColumns, pinnedCount);
       } else {
         let pinnedCount = pinnedColumnsCount;
         // If uncheck something pinned, reduce the pinnedColumnsCount
-        if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
+        if (!checked && columnState.indexOf(targetCol) < pinnedColumnsCount) {
           pinnedCount = Math.max(pinnedColumnsCount - 1, 0);
         }
         // If uncheck something had heatmap skipped, reset to heatmap visible
         if (!checked) {
-          onHeatmapSelectionRemove?.(id);
+          onHeatmapSelectionRemove?.(targetCol);
         }
         const newColumnSet = new Set(columnState);
-        checked ? newColumnSet.add(id) : newColumnSet.delete(id);
+        checked ? newColumnSet.add(targetCol) : newColumnSet.delete(targetCol);
         onVisibleColumnChange?.([...newColumnSet], pinnedCount);
       }
     },
@@ -165,24 +173,48 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const rows = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
+      const colType =
+        (runColumns as readonly string[]).includes(col.column) &&
+        col.type === V1ColumnType.UNSPECIFIED
+          ? 'BOOLEAN'
+          : removeColumnTypePrefix(col.type);
+      const getColDisplayName = (col: ProjectColumn) => {
+        return (
+          <>
+            {col.displayName || col.column} <Badge text={colType} />
+          </>
+        );
+      };
+      const getId = () => {
+        if (col.location === V1LocationType.RUNMETADATA) return formatColumnKey(col);
+
+        return col.column;
+      };
+      const getChecked = () => {
+        if (col.location === V1LocationType.RUNMETADATA)
+          return checkedColumnNames.has(formatColumnKey(col));
+
+        return checkedColumnNames.has(col.column);
+      };
+
       return (
         <div
           className={css.rows}
           data-test="row"
-          data-test-id={col.column}
-          key={col.column}
+          data-test-id={getId()}
+          key={getId()}
           style={style}>
           <Checkbox
-            checked={checkedColumns.has(col.column)}
+            checked={getChecked()}
             data-test="checkbox"
-            id={col.column}
+            id={getId()}
             onChange={handleColumnChange}>
-            {col.displayName || col.column}
+            {getColDisplayName(col)}
           </Checkbox>
         </div>
       );
     },
-    [filteredColumns, checkedColumns, handleColumnChange],
+    [filteredColumns, checkedColumnNames, handleColumnChange],
   );
 
   return (
