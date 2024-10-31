@@ -459,7 +459,7 @@ file.
        main()
 
 You can run this Python script directly (``python3 train.py``), or in a Jupyter notebook. This code
-will train for ten epochs, and checkpoint and validate every 100 batches.
+will train for ten epochs, checkpointing and validating every 100 batches.
 
 Local Distributed Training
 ==========================
@@ -474,8 +474,6 @@ code.
    def main():
    +     # Initialize distributed backend before det_ds.init()
    +     deepspeed.init_distributed()
-   +     # Set flag used by internal PyTorch training loop
-   +     os.environ["DET_MANUAL_INIT_DISTRIBUTED"] = "true"
    +     # Initialize DistributedContext
          with det_ds.init(
    +       distributed=core.DistributedContext.from_deepspeed()
@@ -520,12 +518,10 @@ Example workflow of frequent iterations between local debugging and cluster depl
 .. code:: diff
 
     def main():
-   +   local = det.get_cluster_info() is None
-   +   if local:
+   +   info = det.get_cluster_info()
+   +   if info is None:
    +       # Local: configure local distributed training.
    +       deepspeed.init_distributed()
-   +       # Set flag used by internal PyTorch training loop
-   +       os.environ["DET_MANUAL_INIT_DISTRIBUTED"] = "true"
    +       distributed_context = core.DistributedContext.from_deepspeed()
    +       latest_checkpoint = None
    +   else:
@@ -546,7 +542,7 @@ Example workflow of frequent iterations between local debugging and cluster depl
    +             latest_checkpoint=latest_checkpoint,
              )
 
-To run Trainer API solely on-cluster, the code is much simpler:
+To run Trainer API solely on-cluster, the code is simpler:
 
 .. code:: python
 
@@ -583,9 +579,9 @@ Submit the trial to the cluster:
 
    det e create det.yaml .
 
-If your training code needs to read some values from the experiment configuration,
-``pytorch.deepspeed.init()`` accepts an ``exp_conf`` argument which allows calling
-``context.get_experiment_config()`` from ``DeepSpeedTrialContext``.
+If your training code needs to read some values from the experiment configuration, you can set the
+``data`` field and read from ``det.get_cluster_info().trial.user_data`` or set ``hyperparameters``
+and read from ``det.get_cluster_info().trial.hparams``.
 
 Profiling
 =========

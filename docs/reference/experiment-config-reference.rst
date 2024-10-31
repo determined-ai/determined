@@ -803,6 +803,14 @@ in the :ref:`hyperparameters <experiment-configuration_hyperparameters>` section
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
 
+.. _experiment-configuration_single-searcher-max-length:
+
+``max_length`` (deprecated)
+---------------------------
+
+Previously, ``max_length`` was required to determine the length of each trial. This field has been
+deprecated and all training lengths should be specified directly in training code.
+
 **Optional Fields**
 
 ``smaller_is_better``
@@ -841,6 +849,12 @@ configuration.
 --------------
 
 Required. The number of trials, i.e., hyperparameter configurations, to evaluate.
+
+``max_length`` (deprecated)
+---------------------------
+
+Previously, ``max_length`` was required to determine the length of each trial. This field has been
+deprecated and all training lengths should be specified directly in training code.
 
 **Optional Fields**
 
@@ -881,6 +895,12 @@ specified via the ``hyperparameters`` field. For more details see the
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
+
+``max_length`` (deprecated)
+---------------------------
+
+Previously, ``max_length`` was required to determine the length of each trial. This field has been
+deprecated and all training lengths should be specified directly in training code.
 
 **Optional Fields**
 
@@ -923,6 +943,12 @@ to terminate training. Once trials are stopped, they will not be resumed.
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
+
+``max_length`` (deprecated)
+---------------------------
+
+The length of the trial. This field has been deprecated and should be replaced with ``time_metric``
+and ``max_time`` below.
 
 ``time_metric``
 ---------------
@@ -1029,6 +1055,12 @@ hyperparameter configurations, but at the risk of discarding a configuration too
 end of the spectrum, ``conservative`` mode performs significantly less downsampling, but as a
 consequence does not explore as many configurations given the same budget. We recommend using either
 ``aggressive`` or ``standard`` mode.
+
+``stop_once`` (deprecated)
+--------------------------
+
+Previously, this field determined whether the ASHA algorithm was promotion-based or
+preemption-based. This field is now deprecated and ASHA search is always preemption-based.
 
 ``divisor``
 -----------
@@ -1354,12 +1386,13 @@ details.
 
 .. _exp-config-optimizations:
 
-***************
- Optimizations
-***************
+****************************
+ Optimizations (deprecated)
+****************************
 
 The ``optimizations`` section contains configuration options that influence the performance of the
-experiment.
+experiment. This section has been deprecated and should be configured in training code. Please see
+:ref:`apis-howto-overview` for details specific to your training framework.
 
 .. _config-aggregation-frequency:
 
