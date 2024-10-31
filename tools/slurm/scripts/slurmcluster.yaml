@@ -107,7 +107,7 @@ stages:
           # rendezvous_network_interface: $OPT_RENDEVOUSIFACE
           # default_aux_resource_pool: $OPT_DEFAULTAUXRESOURCEPOOL
           # default_compute_resource_pool: $OPT_DEFAULTCOMPUTERESOURCEPOOL
-          # slot_type: $OPT_SLOTTYPE
+          slot_type: $OPT_SLOTTYPE
           # Specify per-partition overrides for submitted tasks.
           # partition_overrides:
           #   defq:

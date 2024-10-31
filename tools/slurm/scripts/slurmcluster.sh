@@ -199,11 +199,13 @@ export OPT_REMOTE_GROUP=$(gcloud_ssh_stdout_only id -gn)
 export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
+export OPT_SLOTTYPE="cpu" # default, overriden in GPU section if needed
 
 LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
 LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
+
 
 # Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
@@ -223,11 +225,14 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     # If the image has to download during circleci jobs it may cause a timeout waiting for make slurmcluster
     # particilarly if we add GPU tests that need the CUDA image which is larger.
     if [[ -z $GPUS ]]; then
+        echo "Selected cpu for slurm slot type"
         gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
     else
+        echo "Selected cuda for slurm slot type"
         gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
+        export OPT_SLOTTYPE="cuda"
     fi
 fi
 
