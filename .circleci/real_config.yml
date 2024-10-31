@@ -2724,16 +2724,6 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  test-e2e-slurm-disabled:
-    parameters:
-      master_config:
-        type: string
-        default:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - run: echo "Test suite disabled."
-
   # By default, this job only runs on the main branch unless otherwise
   # specified. To invoke this job on a developer branch, add the 'ci-run-allgcp'
   # label to your pull request on github.
@@ -2750,9 +2740,6 @@ jobs:
       container-run-type:
         type: string
         default: singularity
-      allocate-gpu:
-        type: bool
-        default: false
       workload-manager:
         type: string
         default: slurm
@@ -2777,8 +2764,13 @@ jobs:
         default: GOOGLE_PROJECT_ID
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
+      environment-gpu-enabled:
+        type: string
+        default: "0"
     machine:
       image: <<pipeline.parameters.machine-image>>
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     resource_class: xlarge
     parallelism: <<parameters.parallelism>>
     steps:
@@ -2858,7 +2850,8 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            if [ <<parameters.container-run-type>> = "enroot" ]; then
+            if [ <<parameters.environment-gpu-enabled>> == "1" ]; then
+              echo "allocating gpus"
               gpu_param="-g nvidia-tesla-t4:2"
             fi
             yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster \
@@ -4345,6 +4338,27 @@ workflows:
               name: [test-e2e-slurm-enroot-gcp]
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      # Enroot over SLURM test on GCP with GPU
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp-gpu]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and gpu_required"]
+              environment-gpu-enabled: ["1"]
           requires:
             - build-go-ee
           filters:
