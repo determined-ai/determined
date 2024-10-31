@@ -10383,6 +10383,18 @@ export interface V1RunGroup {
      * @memberof V1RunGroup
      */
     runCount?: number;
+    /**
+     * The run ids of the runs that belong to the group
+     * @type {Array<number>}
+     * @memberof V1RunGroup
+     */
+    runIds?: Array<number>;
+    /**
+     * hyperparameters.
+     * @type {any}
+     * @memberof V1RunGroup
+     */
+    hyperparameters?: any;
 }
 /**
  * RunnableOperation represents a single runnable operation emitted by a searcher.

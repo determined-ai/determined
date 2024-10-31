@@ -1091,9 +1091,8 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 
 	resp := &apiv1.GetRunGroupsResponse{}
 	var groups []*runv1.RunGroup
-	query := db.Bun().NewSelect().
-		Model(&groups).
-		ModelTableExpr("runs AS r").
+	searchQuery := db.Bun().NewSelect().
+		TableExpr("runs AS r").
 		Apply(getRunsGroupsColumns)
 
 	var proj *projectv1.Project
@@ -1103,36 +1102,64 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 			return nil, err
 		}
 
-		query = query.Where("r.project_id = ?", req.ProjectId)
+		searchQuery = searchQuery.Where("r.project_id = ?", req.ProjectId)
 	}
-	if query, err = experiment.AuthZProvider.Get().
-		FilterExperimentsQuery(ctx, *curUser, proj, query,
+	if searchQuery, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, proj, searchQuery,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 		); err != nil {
 		return nil, err
 	}
 	if req.Filter != nil {
-		query, err = filterRunQuery(query, req.Filter)
+		searchQuery, err = filterRunQuery(searchQuery, req.Filter)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if req.Sort != nil {
-		err = sortRuns(req.Sort, query, false)
+		err = sortRuns(req.Sort, searchQuery, false)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		query.OrderExpr("group_name ASC")
+		searchQuery.OrderExpr("group_name ASC")
 	}
 
 	groupName, err := runColumnNameToSQL(req.Group)
 	if err != nil {
 		return nil, err
 	}
-	query.Group(groupName)
-	query.ColumnExpr(fmt.Sprintf("%s AS group_name", groupName))
+	searchQuery.Group(groupName)
+	searchQuery.ColumnExpr(fmt.Sprintf("%s AS group_name", groupName))
+
+	query := db.Bun().NewSelect().
+		ColumnExpr("run_groups.group_name").
+		ColumnExpr("run_groups.start_time").
+		ColumnExpr("run_groups.end_time").
+		ColumnExpr("run_groups.checkpoint_size").
+		ColumnExpr("run_groups.checkpoint_count").
+		ColumnExpr("run_groups.searcher_metric_value").
+		ColumnExpr("run_groups.duration").
+		ColumnExpr("run_groups.user_ids").
+		ColumnExpr("run_groups.resource_pools").
+		ColumnExpr("run_groups.searcher_types").
+		ColumnExpr("run_groups.searcher_metrics").
+		ColumnExpr("run_groups.run_count").
+		ColumnExpr("array_to_json(run_groups.run_ids) as run_ids").
+		ColumnExpr(`(SELECT jsonb_merge_agg(jsonb_build_object(s.hparam,
+			jsonb_build_object(
+				'number_val', s.number_val,
+				'text_val', s.text_val,
+				'bool_val', s.bool_val)
+				)) FROM (
+					SELECT hparam, avg(number_val) as number_val,
+						json_agg(distinct coalesce(text_val, '')) as text_val,
+						bool_or(bool_val) as bool_val
+					FROM run_hparams rh WHERE rh.run_id = ANY (run_groups.run_ids)
+					GROUP BY rh.hparam) as s) as hyperparameters`).
+		Model(&groups).
+		ModelTableExpr("(?) as run_groups", searchQuery)
 	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
@@ -1155,6 +1182,7 @@ func getRunsGroupsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("json_agg(distinct e.config->'searcher'->>'name') as searcher_types").
 		ColumnExpr("json_agg(distinct e.config->'searcher'->>'metric') as searcher_metrics").
 		ColumnExpr("COUNT(*) AS run_count").
+		ColumnExpr("array_agg(r.id) as run_ids").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").

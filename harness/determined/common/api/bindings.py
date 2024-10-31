@@ -14020,8 +14020,10 @@ class v1RunGroup(Printable):
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     groupName: "typing.Optional[str]" = None
+    hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
     runCount: "typing.Optional[int]" = None
+    runIds: "typing.Optional[typing.Sequence[int]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
     searcherTypes: "typing.Optional[typing.Sequence[str]]" = None
@@ -14036,8 +14038,10 @@ class v1RunGroup(Printable):
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         groupName: "typing.Union[str, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         runCount: "typing.Union[int, None, Unset]" = _unset,
+        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         searcherTypes: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -14052,10 +14056,14 @@ class v1RunGroup(Printable):
             self.endTime = endTime
         if not isinstance(groupName, Unset):
             self.groupName = groupName
+        if not isinstance(hyperparameters, Unset):
+            self.hyperparameters = hyperparameters
         if not isinstance(resourcePools, Unset):
             self.resourcePools = resourcePools
         if not isinstance(runCount, Unset):
             self.runCount = runCount
+        if not isinstance(runIds, Unset):
+            self.runIds = runIds
         if not isinstance(searcherMetricValue, Unset):
             self.searcherMetricValue = searcherMetricValue
         if not isinstance(searcherMetrics, Unset):
@@ -14078,10 +14086,14 @@ class v1RunGroup(Printable):
             kwargs["endTime"] = obj["endTime"]
         if "groupName" in obj:
             kwargs["groupName"] = obj["groupName"]
+        if "hyperparameters" in obj:
+            kwargs["hyperparameters"] = obj["hyperparameters"]
         if "resourcePools" in obj:
             kwargs["resourcePools"] = obj["resourcePools"]
         if "runCount" in obj:
             kwargs["runCount"] = obj["runCount"]
+        if "runIds" in obj:
+            kwargs["runIds"] = obj["runIds"]
         if "searcherMetricValue" in obj:
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "searcherMetrics" in obj:
@@ -14104,10 +14116,14 @@ class v1RunGroup(Printable):
             out["endTime"] = self.endTime
         if not omit_unset or "groupName" in vars(self):
             out["groupName"] = self.groupName
+        if not omit_unset or "hyperparameters" in vars(self):
+            out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "resourcePools" in vars(self):
             out["resourcePools"] = self.resourcePools
         if not omit_unset or "runCount" in vars(self):
             out["runCount"] = self.runCount
+        if not omit_unset or "runIds" in vars(self):
+            out["runIds"] = self.runIds
         if not omit_unset or "searcherMetricValue" in vars(self):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "searcherMetrics" in vars(self):
