@@ -1132,19 +1132,36 @@ func (a *apiServer) PatchExperiment(
 			}
 
 			enforcedChkptConf, err := configpolicy.GetConfigPolicyField[expconf.CheckpointStorageConfig](
-				ctx, &w.ID, "invariant_config", "checkpoint_storage",
+				ctx, &w.ID, []string{"checkpoint_storage"}, "invariant_config",
 				model.ExperimentType)
 			if err != nil {
 				return nil, fmt.Errorf("unable to fetch task config policies: %w", err)
 			}
-			if enforcedChkptConf != nil {
-				activeConfig.SetCheckpointStorage(*enforcedChkptConf)
-			}
-		}
 
-		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-		if err := a.m.db.SaveExperimentConfig(modelExp.ID, activeConfig); err != nil {
-			return nil, errors.Wrapf(err, "patching experiment %d", modelExp.ID)
+			if enforcedChkptConf != nil {
+				enforcedSaveExpBest := enforcedChkptConf.RawSaveExperimentBest
+				enforcedSaveTrialBest := enforcedChkptConf.RawSaveTrialBest
+				enforcedSaveTrialLatest := enforcedChkptConf.RawSaveTrialLatest
+
+				if enforcedSaveExpBest != nil &&
+					int(newCheckpointStorage.SaveExperimentBest) != *enforcedSaveExpBest {
+					return nil,
+						fmt.Errorf("save_experiment_best is enforced as an invariant config policy of %d",
+							*enforcedSaveExpBest)
+				}
+				if enforcedSaveTrialBest != nil &&
+					int(newCheckpointStorage.SaveTrialBest) != *enforcedSaveTrialBest {
+					return nil,
+						fmt.Errorf("save_trial_best is enforced as an invariant config policy of %d",
+							*enforcedSaveTrialBest)
+				}
+				if enforcedSaveTrialLatest != nil &&
+					int(newCheckpointStorage.SaveTrialLatest) != *enforcedSaveTrialLatest {
+					return nil,
+						fmt.Errorf("save_trial_latest is enforced as an invariant config policy of %d",
+							*enforcedSaveTrialLatest)
+				}
+			}
 		}
 
 		if newResources != nil {
@@ -1155,6 +1172,15 @@ func (a *apiServer) PatchExperiment(
 
 			if newResources.MaxSlots != nil {
 				msg := sproto.SetGroupMaxSlots{MaxSlots: ptrs.Ptr(int(*newResources.MaxSlots))}
+				w, err := getWorkspaceByConfig(activeConfig)
+				if err != nil {
+					return nil, status.Errorf(codes.Internal, err.Error())
+				}
+
+				err = configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+				if err != nil {
+					return nil, status.Errorf(codes.InvalidArgument, err.Error())
+				}
 				e.SetGroupMaxSlots(msg)
 			}
 			if newResources.Weight != nil {
@@ -1169,6 +1195,10 @@ func (a *apiServer) PatchExperiment(
 					return nil, errors.Wrapf(err, "cannot change experiment priority to %v", *newResources.Priority)
 				}
 			}
+		}
+
+		if err := a.m.db.SaveExperimentConfig(modelExp.ID, activeConfig); err != nil {
+			return nil, errors.Wrapf(err, "patching experiment %d", modelExp.ID)
 		}
 
 		if newCheckpointStorage != nil {
