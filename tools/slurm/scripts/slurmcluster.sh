@@ -209,8 +209,14 @@ LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
 LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
-
-
+if [[ -n $GPUS ]]; then
+    # install nvidia drivers
+    gcloud_ssh "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --no-tty --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+    && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+        sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list"
+    gcloud_ssh "sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit"
+fi
 # Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     # Find the file and assign its name to CPU_IMAGE_SQSH & CUDA_IMAGE_SQSH
@@ -231,18 +237,11 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     # particilarly if we add GPU tests that need the CUDA image which is larger.
     
     if [[ -z $GPUS ]]; then
-    gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
-    gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
-    fi
-    if [[ -n $GPUS ]]; then
+        gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
+        gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
+    else
         gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
-         # install nvidia drivers
-        gcloud_ssh "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-        && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-            sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-            sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list"
-        gcloud_ssh "sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit"
     fi
 fi
 
