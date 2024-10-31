@@ -17,9 +17,14 @@ experiment configuration, specifying an appropriate DeepSpeed configuration.
 Reference conversion example:
 
 .. code:: diff
+   +import deepspeed
 
-   -class MyTrial(PyTorchTrial):
-   +class MyTrial(DeepSpeedTrial):
+   -from determined import pytorch
+   +from determined.pytorch import deepspeed as det_ds
+
+
+   -class MyTrial(pytorch.PyTorchTrial):
+   +class MyTrial(det_ds.DeepSpeedTrial):
         def __init__(self, context):
            self.context = context
            self.args = AttrDict(self.context.get_hparams())

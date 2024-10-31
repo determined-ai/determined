@@ -319,25 +319,6 @@ While debugging, the logger will display lines highlighted in blue for easy iden
  Validation Policy
 *******************
 
-.. _experiment-config-min-validation-period:
-
-``min_validation_period``
-=========================
-
-Optional. Specifies the minimum frequency at which validation should be run for each trial.
-
--  The frequency should be defined using a nested dictionary indicating the unit as records,
-   batches, or epochs. For example:
-
-.. code:: yaml
-
-   min_validation_period:
-      epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs, ``records_per_epoch``
-   must be specified.
-
 .. _experiment-config-perform-initial-validation:
 
 ``perform_initial_validation``
@@ -360,25 +341,6 @@ Determined checkpoints in the following situations:
 -  Prior to the searcher making a decision based on the validation of trials, ensuring consistency
    in case of a failure.
 
-.. _experiment-config-min-checkpoint-period:
-
-``min_checkpoint_period``
-=========================
-
-Optional. Specifies the minimum frequency for running checkpointing for each trial.
-
--  This value should be set using a nested dictionary in the form of records, batches, or epochs.
-   For example:
-
-   .. code:: yaml
-
-      min_checkpoint_period:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If the unit is in epochs, you must also specify
-   ``records_per_epoch``.
-
 ``checkpoint_policy``
 =====================
 
@@ -394,8 +356,7 @@ Should be set to one of the following values:
 
 -  ``none``: A checkpoint will never be taken *due* to a validation. However, even with this policy
    selected, checkpoints are still expected to be taken after the trial is finished training, due to
-   cluster scheduling decisions, before search method decisions, or due to
-   :ref:`min_checkpoint_period <experiment-config-min-checkpoint-period>`.
+   cluster scheduling decisions, or when specified in training code.
 
 .. _checkpoint-storage:
 
@@ -835,17 +796,12 @@ Single
 The ``single`` search method does not perform a hyperparameter search at all; rather, it trains a
 single trial for a fixed length. When using this search method, all of the hyperparameters specified
 in the :ref:`hyperparameters <experiment-configuration_hyperparameters>` section must be constants.
-By default, validation metrics are only computed once, after the specified length of training has
-been completed; :ref:`min_validation_period <experiment-config-min-validation-period>` can be used
-to specify that validation metrics should be computed more frequently.
 
 ``metric``
 ----------
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
-
-.. _experiment-configuration_single-searcher-max-length:
 
 **Optional Fields**
 
