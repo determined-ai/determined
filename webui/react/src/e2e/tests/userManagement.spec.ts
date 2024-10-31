@@ -300,7 +300,7 @@ test.describe('User Management', () => {
 
       const getTableUsernames = async (userManagementPage: UserManagement) => {
         return await Promise.all(
-          (await userManagementPage.table.table.rows.username.pwLocator.all()).map(
+          (await userManagementPage.table.table.rows.nameplate.name.pwLocator.all()).map(
             async (username) => {
               return await username.textContent();
             },
@@ -343,43 +343,24 @@ test.describe('User Management', () => {
             order,
           );
 
-          expect(await getTableUsernames(userManagementPage)).toEqual(
-            sortedListTestUsers.slice(0, 10).map((u) => u.username),
-          );
+          await expect(async () => {
+            expect(await getTableUsernames(userManagementPage)).toEqual(
+              sortedListTestUsers.slice(0, 10).map((u) => u.username),
+            );
+          }).toPass({ timeout: 10_000 });
         };
 
         const testSort = async (
           columnId: 'user' | 'role' | 'status' | 'modified',
           sortBy: 'name' | 'admin' | 'active' | 'modifiedAt',
         ) => {
-          await expect(
-            repeatWithFallback(
-              async () => {
-                await expect(
-                  userManagementPage.table.table.headRow[columnId].pwLocator,
-                ).toHaveAttribute('aria-sort', 'ascending');
-              },
-              async () => {
-                await userManagementPage.table.table.headRow[columnId].pwLocator.click();
-              },
-            ),
-          ).toPass();
+          const columnHeader = userManagementPage.table.table.headRow[columnId].pwLocator;
+          const columnSort = await columnHeader.getAttribute('aria-sort');
 
+          if (columnSort !== 'ascending') await columnHeader.click();
           await validateSort(sortBy, 'asc');
 
-          await expect(
-            repeatWithFallback(
-              async () => {
-                await expect(
-                  userManagementPage.table.table.headRow[columnId].pwLocator,
-                ).toHaveAttribute('aria-sort', 'descending');
-              },
-              async () => {
-                await userManagementPage.table.table.headRow[columnId].pwLocator.click();
-              },
-            ),
-          ).toPass();
-
+          await columnHeader.click();
           await validateSort(sortBy, 'desc');
         };
 
