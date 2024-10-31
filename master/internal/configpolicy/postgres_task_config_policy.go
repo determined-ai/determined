@@ -111,52 +111,59 @@ func DeleteConfigPolicies(ctx context.Context,
 	return nil
 }
 
-// GetConfigPolicyField fetches the field from an invariant_config or constraints policyType, in order
-// of precedence. Global scope has highest precedence, then workspace. Returns nil if none is found.
-// **NOTE** The field arguments are wrapped in bun.Safe, so you  must specify the "raw" string
-// exactly as you wish for it to be accessed in the database. For example, if you want to access
-// resources.max_slots, the field argument should be "'resources' -> 'max_slots'" NOT
-// "resources -> max_slots".
+// GetConfigPolicyField fetches the accessField from an invariant_config or constraints policy
+// (determined by policyType) in order of precedence. Global policies takes precedence over workspace
+// policies. Returns nil if the accessField is not set at either scope.
+// **NOTE** The accessField elements are to be specified in the "order of access", meaning that the
+// most nested config field should be the last element of accessField while the outermost
+// config field should be the first element of accessField.
+// For example, if you want to access resources.max_slots, accessField should be
+// []string{"resources", "max_slots"}. If you just want to access the entire resources config, then
+// accessField should be []string{"resources"}.
 // **NOTE**When using this function to retrieve an object of Kind Pointer, set T as the Type of
 // object that the Pointer wraps. For example, if we want an object of type *int, set T to int, so
-// that when its pointer is returned, you get an object of type *int.
-func GetConfigPolicyField[T any](ctx context.Context, wkspID *int, policyType, field, workloadType string) (*T,
+// that when its pointer is returned, we get an object of type *int.
+func GetConfigPolicyField[T any](ctx context.Context, wkspID *int, accessField []string, policyType,
+	workloadType string) (*T,
 	error,
 ) {
 	if policyType != "invariant_config" && policyType != "constraints" {
 		return nil, fmt.Errorf("%s :%s", invalidPolicyTypeErr, policyType)
 	}
 
+	field := "'" + strings.Join(accessField, "' -> '") + "'"
 	var confBytes []byte
 	var conf T
-	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		var globalBytes []byte
-		err := tx.NewSelect().Table("task_config_policies").
-			ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
-			Where("workspace_id IS NULL").
-			Where("workload_type = ?", workloadType).Scan(ctx, &globalBytes)
-		if err == nil && len(globalBytes) > 0 {
-			confBytes = globalBytes
+	var globalBytes []byte
+	err := db.Bun().NewSelect().Table("task_config_policies").
+		ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
+		Where("workspace_id IS NULL").
+		Where("workload_type = ?", workloadType).Scan(ctx, &globalBytes)
+	if err == nil && len(globalBytes) > 0 {
+		err = json.Unmarshal(globalBytes, &conf)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling config field: %w", err)
 		}
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
-
-		var wkspBytes []byte
-		err = tx.NewSelect().Table("task_config_policies").
-			ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
-			Where("workspace_id = ?", wkspID).
-			Where("workload_type = ?", workloadType).Scan(ctx, &wkspBytes)
-		if err == nil && len(globalBytes) == 0 {
-			confBytes = wkspBytes
-		}
-		return err
-	})
-	if err == sql.ErrNoRows || len(confBytes) == 0 {
-		return nil, nil
+		return &conf, nil
 	}
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	var wkspBytes []byte
+	err = db.Bun().NewSelect().Table("task_config_policies").
+		ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
+		Where("workspace_id = ?", wkspID).
+		Where("workload_type = ?", workloadType).Scan(ctx, &wkspBytes)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("error getting config field %s: %w", field, err)
+	}
+	if len(globalBytes) == 0 {
+		confBytes = wkspBytes
+	}
+	if err == sql.ErrNoRows || len(confBytes) == 0 {
+		// The field is not enforced as a config policy. Should not be an error.
+		return nil, nil
 	}
 
 	err = json.Unmarshal(confBytes, &conf)
