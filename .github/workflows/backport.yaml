@@ -24,20 +24,15 @@ jobs:
         uses: tibdex/backport@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          title_template: "[AUTO-BACKPORT <%= number %>] <%= title %>"
-
-      - name: wait-for-checks
-        uses: poseidon/wait-for-status-checks@v0.5.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ignore: test-e2e-longrunning
+          title_template: "[AUTO-BACKPORT <%= base %>] <%= number %>: <%= title %>"
       
       - name: merge backported PR
         id: merge_backport_pr
         if: success()
         run: |
-            PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --search "[AUTO-BACKPORT ${{ github.event.pull_request.number }}]" --json number --jq '.[0].number')
+            PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --search "[AUTO-BACKPORT release-[0-9.]+ ] ${{ github.event.pull_request.number }}" --json number --jq '.[0].number')
             if [ -n "$PR_NUMBER" ]; then
+              tools/scripts/track-pr pr-${{ github.event.action }} "$PR_NUMBER"
               gh pr merge $PR_NUMBER --merge --repo ${{ github.repository }} --admin -t "Auto-merged backport PR."
             else
               echo "No backport PR found to merge."

@@ -40,19 +40,6 @@ query($owner: String!, $name: String!) {
 """
 )
 
-get_pr_id = GraphQLQuery(
-    """
-query($owner: String!, $repo: String!, $number: Int!) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $number) {
-      id
-    }
-  }
-}
-"""
-)
-
-
 search_projects = GraphQLQuery(
     """
 query($owner: String!, $q: String!) {
@@ -61,26 +48,6 @@ query($owner: String!, $q: String!) {
       nodes {
         id
         title
-      }
-    }
-  }
-}
-"""
-)
-
-get_project_status_field = GraphQLQuery(
-    """
-query($project: ID!) {
-  node(id: $project) {
-    ... on ProjectV2 {
-      field(name: "Status") {
-        ... on ProjectV2SingleSelectField {
-          id
-          options {
-            id
-            name
-          }
-        }
       }
     }
   }
@@ -148,37 +115,6 @@ mutation($project: ID!, $item: ID!, $field: ID!, $value: String) {
 """
 )
 
-get_pr_labels = GraphQLQuery(
-    """
-query($id: ID!) {
-  node(id: $id) {
-    ... on PullRequest {
-      labels(first: 100) {
-        nodes {
-          name
-        }
-      }
-    }
-  }
-}
-"""
-)
-
-get_pr_merge_commit_and_url = GraphQLQuery(
-    """
-query($id: ID!) {
-  node(id: $id) {
-    ... on PullRequest {
-      url
-      mergeCommit {
-        oid
-      }
-    }
-  }
-}
-"""
-)
-
 get_pr_info = GraphQLQuery(
     """
 query($id: ID!) {
@@ -212,31 +148,6 @@ query($id: ID!) {
 }
 """
 )
-
-
-get_pr_state = GraphQLQuery(
-    """
-query($id: ID!) {
-  node(id: $id) {
-    ... on PullRequest {
-      state
-    }
-  }
-}
-"""
-)
-
-
-delete_project_item = GraphQLQuery(
-    """
-mutation($project: ID!, $item: ID!) {
-  deleteProjectV2Item(input: {projectId: $project, itemId: $item}) {
-    deletedItemId
-  }
-}
-"""
-)
-
 
 list_project_prs = GraphQLQuery(
     """
