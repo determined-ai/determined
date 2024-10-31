@@ -162,7 +162,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
   const canModify = global ? canModifyGlobalConfigPolicies : canModifyWorkspaceConfigPolicies;
 
   useEffect(() => {
-    if (updatedYAML) setDisabled(form.getFieldValue(YAML_FORM_ITEM_NAME) === updatedYAML);
+    setDisabled(form.getFieldValue(YAML_FORM_ITEM_NAME) === updatedYAML);
   }, [updatedYAML, form]);
 
   const handleChange = () => {
