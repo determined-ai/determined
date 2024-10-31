@@ -1147,7 +1147,7 @@ func (a *apiServer) GetRunGroups(ctx context.Context, req *apiv1.GetRunGroupsReq
 		ColumnExpr("run_groups.searcher_metrics").
 		ColumnExpr("run_groups.run_count").
 		ColumnExpr("array_to_json(run_groups.run_ids) as run_ids").
-		ColumnExpr(`(SELECT jsonb_merge_agg(jsonb_build_object(s.hparam,
+		ColumnExpr(`(SELECT jsonb_concat_agg(jsonb_build_object(s.hparam,
 			jsonb_build_object(
 				'number_val', s.number_val,
 				'text_val', s.text_val,
