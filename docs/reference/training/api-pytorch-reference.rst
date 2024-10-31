@@ -120,3 +120,17 @@ platform which includes:
 *******************************
 
 .. autofunction:: determined.pytorch.init
+
+******************************
+ ``determined.pytorch.Batch``
+******************************
+
+.. autoclass:: determined.pytorch.Batch
+   :members:
+
+******************************
+ ``determined.pytorch.Epoch``
+******************************
+
+.. autoclass:: determined.pytorch.Epoch
+   :members:

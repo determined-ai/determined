@@ -829,10 +829,7 @@ Random
 
 The ``random`` search method implements a simple random search. The user specifies how many
 hyperparameter configurations should be trained and how long each configuration should be trained
-for; the configurations are sampled randomly from the hyperparameter space. Each trial is trained
-for the specified length and then validation metrics are computed. :ref:`min_validation_period
-<experiment-config-min-validation-period>` can be used to specify that validation metrics should be
-computed more frequently.
+for; the configurations are sampled randomly from the hyperparameter space.
 
 ``metric``
 ----------

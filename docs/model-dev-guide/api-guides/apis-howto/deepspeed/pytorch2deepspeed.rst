@@ -17,6 +17,7 @@ experiment configuration, specifying an appropriate DeepSpeed configuration.
 Reference conversion example:
 
 .. code:: diff
+
    +import deepspeed
 
    -from determined import pytorch
