@@ -2771,6 +2771,7 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
+      DEFAULT_PT_GPU_IMAGE: <<pipeline.parameters.default-pt-gpu-hpc-image>>
     resource_class: xlarge
     parallelism: <<parameters.parallelism>>
     steps:

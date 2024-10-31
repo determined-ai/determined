@@ -228,12 +228,11 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
 
     # If the image has to download during circleci jobs it may cause a timeout waiting for make slurmcluster
     # particilarly if we add GPU tests that need the CUDA image which is larger.
-    if [[ -z $GPUS ]]; then
-        echo "Selected cpu for slurm slot type"
-        gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
-        gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
-    else
-        echo "Selected cuda for slurm slot type"
+    
+    
+    gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
+    gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
+    if [[ -n $GPUS ]]; then
         gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
     fi
