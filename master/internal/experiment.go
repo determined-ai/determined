@@ -374,13 +374,12 @@ func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 		return
 	}
 
-	slots, err := configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
+	err = configpolicy.CanSetMaxSlots(msg.MaxSlots, w.ID)
 	if err != nil {
 		log.Warnf("unable to set max slots: %s", err.Error())
 		return
 	}
 
-	msg.MaxSlots = slots
 	resources := e.activeConfig.Resources()
 	resources.SetMaxSlots(msg.MaxSlots)
 	e.activeConfig.SetResources(resources)
@@ -945,13 +944,12 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		return fmt.Errorf("error getting workspace: %w", err)
 	}
 	enforcedWeight, err := configpolicy.GetConfigPolicyField[float64](context.TODO(), &w.ID,
-		"invariant_config",
-		"'resources' -> 'weight'", model.ExperimentType)
+		[]string{"resources", "weight"}, "invariant_config", model.ExperimentType)
 	if err != nil {
 		return fmt.Errorf("error checking against config policies: %w", err)
 	}
-	if enforcedWeight != nil {
-		weight = *enforcedWeight
+	if enforcedWeight != nil && weight != *enforcedWeight {
+		return fmt.Errorf("weight is enforced as an invariant config policy of %v", *enforcedWeight)
 	}
 
 	resources := e.activeConfig.Resources()
