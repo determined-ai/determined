@@ -108,6 +108,7 @@ stages:
           # default_aux_resource_pool: $OPT_DEFAULTAUXRESOURCEPOOL
           # default_compute_resource_pool: $OPT_DEFAULTCOMPUTERESOURCEPOOL
           slot_type: $OPT_SLOTTYPE
+          max_slots_per_pod: 1
           # Specify per-partition overrides for submitted tasks.
           # partition_overrides:
           #   defq:

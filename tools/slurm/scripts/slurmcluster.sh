@@ -199,7 +199,11 @@ export OPT_REMOTE_GROUP=$(gcloud_ssh_stdout_only id -gn)
 export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
-export OPT_SLOTTYPE="cpu" # default, overriden in GPU section if needed
+if [[ -z $GPUS ]]; then
+    export OPT_SLOTTYPE="cpu" 
+else
+    export OPT_SLOTTYPE="gpu"
+fi
 
 LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
@@ -232,13 +236,13 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
         echo "Selected cuda for slurm slot type"
         gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
-        export OPT_SLOTTYPE="cuda"
     fi
 fi
 
 TEMPYAML=$TEMPDIR/slurmcluster.yaml
 envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML
 echo "Generated devcluster file: $TEMPYAML"
+cat $TEMPYAML
 
 # We connect to the Slurm VM using an external IP address, but although it's a
 # single node cluster, the Determined master running on the test machine tries
