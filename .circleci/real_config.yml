@@ -5257,7 +5257,26 @@ workflows:
           requires:
             - build-go
             - request-hpc-tests
-
+      
+      # Enroot over SLURM test on GCP with GPU
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and gpu_required"]
+              environment-gpu-enabled: ["1"]
+          requires:
+            - build-go
+            - request-hpc-tests
+      
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
           filters: *upstream-feature-branch
