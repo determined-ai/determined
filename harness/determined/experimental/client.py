@@ -308,15 +308,17 @@ def whoami() -> User:
 # DOES NOT REQUIRE SINGLETON (don't force a login in order to log out).
 def logout() -> None:
     """Log out of the current session."""
-    if _determined is not None:
-        return _determined.logout()
-
-    logger.warning(
-        "client has not been logged in, either explicitly by client.login() or implicitly by any "
-        "other client.* function, so client.logout() has no session to log out of and is a no-op. "
-        "If you would like to log out of the default active session, try "
-        "client.Determined().logout() instead."
-    )
+    global _determined
+    if _determined is None:
+        logger.warning(
+            "client has not been logged in, either explicitly by client.login() or implicitly by "
+            "any other client.* function, so client.logout() has no session to log out of and is a "
+            "no-op. If you would like to log out of the default active session, try "
+            "client.Determined().logout() instead."
+        )
+    else:
+        _determined.logout()
+        _determined = None
 
 
 @_require_singleton
