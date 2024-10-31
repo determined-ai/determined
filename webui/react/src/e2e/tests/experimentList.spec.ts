@@ -634,6 +634,7 @@ test.describe('Experiment List', () => {
         detExecSync(`experiment delete ${experimentId} --y`);
       }
       if (killExperiment !== undefined) {
+        detExecSync(`experiment kill ${killExperiment}`);
         detExecSync(`experiment delete ${killExperiment} --y`);
       }
 
