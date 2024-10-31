@@ -211,7 +211,7 @@ class DetSDTextualInversionPipeline:
                             devices_and_generators=devices_and_generators,
                             trial_id=trial_id,
                         )
-                        core_context.train.report_progress(pipeline.steps_completed / MAX_LENGTH)
+                        core_context.train.report_progress(pipeline.steps_completed / num_batches)
 
                     # Only preempt after a checkpoint has been saved.
                     if core_context.preempt.should_preempt():
