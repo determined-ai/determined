@@ -241,7 +241,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     const arrayTypeColumns = projectColumns
       .getOrElse([])
       .filter((col) => col.type === V1ColumnType.ARRAY)
-      .map((col) => col.column);
+      .map((col) => formatColumnKey(col));
     return arrayTypeColumns;
   }, [projectColumns]);
 
@@ -379,8 +379,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 columnDefKey,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[columnDefKey] ??
-                  defaultColumnWidths[columnDefKey as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[columnDefKey as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -392,8 +392,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 columnDefKey,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[columnDefKey] ??
-                  defaultColumnWidths[columnDefKey as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[columnDefKey as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
                 undefined,
               );
@@ -405,8 +405,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               columnDefKey,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[columnDefKey] ??
-                defaultColumnWidths[columnDefKey as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[columnDefKey as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -415,8 +415,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               columnDefKey,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[columnDefKey] ??
-                defaultColumnWidths[columnDefKey as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[columnDefKey as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -427,8 +427,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               columnDefKey,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[columnDefKey] ??
-                defaultColumnWidths[columnDefKey as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[columnDefKey as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -441,9 +441,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
-                  max: heatmap.max,
-                  min: heatmap.min,
-                }
+                max: heatmap.max,
+                min: heatmap.min,
+              }
               : undefined,
           );
         }
@@ -817,32 +817,32 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                  );
-                },
-              }
-            : {
-                disabled: settings.pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.max(settings.pinnedColumnsCount - 1, 0),
-                  );
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
               },
+            }
+            : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -871,9 +871,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           sortCount === 0
             ? []
             : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
+              { type: 'divider' as const },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            ];
         items.push(...sortMenuItems);
       }
 

@@ -11,7 +11,6 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { runColumns } from 'pages/FlatRuns/columns';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
@@ -66,6 +65,8 @@ interface ColumnTabProps {
   onHeatmapSelectionRemove?: (id: string) => void;
 }
 
+const KNOWN_BOOLEAN_COLUMNS = ['archived', 'isExpMultitrial', 'parentArchived'];
+
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
   compare,
@@ -115,7 +116,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       : [...new Set([...columnState, ...filteredColumns.map((col) => formatColumnKey(col))])];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
-        newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
+      newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
       : pinnedColumnsCount;
 
     onVisibleColumnChange?.(newColumns, pinnedCount);
@@ -174,8 +175,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
       const colType =
-        (runColumns as readonly string[]).includes(col.column) &&
-        col.type === V1ColumnType.UNSPECIFIED
+        KNOWN_BOOLEAN_COLUMNS.includes(col.column) && col.type === V1ColumnType.UNSPECIFIED
           ? 'BOOLEAN'
           : removeColumnTypePrefix(col.type);
       const getColDisplayName = (col: ProjectColumn) => {

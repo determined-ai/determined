@@ -1,12 +1,17 @@
+import Badge from 'hew/Badge';
 import Button from 'hew/Button';
 import { DirectionType, Sort, validSort } from 'hew/DataGrid/DataGrid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Select, { Option } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
+import { groupBy, mapValues } from 'lodash';
+import { Fragment, useMemo } from 'react';
 
+import { runColumns } from 'pages/FlatRuns/columns';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
+import { removeColumnTypePrefix } from 'utils/flatRun';
 
 import css from './MultiSortMenu.module.scss';
 
@@ -25,6 +30,7 @@ interface MultiSortRowProps {
   onChange?: (sort: Sort) => void;
   onRemove?: () => void;
   bannedSortColumns: Set<string>;
+  typeMap: Record<string, V1ColumnType[]>;
 }
 interface DirectionOptionsProps {
   onChange?: (direction: DirectionType) => void;
@@ -36,6 +42,7 @@ interface ColumnOptionsProps {
   onChange?: (column: string) => void;
   value?: string;
   bannedSortColumns: Set<string>;
+  typeMap: Record<string, V1ColumnType[]>;
 }
 
 export const optionsByColumnType = {
@@ -153,6 +160,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({
   columns,
   value,
   bannedSortColumns,
+  typeMap,
 }) => (
   <Select
     autoFocus
@@ -161,10 +169,31 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({
     loading={Loadable.isNotLoaded(columns)}
     options={Loadable.getOrElse([], columns)
       .filter((c) => !bannedSortColumns.has(c.column))
-      .map((c) => ({
-        label: c.displayName || c.column,
-        value: c.column,
-      }))}
+      .map((c) => {
+        const badges = typeMap[c.column].map((type) => {
+          const copy =
+            (runColumns as readonly string[]).includes(c.column) &&
+            type === V1ColumnType.UNSPECIFIED
+              ? 'BOOLEAN'
+              : removeColumnTypePrefix(type);
+          return (
+            <Fragment key={type}>
+              <Badge text={copy} />{' '}
+            </Fragment>
+          );
+        });
+        const title = c.displayName || c.column;
+        const label = (
+          <>
+            {title} {badges}
+          </>
+        );
+        return {
+          label,
+          title,
+          value: c.column,
+        };
+      })}
     placeholder="Select column"
     value={value}
     width="100%"
@@ -178,6 +207,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({
   onChange,
   onRemove,
   bannedSortColumns,
+  typeMap,
 }) => {
   const valueType =
     Loadable.getOrElse([], columns).find((c) => c.column === sort.column)?.type ||
@@ -188,6 +218,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({
         <ColumnOptions
           bannedSortColumns={bannedSortColumns}
           columns={columns}
+          typeMap={typeMap}
           value={sort.column}
           onChange={(column) => onChange?.({ ...sort, column })}
         />
@@ -231,6 +262,27 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange, bannedS
     window.document.body.dispatchEvent(new Event('mousedown', { bubbles: true }));
     onChange?.([EMPTY_SORT]);
   };
+  // replace duplicate columns with a single unspecified column for copy
+  // reasons. maintain types so we can display in the select
+  const [mergedColumns, typeMap] = useMemo(() => {
+    const loadableTuple = columns.map((c) => {
+      const columnGroups = groupBy(c, 'column');
+      const fixedColumns = Object.values(columnGroups).flatMap((group) => {
+        if (group.length > 1) {
+          return [
+            {
+              ...group[0],
+              type: V1ColumnType.UNSPECIFIED,
+            },
+          ];
+        }
+        return group;
+      });
+      const typeMap = mapValues(columnGroups, (group) => group.map((column) => column.type));
+      return [fixedColumns, typeMap] as const;
+    });
+    return [loadableTuple.map((l) => l[0]), loadableTuple.map((l) => l[1]).getOrElse({})];
+  }, [columns]);
 
   return (
     <div className={css.base} data-test-component="multiSort">
@@ -238,7 +290,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange, bannedS
       <div className={css.rows} data-test="rows">
         {sorts.map((sort, idx) => {
           const seenColumns = sorts.slice(0, idx).map((s) => s.column);
-          const columnOptions = Loadable.map(columns, (cols) =>
+          const columnOptions = mergedColumns.map((cols) =>
             cols.filter((c) => !seenColumns.includes(c.column)),
           );
           return (
@@ -247,6 +299,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange, bannedS
               columns={columnOptions}
               key={sort.column || idx}
               sort={sort}
+              typeMap={typeMap}
               onChange={makeOnRowChange(idx)}
               onRemove={makeOnRowRemove(idx)}
             />

@@ -243,7 +243,7 @@ test.describe('Experiment List', () => {
       async () => {
         await expect(
           tableFilter.filterForm.filter.filterFields.columnName.selectionItem.pwLocator,
-        ).toHaveText('ID');
+        ).toContainText('ID');
         await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('!=');
       },
       totalExperiments - 1,

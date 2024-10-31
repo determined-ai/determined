@@ -242,7 +242,8 @@ export class FilterFormStore {
     col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
   ): void {
     return this.#updateField(id, (form) => {
-      if (form.columnName === col.column && form.location === col.location) {
+      const isSameColumn = form.columnName === col.column && form.type === col.type;
+      if (isSameColumn && form.location === col.location) {
         return form;
       }
       return {

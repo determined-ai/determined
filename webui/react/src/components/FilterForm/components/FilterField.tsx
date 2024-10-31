@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import Badge from 'hew/Badge';
 import Button from 'hew/Button';
 import DatePicker, { DatePickerProps } from 'hew/DatePicker';
 import Icon from 'hew/Icon';
@@ -32,6 +33,7 @@ import { getMetadataValues } from 'services/api';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
+import { formatColumnKey, METADATA_SEPARATOR, removeColumnTypePrefix } from 'utils/flatRun';
 import { alphaNumericSorter } from 'utils/sort';
 
 import css from './FilterField.module.scss';
@@ -69,7 +71,10 @@ const FilterField = ({
 }: Props): JSX.Element => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
-  const currentColumn = columns.find((c) => c.column === field.columnName);
+  const currentColumn = useMemo(
+    () => columns.find((c) => c.type === field.type && c.column === field.columnName),
+    [columns, field.columnName, field.type],
+  );
 
   const columnType = useMemo(() => {
     if (field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT) {
@@ -96,19 +101,18 @@ const FilterField = ({
   };
 
   const onChangeColumnName = (value: SelectValue) => {
-    const prevType = currentColumn?.type;
-    const newColName = value?.toString() ?? '';
-    const newCol = columns.find((c) => c.column === newColName);
+    const prevType = field.type;
+    const [type, newColName] = (value?.toString() ?? '').split(METADATA_SEPARATOR, 2);
+    const newCol = columns.find((c) => c.column === newColName && type === c.type);
     if (newCol) {
       Observable.batch(() => {
         formStore.setFieldColumnName(field.id, newCol);
-
         if ((SpecialColumnNames as ReadonlyArray<string>).includes(newColName)) {
           formStore.setFieldOperator(field.id, Operator.Eq);
           updateFieldValue(field.id, null);
-        } else if (prevType !== newCol?.type) {
+        } else if (prevType !== newCol.type) {
           const defaultOperator: Operator =
-            AvailableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+            AvailableOperators[newCol.type ?? V1ColumnType.UNSPECIFIED][0];
           formStore.setFieldOperator(field.id, defaultOperator);
           updateFieldValue(field.id, null);
         }
@@ -218,6 +222,16 @@ const FilterField = ({
     [columnType, field.type, formStore, index, inputOpen, parentId],
   );
 
+  const getColDisplayName = (col: V1ProjectColumn) => {
+    const colType = removeColumnTypePrefix(col.type);
+
+    return (
+      <>
+        {col.displayName || col.column} <Badge text={colType} />
+      </>
+    );
+  };
+
   return (
     <div className={css.base} data-test-component="FilterField" ref={(node) => drop(node)}>
       <ConjunctionContainer
@@ -232,12 +246,13 @@ const FilterField = ({
           autoFocus
           data-test="columnName"
           dropdownMatchSelectWidth={300}
-          options={columns.map((col, idx) => ({
-            key: `${col.column} ${idx}`,
-            label: col.displayName || col.column,
-            value: col.column,
+          options={columns.map((col) => ({
+            key: formatColumnKey(col, true),
+            label: getColDisplayName(col),
+            title: col.displayName || col.column,
+            value: formatColumnKey(col, true),
           }))}
-          value={field.columnName}
+          value={`${field.type}${METADATA_SEPARATOR}${field.columnName}`}
           width={'100%'}
           onChange={onChangeColumnName}
         />
