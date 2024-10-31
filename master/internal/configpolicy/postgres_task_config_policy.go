@@ -133,37 +133,39 @@ func GetConfigPolicyField[T any](ctx context.Context, wkspID *int, accessField [
 
 	field := "'" + strings.Join(accessField, "' -> '") + "'"
 	var confBytes []byte
-	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		var globalBytes []byte
-		err := tx.NewSelect().Table("task_config_policies").
-			ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
-			Where("workspace_id IS NULL").
-			Where("workload_type = ?", workloadType).Scan(ctx, &globalBytes)
-		if err != nil && err != sql.ErrNoRows {
-			return err
+	var conf T
+	var globalBytes []byte
+	err := db.Bun().NewSelect().Table("task_config_policies").
+		ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
+		Where("workspace_id IS NULL").
+		Where("workload_type = ?", workloadType).Scan(ctx, &globalBytes)
+	if err == nil && len(globalBytes) > 0 {
+		err = json.Unmarshal(globalBytes, &conf)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling config field: %w", err)
 		}
+		return &conf, nil
+	}
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
 
-		confBytes = globalBytes
-
-		var wkspBytes []byte
-		err = tx.NewSelect().Table("task_config_policies").
-			ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
-			Where("workspace_id = ?", wkspID).
-			Where("workload_type = ?", workloadType).Scan(ctx, &wkspBytes)
-		if len(globalBytes) == 0 {
-			confBytes = wkspBytes
-		}
-		return err
-	})
+	var wkspBytes []byte
+	err = db.Bun().NewSelect().Table("task_config_policies").
+		ColumnExpr("? -> ?", bun.Safe(policyType), bun.Safe(field)).
+		Where("workspace_id = ?", wkspID).
+		Where("workload_type = ?", workloadType).Scan(ctx, &wkspBytes)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("error getting config field %s: %w", field, err)
 	}
-	if len(confBytes) == 0 {
+	if len(globalBytes) == 0 {
+		confBytes = wkspBytes
+	}
+	if err == sql.ErrNoRows || len(confBytes) == 0 {
 		// The field is not enforced as a config policy. Should not be an error.
 		return nil, nil
 	}
 
-	var conf T
 	err = json.Unmarshal(confBytes, &conf)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling config field: %w", err)
