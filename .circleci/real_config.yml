@@ -3443,7 +3443,7 @@ jobs:
         default: "m6i.large"
       cluster-id:
         type: string
-        default: determined-${CIRCLE_BRANCH////--}
+        default: determined-rds-${CIRCLE_BRANCH////--}
       max-dynamic-agents:
         type: integer
         default: 1
@@ -3481,7 +3481,7 @@ jobs:
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           enable-cors: <<parameters.enable-cors>>
           reattach-enabled: <<parameters.reattach-enabled>>
-          deployment-type: simple
+          deployment-type: simple-rds
           extra-tags: <<parameters.extra-tags>>
           ee: <<parameters.ee>>
 
@@ -4202,7 +4202,7 @@ workflows:
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 1
-          cluster-id: determined-preview
+          cluster-id: determined-preview-rds
           compute-agent-instance-type: t2.medium
 
   test-e2e:
