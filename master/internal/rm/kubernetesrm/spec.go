@@ -135,9 +135,9 @@ func (j *job) configureEnvVars(
 	}
 
 	envVarsMap["DET_CLUSTER_ID"] = j.clusterID
-	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, j.masterIP, j.masterPort)
-	envVarsMap["DET_MASTER_HOST"] = j.masterIP
-	envVarsMap["DET_MASTER_ADDR"] = j.masterIP
+	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, j.masterHost, j.masterPort)
+	envVarsMap["DET_MASTER_HOST"] = j.masterHost
+	envVarsMap["DET_MASTER_ADDR"] = j.masterHost
 	envVarsMap["DET_MASTER_PORT"] = strconv.Itoa(int(j.masterPort))
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIDs, ","))
 	if j.masterTLSConfig.CertificateName != "" {
