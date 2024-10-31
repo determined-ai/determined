@@ -224,17 +224,25 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     if [[ $CUDA_IMAGE_SQSH != "$LOCAL_CUDA_IMAGE_SQSH" ]]; then
         echo "WARNING: Local CUDAImage ${LOCAL_CUDA_IMAGE_STRING} does not match the CUDA Image found on existing ${OPT_WORKLOAD_MANAGER} image."
         echo "   Regenerate base image with: make -C tools/slurm/packer build WORKLOAD_MANAGER=${OPT_WORKLOAD_MANAGER}"
+       
     fi
 
     # If the image has to download during circleci jobs it may cause a timeout waiting for make slurmcluster
     # particilarly if we add GPU tests that need the CUDA image which is larger.
     
-    
+    if [[ -z $GPUS ]]; then
     gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
     gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
+    fi
     if [[ -n $GPUS ]]; then
         gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -N -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
+         # install nvidia drivers
+        gcloud_ssh "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+        && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+            sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+            sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list"
+        gcloud_ssh "sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit"
     fi
 fi
 
