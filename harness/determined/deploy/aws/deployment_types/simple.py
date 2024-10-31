@@ -2,15 +2,18 @@ from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base
 
 
-class Simple(base.DeterminedDeployment):
-    template = "simple.yaml"
-    deployment_type = constants.deployment_types.SIMPLE
+class SimpleRDS(base.DeterminedDeployment):
+    template = "simple-rds.yaml"
+    deployment_type = constants.deployment_types.SIMPLE_RDS
 
     template_parameter_keys = base.COMMON_TEMPLATE_PARAMETER_KEYS + [
         constants.cloudformation.PREEMPTION_ENABLED,
         constants.cloudformation.RETAIN_LOG_GROUP,
         constants.cloudformation.SCHEDULER_TYPE,
         constants.cloudformation.SUBNET_ID_KEY,
+        constants.cloudformation.DB_INSTANCE_TYPE,
+        constants.cloudformation.DB_SNAPSHOT,
+        constants.cloudformation.DB_SIZE,
     ]
 
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:
@@ -31,18 +34,3 @@ class Simple(base.DeterminedDeployment):
             update_terminate_agents=update_terminate_agents,
         )
         self.print_results()
-
-
-class SimpleRDS(Simple):
-    template = "simple-rds.yaml"
-    deployment_type = constants.deployment_types.SIMPLE_RDS
-
-    template_parameter_keys = base.COMMON_TEMPLATE_PARAMETER_KEYS + [
-        constants.cloudformation.PREEMPTION_ENABLED,
-        constants.cloudformation.RETAIN_LOG_GROUP,
-        constants.cloudformation.SCHEDULER_TYPE,
-        constants.cloudformation.SUBNET_ID_KEY,
-        constants.cloudformation.DB_INSTANCE_TYPE,
-        constants.cloudformation.DB_SNAPSHOT,
-        constants.cloudformation.DB_SIZE,
-    ]
