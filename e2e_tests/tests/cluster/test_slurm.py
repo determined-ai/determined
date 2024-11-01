@@ -182,7 +182,7 @@ def test_mnist_pytorch_distributed() -> None:
     assert "--epochs 1" in config["entrypoint"], "update test to match tutorial"
     config["entrypoint"] = config["entrypoint"].replace("--epochs 1", "--batches 64")
     config["max_restarts"] = 0
-
+    config["resources"]["slots_per_trial"] = 4 # only 4 GPUs available in test
     exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
