@@ -245,6 +245,12 @@ func newJobsService(
 		return nil, err
 	}
 
+	// in separte go routine: every getAgentsCacheDuration query the API server for all namespaces
+	// and update the cache
+	// go func() {
+	// 	listPodsInAllNamespaces()
+	// }
+
 	err = p.syncNamespaces(ns, false)
 	if err != nil {
 		return nil, err
@@ -1703,6 +1709,8 @@ func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotRespo
 const getAgentsCacheDuration = 15 * time.Second
 
 func (j *jobsService) getAgents() (*apiv1.GetAgentsResponse, error) {
+	// change getAgentsCacheLock to RWLock()
+
 	j.getAgentsCacheLock.Lock()
 	defer j.getAgentsCacheLock.Unlock()
 
@@ -2117,17 +2125,28 @@ func (j *jobsService) listJobsInAllNamespaces(
 func (j *jobsService) listPodsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
 ) (*k8sV1.PodList, error) {
-	res := &k8sV1.PodList{}
-	for n, i := range j.podInterfaces {
-		pods, err := i.List(ctx, opts)
-		if err != nil {
-			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
-		}
+	allPods, err := j.clientSet.CoreV1().Pods("").List(ctx, metaV1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var podsWeWant k8sV1.PodList
+	namespaces := set.FromKeys(j.podInterfaces)
 
-		res.Items = append(res.Items, pods.Items...)
+	for _, pod := range allPods.Items {
+		// pods, err := i.List(ctx, opts)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
+		// }
+
+		if namespaces.Contains(pod.Namespace) {
+			podsWeWant.Items = append(podsWeWant.Items, pod)
+		}
 	}
 
-	return res, nil
+	allPods.Items, podsWeWant.Items = podsWeWant.Items, allPods.Items
+
+	// Use set datatype to make set from the j.podInterfaces map
+	return allPods, nil
 }
 
 func (j *jobsService) listConfigMapsInAllNamespaces(
