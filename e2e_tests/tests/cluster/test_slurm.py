@@ -95,7 +95,8 @@ def test_docker_image() -> None:
 
 # Without GPUs, this test may hang and eventually gets a timeout instead of the quick
 # failure that is intended.  This is the current behavior on mosaic, so for now skip without GPUs.
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+
+@pytest.mark.gpu_required
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
 @api_utils.skipif_not_hpc()
@@ -170,7 +171,8 @@ def test_docker_login() -> None:
     )
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+@pytest.mark.e2e_gpu
+@pytest.mark.gpu_required
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
 @api_utils.skipif_not_hpc()

@@ -43,7 +43,8 @@ def check_shm_size() -> bool:
     return pathlib.Path("/dev/shm").exists() and shutil.disk_usage("/dev/shm")[0] < 10**8
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+@pytest.mark.e2e_gpu
+@pytest.mark.gpu_required
 @pytest.mark.deepspeed
 @pytest.mark.gpu
 class TestDeepSpeedTrial:
