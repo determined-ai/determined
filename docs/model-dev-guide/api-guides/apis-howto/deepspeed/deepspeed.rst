@@ -365,6 +365,237 @@ profiling batches 3 and 4.
    rendering times for TensorBoard and memory issues. For long-running experiments, it is
    recommended to configure a profiling schedule.
 
+*******************
+ DeepSpeed Trainer
+*******************
+
+With the DeepSpeed Trainer API, you can implement and iterate on model training code locally before
+running on cluster. When you are satisfied with your model code, you configure and submit the code
+on cluster.
+
+The DeepSpeed Trainer API lets you do the following:
+
+-  Work locally, iterating on your model code.
+-  Debug models in your favorite debug environment (e.g., directly on your machine, IDE, or Jupyter
+   notebook).
+-  Run training scripts without needing to use an experiment configuration file.
+-  Load previously saved checkpoints directly into your model.
+
+Initializing the Trainer
+========================
+
+After defining the PyTorch Trial, initialize the trial and the trainer.
+:meth:`~determined.pytorch.deepspeed.init` returns a
+:class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext` for instantiating
+:class:`~determined.pytorch.deepspeed.DeepSpeedTrial`. Initialize
+:class:`~determined.pytorch.deepspeed.Trainer` with the trial and context.
+
+.. code:: python
+
+   from determined.pytorch import deepspeed as det_ds
+
+   def main():
+       with det_ds.init() as train_context:
+           trial = MyTrial(train_context)
+           trainer = det_ds.Trainer(trial, train_context)
+
+   if __name__ == "__main__":
+       # Configure logging
+       logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+       main()
+
+Training is configured with a call to :meth:`~determined.pytorch.deepspeed.Trainer.fit` with
+training loop arguments, such as checkpointing periods, validation periods, and checkpointing
+policy.
+
+.. code:: diff
+
+   from determined import pytorch
+   from determined.pytorch import deepspeed as det_ds
+
+   def main():
+       with det_ds.init() as train_context:
+           trial = MyTrial(train_context)
+           trainer = det_ds.Trainer(trial, train_context)
+   +       trainer.fit(
+   +           max_length=pytorch.Epoch(10),
+   +           checkpoint_period=pytorch.Batch(100),
+   +           validation_period=pytorch.Batch(100),
+   +           checkpoint_policy="all"
+   +       )
+
+
+   if __name__ == "__main__":
+       # Configure logging
+       logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+       main()
+
+Run Your Training Script Locally
+================================
+
+Run training scripts locally without submitting to a cluster or defining an experiment configuration
+file.
+
+.. code:: python
+
+   from determined import pytorch
+   from determined.pytorch import deepspeed as det_ds
+
+   def main():
+       with det_ds.init() as train_context:
+           trial = MyTrial(train_context)
+           trainer = det_ds.Trainer(trial, train_context)
+           trainer.fit(
+               max_length=pytorch.Epoch(10),
+               checkpoint_period=pytorch.Batch(100),
+               validation_period=pytorch.Batch(100),
+               checkpoint_policy="all",
+           )
+
+
+   if __name__ == "__main__":
+       # Configure logging
+       logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+       main()
+
+You can run this Python script directly (``python3 train.py``), or in a Jupyter notebook. This code
+will train for ten epochs, checkpointing and validating every 100 batches.
+
+Local Distributed Training
+==========================
+
+Local training can utilize multiple GPUs on a single node with a few modifications to the above
+code.
+
+.. code:: diff
+
+   import deepspeed
+
+   def main():
+   +     # Initialize distributed backend before det_ds.init()
+   +     deepspeed.init_distributed()
+   +     # Initialize DistributedContext
+         with det_ds.init(
+   +       distributed=core.DistributedContext.from_deepspeed()
+         ) as train_context:
+             trial = MyTrial(train_context)
+             trainer = det_ds.Trainer(trial, train_context)
+             trainer.fit(
+                 max_length=pytorch.Epoch(10),
+                 checkpoint_period=pytorch.Batch(100),
+                 validation_period=pytorch.Batch(100),
+                 checkpoint_policy="all"
+             )
+
+This code can be directly invoked with your distributed backend's launcher: ``deepspeed --num_gpus=4
+trainer.py --deepspeed --deepspeed_config ds_config.json``
+
+Test Mode
+=========
+
+Trainer accepts a test_mode parameter which, if true, trains and validates your training code for
+only one batch, checkpoints, then exits. This is helpful for debugging code or writing automated
+tests around your model code.
+
+.. code:: diff
+
+    trainer.fit(
+                 max_length=pytorch.Epoch(10),
+                 checkpoint_period=pytorch.Batch(100),
+                 validation_period=pytorch.Batch(100),
+   +             test_mode=True
+             )
+
+Prepare Your Training Code for Deploying to a Determined Cluster
+================================================================
+
+Once you are satisfied with the results of training the model locally, you submit the code to a
+cluster. This example allows for distributed training locally and on cluster without having to make
+code changes.
+
+Example workflow of frequent iterations between local debugging and cluster deployment:
+
+.. code:: diff
+
+    def main():
+   +   info = det.get_cluster_info()
+   +   if info is None:
+   +       # Local: configure local distributed training.
+   +       deepspeed.init_distributed()
+   +       distributed_context = core.DistributedContext.from_deepspeed()
+   +       latest_checkpoint = None
+   +   else:
+   +       # On-cluster: Determined will automatically detect distributed context.
+   +       distributed_context = None
+   +       # On-cluster: configure the latest checkpoint for pause/resume training functionality.
+   +       latest_checkpoint = info.latest_checkpoint
+
+   +     with det_ds.init(
+   +       distributed=distributed_context
+         ) as train_context:
+             trial = DCGANTrial(train_context)
+             trainer = det_ds.Trainer(trial, train_context)
+             trainer.fit(
+                 max_length=pytorch.Epoch(11),
+                 checkpoint_period=pytorch.Batch(100),
+                 validation_period=pytorch.Batch(100),
+   +             latest_checkpoint=latest_checkpoint,
+             )
+
+To run Trainer API solely on-cluster, the code is simpler:
+
+.. code:: python
+
+   def main():
+       with det_ds.init() as train_context:
+           trial_inst = gan_model.DCGANTrial(train_context)
+           trainer = det_ds.Trainer(trial_inst, train_context)
+           trainer.fit(
+               max_length=pytorch.Epoch(11),
+               checkpoint_period=pytorch.Batch(100),
+               validation_period=pytorch.Batch(100),
+               latest_checkpoint=det.get_cluster_info().latest_checkpoint,
+           )
+
+Submit Your Trial for Training on Cluster
+=========================================
+
+To run your experiment on cluster, you'll need to create an experiment configuration (YAML) file.
+Your experiment configuration file must contain searcher configuration and entrypoint.
+
+.. code:: python
+
+   name: dcgan_deepspeed_mnist
+   searcher:
+     name: single
+     metric: validation_loss
+   resources:
+     slots_per_trial: 2
+   entrypoint: python3 -m determined.launch.deepspeed python3 train.py
+
+Submit the trial to the cluster:
+
+.. code:: bash
+
+   det e create det.yaml .
+
+If your training code needs to read some values from the experiment configuration, you can set the
+``data`` field and read from ``det.get_cluster_info().trial.user_data`` or set ``hyperparameters``
+and read from ``det.get_cluster_info().trial.hparams``.
+
+Profiling
+=========
+
+When training on cluster, you can enable the system metrics profiler by adding a parameter to your
+``fit()`` call:
+
+.. code:: diff
+
+    trainer.fit(
+       ...,
+   +   profiling_enabled=True
+    )
+
 *****************************
  Known DeepSpeed Constraints
 *****************************

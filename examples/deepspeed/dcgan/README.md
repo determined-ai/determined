@@ -25,10 +25,16 @@ After installing docker and pulling an image, users can launch a container via
 
 Install necessary dependencies via `pip install determined mpi4py`
 
-Then, run the following command:
+Then, run the following command if running on a single node and GPU:
 ```
 python trainer.py
 ```
+For multiple nodes GPUs, use the following:
+```
+deepspeed --num_nodes=<node_count> --num_gpus=<gpu_count> trainer.py --deepspeed --deepspeed_config ds_config.json
+```
+Where `num_nodes` corresponds to the number of nodes on your local cluster and `num_gpus` corresponds to
+the number of GPUs per node.
 
 Any additional configs can be specified in `mnist.yaml` and `ds_config.json` accordingly.
 

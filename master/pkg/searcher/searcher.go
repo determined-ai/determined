@@ -86,7 +86,7 @@ func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Action, error) {
 	operations, err := s.method.trialCreated(s.context(), requestID)
 	if err != nil {
 		return nil, errors.Wrapf(err,
-			"error while handling a trial created event: %d", requestID)
+			"error while handling a trial created event: %s", requestID)
 	}
 	s.record(operations)
 	return operations, nil
@@ -156,7 +156,7 @@ func (s *Searcher) ValidationCompleted(
 
 	operations, err := s.method.validationCompleted(s.context(), requestID, metrics)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a validation completed event: %d", requestID)
+		return nil, errors.Wrapf(err, "error while handling a validation completed event: %s", requestID)
 	}
 	s.record(operations)
 	return operations, nil
@@ -170,7 +170,7 @@ func (s *Searcher) TrialExited(requestID model.RequestID) ([]Action, error) {
 	s.state.TrialsClosed[requestID] = true
 	actions, err := s.method.trialExited(s.context(), requestID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a trial closed event: %d", requestID)
+		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
 	}
 	s.record(actions)
 

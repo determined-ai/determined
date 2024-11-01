@@ -12,10 +12,6 @@ class TrainUnit:
     the value of unit, where the value can be an int or an implementable collections.abc.Container.
 
     TrainUnits are used to define periodic training behavior such as checkpointing and validating.
-
-    int values are treated as periods, e.g. Batch(100) will checkpoint/validate every 100 batches.
-    collections.abc.Container values are treated as schedules, e.g. Batch(1,5,10) will
-    checkpoint/validate on batches 1, 5, and 10.
     """
 
     def __init__(self, value: Union[int, abc.Container]):
@@ -87,7 +83,12 @@ class TrainUnit:
 
 class Epoch(TrainUnit):
     """
-    Epoch step type (e.g. Epoch(1) defines 1 epoch)
+    Defines an Epoch unit for specifying length to PyTorch trainers.
+
+    Epoch(int) values are treated as periods, e.g. Epoch(100) will checkpoint/validate every 100
+    epochs.
+    Epoch(collections.abc.Container) values are treated as schedules, e.g. Epoch([1,5,10]) will
+    checkpoint/validate on epochs 1, 5, and 10.
     """
 
     pass
@@ -95,7 +96,12 @@ class Epoch(TrainUnit):
 
 class Batch(TrainUnit):
     """
-    Batch step type (e.g. Batch(1) defines 1 batch)
+    Defines a Batch unit for specifying length to PyTorch trainers.
+
+    Batch(int) values are treated as periods, e.g. Batch(100) will checkpoint/validate every 100
+    batches.
+    Batch(collections.abc.Container) values are treated as schedules, e.g. Batch([1,5,10]) will
+    checkpoint/validate on batches 1, 5, and 10.
     """
 
     @staticmethod
