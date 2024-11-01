@@ -12,10 +12,6 @@
    and are now being removed. Users are encouraged to use a preset searcher, which can be easily
    :ref:`configured <experiment-configuration_searcher>` for any experiment.
 
--  DeepSpeed: the ``num_micro_batches_per_slot`` and ``train_micro_batch_size_per_gpu`` attributes
-   on ``DeepSpeedContext`` have been replaced with ``get_train_micro_batch_size_per_gpu()`` and
-   ``get_num_micro_batches_per_slot()``.
-
 **New Features**
 
 -  API: introduce ``keras.DeterminedCallback``, a new high-level training API for TF Keras that
