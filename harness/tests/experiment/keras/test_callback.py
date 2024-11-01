@@ -1,10 +1,11 @@
+import contextlib
 import json
 import os
 import pathlib
 import re
 import subprocess
 import sys
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union
 from unittest import mock
 
 import keras
@@ -30,8 +31,21 @@ def mock_core_context(
     """
     # Set up a functional DistributedContext.
     distributed = distributed or core.DummyDistributedContext()
+
     # Set up a functional CheckpointContext.
-    storage_manager = storage.SharedFSStorageManager(path)
+    class StorageManagerForTesting(storage.SharedFSStorageManager):
+        @contextlib.contextmanager
+        def restore_path(
+            self, src: str, selector: Optional[storage.Selector] = None
+        ) -> Iterator[pathlib.Path]:
+            events.append(("restore_path:enter", None))
+            try:
+                with super().restore_path(src, selector) as x:
+                    yield x
+            finally:
+                events.append(("restore_path:exit", None))
+
+    storage_manager = StorageManagerForTesting(path)
     checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
 
     # Mock everything else, logging report-like calls to events.
@@ -74,6 +88,7 @@ class DeterminedCallbackForTesting(det.keras.DeterminedCallback):
 
     def __init__(self, events: utils.Events, *args: Any, **kwargs: Any) -> None:
         self.events = events
+        self.first_train_batch_end = False
         super().__init__(*args, **kwargs)
 
     def on_train_begin(self, logs: Any) -> None:
@@ -81,6 +96,12 @@ class DeterminedCallbackForTesting(det.keras.DeterminedCallback):
         weight = self.model.layers[0].get_weights()[0][0]
         fourdigits = "%.4f" % weight
         self.events.append((f"after_train_begin:{fourdigits}", weight))
+
+    def on_train_batch_end(self, batch: int, logs: Any) -> None:
+        if not self.first_train_batch_end:
+            self.first_train_batch_end = True
+            self.events.append(("first_train_batch_end", None))
+        super().on_train_batch_end(batch, logs)
 
     def on_epoch_end(self, epoch: int, logs: Any) -> None:
         self.events.append((f"before_epoch_end:{epoch}", logs))
@@ -250,12 +271,15 @@ def test_save_restore_and_warm_start(tmp_path: pathlib.Path, eager: bool) -> Non
     # - initial weight is nonzero (checkpoint was loaded)
     # - initial epoch is nonzero (training state was loaded)
     # - steps_completed was properly restored
+    # - checkpoint is not destoyed until first batch is completed
     events = do_fit(tmp_path, eager=eager, checkpoint=ckpt, continue_id=1)
     utils.assert_events_match(
         events,
         "set_status:restoring",
         "load_model",
         "after_train_begin:%.4f" % weight,
+        "first_train_batch_end",
+        "restore_path:exit",
         "!after_epoch_end:0",
         "before_epoch_end:1",
         "report_metrics:training:16",
@@ -267,12 +291,15 @@ def test_save_restore_and_warm_start(tmp_path: pathlib.Path, eager: bool) -> Non
     # - initial weight is nonzero (no checkpoint was loaded)
     # - initial epoch is zero (no training state was loaded)
     # - steps_completed was properly reset
+    # - checkpoint is not destoyed until first batch is completed
     events = do_fit(tmp_path, eager=eager, checkpoint=ckpt, continue_id=2)
     utils.assert_events_match(
         events,
         "set_status:restoring",
         "load_model",
         "after_train_begin:%.4f" % weight,
+        "first_train_batch_end",
+        "restore_path:exit",
         "report_metrics:training:8",
         "after_epoch_end:0",
         "after_epoch_end:1",
