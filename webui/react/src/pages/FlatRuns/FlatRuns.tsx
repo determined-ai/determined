@@ -46,7 +46,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
-import LoadableCount from 'components/LoadableCount';
+import LoadableCount, { SelectionAction } from 'components/LoadableCount';
 import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
@@ -779,21 +779,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     [updateSettings],
   );
 
-  const handleActualSelectAll = useCallback(() => {
-    handleSelectionChange?.('add-all');
-  }, [handleSelectionChange]);
-
-  const handleClearSelect = useCallback(() => {
-    handleSelectionChange?.('remove-all');
-  }, [handleSelectionChange]);
-
   const handleHeaderClick = useCallback(
     (columnId: string): void => {
       if (columnId === MULTISELECT) {
         if (isRangeSelected([0, settings.pageLimit])) {
-          handleSelectionChange?.('remove', [0, settings.pageLimit]);
+          handleSelectionChange('remove', [0, settings.pageLimit]);
         } else {
-          handleSelectionChange?.('add', [0, settings.pageLimit]);
+          handleSelectionChange('add', [0, settings.pageLimit]);
         }
       }
     },
@@ -975,6 +967,20 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     };
   }, [canceler, stopPolling]);
 
+  const selectionAction: SelectionAction = useMemo(() => {
+    return total.match({
+      _: () => 'NONE' as const,
+      Loaded: (loadedTotal) => {
+        if (isRangeSelected([0, settings.pageLimit]) && selectionSize < loadedTotal) {
+          return 'SELECT_ALL';
+        } else if (selectionSize > settings.pageLimit) {
+          return 'CLEAR_SELECTION';
+        }
+        return 'NONE';
+      },
+    });
+  }, [isRangeSelected, selectionSize, settings.pageLimit, total]);
+
   return (
     <div className={css.content} ref={contentRef}>
       <Row>
@@ -1029,13 +1035,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onActionComplete={onActionComplete}
             />
             <LoadableCount
+              handleSelectionChange={handleSelectionChange}
               labelPlural="runs"
               labelSingular="run"
-              pageSize={settings.pageLimit}
               selectedCount={selectionSize}
+              selectionAction={selectionAction}
               total={total}
-              onActualSelectAll={handleActualSelectAll}
-              onClearSelect={handleClearSelect}
             />
           </Row>
         </Column>
