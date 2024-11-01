@@ -3996,7 +3996,6 @@ jobs:
 
 workflows:
   nightly:
-    when: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - test-aws-fs:
           name: test-aws-fs-efs
