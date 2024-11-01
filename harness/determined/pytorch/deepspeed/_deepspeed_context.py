@@ -2,6 +2,7 @@ import json
 import logging
 import pathlib
 import time
+import warnings
 from importlib import util as importutil
 from typing import Any, Dict, List, Optional, Set, Type, Union, cast
 
@@ -239,12 +240,34 @@ class DeepSpeedTrialContext(pytorch._PyTorchReducerContext):
             )
         return self._train_micro_batch_size_per_gpu
 
+    @property
+    def train_micro_batch_size_per_gpu(self) -> int:
+        warnings.warn(
+            "DeepSpeedTrialContext.train_micro_batch_size_per_gpu has been deprecated in "
+            "Determined 0.38.0; please use the context.get_train_micro_batch_size_per_gpu() getter "
+            "instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.get_train_micro_batch_size_per_gpu()
+
     def get_num_micro_batches_per_slot(self) -> int:
         if self._num_micro_batches_per_slot is None:
             raise det.errors.InvalidExperimentException(
                 "Please call wrap_model_engine before accessing num_micro_batches_per_slot."
             )
         return self._num_micro_batches_per_slot
+
+    @property
+    def num_micro_batches_per_slot(self) -> int:
+        warnings.warn(
+            "DeepSpeedTrialContext.num_micro_batches_per_slot has been deprecated in "
+            "Determined 0.38.0; please use the context.get_num_micro_batches_per_slot() getter "
+            "instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.get_num_micro_batches_per_slot()
 
     def _init_device(self) -> None:
         if not self._num_gpus:
