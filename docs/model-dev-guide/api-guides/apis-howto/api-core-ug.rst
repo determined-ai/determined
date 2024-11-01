@@ -305,45 +305,25 @@ configuration file.
  Step 4: Hyperparameter Search
 *******************************
 
-With the Core API you can run advanced hyperparameter searches with arbitrary training code. The
-hyperparameter search logic is in the master, which coordinates many different Trials. Each trial
-runs a train-validate-report loop:
-
-.. table::
-
-   +----------+--------------------------------------------------------------------------+
-   | Train    | Train until a point chosen by the hyperparameter search algorithm and    |
-   |          | obtained via the Core API.  The length of training is absolute, so you   |
-   |          | have to keep track of how much you have already trained to know how much |
-   |          | more to train.                                                           |
-   +----------+--------------------------------------------------------------------------+
-   | Validate | Validate your model to obtain the metric you configured in the           |
-   |          | ``searcher.metric`` field of your experiment config.                     |
-   +----------+--------------------------------------------------------------------------+
-   | Report   | Use the Core API to report results to the master.                        |
-   +----------+--------------------------------------------------------------------------+
+With the Core API you can run advanced hyperparameter searches with any training loop. The
+hyperparameter search logic is in the master, which can create trials and can decide to preempt them
+if they are underpeforming.
 
 To perform a hyperparameter search, we'll update our script to define the hyperparameter search
 settings we want to use for our experiment. More specifically, we'll need to define the following
 settings in our experiment configuration file:
 
--  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :ref:`search-methods`.
--  ``metric``: ``test_loss``
--  ``smaller_is_better``: ``True`` (This is equivalent to minimization vs. maximization of
-   objective.)
--  ``max_trials``: 500 (This is the maximum number of trials the searcher should run.)
--  ``time_metric``: ``epochs`` (This is the name of the "time" metric which we report in validation
+-  ``name: adaptive_asha`` (name of our searcher. For all options, visit :ref:`search-methods`).
+-  ``metric: test_loss``
+-  ``smaller_is_better: true`` (This is equivalent to minimization vs. maximization of objective.)
+-  ``max_trials: 50`` (This is the maximum number of trials the searcher should run.)
+-  ``time_metric: epochs`` (This is the name of the "time" metric which we report in validation
    metrics).
--  ``max_time``: 20 (The max number of epochs a trial will report. For more information, visit
+-  ``max_time: 20`` (The max number of epochs a trial will report. For more information, visit
    Adaptive ASHA in the :ref:`Experiment Configuration Reference <experiment-configuration>`.
 
 In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
 between the ``minval`` and ``maxval`` for each hyperparameter for each trial.
-
-.. note::
-
-   To see early stopping in action, try setting ``max_trials`` to over 500 and playing around with
-   the hyperparameter search values.
 
 In this step, we’ll run our experiment using the ``model_def_adaptive.py`` script and its
 accompanying ``adaptive.yaml`` experiment configuration file.
@@ -373,6 +353,15 @@ hardcoded values:
    :language: python
    :start-after: # Docs snippet start: per trial basis
    :end-before: # Docs snippet end: per trial basis
+   :dedent:
+
+Lastly, to comply with the requirements of the ASHA search, we must report an ``epochs`` metric with
+our validation metrics, since we set ``time_metric: epochs`` in our searcher:
+
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+   :language: python
+   :start-after: # Docs snippet start: report epochs
+   :end-before: # Docs snippet end: report epochs
    :dedent:
 
 Step 4.1: Run the Experiment

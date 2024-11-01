@@ -110,6 +110,8 @@ Example Python script command:
 
    script.py [args...]
 
+.. _predefined-launchers:
+
 **********************
  Predefined Launchers
 **********************

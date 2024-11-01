@@ -246,9 +246,7 @@ class DetSDTextualInversionTrainer:
                         trainer.logger.info(f"Step {trainer.steps_completed} completed.")
 
                         is_end_of_training = trainer.steps_completed == trainer.num_sgd_steps
-                        time_to_report = (
-                            trainer.steps_completed % trainer.metric_report_freq == 0
-                        )
+                        time_to_report = trainer.steps_completed % trainer.metric_report_freq == 0
                         time_to_ckpt = trainer.steps_completed % trainer.checkpoint_freq == 0
 
                         # Report metrics, checkpoint, and preempt as appropriate.

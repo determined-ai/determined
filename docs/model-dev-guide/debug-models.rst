@@ -4,37 +4,21 @@
  Debugging Models
 ##################
 
-Using Determined to debug models depends on your environment.
+Using Determined to train your model can introduce a number of failure points that aren't present
+when running training scripts locally. Running your code on a Determined cluster differs from
+typical training scripts in the following ways:
 
-Your code on a Determined cluster differs from typical training scripts in the following ways:
-
--  The code conforms to the Trial APIs as a subclass of the Determined ``Trial`` class, indirectly,
-   by using one of the concrete subclasses, such as
-   :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`.
-
--  The code runs in a Docker container on another machine.
-
+-  The code runs in a Docker container, possibly on another machine.
 -  Your model can run many times in a hyperparameter search.
-
 -  Your model can be distributed across multiple GPUs or machines.
 
-These debugging steps introduce code changes incrementally, working toward a fully functioning
-Determined model. Follow the nine steps as applicable to your environment:
+These debugging steps introduce environment and code changes incrementally, working toward fully
+functioning distributed training on a Determined cluster:
 
--  Model-related Issues
-      -  `Step 1 - Verify that your code runs locally`_
-      -  `Step 2 - Verify that each Trial subclass method works locally`_
-      -  `Step 3 - Verify local test mode`_
-
--  Docker- or Cluster-related Issues
-      -  `Step 4 - Verify that the original code runs in a notebook or shell`_
-      -  `Step 5 - Verify that each Trial subclass method works in a notebook or shell`_
-      -  `Step 6 - Verify that local test mode works in a notebook or shell`_
-
--  Higher-level Issues
-      -  `Step 7 - Verify that cluster test mode works with slots_per_trial set to 1`_
-      -  `Step 8 - Verify that a single-GPU experiment works`_
-      -  `Step 9 - Verify that a multi-GPU experiment works`_
+-  `Step 1 - Verify that your training script runs locally`_
+-  `Step 2 - Verify that your training script runs in a notebook or shell`_
+-  `Step 3 - Verify that a single-GPU experiment works`_
+-  `Step 4 - Verify that a multi-GPU experiment works`_
 
 **************
  Prerequisite
@@ -45,90 +29,29 @@ development machine, on-prem, or on cloud. For installation guides, visit :ref:`
 
 .. _step1:
 
-*********************************************
- Step 1 - Verify that your code runs locally
-*********************************************
+********************************************************
+ Step 1 - Verify that your training script runs locally
+********************************************************
 
-This step assumes you have ported (converted) your model from code outside of Determined. Otherwise,
-skip to :ref:`Step 2 <step2>`.
+Determined's training APIs are designed to work both on-cluster and locally (that is, without
+interacting with a Determined master), so you should be able to run your training script on the same
+local machine that you ran your model before integrating with Determined APIs.
+
+If you ported your model to :class:`~determined.pytorch.PyTorchTrial` or
+:class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and are having trouble getting your ported
+model to work, one debugging strategy is to manually call the various methods of your Trial directly
+before calling ``Trainer.fit()``.
 
 Confirm that your code works as expected before continuing.
 
 .. _step2:
 
-***************************************************************
- Step 2 - Verify that each Trial subclass method works locally
-***************************************************************
+***********************************************************************
+ Step 2 - Verify that your training script runs in a notebook or shell
+***********************************************************************
 
-This step assumes you have a working local environment for training. If you typically run your code
-in a Docker environment, skip to :ref:`Step 4 <step4>`. This step also ensures that your class
-performs as expected by calling its methods and verifying the output.
-
-:class:`~determined.pytorch.PyTorchTrial` supports a fully-local training mode, which can be useful
-for debugging. See :ref:`pytorch_trainer_ug` for usage details.
-
-#. Create simple tests to verify each ``Trial`` subclass method.
-
-   Examples of what these tests might look like for
-   :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` can be found in the
-   :meth:`determined.TrialContext.from_config` documentation, but only you can verify what is
-   reasonable for your test.
-
-#. Diagnose failures:
-
-   If you experience issues running the ``Trial`` subclass methods locally, it is likely there are
-   errors are in your trial class or the ``hyperparameters`` section of your configuration file.
-   Ideally, method-by-method evaluation makes it easier to find and solve issues.
-
-.. _step3:
-
-*********************************
- Step 3 - Verify local test mode
-*********************************
-
-:ref:`Step 2 <step2>` validated that your Trial API calls work as expected. This step uses your code
-to run an actual Determined training loop with abbreviated workloads to make sure that it meets
-Determined requirements.
-
-This step assumes you have a working local environment for training. If you do not, skip to
-:ref:`Step 4 <step4>`.
-
-#. Create an experiment using the following command:
-
-   .. code:: bash
-
-      det experiment create myconfig.yaml my_model_dir --local --test
-
-   The ``--local`` argument specifies that training occurs where you launched the experiment instead
-   of occurring on a cluster. The ``--test`` argument runs abbreviated workloads to try to detect
-   bugs sooner and exits immediately.
-
-   The test is considered to have passed if the command completes successfully.
-
-#. Diagnose failures:
-
-   Local test mode performs the following actions:
-
-   #. Builds a model.
-   #. Runs a single batch of training data.
-   #. Evaluates the model.
-   #. Saves a checkpoint to a dummy location.
-
-   If your per-method checks in :ref:`Step 2 <step2>` passed but local test mode fails, your
-   ``Trial`` subclass might not be implemented correctly. Double-check the documentation. It is also
-   possible that you have found a bug or an invalid assumption in the Determined software and should
-   `file a GitHub issue <https://github.com/determined-ai/determined/issues>`__ or contact
-   Determined on `Slack
-   <https://determined-community.slack.com/join/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
-
-.. _step4:
-
-********************************************************************
- Step 4 - Verify that the original code runs in a notebook or shell
-********************************************************************
-
-This step is the same as :ref:`Step 1 <step1>`, except the original code runs on the Determined
-cluster instead of locally.
+This step is the same as :ref:`Step 1 <step1>`, except the your training script runs on the
+Determined cluster instead of locally.
 
 #. Launch a notebook or shell on the cluster:
 
@@ -154,7 +77,8 @@ cluster instead of locally.
 
 #. Verify code execution:
 
-   After you are on the cluster, testing is the same as :ref:`Step 1 <step1>`.
+   After you are on the cluster, you can test your script by just running it, as in :ref:`Step 1
+   <step1>`.
 
 #. Diagnose failures:
 
@@ -176,72 +100,24 @@ cluster instead of locally.
    -  If you need environment variables to be set for your model to work, see
       :ref:`command-notebook-configuration`.
 
-.. _step5:
+.. _step3:
 
-******************************************************************************
- Step 5 - Verify that each Trial subclass method works in a notebook or shell
-******************************************************************************
+****************************************************
+ Step 3 - Verify that a single-GPU experiment works
+****************************************************
 
-This step is the same as :ref:`Step 2 <step2>`, except the original code runs on the Determined
-cluster instead of locally.
-
-#. Launch a notebook or shell:
-
-   If you prefer to use Jupyter notebook, enter:
-
-   .. code:: bash
-
-      det notebook start --context my_model_dir
-      # Your browser should automatically open the notebook.
-
-   If you prefer to use SSH to interact with your model, enter:
-
-   .. code:: bash
-
-      det shell start --context my_model_dir
-      # Your terminal should automatically connect to the shell.
-
-   When interacting with the shell or notebook, testing is the same as :ref:`Step 2 <step2>`.
-
-#. Diagnose failures:
-
-   Combine the failure diagnosis steps used in :ref:`Step 2 <step2>` and :ref:`Step 4 <step4>`.
-
-.. _step6:
-
-*******************************************************************
- Step 6 - Verify that local test mode works in a notebook or shell
-*******************************************************************
-
-This step is the same as :ref:`Step 3 <step3>`, except the original code runs on the Determined
-cluster instead of locally.
-
-#. Launch a notebook or shell as described in :ref:`Step 4 <step4>`.
-
-   On the cluster, testing is the same as :ref:`Step 3 <step3>`, except that the second model
-   definition argument of the ``det experiment create`` command should be
-   ``/run/determined/workdir`` or ``.`` if you have not changed the working directory after
-   connecting to the cluster. This is because the ``--context`` specified when creating the shell or
-   notebook is copied to the ``/run/determined/workdir`` directory inside the container, the same as
-   the model definition argument is copied to ``det experiment create``.
-
-#. Diagnose failures following the same steps described in :ref:`Step 3 <step3>` and :ref:`Step 4
-   <step4>`.
-
-.. _step7:
-
-****************************************************************************
- Step 7 - Verify that cluster test mode works with slots_per_trial set to 1
-****************************************************************************
-
-This step is similar to :ref:`Step 6 <step6>`, except instead of launching the command from an
-interactive environment, it is submitted to the cluster and managed by Determined.
+In this step, instead of launching the command from an interactive environment, it is submitted to
+the cluster and managed by Determined.
 
 #. Apply customizations:
 
-   If you customized your command environment in testing :ref:`Step 3 <step3>`, :ref:`Step 4
-   <step4>`, or :ref:`Step 5 <step5>`, make sure to apply the same customizations in your experiment
-   configuration file.
+   If you customized your command environment in testing :ref:`Step 2 <step2>`, make sure to apply
+   the same customizations in your experiment configuration file.
+
+#. Set ``entrypoint``:
+
+   Set the ``entrypoint`` of your experiment config to match the way you call your training script
+   in your environment, including all arguments.
 
 #. Set ``resources.slots_per_trial``:
 
@@ -253,17 +129,21 @@ interactive environment, it is submitted to the cluster and managed by Determine
       resources:
         slots_per_trial: 1
 
-#. Create an experiment with the ``--test`` argument, omitting the ``--local`` argument:
+#. Submit your experiment:
 
    .. code:: bash
 
-      det experiment create myconfig.yaml my_model_dir --test
+      det experiment create myconfig.yaml my_model_dir -f
 
 #. Diagnose failures:
 
-   If you can run local test mode inside a notebook or shell but are unable to successfully submit
-   an experiment, make sure that notebook or shell customizations you might have made are replicated
-   in your :ref:`experiment configuration <experiment-config-reference>`, such as:
+   The experiment configuration is validated upon submission. If you see errors about ``invalid
+   experiment configuration`` during submission, review the :ref:`experiment configuration
+   <experiment-config-reference>`.
+
+   If your training script runs inside a notebook or shell, but fails when on-cluster, make sure
+   that notebook or shell customizations you might have made are replicated in your experiment
+   config, such as:
 
    -  If required, a custom Docker image is set in the experiment configuration.
 
@@ -292,73 +172,53 @@ interactive environment, it is submitted to the cluster and managed by Determine
       before training starts. The message ``Checkpoint storage validation failed``, indicates that
       you should review the ``checkpoint_storage`` setting values.
 
-   -  The experiment configuration is more strictly validated for cluster-managed experiments than
-      for ``--local --test`` mode. Errors related to ``invalid experiment configuration`` when
-      attempting to submit the experiment to the cluster indicate that the experiment configuration
-      has errors. Review the :ref:`experiment configuration <experiment-config-reference>`.
-
 If you are unable to identify the cause of the problem, contact Determined `community support
 <https://determined-community.slack.com/join/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
 
-.. _step8:
+.. _step4:
 
-****************************************************
- Step 8 - Verify that a single-GPU experiment works
-****************************************************
+***************************************************
+ Step 4 - Verify that a multi-GPU experiment works
+***************************************************
 
-This step is similar to :ref:`Step 7 <step7>`, except that it introduces hyperparameter search and
-executes full training for each trial.
+This step introduces distributed training.
 
-#. Configure your system the same as :ref:`Step 7 <step7>`:
+#. Make any necessary code changes:
 
-   Confirm that your experiment configuration does not specify ``resources.slots_per_trial`` or that
-   it is set to ``1``. For example:
+   -  If you are using the Core API for training, distributed training may take extra work. The
+      :ref:`api-core-ug-basic` and :ref:`api-core-ug` examples can help you understand what all is
+      required.
+
+   -  If you are using Determined's :class:`keras.DeterminedCallback
+      <determined.keras.DeterminedCallback>` for training, you will have to take the `standard steps
+      for enabling distributed training in Keras
+      <https://www.tensorflow.org/tutorials/distribute/keras>`__, except that you don't need to
+      configure the ``TF_CONFIG`` environment variable because it is configured by Determined's
+      :ref:`launch-tensorflow`.
+
+   -  For the remaining training APIs, distributed training should work without additional code
+      changes.
+
+#. Wrap your training script in ``entrypoint`` with the correct launcher for the training API you
+   are using. For example, if you are using PyTorchTrial, you should use Determined's
+   :ref:`pytorch-dist-launcher`:
 
    .. code:: yaml
 
-      resources:
-        slots_per_trial: 1
+      entrypoint: >-
+        python3 -m determined.launch.torch_distributed --
+        python3 ./my_train_script.py --my-option=value
 
-#. Create an experiment without the ``--test`` or ``--local`` arguments:
+   See :ref:`predefined-launchers` for more launcher options.
 
-   You might find the ``--follow``, or ``-f``, argument helpful:
-
-   .. code:: bash
-
-      det experiment create myconfig.yaml my_model_dir -f
-
-#. Diagnose failures:
-
-   If :ref:`Step 7 <step7>` worked but this step does not, check:
-
-   -  Check if the error happens when the experiment configuration has ``searcher.source_trial_id``
-      set. One possibility in an actual experiment that does not occur in a ``--test`` experiment is
-      the loading of a previous checkpoint. Errors when loading from a checkpoint can be caused by
-      architectural changes, where the new model code is not architecturally compatible with the old
-      model code.
-
-   -  Generally, issues in this step are caused by doing training and evaluation continuously. Focus
-      on how that change can cause issues with your code.
-
-.. _step9:
-
-***************************************************
- Step 9 - Verify that a multi-GPU experiment works
-***************************************************
-
-This step is similar to :ref:`Step 8 <step8>`, except that it introduces distributed training. This
-step only applies if you have multiple GPUs and want to use distributed training.
-
-#. Configure your system the same as :ref:`Step 7 <step7>`:
-
-   Set ``resources.slots_per_trial`` to a number greater than ``1``. For example:
+#. Configure ``resources.slots_per_trial`` to a number greater than ``1``. For example:
 
    .. code:: yaml
 
       resources:
         slots_per_trial: 2
 
-#. Create your experiment:
+#. Submit your experiment:
 
    .. code:: bash
 
@@ -366,8 +226,8 @@ step only applies if you have multiple GPUs and want to use distributed training
 
 #. Diagnose failures:
 
-   If you are using the ``determined`` library APIs correctly, distributed training should work
-   without error. Otherwise, common problems might be:
+   Double-check that any code changes you made are correct, and also that you wrapped your code with
+   the correct launcher. Otherwise, common problems might be:
 
    -  If your experiment is not being scheduled on the cluster, ensure that the ``slots_per_trial``
       setting is valid for your cluster. For example:
@@ -384,9 +244,9 @@ step only applies if you have multiple GPUs and want to use distributed training
       Ensure that there are no other notebooks, shells, or experiments on the cluster that might
       consume too many resources and prevent the experiment from starting.
 
-   -  Determined is designed to control the details of distributed training for you. If you also try
-      to control those details, such as by calling ``tf.config.set_visible_devices()`` while
-      training a Keras model, it is likely to cause issues.
+   -  Determined is designed to control many of the details of distributed training for you. If you
+      also try to control those details, such as by calling ``tf.config.set_visible_devices()``
+      while training a Keras model, it is likely to cause issues.
 
    -  Some classes of metrics must be specially calculated during distributed training. Most
       metrics, such as loss or accuracy, can be calculated piecemeal on each worker in a distributed

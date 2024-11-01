@@ -17,8 +17,9 @@ FAKE_LABEL = 0
 
 
 class DCGANTrial(det_ds.DeepSpeedTrial):
-    def __init__(self, context: det_ds.DeepSpeedTrialContext,
-                 hparams: dict, data_config: dict) -> None:
+    def __init__(
+        self, context: det_ds.DeepSpeedTrialContext, hparams: dict, data_config: dict
+    ) -> None:
         self.context = context
         self.hparams = hparams
         self.data_config = data_config
