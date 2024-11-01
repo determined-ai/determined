@@ -44,6 +44,7 @@
     "@glideapps/glide-data-grid": "^6.0.3",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.1.7",
+    "async-validator": "^4.2.5",
     "core-js": "3.37.0",
     "dayjs": "^1.11.11",
     "debug": "^4.3.4",

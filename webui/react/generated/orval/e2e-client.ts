@@ -7,72 +7,75 @@
 You can think of Determined as a platform that bridges the gap between tools like TensorFlow and PyTorch --- which work great for a single researcher with a single GPU --- to the challenges that arise when doing deep learning at scale, as teams, clusters, and data sets all increase in size.
  * OpenAPI spec version: 0.1
  */
-import axios from 'axios';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios'
+import type {
+  AxiosRequestConfig,
+  AxiosResponse
+} from 'axios'
 export type GetRawResourceAllocationCsvParams = {
-  /**
-   * Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
-   */
-  timestamp_after: string;
-  /**
-   * End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
-   */
-  timestamp_before: string;
+/**
+ * Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+ */
+timestamp_after: string;
+/**
+ * End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+ */
+timestamp_before: string;
 };
 
 export type GetResourceAllocationCsvParams = {
-  /**
-   * Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
-   */
-  timestamp_after: string;
-  /**
-   * End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
-   */
-  timestamp_before: string;
+/**
+ * Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+ */
+timestamp_after: string;
+/**
+ * End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+ */
+timestamp_before: string;
 };
 
 export type GetAggregatedResourceAllocationCsvParams = {
-  /**
-   * Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
-   */
-  start_date: string;
-  /**
-   * End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
-   */
-  end_date: string;
-  /**
-   * Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
-   */
-  period: string;
+/**
+ * Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+ */
+start_date: string;
+/**
+ * End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+ */
+end_date: string;
+/**
+ * Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+ */
+period: string;
 };
 
 export type GetExperimentModelFileParams = {
-  /**
-   * Path to the target file
-   */
-  path: string;
+/**
+ * Path to the target file
+ */
+path: string;
 };
 
 export type DeleteWorkspaceNamespaceBindingsParams = {
-  /**
-   * The names of the clusters to delete the bindings for.
-   */
-  clusterNames?: string[];
+/**
+ * The names of the clusters to delete the bindings for.
+ */
+clusterNames?: string[];
 };
 
 export type ListRPsBoundToWorkspaceParams = {
-  /**
-   * The offset to use with pagination.
-   */
-  offset?: number;
-  /**
-   * The maximum number of results to return.
-   */
-  limit?: number;
+/**
+ * The offset to use with pagination.
+ */
+offset?: number;
+/**
+ * The maximum number of results to return.
+ */
+limit?: number;
 };
 
-export type GetWorkspaceProjectsOrderBy =
-  (typeof GetWorkspaceProjectsOrderBy)[keyof typeof GetWorkspaceProjectsOrderBy];
+export type GetWorkspaceProjectsOrderBy = typeof GetWorkspaceProjectsOrderBy[keyof typeof GetWorkspaceProjectsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetWorkspaceProjectsOrderBy = {
@@ -81,8 +84,8 @@ export const GetWorkspaceProjectsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetWorkspaceProjectsSortBy =
-  (typeof GetWorkspaceProjectsSortBy)[keyof typeof GetWorkspaceProjectsSortBy];
+export type GetWorkspaceProjectsSortBy = typeof GetWorkspaceProjectsSortBy[keyof typeof GetWorkspaceProjectsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetWorkspaceProjectsSortBy = {
@@ -95,7 +98,7 @@ export const GetWorkspaceProjectsSortBy = {
 } as const;
 
 export type GetWorkspaceProjectsParams = {
-  /**
+/**
  * Sort the projects by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.
@@ -105,43 +108,44 @@ export type GetWorkspaceProjectsParams = {
  - SORT_BY_DESCRIPTION: Returns projects sorted by description.
  - SORT_BY_ID: Returns projects sorted by ID.
  */
-  sortBy?: GetWorkspaceProjectsSortBy;
-  /**
+sortBy?: GetWorkspaceProjectsSortBy;
+/**
  * Order projects in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetWorkspaceProjectsOrderBy;
-  /**
+orderBy?: GetWorkspaceProjectsOrderBy;
+/**
  * Skip the number of projects before returning results. Negative values
 denote number of projects to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of projects. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Limit the projects to those matching the name.
-   */
-  name?: string;
-  /**
-   * Limit the projects to those with an archived status.
-   */
-  archived?: boolean;
-  /**
-   * Limit the projects to those from particular users, by usernames.
-   */
-  users?: string[];
-  /**
-   * Limit the projects to those from particular users, by userIds.
-   */
-  userIds?: number[];
+offset?: number;
+/**
+ * Limit the number of projects. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Limit the projects to those matching the name.
+ */
+name?: string;
+/**
+ * Limit the projects to those with an archived status.
+ */
+archived?: boolean;
+/**
+ * Limit the projects to those from particular users, by usernames.
+ */
+users?: string[];
+/**
+ * Limit the projects to those from particular users, by userIds.
+ */
+userIds?: number[];
 };
 
-export type GetWorkspacesOrderBy = (typeof GetWorkspacesOrderBy)[keyof typeof GetWorkspacesOrderBy];
+export type GetWorkspacesOrderBy = typeof GetWorkspacesOrderBy[keyof typeof GetWorkspacesOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetWorkspacesOrderBy = {
@@ -150,7 +154,8 @@ export const GetWorkspacesOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetWorkspacesSortBy = (typeof GetWorkspacesSortBy)[keyof typeof GetWorkspacesSortBy];
+export type GetWorkspacesSortBy = typeof GetWorkspacesSortBy[keyof typeof GetWorkspacesSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetWorkspacesSortBy = {
@@ -160,58 +165,59 @@ export const GetWorkspacesSortBy = {
 } as const;
 
 export type GetWorkspacesParams = {
-  /**
+/**
  * Sort the workspaces by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.
  - SORT_BY_ID: Returns workspaces sorted by id.
  - SORT_BY_NAME: Returns workspaces sorted by name.
  */
-  sortBy?: GetWorkspacesSortBy;
-  /**
+sortBy?: GetWorkspacesSortBy;
+/**
  * Order workspaces in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetWorkspacesOrderBy;
-  /**
+orderBy?: GetWorkspacesOrderBy;
+/**
  * Skip the number of workspaces before returning results. Negative values
 denote number of workspaces to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of workspaces. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Limit the workspaces to those matching the name (case insensitive).
-   */
-  name?: string;
-  /**
-   * Limit the workspaces to those with an archived status.
-   */
-  archived?: boolean;
-  /**
-   * Limit the workspaces to those from particular users, by usernames.
-   */
-  users?: string[];
-  /**
-   * Limit the workspaces to those from particular users, by userIds.
-   */
-  userIds?: number[];
-  /**
-   * Limit the workspaces to those with pinned status by the current user.
-   */
-  pinned?: boolean;
-  /**
-   * Limit the workspaces to those matching the name (case sensitive).
-   */
-  nameCaseSensitive?: string;
+offset?: number;
+/**
+ * Limit the number of workspaces. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Limit the workspaces to those matching the name (case insensitive).
+ */
+name?: string;
+/**
+ * Limit the workspaces to those with an archived status.
+ */
+archived?: boolean;
+/**
+ * Limit the workspaces to those from particular users, by usernames.
+ */
+users?: string[];
+/**
+ * Limit the workspaces to those from particular users, by userIds.
+ */
+userIds?: number[];
+/**
+ * Limit the workspaces to those with pinned status by the current user.
+ */
+pinned?: boolean;
+/**
+ * Limit the workspaces to those matching the name (case sensitive).
+ */
+nameCaseSensitive?: string;
 };
 
-export type GetUsersOrderBy = (typeof GetUsersOrderBy)[keyof typeof GetUsersOrderBy];
+export type GetUsersOrderBy = typeof GetUsersOrderBy[keyof typeof GetUsersOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetUsersOrderBy = {
@@ -220,7 +226,8 @@ export const GetUsersOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetUsersSortBy = (typeof GetUsersSortBy)[keyof typeof GetUsersSortBy];
+export type GetUsersSortBy = typeof GetUsersSortBy[keyof typeof GetUsersSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetUsersSortBy = {
@@ -236,7 +243,7 @@ export const GetUsersSortBy = {
 } as const;
 
 export type GetUsersParams = {
-  /**
+/**
  * Sort users by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
@@ -249,51 +256,51 @@ export type GetUsersParams = {
  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
  */
-  sortBy?: GetUsersSortBy;
-  /**
+sortBy?: GetUsersSortBy;
+/**
  * Order users in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetUsersOrderBy;
-  /**
+orderBy?: GetUsersOrderBy;
+/**
  * Skip the number of projects before returning results. Negative values
 denote number of projects to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of projects. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Filter by username or display name.
-   */
-  name?: string;
-  /**
-   * Filter by status.
-   */
-  active?: boolean;
-  /**
-   * Filter by roles.
-   */
-  admin?: boolean;
-  /**
-   * Filter by roles id assigned directly to user for EE.
-   */
-  roleIdAssignedDirectlyToUser?: number[];
+offset?: number;
+/**
+ * Limit the number of projects. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Filter by username or display name.
+ */
+name?: string;
+/**
+ * Filter by status.
+ */
+active?: boolean;
+/**
+ * Filter by roles.
+ */
+admin?: boolean;
+/**
+ * Filter by roles id assigned directly to user for EE.
+ */
+roleIdAssignedDirectlyToUser?: number[];
 };
 
 export type GetProjectsByUserActivityParams = {
-  /**
-   * Limit number of project entries.
-   */
-  limit?: number;
+/**
+ * Limit number of project entries.
+ */
+limit?: number;
 };
 
-export type GetTrialWorkloadsMetricType =
-  (typeof GetTrialWorkloadsMetricType)[keyof typeof GetTrialWorkloadsMetricType];
+export type GetTrialWorkloadsMetricType = typeof GetTrialWorkloadsMetricType[keyof typeof GetTrialWorkloadsMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialWorkloadsMetricType = {
@@ -303,8 +310,8 @@ export const GetTrialWorkloadsMetricType = {
   METRIC_TYPE_PROFILING: 'METRIC_TYPE_PROFILING',
 } as const;
 
-export type GetTrialWorkloadsFilter =
-  (typeof GetTrialWorkloadsFilter)[keyof typeof GetTrialWorkloadsFilter];
+export type GetTrialWorkloadsFilter = typeof GetTrialWorkloadsFilter[keyof typeof GetTrialWorkloadsFilter];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialWorkloadsFilter = {
@@ -314,8 +321,8 @@ export const GetTrialWorkloadsFilter = {
   FILTER_OPTION_CHECKPOINT_OR_VALIDATION: 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION',
 } as const;
 
-export type GetTrialWorkloadsOrderBy =
-  (typeof GetTrialWorkloadsOrderBy)[keyof typeof GetTrialWorkloadsOrderBy];
+export type GetTrialWorkloadsOrderBy = typeof GetTrialWorkloadsOrderBy[keyof typeof GetTrialWorkloadsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialWorkloadsOrderBy = {
@@ -325,28 +332,28 @@ export const GetTrialWorkloadsOrderBy = {
 } as const;
 
 export type GetTrialWorkloadsParams = {
-  /**
+/**
  * Order workloads in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetTrialWorkloadsOrderBy;
-  /**
+orderBy?: GetTrialWorkloadsOrderBy;
+/**
  * Skip the number of workloads before returning results. Negative values
 denote number of workloads to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of workloads. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Sort workloads by batches, a training metric, or a validation metric.
-   */
-  sortKey?: string;
-  /**
+offset?: number;
+/**
+ * Limit the number of workloads. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Sort workloads by batches, a training metric, or a validation metric.
+ */
+sortKey?: string;
+/**
  * Filter workloads with validation and/or checkpoint information.
 
  - FILTER_OPTION_UNSPECIFIED: Any workload.
@@ -354,12 +361,12 @@ denote number of workloads to skip from the end before returning results.
  - FILTER_OPTION_VALIDATION: Only validation workloads.
  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
  */
-  filter?: GetTrialWorkloadsFilter;
-  /**
-   * Include per-batch metrics.
-   */
-  includeBatchMetrics?: boolean;
-  /**
+filter?: GetTrialWorkloadsFilter;
+/**
+ * Include per-batch metrics.
+ */
+includeBatchMetrics?: boolean;
+/**
  * When sorting workloads by sort_key, specify training or validation form of
 a metric.
 
@@ -368,15 +375,15 @@ a metric.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  */
-  metricType?: GetTrialWorkloadsMetricType;
-  /**
-   * Metric group (training, validation, etc).
-   */
-  group?: string;
-  /**
-   * Remove deleted checkpoints.
-   */
-  removeDeletedCheckpoints?: boolean;
+metricType?: GetTrialWorkloadsMetricType;
+/**
+ * Metric group (training, validation, etc).
+ */
+group?: string;
+/**
+ * Remove deleted checkpoints.
+ */
+removeDeletedCheckpoints?: boolean;
 };
 
 export type GetTrialProfilerAvailableSeries200 = {
@@ -385,10 +392,10 @@ export type GetTrialProfilerAvailableSeries200 = {
 };
 
 export type GetTrialProfilerAvailableSeriesParams = {
-  /**
-   * Continue streaming labels until the trial stops. Defaults to False.
-   */
-  follow?: boolean;
+/**
+ * Continue streaming labels until the trial stops. Defaults to False.
+ */
+follow?: boolean;
 };
 
 export type TrialLogsFields200 = {
@@ -397,10 +404,10 @@ export type TrialLogsFields200 = {
 };
 
 export type TrialLogsFieldsParams = {
-  /**
-   * Continue following fields until the trial stops.
-   */
-  follow?: boolean;
+/**
+ * Continue following fields until the trial stops.
+ */
+follow?: boolean;
 };
 
 export type TrialLogs200 = {
@@ -408,7 +415,8 @@ export type TrialLogs200 = {
   result?: V1TrialLogsResponse;
 };
 
-export type TrialLogsOrderBy = (typeof TrialLogsOrderBy)[keyof typeof TrialLogsOrderBy];
+export type TrialLogsOrderBy = typeof TrialLogsOrderBy[keyof typeof TrialLogsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TrialLogsOrderBy = {
@@ -417,7 +425,8 @@ export const TrialLogsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type TrialLogsLevelsItem = (typeof TrialLogsLevelsItem)[keyof typeof TrialLogsLevelsItem];
+export type TrialLogsLevelsItem = typeof TrialLogsLevelsItem[keyof typeof TrialLogsLevelsItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TrialLogsLevelsItem = {
@@ -431,27 +440,27 @@ export const TrialLogsLevelsItem = {
 } as const;
 
 export type TrialLogsParams = {
-  /**
-   * Limit the number of trial logs. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Continue following logs until the trial stops.
-   */
-  follow?: boolean;
-  /**
-   * Limit the trial logs to a subset of agents.
-   */
-  agentIds?: string[];
-  /**
-   * Limit the trial logs to a subset of containers.
-   */
-  containerIds?: string[];
-  /**
-   * Limit the trial logs to a subset of ranks.
-   */
-  rankIds?: number[];
-  /**
+/**
+ * Limit the number of trial logs. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Continue following logs until the trial stops.
+ */
+follow?: boolean;
+/**
+ * Limit the trial logs to a subset of agents.
+ */
+agentIds?: string[];
+/**
+ * Limit the trial logs to a subset of containers.
+ */
+containerIds?: string[];
+/**
+ * Limit the trial logs to a subset of ranks.
+ */
+rankIds?: number[];
+/**
  * Limit the trial logs to a subset of agents.
 
  - LOG_LEVEL_UNSPECIFIED: Unspecified log level.
@@ -462,39 +471,39 @@ export type TrialLogsParams = {
  - LOG_LEVEL_ERROR: A log level of ERROR.
  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
  */
-  levels?: TrialLogsLevelsItem[];
-  /**
-   * Limit the trial logs to a subset of output streams.
-   */
-  stdtypes?: string[];
-  /**
-   * Limit the trial logs to a subset of sources.
-   */
-  sources?: string[];
-  /**
-   * Limit the trial logs to ones with a timestamp before a given time.
-   */
-  timestampBefore?: string;
-  /**
-   * Limit the trial logs to ones with a timestamp after a given time.
-   */
-  timestampAfter?: string;
-  /**
+levels?: TrialLogsLevelsItem[];
+/**
+ * Limit the trial logs to a subset of output streams.
+ */
+stdtypes?: string[];
+/**
+ * Limit the trial logs to a subset of sources.
+ */
+sources?: string[];
+/**
+ * Limit the trial logs to ones with a timestamp before a given time.
+ */
+timestampBefore?: string;
+/**
+ * Limit the trial logs to ones with a timestamp after a given time.
+ */
+timestampAfter?: string;
+/**
  * Order logs in either ascending or descending order by timestamp.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: TrialLogsOrderBy;
-  /**
-   * Search the logs by whether the text contains a substring.
-   */
-  searchText?: string;
-  /**
-   * Search text is regex. Default to false.
-   */
-  enableRegex?: boolean;
+orderBy?: TrialLogsOrderBy;
+/**
+ * Search the logs by whether the text contains a substring.
+ */
+searchText?: string;
+/**
+ * Search text is regex. Default to false.
+ */
+enableRegex?: boolean;
 };
 
 export type GetTrialProfilerMetrics200 = {
@@ -502,8 +511,8 @@ export type GetTrialProfilerMetrics200 = {
   result?: V1GetTrialProfilerMetricsResponse;
 };
 
-export type GetTrialProfilerMetricsLabelsMetricType =
-  (typeof GetTrialProfilerMetricsLabelsMetricType)[keyof typeof GetTrialProfilerMetricsLabelsMetricType];
+export type GetTrialProfilerMetricsLabelsMetricType = typeof GetTrialProfilerMetricsLabelsMetricType[keyof typeof GetTrialProfilerMetricsLabelsMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialProfilerMetricsLabelsMetricType = {
@@ -514,19 +523,19 @@ export const GetTrialProfilerMetricsLabelsMetricType = {
 } as const;
 
 export type GetTrialProfilerMetricsParams = {
-  /**
-   * The name of the metric.
-   */
-  'labels.name'?: string;
-  /**
-   * The agent ID associated with the metric.
-   */
-  'labels.agentId'?: string;
-  /**
-   * The GPU UUID associated with the metric.
-   */
-  'labels.gpuUuid'?: string;
-  /**
+/**
+ * The name of the metric.
+ */
+'labels.name'?: string;
+/**
+ * The agent ID associated with the metric.
+ */
+'labels.agentId'?: string;
+/**
+ * The GPU UUID associated with the metric.
+ */
+'labels.gpuUuid'?: string;
+/**
  * The type of the metric.
 
  - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
@@ -535,15 +544,15 @@ export type GetTrialProfilerMetricsParams = {
 from the dataloader took.
  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  */
-  'labels.metricType'?: GetTrialProfilerMetricsLabelsMetricType;
-  /**
-   * Continue streaming metrics until the trial stops. Defaults to False.
-   */
-  'follow'?: boolean;
+'labels.metricType'?: GetTrialProfilerMetricsLabelsMetricType;
+/**
+ * Continue streaming metrics until the trial stops. Defaults to False.
+ */
+follow?: boolean;
 };
 
-export type GetTrialCheckpointsStatesItem =
-  (typeof GetTrialCheckpointsStatesItem)[keyof typeof GetTrialCheckpointsStatesItem];
+export type GetTrialCheckpointsStatesItem = typeof GetTrialCheckpointsStatesItem[keyof typeof GetTrialCheckpointsStatesItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialCheckpointsStatesItem = {
@@ -555,8 +564,8 @@ export const GetTrialCheckpointsStatesItem = {
   STATE_PARTIALLY_DELETED: 'STATE_PARTIALLY_DELETED',
 } as const;
 
-export type GetTrialCheckpointsOrderBy =
-  (typeof GetTrialCheckpointsOrderBy)[keyof typeof GetTrialCheckpointsOrderBy];
+export type GetTrialCheckpointsOrderBy = typeof GetTrialCheckpointsOrderBy[keyof typeof GetTrialCheckpointsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialCheckpointsOrderBy = {
@@ -565,8 +574,8 @@ export const GetTrialCheckpointsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetTrialCheckpointsSortByAttr =
-  (typeof GetTrialCheckpointsSortByAttr)[keyof typeof GetTrialCheckpointsSortByAttr];
+export type GetTrialCheckpointsSortByAttr = typeof GetTrialCheckpointsSortByAttr[keyof typeof GetTrialCheckpointsSortByAttr];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialCheckpointsSortByAttr = {
@@ -580,7 +589,7 @@ export const GetTrialCheckpointsSortByAttr = {
 } as const;
 
 export type GetTrialCheckpointsParams = {
-  /**
+/**
  * Sort by preset checkpoint attribute.
 
  - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
@@ -592,29 +601,29 @@ export type GetTrialCheckpointsParams = {
  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
 configuration setting.
  */
-  sortByAttr?: GetTrialCheckpointsSortByAttr;
-  /**
-   * Sort by custom validation metric name.
-   */
-  sortByMetric?: string;
-  /**
+sortByAttr?: GetTrialCheckpointsSortByAttr;
+/**
+ * Sort by custom validation metric name.
+ */
+sortByMetric?: string;
+/**
  * Order checkpoints in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetTrialCheckpointsOrderBy;
-  /**
+orderBy?: GetTrialCheckpointsOrderBy;
+/**
  * Skip the number of checkpoints before returning results. Negative values
 denote number of checkpoints to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of checkpoints. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
+offset?: number;
+/**
+ * Limit the number of checkpoints. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
  * Limit the checkpoints to those that match the states.
 
  - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -624,11 +633,11 @@ denote number of checkpoints to skip from the end before returning results.
  - STATE_DELETED: The checkpoint has been deleted.
  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
  */
-  states?: GetTrialCheckpointsStatesItem[];
+states?: GetTrialCheckpointsStatesItem[];
 };
 
-export type CompareTrialsMetricType =
-  (typeof CompareTrialsMetricType)[keyof typeof CompareTrialsMetricType];
+export type CompareTrialsMetricType = typeof CompareTrialsMetricType[keyof typeof CompareTrialsMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const CompareTrialsMetricType = {
@@ -639,27 +648,27 @@ export const CompareTrialsMetricType = {
 } as const;
 
 export type CompareTrialsParams = {
-  /**
-   * The requested trial ids.
-   */
-  'trialIds'?: number[];
-  /**
-   * The maximum number of data points to return after downsampling.
-   */
-  'maxDatapoints'?: number;
-  /**
-   * The names of selected metrics.
-   */
-  'metricNames'?: string[];
-  /**
-   * Sample from metrics after this batch number.
-   */
-  'startBatches'?: number;
-  /**
-   * Sample from metrics before this batch number.
-   */
-  'endBatches'?: number;
-  /**
+/**
+ * The requested trial ids.
+ */
+trialIds?: number[];
+/**
+ * The maximum number of data points to return after downsampling.
+ */
+maxDatapoints?: number;
+/**
+ * The names of selected metrics.
+ */
+metricNames?: string[];
+/**
+ * Sample from metrics after this batch number.
+ */
+startBatches?: number;
+/**
+ * Sample from metrics before this batch number.
+ */
+endBatches?: number;
+/**
  * Metric group.
 
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
@@ -667,75 +676,75 @@ export type CompareTrialsParams = {
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  */
-  'metricType'?: CompareTrialsMetricType;
-  /**
-   * Metric group (training, validation, etc).
-   */
-  'group'?: string;
-  /**
-   * metric ids for the query. must be in the form group.metric_name.
-   */
-  'metricIds'?: string[];
-  /**
-   * metric or column name for the filter.
-   */
-  'timeSeriesFilter.name'?: string;
-  /**
-   * Less than.
-   */
-  'timeSeriesFilter.doubleRange.lt'?: number;
-  /**
-   * Less than or equal.
-   */
-  'timeSeriesFilter.doubleRange.lte'?: number;
-  /**
-   * Greater than.
-   */
-  'timeSeriesFilter.doubleRange.gt'?: number;
-  /**
-   * Greater than or equal.
-   */
-  'timeSeriesFilter.doubleRange.gte'?: number;
-  /**
-   * Less than.
-   */
-  'timeSeriesFilter.integerRange.lt'?: number;
-  /**
-   * Less than or equal.
-   */
-  'timeSeriesFilter.integerRange.lte'?: number;
-  /**
-   * Greater than.
-   */
-  'timeSeriesFilter.integerRange.gt'?: number;
-  /**
-   * Greater than or equal.
-   */
-  'timeSeriesFilter.integerRange.gte'?: number;
-  /**
-   * In a set. `in` is a reserved word in python.
-   */
-  'timeSeriesFilter.integerRange.incl'?: number[];
-  /**
-   * Not in a set.
-   */
-  'timeSeriesFilter.integerRange.notIn'?: number[];
-  /**
-   * Less than.
-   */
-  'timeSeriesFilter.timeRange.lt'?: string;
-  /**
-   * Less than or equal.
-   */
-  'timeSeriesFilter.timeRange.lte'?: string;
-  /**
-   * Greater than.
-   */
-  'timeSeriesFilter.timeRange.gt'?: string;
-  /**
-   * Greater than or equal.
-   */
-  'timeSeriesFilter.timeRange.gte'?: string;
+metricType?: CompareTrialsMetricType;
+/**
+ * Metric group (training, validation, etc).
+ */
+group?: string;
+/**
+ * metric ids for the query. must be in the form group.metric_name.
+ */
+metricIds?: string[];
+/**
+ * metric or column name for the filter.
+ */
+'timeSeriesFilter.name'?: string;
+/**
+ * Less than.
+ */
+'timeSeriesFilter.doubleRange.lt'?: number;
+/**
+ * Less than or equal.
+ */
+'timeSeriesFilter.doubleRange.lte'?: number;
+/**
+ * Greater than.
+ */
+'timeSeriesFilter.doubleRange.gt'?: number;
+/**
+ * Greater than or equal.
+ */
+'timeSeriesFilter.doubleRange.gte'?: number;
+/**
+ * Less than.
+ */
+'timeSeriesFilter.integerRange.lt'?: number;
+/**
+ * Less than or equal.
+ */
+'timeSeriesFilter.integerRange.lte'?: number;
+/**
+ * Greater than.
+ */
+'timeSeriesFilter.integerRange.gt'?: number;
+/**
+ * Greater than or equal.
+ */
+'timeSeriesFilter.integerRange.gte'?: number;
+/**
+ * In a set. `in` is a reserved word in python.
+ */
+'timeSeriesFilter.integerRange.incl'?: number[];
+/**
+ * Not in a set.
+ */
+'timeSeriesFilter.integerRange.notIn'?: number[];
+/**
+ * Less than.
+ */
+'timeSeriesFilter.timeRange.lt'?: string;
+/**
+ * Less than or equal.
+ */
+'timeSeriesFilter.timeRange.lte'?: string;
+/**
+ * Greater than.
+ */
+'timeSeriesFilter.timeRange.gt'?: string;
+/**
+ * Greater than or equal.
+ */
+'timeSeriesFilter.timeRange.gte'?: string;
 };
 
 export type GetValidationMetrics200 = {
@@ -744,10 +753,10 @@ export type GetValidationMetrics200 = {
 };
 
 export type GetValidationMetricsParams = {
-  /**
-   * Trial IDs to get metrics for.
-   */
-  trialIds?: number[];
+/**
+ * Trial IDs to get metrics for.
+ */
+trialIds?: number[];
 };
 
 export type GetMetrics200 = {
@@ -756,14 +765,14 @@ export type GetMetrics200 = {
 };
 
 export type GetMetricsParams = {
-  /**
-   * Trial IDs to get metrics for.
-   */
-  trialIds: number[];
-  /**
-   * The group of metrics to get eg 'training', 'validation', etc.
-   */
-  group: string;
+/**
+ * Trial IDs to get metrics for.
+ */
+trialIds: number[];
+/**
+ * The group of metrics to get eg 'training', 'validation', etc.
+ */
+group: string;
 };
 
 export type GetTrainingMetrics200 = {
@@ -772,14 +781,14 @@ export type GetTrainingMetrics200 = {
 };
 
 export type GetTrainingMetricsParams = {
-  /**
-   * Trial IDs to get metrics for.
-   */
-  trialIds?: number[];
+/**
+ * Trial IDs to get metrics for.
+ */
+trialIds?: number[];
 };
 
-export type GetAccessTokensOrderBy =
-  (typeof GetAccessTokensOrderBy)[keyof typeof GetAccessTokensOrderBy];
+export type GetAccessTokensOrderBy = typeof GetAccessTokensOrderBy[keyof typeof GetAccessTokensOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetAccessTokensOrderBy = {
@@ -788,8 +797,8 @@ export const GetAccessTokensOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetAccessTokensSortBy =
-  (typeof GetAccessTokensSortBy)[keyof typeof GetAccessTokensSortBy];
+export type GetAccessTokensSortBy = typeof GetAccessTokensSortBy[keyof typeof GetAccessTokensSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetAccessTokensSortBy = {
@@ -803,7 +812,7 @@ export const GetAccessTokensSortBy = {
 } as const;
 
 export type GetAccessTokensParams = {
-  /**
+/**
  * Sort token info by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
@@ -814,40 +823,40 @@ export type GetAccessTokensParams = {
  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
  */
-  sortBy?: GetAccessTokensSortBy;
-  /**
+sortBy?: GetAccessTokensSortBy;
+/**
  * Order token info in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetAccessTokensOrderBy;
-  /**
+orderBy?: GetAccessTokensOrderBy;
+/**
  * Skip the number of projects before returning results. Negative values
 denote number of projects to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of projects. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Filter on token_ids.
-   */
-  tokenIds?: number[];
-  /**
-   * Filter by username.
-   */
-  username?: string;
-  /**
-   * Filter by active status.
-   */
-  showInactive?: boolean;
+offset?: number;
+/**
+ * Limit the number of projects. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Filter on token_ids.
+ */
+tokenIds?: number[];
+/**
+ * Filter by username.
+ */
+username?: string;
+/**
+ * Filter by active status.
+ */
+showInactive?: boolean;
 };
 
-export type GetTensorboardsOrderBy =
-  (typeof GetTensorboardsOrderBy)[keyof typeof GetTensorboardsOrderBy];
+export type GetTensorboardsOrderBy = typeof GetTensorboardsOrderBy[keyof typeof GetTensorboardsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTensorboardsOrderBy = {
@@ -856,8 +865,8 @@ export const GetTensorboardsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetTensorboardsSortBy =
-  (typeof GetTensorboardsSortBy)[keyof typeof GetTensorboardsSortBy];
+export type GetTensorboardsSortBy = typeof GetTensorboardsSortBy[keyof typeof GetTensorboardsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTensorboardsSortBy = {
@@ -869,7 +878,7 @@ export const GetTensorboardsSortBy = {
 } as const;
 
 export type GetTensorboardsParams = {
-  /**
+/**
  * Sort tensorboards by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.
@@ -878,45 +887,46 @@ export type GetTensorboardsParams = {
  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
  */
-  sortBy?: GetTensorboardsSortBy;
-  /**
+sortBy?: GetTensorboardsSortBy;
+/**
  * Order tensorboards in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetTensorboardsOrderBy;
-  /**
+orderBy?: GetTensorboardsOrderBy;
+/**
  * Skip the number of tensorboards before returning results. Negative values
 denote number of tensorboards to skip from the end before returning
 results.
  */
-  offset?: number;
-  /**
-   * Limit the number of tensorboards. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
+offset?: number;
+/**
+ * Limit the number of tensorboards. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
  * Limit tensorboards to those that are owned by users with the specified
 usernames.
  */
-  users?: string[];
-  /**
+users?: string[];
+/**
  * Limit tensorboards to those that are owned by users with the specified
 userIds.
  */
-  userIds?: number[];
-  /**
+userIds?: number[];
+/**
  * Limit tensorboards to those that are in a specific workspace, or 0 for
 all accessible workspaces.
  */
-  workspaceId?: number;
+workspaceId?: number;
 };
 
 export type PatchTemplateConfigBody = { [key: string]: unknown };
 
-export type GetTemplatesOrderBy = (typeof GetTemplatesOrderBy)[keyof typeof GetTemplatesOrderBy];
+export type GetTemplatesOrderBy = typeof GetTemplatesOrderBy[keyof typeof GetTemplatesOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTemplatesOrderBy = {
@@ -925,7 +935,8 @@ export const GetTemplatesOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetTemplatesSortBy = (typeof GetTemplatesSortBy)[keyof typeof GetTemplatesSortBy];
+export type GetTemplatesSortBy = typeof GetTemplatesSortBy[keyof typeof GetTemplatesSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTemplatesSortBy = {
@@ -934,38 +945,38 @@ export const GetTemplatesSortBy = {
 } as const;
 
 export type GetTemplatesParams = {
-  /**
+/**
  * Sort templates by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
  */
-  sortBy?: GetTemplatesSortBy;
-  /**
+sortBy?: GetTemplatesSortBy;
+/**
  * Order templates in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetTemplatesOrderBy;
-  /**
+orderBy?: GetTemplatesOrderBy;
+/**
  * Skip the number of templates before returning results. Negative values
 denote number of templates to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of templates. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Limit templates to those that match the name.
-   */
-  name?: string;
-  /**
-   * Limit templates to those that match the workspace id.
-   */
-  workspaceIds?: number[];
+offset?: number;
+/**
+ * Limit the number of templates. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Limit templates to those that match the name.
+ */
+name?: string;
+/**
+ * Limit templates to those that match the workspace id.
+ */
+workspaceIds?: number[];
 };
 
 export type TaskLogsFields200 = {
@@ -974,10 +985,10 @@ export type TaskLogsFields200 = {
 };
 
 export type TaskLogsFieldsParams = {
-  /**
-   * Continue following fields until the task stops.
-   */
-  follow?: boolean;
+/**
+ * Continue following fields until the task stops.
+ */
+follow?: boolean;
 };
 
 export type TaskLogs200 = {
@@ -985,7 +996,8 @@ export type TaskLogs200 = {
   result?: V1TaskLogsResponse;
 };
 
-export type TaskLogsOrderBy = (typeof TaskLogsOrderBy)[keyof typeof TaskLogsOrderBy];
+export type TaskLogsOrderBy = typeof TaskLogsOrderBy[keyof typeof TaskLogsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TaskLogsOrderBy = {
@@ -994,7 +1006,8 @@ export const TaskLogsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type TaskLogsLevelsItem = (typeof TaskLogsLevelsItem)[keyof typeof TaskLogsLevelsItem];
+export type TaskLogsLevelsItem = typeof TaskLogsLevelsItem[keyof typeof TaskLogsLevelsItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TaskLogsLevelsItem = {
@@ -1008,31 +1021,31 @@ export const TaskLogsLevelsItem = {
 } as const;
 
 export type TaskLogsParams = {
-  /**
-   * Limit the number of trial logs. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Continue following logs until the trial stops.
-   */
-  follow?: boolean;
-  /**
-   * Limit the task logs to particular allocations.
-   */
-  allocationIds?: string[];
-  /**
-   * Limit the trial logs to a subset of agents.
-   */
-  agentIds?: string[];
-  /**
-   * Limit the trial logs to a subset of containers.
-   */
-  containerIds?: string[];
-  /**
-   * Limit the trial logs to a subset of ranks.
-   */
-  rankIds?: number[];
-  /**
+/**
+ * Limit the number of trial logs. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Continue following logs until the trial stops.
+ */
+follow?: boolean;
+/**
+ * Limit the task logs to particular allocations.
+ */
+allocationIds?: string[];
+/**
+ * Limit the trial logs to a subset of agents.
+ */
+agentIds?: string[];
+/**
+ * Limit the trial logs to a subset of containers.
+ */
+containerIds?: string[];
+/**
+ * Limit the trial logs to a subset of ranks.
+ */
+rankIds?: number[];
+/**
  * Limit the trial logs to a subset of agents.
 
  - LOG_LEVEL_UNSPECIFIED: Unspecified log level.
@@ -1043,42 +1056,43 @@ export type TaskLogsParams = {
  - LOG_LEVEL_ERROR: A log level of ERROR.
  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
  */
-  levels?: TaskLogsLevelsItem[];
-  /**
-   * Limit the trial logs to a subset of output streams.
-   */
-  stdtypes?: string[];
-  /**
-   * Limit the trial logs to a subset of sources.
-   */
-  sources?: string[];
-  /**
-   * Limit the trial logs to ones with a timestamp before a given time.
-   */
-  timestampBefore?: string;
-  /**
-   * Limit the trial logs to ones with a timestamp after a given time.
-   */
-  timestampAfter?: string;
-  /**
+levels?: TaskLogsLevelsItem[];
+/**
+ * Limit the trial logs to a subset of output streams.
+ */
+stdtypes?: string[];
+/**
+ * Limit the trial logs to a subset of sources.
+ */
+sources?: string[];
+/**
+ * Limit the trial logs to ones with a timestamp before a given time.
+ */
+timestampBefore?: string;
+/**
+ * Limit the trial logs to ones with a timestamp after a given time.
+ */
+timestampAfter?: string;
+/**
  * Order logs in either ascending or descending order by timestamp.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: TaskLogsOrderBy;
-  /**
-   * Search the logs by whether the text contains a substring.
-   */
-  searchText?: string;
-  /**
-   * Search text is regex. Default to false.
-   */
-  enableRegex?: boolean;
+orderBy?: TaskLogsOrderBy;
+/**
+ * Search the logs by whether the text contains a substring.
+ */
+searchText?: string;
+/**
+ * Search text is regex. Default to false.
+ */
+enableRegex?: boolean;
 };
 
-export type GetShellsOrderBy = (typeof GetShellsOrderBy)[keyof typeof GetShellsOrderBy];
+export type GetShellsOrderBy = typeof GetShellsOrderBy[keyof typeof GetShellsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetShellsOrderBy = {
@@ -1087,7 +1101,8 @@ export const GetShellsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetShellsSortBy = (typeof GetShellsSortBy)[keyof typeof GetShellsSortBy];
+export type GetShellsSortBy = typeof GetShellsSortBy[keyof typeof GetShellsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetShellsSortBy = {
@@ -1099,7 +1114,7 @@ export const GetShellsSortBy = {
 } as const;
 
 export type GetShellsParams = {
-  /**
+/**
  * Sort shells by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.
@@ -1108,82 +1123,81 @@ export type GetShellsParams = {
  - SORT_BY_START_TIME: Return shells sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
  */
-  sortBy?: GetShellsSortBy;
-  /**
+sortBy?: GetShellsSortBy;
+/**
  * Order shells in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetShellsOrderBy;
-  /**
+orderBy?: GetShellsOrderBy;
+/**
  * Skip the number of shells before returning results. Negative values
 denote number of shells to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of shells. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Limit shells to those that are owned by users with the specified usernames.
-   */
-  users?: string[];
-  /**
-   * Limit shells to those that are owned by users with the specified userIds.
-   */
-  userIds?: number[];
-  /**
+offset?: number;
+/**
+ * Limit the number of shells. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Limit shells to those that are owned by users with the specified usernames.
+ */
+users?: string[];
+/**
+ * Limit shells to those that are owned by users with the specified userIds.
+ */
+userIds?: number[];
+/**
  * Limit to those within a specified workspace, or 0 for all
 accessible workspaces.
  */
-  workspaceId?: number;
+workspaceId?: number;
 };
 
 export type GetGroupsAndUsersAssignedToWorkspaceParams = {
-  /**
+/**
  * Name of groups and users to search by. Name filters by group name for
 groups. Name filters by display name then username if display name is null
 for users.
  */
-  name?: string;
+name?: string;
 };
 
 export type ResourceAllocationRawParams = {
-  /**
-   * The start of the period to consider.
-   */
-  timestampAfter: string;
-  /**
-   * The end of the period to consider.
-   */
-  timestampBefore: string;
+/**
+ * The start of the period to consider.
+ */
+timestampAfter: string;
+/**
+ * The end of the period to consider.
+ */
+timestampBefore: string;
 };
 
-export type ResourceAllocationAggregatedPeriod =
-  (typeof ResourceAllocationAggregatedPeriod)[keyof typeof ResourceAllocationAggregatedPeriod];
+export type ResourceAllocationAggregatedPeriod = typeof ResourceAllocationAggregatedPeriod[keyof typeof ResourceAllocationAggregatedPeriod];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ResourceAllocationAggregatedPeriod = {
-  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED:
-    'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED',
+  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED',
   RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY',
   RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
 } as const;
 
 export type ResourceAllocationAggregatedParams = {
-  /**
+/**
  * The first day to consider (the exact time is midnight UTC at the beginning
 of the day).
  */
-  startDate: string;
-  /**
+startDate: string;
+/**
  * The last day to consider (the exact time is midnight UTC at the end of the
 day).
  */
-  endDate: string;
-  /**
+endDate: string;
+/**
  * The period over which to perform aggregation.
 
  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
@@ -1191,39 +1205,39 @@ just an artifact of using protobuf.
  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.
  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
  */
-  period?: ResourceAllocationAggregatedPeriod;
+period?: ResourceAllocationAggregatedPeriod;
 };
 
 export type ListWorkspacesBoundToRPParams = {
-  /**
-   * The offset to use with pagination.
-   */
-  offset?: number;
-  /**
-   * The maximum number of results to return.
-   */
-  limit?: number;
+/**
+ * The offset to use with pagination.
+ */
+offset?: number;
+/**
+ * The maximum number of results to return.
+ */
+limit?: number;
 };
 
 export type GetResourcePoolsParams = {
-  /**
+/**
  * Skip the number of resource pools before returning results. Negative values
 denote number of resource pools to skip from the end before returning
 results.
  */
-  offset?: number;
-  /**
-   * Limit the number of resource pools. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Indicate whether or not to return unbound pools only.
-   */
-  unbound?: boolean;
+offset?: number;
+/**
+ * Limit the number of resource pools. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Indicate whether or not to return unbound pools only.
+ */
+unbound?: boolean;
 };
 
-export type GetProjectColumnsTableType =
-  (typeof GetProjectColumnsTableType)[keyof typeof GetProjectColumnsTableType];
+export type GetProjectColumnsTableType = typeof GetProjectColumnsTableType[keyof typeof GetProjectColumnsTableType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetProjectColumnsTableType = {
@@ -1233,17 +1247,18 @@ export const GetProjectColumnsTableType = {
 } as const;
 
 export type GetProjectColumnsParams = {
-  /**
+/**
  * type of table for project columns.
 
  - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
  - TABLE_TYPE_EXPERIMENT: experiment table.
  - TABLE_TYPE_RUN: run table.
  */
-  tableType?: GetProjectColumnsTableType;
+tableType?: GetProjectColumnsTableType;
 };
 
-export type GetNotebooksOrderBy = (typeof GetNotebooksOrderBy)[keyof typeof GetNotebooksOrderBy];
+export type GetNotebooksOrderBy = typeof GetNotebooksOrderBy[keyof typeof GetNotebooksOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetNotebooksOrderBy = {
@@ -1252,7 +1267,8 @@ export const GetNotebooksOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetNotebooksSortBy = (typeof GetNotebooksSortBy)[keyof typeof GetNotebooksSortBy];
+export type GetNotebooksSortBy = typeof GetNotebooksSortBy[keyof typeof GetNotebooksSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetNotebooksSortBy = {
@@ -1264,7 +1280,7 @@ export const GetNotebooksSortBy = {
 } as const;
 
 export type GetNotebooksParams = {
-  /**
+/**
  * Sort notebooks by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.
@@ -1273,43 +1289,43 @@ export type GetNotebooksParams = {
  - SORT_BY_START_TIME: Return notebooks sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
  */
-  sortBy?: GetNotebooksSortBy;
-  /**
+sortBy?: GetNotebooksSortBy;
+/**
  * Order notebooks in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetNotebooksOrderBy;
-  /**
+orderBy?: GetNotebooksOrderBy;
+/**
  * Skip the number of notebooks before returning results. Negative values
 denote number of notebooks to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of notebooks. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
+offset?: number;
+/**
+ * Limit the number of notebooks. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
  * Limit notebooks to those that are owned by users with the specified
 usernames.
  */
-  users?: string[];
-  /**
+users?: string[];
+/**
  * Limit notebooks to those that are owned by users with the specified
 userIds.
  */
-  userIds?: number[];
-  /**
+userIds?: number[];
+/**
  * Limit to those within a specified workspace, or 0 for all
 accessible workspaces.
  */
-  workspaceId?: number;
+workspaceId?: number;
 };
 
-export type GetTrialMetricsByModelVersionTrialSourceInfoType =
-  (typeof GetTrialMetricsByModelVersionTrialSourceInfoType)[keyof typeof GetTrialMetricsByModelVersionTrialSourceInfoType];
+export type GetTrialMetricsByModelVersionTrialSourceInfoType = typeof GetTrialMetricsByModelVersionTrialSourceInfoType[keyof typeof GetTrialMetricsByModelVersionTrialSourceInfoType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialMetricsByModelVersionTrialSourceInfoType = {
@@ -1319,23 +1335,23 @@ export const GetTrialMetricsByModelVersionTrialSourceInfoType = {
 } as const;
 
 export type GetTrialMetricsByModelVersionParams = {
-  /**
+/**
  * Type of the TrialSourceInfo.
 
  - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified
  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference
  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
  */
-  trialSourceInfoType?: GetTrialMetricsByModelVersionTrialSourceInfoType;
-  /**
+trialSourceInfoType?: GetTrialMetricsByModelVersionTrialSourceInfoType;
+/**
  * Metric Group string ("training", "validation", or anything else) (nil means
 all groups).
  */
-  metricGroup?: string;
+metricGroup?: string;
 };
 
-export type GetModelVersionsOrderBy =
-  (typeof GetModelVersionsOrderBy)[keyof typeof GetModelVersionsOrderBy];
+export type GetModelVersionsOrderBy = typeof GetModelVersionsOrderBy[keyof typeof GetModelVersionsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetModelVersionsOrderBy = {
@@ -1344,8 +1360,8 @@ export const GetModelVersionsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetModelVersionsSortBy =
-  (typeof GetModelVersionsSortBy)[keyof typeof GetModelVersionsSortBy];
+export type GetModelVersionsSortBy = typeof GetModelVersionsSortBy[keyof typeof GetModelVersionsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetModelVersionsSortBy = {
@@ -1355,34 +1371,35 @@ export const GetModelVersionsSortBy = {
 } as const;
 
 export type GetModelVersionsParams = {
-  /**
+/**
  * Sort the model versions by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.
  - SORT_BY_VERSION: Returns model versions sorted by version number.
  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
  */
-  sortBy?: GetModelVersionsSortBy;
-  /**
+sortBy?: GetModelVersionsSortBy;
+/**
  * Order model versions in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetModelVersionsOrderBy;
-  /**
+orderBy?: GetModelVersionsOrderBy;
+/**
  * Skip the number of model versions before returning results. Negative values
 denote number of models to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of model versions. A value of 0 denotes no limit.
-   */
-  limit?: number;
+offset?: number;
+/**
+ * Limit the number of model versions. A value of 0 denotes no limit.
+ */
+limit?: number;
 };
 
-export type GetModelsOrderBy = (typeof GetModelsOrderBy)[keyof typeof GetModelsOrderBy];
+export type GetModelsOrderBy = typeof GetModelsOrderBy[keyof typeof GetModelsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetModelsOrderBy = {
@@ -1391,7 +1408,8 @@ export const GetModelsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetModelsSortBy = (typeof GetModelsSortBy)[keyof typeof GetModelsSortBy];
+export type GetModelsSortBy = typeof GetModelsSortBy[keyof typeof GetModelsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetModelsSortBy = {
@@ -1405,7 +1423,7 @@ export const GetModelsSortBy = {
 } as const;
 
 export type GetModelsParams = {
-  /**
+/**
  * Sort the models by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.
@@ -1416,67 +1434,67 @@ export type GetModelsParams = {
  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
  - SORT_BY_WORKSPACE: Returns models sorted by workspace name.
  */
-  sortBy?: GetModelsSortBy;
-  /**
+sortBy?: GetModelsSortBy;
+/**
  * Order models in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetModelsOrderBy;
-  /**
+orderBy?: GetModelsOrderBy;
+/**
  * Skip the number of models before returning results. Negative values
 denote number of models to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of models. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Limit the models to those matching or partially-matching the name.
-   */
-  name?: string;
-  /**
-   * Limit the models to those matching or partially-matching the description.
-   */
-  description?: string;
-  /**
-   * Limit the models to those with the following labels.
-   */
-  labels?: string[];
-  /**
-   * Limit to unarchived models only.
-   */
-  archived?: boolean;
-  /**
-   * Limit the models to those made by the users with the following usernames.
-   */
-  users?: string[];
-  /**
-   * Limit models to those that belong to the following workspace names.
-   */
-  workspaceNames?: string[];
-  /**
-   * Limit the models to those made by the users with the following userIds.
-   */
-  userIds?: number[];
-  /**
-   * Limit the models to this model id.
-   */
-  id?: number;
-  /**
-   * Limit models to those that belong to the following workspace ids.
-   */
-  workspaceIds?: number[];
+offset?: number;
+/**
+ * Limit the number of models. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Limit the models to those matching or partially-matching the name.
+ */
+name?: string;
+/**
+ * Limit the models to those matching or partially-matching the description.
+ */
+description?: string;
+/**
+ * Limit the models to those with the following labels.
+ */
+labels?: string[];
+/**
+ * Limit to unarchived models only.
+ */
+archived?: boolean;
+/**
+ * Limit the models to those made by the users with the following usernames.
+ */
+users?: string[];
+/**
+ * Limit models to those that belong to the following workspace names.
+ */
+workspaceNames?: string[];
+/**
+ * Limit the models to those made by the users with the following userIds.
+ */
+userIds?: number[];
+/**
+ * Limit the models to this model id.
+ */
+id?: number;
+/**
+ * Limit models to those that belong to the following workspace ids.
+ */
+workspaceIds?: number[];
 };
 
 export type GetModelLabelsParams = {
-  /**
-   * Optional workspace ID to limit query for model tags.
-   */
-  workspaceId?: number;
+/**
+ * Optional workspace ID to limit query for model tags.
+ */
+workspaceId?: number;
 };
 
 export type MasterLogs200 = {
@@ -1485,29 +1503,30 @@ export type MasterLogs200 = {
 };
 
 export type MasterLogsParams = {
-  /**
+/**
  * Skip the number of master logs before returning results. Negative values
 denote number of master logs to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of master logs. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * Continue following logs until the master stops or the limit is reached.
-   */
-  follow?: boolean;
+offset?: number;
+/**
+ * Limit the number of master logs. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * Continue following logs until the master stops or the limit is reached.
+ */
+follow?: boolean;
 };
 
 export type GetJobQueueStatsParams = {
-  /**
-   * Filter the results based on a set of resource pools.
-   */
-  resourcePools?: string[];
+/**
+ * Filter the results based on a set of resource pools.
+ */
+resourcePools?: string[];
 };
 
-export type GetJobsV2StatesItem = (typeof GetJobsV2StatesItem)[keyof typeof GetJobsV2StatesItem];
+export type GetJobsV2StatesItem = typeof GetJobsV2StatesItem[keyof typeof GetJobsV2StatesItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetJobsV2StatesItem = {
@@ -1517,7 +1536,8 @@ export const GetJobsV2StatesItem = {
   STATE_SCHEDULED_BACKFILLED: 'STATE_SCHEDULED_BACKFILLED',
 } as const;
 
-export type GetJobsV2OrderBy = (typeof GetJobsV2OrderBy)[keyof typeof GetJobsV2OrderBy];
+export type GetJobsV2OrderBy = typeof GetJobsV2OrderBy[keyof typeof GetJobsV2OrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetJobsV2OrderBy = {
@@ -1527,19 +1547,19 @@ export const GetJobsV2OrderBy = {
 } as const;
 
 export type GetJobsV2Params = {
-  /**
-   * Pagination offset.
-   */
-  offset?: number;
-  /**
-   * Pagination limit.
-   */
-  limit?: number;
-  /**
-   * The target resource-pool for agent resource manager.
-   */
-  resourcePool?: string;
-  /**
+/**
+ * Pagination offset.
+ */
+offset?: number;
+/**
+ * Pagination limit.
+ */
+limit?: number;
+/**
+ * The target resource-pool for agent resource manager.
+ */
+resourcePool?: string;
+/**
  * Order results in either ascending or descending order by the number of
 jobs ahead.
 
@@ -1547,8 +1567,8 @@ jobs ahead.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetJobsV2OrderBy;
-  /**
+orderBy?: GetJobsV2OrderBy;
+/**
  * Filter to jobs with states among those given.
 
  - STATE_UNSPECIFIED: Unspecified state.
@@ -1556,10 +1576,11 @@ jobs ahead.
  - STATE_SCHEDULED: Job is scheduled.
  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
  */
-  states?: GetJobsV2StatesItem[];
+states?: GetJobsV2StatesItem[];
 };
 
-export type GetJobsStatesItem = (typeof GetJobsStatesItem)[keyof typeof GetJobsStatesItem];
+export type GetJobsStatesItem = typeof GetJobsStatesItem[keyof typeof GetJobsStatesItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetJobsStatesItem = {
@@ -1569,7 +1590,8 @@ export const GetJobsStatesItem = {
   STATE_SCHEDULED_BACKFILLED: 'STATE_SCHEDULED_BACKFILLED',
 } as const;
 
-export type GetJobsOrderBy = (typeof GetJobsOrderBy)[keyof typeof GetJobsOrderBy];
+export type GetJobsOrderBy = typeof GetJobsOrderBy[keyof typeof GetJobsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetJobsOrderBy = {
@@ -1579,19 +1601,19 @@ export const GetJobsOrderBy = {
 } as const;
 
 export type GetJobsParams = {
-  /**
-   * Pagination offset.
-   */
-  offset?: number;
-  /**
-   * Pagination limit.
-   */
-  limit?: number;
-  /**
-   * The target resource-pool for agent resource manager.
-   */
-  resourcePool?: string;
-  /**
+/**
+ * Pagination offset.
+ */
+offset?: number;
+/**
+ * Pagination limit.
+ */
+limit?: number;
+/**
+ * The target resource-pool for agent resource manager.
+ */
+resourcePool?: string;
+/**
  * Order results in either ascending or descending order by the number of
 jobs ahead.
 
@@ -1599,8 +1621,8 @@ jobs ahead.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetJobsOrderBy;
-  /**
+orderBy?: GetJobsOrderBy;
+/**
  * Filter to jobs with states among those given.
 
  - STATE_UNSPECIFIED: Unspecified state.
@@ -1608,11 +1630,11 @@ jobs ahead.
  - STATE_SCHEDULED: Job is scheduled.
  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
  */
-  states?: GetJobsStatesItem[];
+states?: GetJobsStatesItem[];
 };
 
-export type GetExperimentCheckpointsStatesItem =
-  (typeof GetExperimentCheckpointsStatesItem)[keyof typeof GetExperimentCheckpointsStatesItem];
+export type GetExperimentCheckpointsStatesItem = typeof GetExperimentCheckpointsStatesItem[keyof typeof GetExperimentCheckpointsStatesItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentCheckpointsStatesItem = {
@@ -1624,8 +1646,8 @@ export const GetExperimentCheckpointsStatesItem = {
   STATE_PARTIALLY_DELETED: 'STATE_PARTIALLY_DELETED',
 } as const;
 
-export type GetExperimentCheckpointsOrderBy =
-  (typeof GetExperimentCheckpointsOrderBy)[keyof typeof GetExperimentCheckpointsOrderBy];
+export type GetExperimentCheckpointsOrderBy = typeof GetExperimentCheckpointsOrderBy[keyof typeof GetExperimentCheckpointsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentCheckpointsOrderBy = {
@@ -1634,8 +1656,8 @@ export const GetExperimentCheckpointsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetExperimentCheckpointsSortByAttr =
-  (typeof GetExperimentCheckpointsSortByAttr)[keyof typeof GetExperimentCheckpointsSortByAttr];
+export type GetExperimentCheckpointsSortByAttr = typeof GetExperimentCheckpointsSortByAttr[keyof typeof GetExperimentCheckpointsSortByAttr];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentCheckpointsSortByAttr = {
@@ -1649,7 +1671,7 @@ export const GetExperimentCheckpointsSortByAttr = {
 } as const;
 
 export type GetExperimentCheckpointsParams = {
-  /**
+/**
  * Sort by preset checkpoint attribute.
 
  - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
@@ -1661,29 +1683,29 @@ export type GetExperimentCheckpointsParams = {
  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
 configuration setting.
  */
-  sortByAttr?: GetExperimentCheckpointsSortByAttr;
-  /**
-   * Sort by custom validation metric name.
-   */
-  sortByMetric?: string;
-  /**
+sortByAttr?: GetExperimentCheckpointsSortByAttr;
+/**
+ * Sort by custom validation metric name.
+ */
+sortByMetric?: string;
+/**
  * Order checkpoints in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetExperimentCheckpointsOrderBy;
-  /**
+orderBy?: GetExperimentCheckpointsOrderBy;
+/**
  * Skip the number of checkpoints before returning results. Negative values
 denote number of checkpoints to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of checkpoints. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
+offset?: number;
+/**
+ * Limit the number of checkpoints. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
  * Limit the checkpoints to those that match the states.
 
  - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -1693,11 +1715,11 @@ denote number of checkpoints to skip from the end before returning results.
  - STATE_DELETED: The checkpoint has been deleted.
  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
  */
-  states?: GetExperimentCheckpointsStatesItem[];
+states?: GetExperimentCheckpointsStatesItem[];
 };
 
-export type GetExperimentTrialsStatesItem =
-  (typeof GetExperimentTrialsStatesItem)[keyof typeof GetExperimentTrialsStatesItem];
+export type GetExperimentTrialsStatesItem = typeof GetExperimentTrialsStatesItem[keyof typeof GetExperimentTrialsStatesItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentTrialsStatesItem = {
@@ -1720,8 +1742,8 @@ export const GetExperimentTrialsStatesItem = {
   STATE_RUNNING: 'STATE_RUNNING',
 } as const;
 
-export type GetExperimentTrialsOrderBy =
-  (typeof GetExperimentTrialsOrderBy)[keyof typeof GetExperimentTrialsOrderBy];
+export type GetExperimentTrialsOrderBy = typeof GetExperimentTrialsOrderBy[keyof typeof GetExperimentTrialsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentTrialsOrderBy = {
@@ -1730,8 +1752,8 @@ export const GetExperimentTrialsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetExperimentTrialsSortBy =
-  (typeof GetExperimentTrialsSortBy)[keyof typeof GetExperimentTrialsSortBy];
+export type GetExperimentTrialsSortBy = typeof GetExperimentTrialsSortBy[keyof typeof GetExperimentTrialsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentTrialsSortBy = {
@@ -1750,7 +1772,7 @@ export const GetExperimentTrialsSortBy = {
 } as const;
 
 export type GetExperimentTrialsParams = {
-  /**
+/**
  * Sort trials by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.
@@ -1769,25 +1791,25 @@ specified by `searcher.metric` in the experiment configuration.
  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
  */
-  sortBy?: GetExperimentTrialsSortBy;
-  /**
+sortBy?: GetExperimentTrialsSortBy;
+/**
  * Order trials in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetExperimentTrialsOrderBy;
-  /**
+orderBy?: GetExperimentTrialsOrderBy;
+/**
  * Skip the number of trials before returning results. Negative values
 denote number of trials to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of trials. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
+offset?: number;
+/**
+ * Limit the number of trials. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
  * Limit trials to those that match the provided state.
 
  - STATE_UNSPECIFIED: The state of the experiment is unknown.
@@ -1812,7 +1834,7 @@ image. Starting is a substate of the Active state.
  - STATE_RUNNING: The experiment has an allocation actively running.
 Running is a substate of the Active state.
  */
-  states?: GetExperimentTrialsStatesItem[];
+states?: GetExperimentTrialsStatesItem[];
 };
 
 export type TrialsSnapshot200 = {
@@ -1820,8 +1842,8 @@ export type TrialsSnapshot200 = {
   result?: V1TrialsSnapshotResponse;
 };
 
-export type TrialsSnapshotMetricType =
-  (typeof TrialsSnapshotMetricType)[keyof typeof TrialsSnapshotMetricType];
+export type TrialsSnapshotMetricType = typeof TrialsSnapshotMetricType[keyof typeof TrialsSnapshotMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TrialsSnapshotMetricType = {
@@ -1832,11 +1854,11 @@ export const TrialsSnapshotMetricType = {
 } as const;
 
 export type TrialsSnapshotParams = {
-  /**
-   * A metric name.
-   */
-  metricName: string;
-  /**
+/**
+ * A metric name.
+ */
+metricName: string;
+/**
  * The type of metric.
 
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
@@ -1844,23 +1866,23 @@ export type TrialsSnapshotParams = {
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  */
-  metricType?: TrialsSnapshotMetricType;
-  /**
-   * Metric group (training, validation, etc).
-   */
-  group?: string;
-  /**
-   * The point of progress at which to query metrics.
-   */
-  batchesProcessed: number;
-  /**
-   * A range either side of batches_processed to include near-misses.
-   */
-  batchesMargin?: number;
-  /**
-   * Seconds to wait when polling for updates.
-   */
-  periodSeconds?: number;
+metricType?: TrialsSnapshotMetricType;
+/**
+ * Metric group (training, validation, etc).
+ */
+group?: string;
+/**
+ * The point of progress at which to query metrics.
+ */
+batchesProcessed: number;
+/**
+ * A range either side of batches_processed to include near-misses.
+ */
+batchesMargin?: number;
+/**
+ * Seconds to wait when polling for updates.
+ */
+periodSeconds?: number;
 };
 
 export type TrialsSample200 = {
@@ -1868,8 +1890,8 @@ export type TrialsSample200 = {
   result?: V1TrialsSampleResponse;
 };
 
-export type TrialsSampleMetricType =
-  (typeof TrialsSampleMetricType)[keyof typeof TrialsSampleMetricType];
+export type TrialsSampleMetricType = typeof TrialsSampleMetricType[keyof typeof TrialsSampleMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TrialsSampleMetricType = {
@@ -1880,11 +1902,11 @@ export const TrialsSampleMetricType = {
 } as const;
 
 export type TrialsSampleParams = {
-  /**
-   * A metric name.
-   */
-  metricName: string;
-  /**
+/**
+ * A metric name.
+ */
+metricName: string;
+/**
  * The type of metric.
 
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
@@ -1892,31 +1914,31 @@ export type TrialsSampleParams = {
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  */
-  metricType?: TrialsSampleMetricType;
-  /**
-   * Metric group (training, validation, etc).
-   */
-  group?: string;
-  /**
-   * Maximum number of trials to fetch data for.
-   */
-  maxTrials?: number;
-  /**
-   * Maximum number of initial / historical data points.
-   */
-  maxDatapoints?: number;
-  /**
-   * Beginning of window (inclusive) to fetch data for.
-   */
-  startBatches?: number;
-  /**
-   * Ending of window (inclusive) to fetch data for.
-   */
-  endBatches?: number;
-  /**
-   * Seconds to wait when polling for updates.
-   */
-  periodSeconds?: number;
+metricType?: TrialsSampleMetricType;
+/**
+ * Metric group (training, validation, etc).
+ */
+group?: string;
+/**
+ * Maximum number of trials to fetch data for.
+ */
+maxTrials?: number;
+/**
+ * Maximum number of initial / historical data points.
+ */
+maxDatapoints?: number;
+/**
+ * Beginning of window (inclusive) to fetch data for.
+ */
+startBatches?: number;
+/**
+ * Ending of window (inclusive) to fetch data for.
+ */
+endBatches?: number;
+/**
+ * Seconds to wait when polling for updates.
+ */
+periodSeconds?: number;
 };
 
 export type MetricBatches200 = {
@@ -1924,8 +1946,8 @@ export type MetricBatches200 = {
   result?: V1MetricBatchesResponse;
 };
 
-export type MetricBatchesMetricType =
-  (typeof MetricBatchesMetricType)[keyof typeof MetricBatchesMetricType];
+export type MetricBatchesMetricType = typeof MetricBatchesMetricType[keyof typeof MetricBatchesMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const MetricBatchesMetricType = {
@@ -1936,11 +1958,11 @@ export const MetricBatchesMetricType = {
 } as const;
 
 export type MetricBatchesParams = {
-  /**
-   * A metric name.
-   */
-  metricName: string;
-  /**
+/**
+ * A metric name.
+ */
+metricName: string;
+/**
  * The type of metric.
 
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
@@ -1948,15 +1970,15 @@ export type MetricBatchesParams = {
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  */
-  metricType?: MetricBatchesMetricType;
-  /**
-   * Metric group (training, validation, etc).
-   */
-  group?: string;
-  /**
-   * Seconds to wait when polling for updates.
-   */
-  periodSeconds?: number;
+metricType?: MetricBatchesMetricType;
+/**
+ * Metric group (training, validation, etc).
+ */
+group?: string;
+/**
+ * Seconds to wait when polling for updates.
+ */
+periodSeconds?: number;
 };
 
 export type ExpMetricNames200 = {
@@ -1965,18 +1987,18 @@ export type ExpMetricNames200 = {
 };
 
 export type ExpMetricNamesParams = {
-  /**
-   * The ids for the experiments.
-   */
-  ids: number[];
-  /**
-   * Seconds to wait when polling for updates.
-   */
-  periodSeconds?: number;
+/**
+ * The ids for the experiments.
+ */
+ids: number[];
+/**
+ * Seconds to wait when polling for updates.
+ */
+periodSeconds?: number;
 };
 
-export type GetExperimentsStatesItem =
-  (typeof GetExperimentsStatesItem)[keyof typeof GetExperimentsStatesItem];
+export type GetExperimentsStatesItem = typeof GetExperimentsStatesItem[keyof typeof GetExperimentsStatesItem];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentsStatesItem = {
@@ -1999,8 +2021,8 @@ export const GetExperimentsStatesItem = {
   STATE_RUNNING: 'STATE_RUNNING',
 } as const;
 
-export type GetExperimentsOrderBy =
-  (typeof GetExperimentsOrderBy)[keyof typeof GetExperimentsOrderBy];
+export type GetExperimentsOrderBy = typeof GetExperimentsOrderBy[keyof typeof GetExperimentsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentsOrderBy = {
@@ -2009,7 +2031,8 @@ export const GetExperimentsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetExperimentsSortBy = (typeof GetExperimentsSortBy)[keyof typeof GetExperimentsSortBy];
+export type GetExperimentsSortBy = typeof GetExperimentsSortBy[keyof typeof GetExperimentsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetExperimentsSortBy = {
@@ -2032,7 +2055,7 @@ export const GetExperimentsSortBy = {
 } as const;
 
 export type GetExperimentsParams = {
-  /**
+/**
  * Sort experiments by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
@@ -2053,44 +2076,44 @@ returned after the ones with end_time.
  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
  */
-  'sortBy'?: GetExperimentsSortBy;
-  /**
+sortBy?: GetExperimentsSortBy;
+/**
  * Order experiments in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  'orderBy'?: GetExperimentsOrderBy;
-  /**
+orderBy?: GetExperimentsOrderBy;
+/**
  * Skip the number of experiments before returning results. Negative values
 denote number of experiments to skip from the end before returning results.
  */
-  'offset'?: number;
-  /**
+offset?: number;
+/**
  * Limit the number of experiments.
 0 or Unspecified - returns a default of 100.
 -1               - returns everything.
 -2               - returns pagination info but no experiments.
  */
-  'limit'?: number;
-  /**
-   * Limit experiments to those that match the description.
-   */
-  'description'?: string;
-  /**
-   * Limit experiments to those that match the name.
-   */
-  'name'?: string;
-  /**
-   * Limit experiments to those that match the provided labels.
-   */
-  'labels'?: string[];
-  /**
-   * Limit experiments to those that are archived.
-   */
-  'archived'?: boolean;
-  /**
+limit?: number;
+/**
+ * Limit experiments to those that match the description.
+ */
+description?: string;
+/**
+ * Limit experiments to those that match the name.
+ */
+name?: string;
+/**
+ * Limit experiments to those that match the provided labels.
+ */
+labels?: string[];
+/**
+ * Limit experiments to those that are archived.
+ */
+archived?: boolean;
+/**
  * Limit experiments to those that match the provided state.
 
  - STATE_UNSPECIFIED: The state of the experiment is unknown.
@@ -2115,60 +2138,61 @@ image. Starting is a substate of the Active state.
  - STATE_RUNNING: The experiment has an allocation actively running.
 Running is a substate of the Active state.
  */
-  'states'?: GetExperimentsStatesItem[];
-  /**
+states?: GetExperimentsStatesItem[];
+/**
  * Limit experiments to those that are owned by users with the specified
 usernames.
  */
-  'users'?: string[];
-  /**
+users?: string[];
+/**
  * Limit experiments to those that are owned by users with the specified
 userIds.
  */
-  'userIds'?: number[];
-  /**
+userIds?: number[];
+/**
  * Limit experiments to those within a specified project, or 0 for all
 projects.
  */
-  'projectId'?: number;
-  /**
-   * Less than.
-   */
-  'experimentIdFilter.lt'?: number;
-  /**
-   * Less than or equal.
-   */
-  'experimentIdFilter.lte'?: number;
-  /**
-   * Greater than.
-   */
-  'experimentIdFilter.gt'?: number;
-  /**
-   * Greater than or equal.
-   */
-  'experimentIdFilter.gte'?: number;
-  /**
-   * In a set. `in` is a reserved word in python.
-   */
-  'experimentIdFilter.incl'?: number[];
-  /**
-   * Not in a set.
-   */
-  'experimentIdFilter.notIn'?: number[];
-  /**
-   * whether to surface trial specific data from the best trial.
-   */
-  'showTrialData'?: boolean;
+projectId?: number;
+/**
+ * Less than.
+ */
+'experimentIdFilter.lt'?: number;
+/**
+ * Less than or equal.
+ */
+'experimentIdFilter.lte'?: number;
+/**
+ * Greater than.
+ */
+'experimentIdFilter.gt'?: number;
+/**
+ * Greater than or equal.
+ */
+'experimentIdFilter.gte'?: number;
+/**
+ * In a set. `in` is a reserved word in python.
+ */
+'experimentIdFilter.incl'?: number[];
+/**
+ * Not in a set.
+ */
+'experimentIdFilter.notIn'?: number[];
+/**
+ * whether to surface trial specific data from the best trial.
+ */
+showTrialData?: boolean;
 };
 
 export type GetExperimentLabelsParams = {
-  /**
-   * Filter experiments by project.
-   */
-  projectId?: number;
+/**
+ * Filter experiments by project.
+ */
+projectId?: number;
 };
 
-export type GetCommandsOrderBy = (typeof GetCommandsOrderBy)[keyof typeof GetCommandsOrderBy];
+export type GetCommandsOrderBy = typeof GetCommandsOrderBy[keyof typeof GetCommandsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetCommandsOrderBy = {
@@ -2177,7 +2201,8 @@ export const GetCommandsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetCommandsSortBy = (typeof GetCommandsSortBy)[keyof typeof GetCommandsSortBy];
+export type GetCommandsSortBy = typeof GetCommandsSortBy[keyof typeof GetCommandsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetCommandsSortBy = {
@@ -2189,7 +2214,7 @@ export const GetCommandsSortBy = {
 } as const;
 
 export type GetCommandsParams = {
-  /**
+/**
  * Sort commands by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.
@@ -2198,42 +2223,42 @@ export type GetCommandsParams = {
  - SORT_BY_START_TIME: Return commands sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
  */
-  sortBy?: GetCommandsSortBy;
-  /**
+sortBy?: GetCommandsSortBy;
+/**
  * Order commands in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetCommandsOrderBy;
-  /**
+orderBy?: GetCommandsOrderBy;
+/**
  * Skip the number of commands before returning results. Negative values
 denote number of commands to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of commands. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
+offset?: number;
+/**
+ * Limit the number of commands. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
  * Limit commands to those that are owned by users with the specified
 usernames.
  */
-  users?: string[];
-  /**
-   * Limit commands to those that are owned by users with the specified userIds.
-   */
-  userIds?: number[];
-  /**
+users?: string[];
+/**
+ * Limit commands to those that are owned by users with the specified userIds.
+ */
+userIds?: number[];
+/**
  * Limit commands to those within a specific workspace, or 0 for all
 accessible workspaces.
  */
-  workspaceId?: number;
+workspaceId?: number;
 };
 
-export type GetTrialMetricsByCheckpointTrialSourceInfoType =
-  (typeof GetTrialMetricsByCheckpointTrialSourceInfoType)[keyof typeof GetTrialMetricsByCheckpointTrialSourceInfoType];
+export type GetTrialMetricsByCheckpointTrialSourceInfoType = typeof GetTrialMetricsByCheckpointTrialSourceInfoType[keyof typeof GetTrialMetricsByCheckpointTrialSourceInfoType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialMetricsByCheckpointTrialSourceInfoType = {
@@ -2243,29 +2268,30 @@ export const GetTrialMetricsByCheckpointTrialSourceInfoType = {
 } as const;
 
 export type GetTrialMetricsByCheckpointParams = {
-  /**
+/**
  * Type of the TrialSourceInfo.
 
  - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified
  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference
  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
  */
-  trialSourceInfoType?: GetTrialMetricsByCheckpointTrialSourceInfoType;
-  /**
+trialSourceInfoType?: GetTrialMetricsByCheckpointTrialSourceInfoType;
+/**
  * Metric Group string ("training", "validation", or anything else) (nil means
 all groups).
  */
-  metricGroup?: string;
+metricGroup?: string;
 };
 
 export type AllocationPreemptionSignalParams = {
-  /**
-   * The timeout in seconds.
-   */
-  timeoutSeconds?: number;
+/**
+ * The timeout in seconds.
+ */
+timeoutSeconds?: number;
 };
 
-export type GetAgentsOrderBy = (typeof GetAgentsOrderBy)[keyof typeof GetAgentsOrderBy];
+export type GetAgentsOrderBy = typeof GetAgentsOrderBy[keyof typeof GetAgentsOrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetAgentsOrderBy = {
@@ -2274,7 +2300,8 @@ export const GetAgentsOrderBy = {
   ORDER_BY_DESC: 'ORDER_BY_DESC',
 } as const;
 
-export type GetAgentsSortBy = (typeof GetAgentsSortBy)[keyof typeof GetAgentsSortBy];
+export type GetAgentsSortBy = typeof GetAgentsSortBy[keyof typeof GetAgentsSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetAgentsSortBy = {
@@ -2284,39 +2311,39 @@ export const GetAgentsSortBy = {
 } as const;
 
 export type GetAgentsParams = {
-  /**
+/**
  * Sort agents by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.
  - SORT_BY_ID: Returns agents sorted by id.
  - SORT_BY_TIME: Returns agents sorted by time.
  */
-  sortBy?: GetAgentsSortBy;
-  /**
+sortBy?: GetAgentsSortBy;
+/**
  * Order agents in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-  orderBy?: GetAgentsOrderBy;
-  /**
+orderBy?: GetAgentsOrderBy;
+/**
  * Skip the number of agents before returning results. Negative values
 denote number of agents to skip from the end before returning results.
  */
-  offset?: number;
-  /**
-   * Limit the number of agents. A value of 0 denotes no limit.
-   */
-  limit?: number;
-  /**
-   * exclude slots.
-   */
-  excludeSlots?: boolean;
-  /**
-   * exclude containers.
-   */
-  excludeContainers?: boolean;
+offset?: number;
+/**
+ * Limit the number of agents. A value of 0 denotes no limit.
+ */
+limit?: number;
+/**
+ * exclude slots.
+ */
+excludeSlots?: boolean;
+/**
+ * exclude containers.
+ */
+excludeContainers?: boolean;
 };
 
 /**
@@ -2329,7 +2356,8 @@ export type V1TrialMetricsBody = V1TrialMetrics;
  */
 export type V1TemplateBody = V1Template;
 
-export type HealthStatus = (typeof HealthStatus)[keyof typeof HealthStatus];
+export type HealthStatus = typeof HealthStatus[keyof typeof HealthStatus];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const HealthStatus = {
@@ -2368,7 +2396,8 @@ image. Starting is a substate of the Active state.
  - STATE_RUNNING: The trial's allocation is actively running.
 Running is a substate of the Active state.
  */
-export type Trialv1State = (typeof Trialv1State)[keyof typeof Trialv1State];
+export type Trialv1State = typeof Trialv1State[keyof typeof Trialv1State];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Trialv1State = {
@@ -2401,7 +2430,8 @@ not ready yet.
  - STATE_WAITING: The task is waiting on something to complete.
  - STATE_QUEUED: Additional state to cover queueing operations.
  */
-export type Taskv1State = (typeof Taskv1State)[keyof typeof Taskv1State];
+export type Taskv1State = typeof Taskv1State[keyof typeof Taskv1State];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Taskv1State = {
@@ -2428,7 +2458,8 @@ export const Taskv1State = {
  - TYPE_EXTERNAL: External Job.
  - TYPE_GENERIC: Generic Job.
  */
-export type Jobv1Type = (typeof Jobv1Type)[keyof typeof Jobv1Type];
+export type Jobv1Type = typeof Jobv1Type[keyof typeof Jobv1Type];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Jobv1Type = {
@@ -2451,7 +2482,8 @@ export const Jobv1Type = {
  - STATE_SCHEDULED: Job is scheduled.
  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
  */
-export type Jobv1State = (typeof Jobv1State)[keyof typeof Jobv1State];
+export type Jobv1State = typeof Jobv1State[keyof typeof Jobv1State];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Jobv1State = {
@@ -2486,7 +2518,8 @@ image. Starting is a substate of the Active state.
  - STATE_RUNNING: The experiment has an allocation actively running.
 Running is a substate of the Active state.
  */
-export type Experimentv1State = (typeof Experimentv1State)[keyof typeof Experimentv1State];
+export type Experimentv1State = typeof Experimentv1State[keyof typeof Experimentv1State];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Experimentv1State = {
@@ -2517,7 +2550,8 @@ export const Experimentv1State = {
  - TYPE_CUDA: CUDA device.
  - TYPE_ROCM: ROCM.
  */
-export type Devicev1Type = (typeof Devicev1Type)[keyof typeof Devicev1Type];
+export type Devicev1Type = typeof Devicev1Type[keyof typeof Devicev1Type];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Devicev1Type = {
@@ -2539,7 +2573,8 @@ service in the container is not ready yet.
  - STATE_TERMINATED: The container has completely exited or the container has been aborted prior
 to getting assigned.
  */
-export type Containerv1State = (typeof Containerv1State)[keyof typeof Containerv1State];
+export type Containerv1State = typeof Containerv1State[keyof typeof Containerv1State];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Containerv1State = {
@@ -2561,7 +2596,8 @@ export const Containerv1State = {
  - STATE_DELETED: The checkpoint has been deleted.
  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
  */
-export type Checkpointv1State = (typeof Checkpointv1State)[keyof typeof Checkpointv1State];
+export type Checkpointv1State = typeof Checkpointv1State[keyof typeof Checkpointv1State];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Checkpointv1State = {
@@ -2581,7 +2617,8 @@ export const Checkpointv1State = {
  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.
  - WORKSPACE_STATE_DELETED: The object finished deleting.
  */
-export type V1WorkspaceState = (typeof V1WorkspaceState)[keyof typeof V1WorkspaceState];
+export type V1WorkspaceState = typeof V1WorkspaceState[keyof typeof V1WorkspaceState];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1WorkspaceState = {
@@ -2695,7 +2732,8 @@ export interface V1WorkloadContainer {
  - WEBHOOK_TYPE_DEFAULT: For a default webhook
  - WEBHOOK_TYPE_SLACK: For a slack webhook.
  */
-export type V1WebhookType = (typeof V1WebhookType)[keyof typeof V1WebhookType];
+export type V1WebhookType = typeof V1WebhookType[keyof typeof V1WebhookType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1WebhookType = {
@@ -2712,7 +2750,8 @@ export const V1WebhookType = {
  - WEBHOOK_MODE_SPECIFIC: Webhook will only be triggered by experiment with matching configuration in
 the same workspace as the web hook
  */
-export type V1WebhookMode = (typeof V1WebhookMode)[keyof typeof V1WebhookMode];
+export type V1WebhookMode = typeof V1WebhookMode[keyof typeof V1WebhookMode];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1WebhookMode = {
@@ -2817,9 +2856,7 @@ password. */
 /**
  * Response to UpdateJobQueueRequest.
  */
-export interface V1UpdateJobQueueResponse {
-  [key: string]: unknown;
-}
+export interface V1UpdateJobQueueResponse { [key: string]: unknown }
 
 /**
  * Request to update the job queue.
@@ -2851,20 +2888,14 @@ export interface V1UpdateGroupRequest {
 /**
  * Response to UnpinWorkspaceRequest.
  */
-export interface V1UnpinWorkspaceResponse {
-  [key: string]: unknown;
-}
+export interface V1UnpinWorkspaceResponse { [key: string]: unknown }
 
-export interface V1UnpauseGenericTaskResponse {
-  [key: string]: unknown;
-}
+export interface V1UnpauseGenericTaskResponse { [key: string]: unknown }
 
 /**
  * Unbind a resource pool to workspaces response.
  */
-export interface V1UnbindRPFromWorkspaceResponse {
-  [key: string]: unknown;
-}
+export interface V1UnbindRPFromWorkspaceResponse { [key: string]: unknown }
 
 /**
  * Unbind a resource pool to workspaces.
@@ -2881,9 +2912,7 @@ export interface V1UnbindRPFromWorkspaceRequest {
 /**
  * Response to UnarchiveWorkspaceRequest.
  */
-export interface V1UnarchiveWorkspaceResponse {
-  [key: string]: unknown;
-}
+export interface V1UnarchiveWorkspaceResponse { [key: string]: unknown }
 
 /**
  * Response to UnarchiveSearchesRequest.
@@ -2920,13 +2949,9 @@ export interface V1UnarchiveRunsRequest {
 /**
  * Response to UnarchiveProjectRequest.
  */
-export interface V1UnarchiveProjectResponse {
-  [key: string]: unknown;
-}
+export interface V1UnarchiveProjectResponse { [key: string]: unknown }
 
-export interface V1UnarchiveModelResponse {
-  [key: string]: unknown;
-}
+export interface V1UnarchiveModelResponse { [key: string]: unknown }
 
 /**
  * Response to UnarchiveExperimentsRequest.
@@ -2950,9 +2975,7 @@ export interface V1UnarchiveExperimentsRequest {
 /**
  * Response to UnarchiveExperimentRequest.
  */
-export interface V1UnarchiveExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1UnarchiveExperimentResponse { [key: string]: unknown }
 
 /**
  * Enum values for expected trigger types.
@@ -2963,7 +2986,8 @@ export interface V1UnarchiveExperimentResponse {
  - TRIGGER_TYPE_TASK_LOG: For task logs.
  - TRIGGER_TYPE_CUSTOM: For custom alert.
  */
-export type V1TriggerType = (typeof V1TriggerType)[keyof typeof V1TriggerType];
+export type V1TriggerType = typeof V1TriggerType[keyof typeof V1TriggerType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1TriggerType = {
@@ -3051,8 +3075,8 @@ export interface V1TrialSummary {
  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference
  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
  */
-export type V1TrialSourceInfoType =
-  (typeof V1TrialSourceInfoType)[keyof typeof V1TrialSourceInfoType];
+export type V1TrialSourceInfoType = typeof V1TrialSourceInfoType[keyof typeof V1TrialSourceInfoType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1TrialSourceInfoType = {
@@ -3174,8 +3198,8 @@ export interface V1TrialLogsFieldsResponse {
  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter
 in the trial init.
  */
-export type V1TrialEarlyExitExitedReason =
-  (typeof V1TrialEarlyExitExitedReason)[keyof typeof V1TrialEarlyExitExitedReason];
+export type V1TrialEarlyExitExitedReason = typeof V1TrialEarlyExitExitedReason[keyof typeof V1TrialEarlyExitExitedReason];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1TrialEarlyExitExitedReason = {
@@ -3198,7 +3222,8 @@ export interface V1TrialEarlyExit {
  - TOKEN_TYPE_USER_SESSION: User Session token.
  - TOKEN_TYPE_ACCESS_TOKEN: Access token.
  */
-export type V1TokenType = (typeof V1TokenType)[keyof typeof V1TokenType];
+export type V1TokenType = typeof V1TokenType[keyof typeof V1TokenType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1TokenType = {
@@ -3308,7 +3333,8 @@ export interface V1Template {
  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
  - TASK_TYPE_GENERIC: "GENERIC" task type for the enum public.task_type in Postgres.
  */
-export type V1TaskType = (typeof V1TaskType)[keyof typeof V1TaskType];
+export type V1TaskType = typeof V1TaskType[keyof typeof V1TaskType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1TaskType = {
@@ -3423,7 +3449,8 @@ export interface V1Task {
  - TABLE_TYPE_EXPERIMENT: experiment table.
  - TABLE_TYPE_RUN: run table.
  */
-export type V1TableType = (typeof V1TableType)[keyof typeof V1TableType];
+export type V1TableType = typeof V1TableType[keyof typeof V1TableType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1TableType = {
@@ -3457,12 +3484,12 @@ export interface V1StartTrialRequest {
 /**
  * Map of device type to device stats.
  */
-export type V1SlotStatsTypeStats = { [key: string]: V1DeviceStats };
+export type V1SlotStatsTypeStats = {[key: string]: V1DeviceStats};
 
 /**
  * Map of device brands to device stats.
  */
-export type V1SlotStatsBrandStats = { [key: string]: V1DeviceStats };
+export type V1SlotStatsBrandStats = {[key: string]: V1DeviceStats};
 
 /**
  * SlotStats contains statistics about a set of slots.
@@ -3528,9 +3555,7 @@ export interface V1Shell {
 /**
  * The added workspace-namespace bindings.
  */
-export type V1SetWorkspaceNamespaceBindingsResponseNamespaceBindings = {
-  [key: string]: V1WorkspaceNamespaceBinding;
-};
+export type V1SetWorkspaceNamespaceBindingsResponseNamespaceBindings = {[key: string]: V1WorkspaceNamespaceBinding};
 
 /**
  * Response for setting workspace-namespace bindings.
@@ -3543,9 +3568,7 @@ export interface V1SetWorkspaceNamespaceBindingsResponse {
 /**
  * The cluster-namespace pairs used to create workspace-namespace bindings.
  */
-export type V1SetWorkspaceNamespaceBindingsRequestClusterNamespaceMeta = {
-  [key: string]: V1WorkspaceNamespaceMeta;
-};
+export type V1SetWorkspaceNamespaceBindingsRequestClusterNamespaceMeta = {[key: string]: V1WorkspaceNamespaceMeta};
 
 /**
  * Request for setting workspace-namespace bindings.
@@ -3602,15 +3625,13 @@ export interface V1SetShellPriorityRequest {
  * Response for setting the resource quota for a workspace (for a specific
 cluster).
  */
-export interface V1SetResourceQuotasResponse {
-  [key: string]: unknown;
-}
+export interface V1SetResourceQuotasResponse { [key: string]: unknown }
 
 /**
  * A map of cluster to resource-quota pairs used to set GPU request limits on
 the workspace (for a specific cluster).
  */
-export type V1SetResourceQuotasRequestClusterQuotaPairs = { [key: string]: number };
+export type V1SetResourceQuotasRequestClusterQuotaPairs = {[key: string]: number};
 
 /**
  * Request to set a resource quota on a workspace (for a specific cluster).
@@ -3660,9 +3681,7 @@ export interface V1SetCommandPriorityRequest {
 /**
  * Response to SetClusterMessageRequest.
  */
-export interface V1SetClusterMessageResponse {
-  [key: string]: unknown;
-}
+export interface V1SetClusterMessageResponse { [key: string]: unknown }
 
 /**
  * Set the cluster-wide message.
@@ -3792,7 +3811,8 @@ delegated.
  - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is
 delegated.
  */
-export type V1SchedulerType = (typeof V1SchedulerType)[keyof typeof V1SchedulerType];
+export type V1SchedulerType = typeof V1SchedulerType[keyof typeof V1SchedulerType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1SchedulerType = {
@@ -3937,7 +3957,7 @@ export interface V1ResumeRunsRequest {
 /**
  * ID, an identifier for an agent, maps to the associated devices.
  */
-export type V1ResourcesSummaryAgentDevices = { [key: string]: ResourcesSummaryDevices };
+export type V1ResourcesSummaryAgentDevices = {[key: string]: ResourcesSummaryDevices};
 
 /**
  * ResourcesStarted contains the information needed by tasks from container
@@ -4001,7 +4021,8 @@ just an artifact of using protobuf.
  - RESOURCE_POOL_TYPE_STATIC: A static resource pool.
  - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
  */
-export type V1ResourcePoolType = (typeof V1ResourcePoolType)[keyof typeof V1ResourcePoolType];
+export type V1ResourcePoolType = typeof V1ResourcePoolType[keyof typeof V1ResourcePoolType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1ResourcePoolType = {
@@ -4075,7 +4096,7 @@ export interface V1ResourcePoolDetail {
 /**
  * Resource manager's metadata.
  */
-export type V1ResourcePoolResourceManagerMetadata = { [key: string]: string };
+export type V1ResourcePoolResourceManagerMetadata = {[key: string]: string};
 
 /**
  * A Resource Pool is a pool of resources where containers are run.
@@ -4187,13 +4208,12 @@ just an artifact of using protobuf.
  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.
  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
  */
-export type V1ResourceAllocationAggregationPeriod =
-  (typeof V1ResourceAllocationAggregationPeriod)[keyof typeof V1ResourceAllocationAggregationPeriod];
+export type V1ResourceAllocationAggregationPeriod = typeof V1ResourceAllocationAggregationPeriod[keyof typeof V1ResourceAllocationAggregationPeriod];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1ResourceAllocationAggregationPeriod = {
-  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED:
-    'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED',
+  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED',
   RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY',
   RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
 } as const;
@@ -4201,18 +4221,18 @@ export const V1ResourceAllocationAggregationPeriod = {
 /**
  * The seconds in the cluster used by experiments belonging to each user.
  */
-export type V1ResourceAllocationAggregatedEntryByUsername = { [key: string]: number };
+export type V1ResourceAllocationAggregatedEntryByUsername = {[key: string]: number};
 
 /**
  * The seconds in the cluster used by experiments assigned to each resource
 pool.
  */
-export type V1ResourceAllocationAggregatedEntryByResourcePool = { [key: string]: number };
+export type V1ResourceAllocationAggregatedEntryByResourcePool = {[key: string]: number};
 
 /**
  * The seconds in the cluster used by experiments labeled with each label.
  */
-export type V1ResourceAllocationAggregatedEntryByExperimentLabel = { [key: string]: number };
+export type V1ResourceAllocationAggregatedEntryByExperimentLabel = {[key: string]: number};
 
 /**
  * One instance of slots in the cluster being allocated to a task during a
@@ -4244,17 +4264,11 @@ export interface V1ResourceAllocationAggregatedResponse {
 /**
  * Response to ResetUserSettingRequest.
  */
-export interface V1ResetUserSettingResponse {
-  [key: string]: unknown;
-}
+export interface V1ResetUserSettingResponse { [key: string]: unknown }
 
-export interface V1ReportTrialValidationMetricsResponse {
-  [key: string]: unknown;
-}
+export interface V1ReportTrialValidationMetricsResponse { [key: string]: unknown }
 
-export interface V1ReportTrialTrainingMetricsResponse {
-  [key: string]: unknown;
-}
+export interface V1ReportTrialTrainingMetricsResponse { [key: string]: unknown }
 
 export interface V1ReportTrialSourceInfoResponse {
   /** UUID of the checkpoint. */
@@ -4266,13 +4280,9 @@ export interface V1ReportTrialSourceInfoRequest {
   trialSourceInfo: V1TrialSourceInfo;
 }
 
-export interface V1ReportTrialSearcherEarlyExitResponse {
-  [key: string]: unknown;
-}
+export interface V1ReportTrialSearcherEarlyExitResponse { [key: string]: unknown }
 
-export interface V1ReportTrialProgressResponse {
-  [key: string]: unknown;
-}
+export interface V1ReportTrialProgressResponse { [key: string]: unknown }
 
 /**
  * For bookkeeping, updates the progress of the trial as a percent torwards
@@ -4289,9 +4299,7 @@ the searcher. */
   trialId: number;
 }
 
-export interface V1ReportTrialMetricsResponse {
-  [key: string]: unknown;
-}
+export interface V1ReportTrialMetricsResponse { [key: string]: unknown }
 
 /**
  * Persist the given metrics for the trial.
@@ -4305,9 +4313,7 @@ export interface V1ReportTrialMetricsRequest {
 /**
  * Response to ReportCheckpointRequest.
  */
-export interface V1ReportCheckpointResponse {
-  [key: string]: unknown;
-}
+export interface V1ReportCheckpointResponse { [key: string]: unknown }
 
 /**
  * The rendezvous info for the trial to rendezvous with sibling containers.
@@ -4325,9 +4331,7 @@ export interface V1RendezvousInfo {
  * RemoveAssignmentsResponse is the body of the response for teh call
 to remove a user or group from a role.
  */
-export interface V1RemoveAssignmentsResponse {
-  [key: string]: unknown;
-}
+export interface V1RemoveAssignmentsResponse { [key: string]: unknown }
 
 /**
  * RemoveAssignmentsRequest is the body of the request for the call
@@ -4421,9 +4425,7 @@ global config policies. */
 /**
  * Response to PutExperimentRetainLogsRequest.
  */
-export interface V1PutTrialRetainLogsResponse {
-  [key: string]: unknown;
-}
+export interface V1PutTrialRetainLogsResponse { [key: string]: unknown }
 
 /**
  * Request for changing the log retention policy for the an experiment.
@@ -4527,9 +4529,7 @@ export interface V1PutExperimentsRetainLogsRequest {
 /**
  * Response to PutExperimentRetainLogsRequest.
  */
-export interface V1PutExperimentRetainLogsResponse {
-  [key: string]: unknown;
-}
+export interface V1PutExperimentRetainLogsResponse { [key: string]: unknown }
 
 /**
  * Request for changing the log retention policy for the an experiment.
@@ -4657,9 +4657,7 @@ export interface V1PreviewHPSearchRequest {
 /**
  * The workspace-namespace bindings and resource quotas created.
  */
-export type V1PostWorkspaceResponseNamespaceBindings = {
-  [key: string]: V1WorkspaceNamespaceBinding;
-};
+export type V1PostWorkspaceResponseNamespaceBindings = {[key: string]: V1WorkspaceNamespaceBinding};
 
 /**
  * Response to PostWorkspaceRequest.
@@ -4675,16 +4673,14 @@ export interface V1PostWorkspaceResponse {
 namespace within that cluster (inherently capping the slots available to a
 workspace).
  */
-export type V1PostWorkspaceRequestClusterQuotaPairs = { [key: string]: number };
+export type V1PostWorkspaceRequestClusterQuotaPairs = {[key: string]: number};
 
 /**
  * The map of clusters to workspace-namespace metadata (including the
 workspace-namespace binding and the resource quota placed on the namespace
 bound to the workspace for a given cluster).
  */
-export type V1PostWorkspaceRequestClusterNamespaceMeta = {
-  [key: string]: V1WorkspaceNamespaceMeta;
-};
+export type V1PostWorkspaceRequestClusterNamespaceMeta = {[key: string]: V1WorkspaceNamespaceMeta};
 
 /**
  * Optional checkpoint storage config.
@@ -4724,9 +4720,7 @@ export interface V1PostWebhookResponse {
 /**
  * Response to PostWebhookEventDataRequest.
  */
-export interface V1PostWebhookEventDataResponse {
-  [key: string]: unknown;
-}
+export interface V1PostWebhookEventDataResponse { [key: string]: unknown }
 
 /**
  * Request for triggering custom trigger.
@@ -4742,9 +4736,7 @@ export interface V1PostWebhookEventDataRequest {
 /**
  * Response to PostUserSettingRequest.
  */
-export interface V1PostUserSettingResponse {
-  [key: string]: unknown;
-}
+export interface V1PostUserSettingResponse { [key: string]: unknown }
 
 /**
  * Update user settings.
@@ -4775,9 +4767,7 @@ export interface V1PostUserRequest {
 /**
  * Response to PostUserActivityRequest.
  */
-export interface V1PostUserActivityResponse {
-  [key: string]: unknown;
-}
+export interface V1PostUserActivityResponse { [key: string]: unknown }
 
 /**
  * Update user activity.
@@ -4788,13 +4778,9 @@ export interface V1PostUserActivityRequest {
   entityType: V1EntityType;
 }
 
-export interface V1PostTrialRunnerMetadataResponse {
-  [key: string]: unknown;
-}
+export interface V1PostTrialRunnerMetadataResponse { [key: string]: unknown }
 
-export interface V1PostTrialProfilerMetricsBatchResponse {
-  [key: string]: unknown;
-}
+export interface V1PostTrialProfilerMetricsBatchResponse { [key: string]: unknown }
 
 /**
  * Create a batch of trial profiler metrics.
@@ -4814,9 +4800,7 @@ export interface V1PostTemplateResponse {
 /**
  * Response to PostTaskLogs.
  */
-export interface V1PostTaskLogsResponse {
-  [key: string]: unknown;
-}
+export interface V1PostTaskLogsResponse { [key: string]: unknown }
 
 /**
  * Request to PostTaskLogs.
@@ -4953,9 +4937,7 @@ export interface V1PostCheckpointMetadataRequest {
   checkpoint?: V1Checkpoint;
 }
 
-export interface V1PostAllocationProxyAddressResponse {
-  [key: string]: unknown;
-}
+export interface V1PostAllocationProxyAddressResponse { [key: string]: unknown }
 
 /**
  * Set the proxy address for some allocation.
@@ -4967,9 +4949,7 @@ export interface V1PostAllocationProxyAddressRequest {
   proxyAddress?: string;
 }
 
-export interface V1PostAllocationAcceleratorDataResponse {
-  [key: string]: unknown;
-}
+export interface V1PostAllocationAcceleratorDataResponse { [key: string]: unknown }
 
 /**
  * Set the accelerator data for some allocation.
@@ -5011,9 +4991,7 @@ export interface V1PolymorphicFilter {
 /**
  * Response to PinWorkspaceRequest.
  */
-export interface V1PinWorkspaceResponse {
-  [key: string]: unknown;
-}
+export interface V1PinWorkspaceResponse { [key: string]: unknown }
 
 /**
  * List of permissions types.
@@ -5087,7 +5065,8 @@ scope.
  - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token
  - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
  */
-export type V1PermissionType = (typeof V1PermissionType)[keyof typeof V1PermissionType];
+export type V1PermissionType = typeof V1PermissionType[keyof typeof V1PermissionType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1PermissionType = {
@@ -5109,10 +5088,8 @@ export const V1PermissionType = {
   PERMISSION_TYPE_UPDATE_WORKSPACE: 'PERMISSION_TYPE_UPDATE_WORKSPACE',
   PERMISSION_TYPE_DELETE_WORKSPACE: 'PERMISSION_TYPE_DELETE_WORKSPACE',
   PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: 'PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP',
-  PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG:
-    'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG',
-  PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL:
-    'PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL',
+  PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: 'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG',
+  PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: 'PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL',
   PERMISSION_TYPE_CREATE_PROJECT: 'PERMISSION_TYPE_CREATE_PROJECT',
   PERMISSION_TYPE_VIEW_PROJECT: 'PERMISSION_TYPE_VIEW_PROJECT',
   PERMISSION_TYPE_UPDATE_PROJECT: 'PERMISSION_TYPE_UPDATE_PROJECT',
@@ -5123,10 +5100,8 @@ export const V1PermissionType = {
   PERMISSION_TYPE_CREATE_MODEL_REGISTRY: 'PERMISSION_TYPE_CREATE_MODEL_REGISTRY',
   PERMISSION_TYPE_DELETE_MODEL_REGISTRY: 'PERMISSION_TYPE_DELETE_MODEL_REGISTRY',
   PERMISSION_TYPE_DELETE_MODEL_VERSION: 'PERMISSION_TYPE_DELETE_MODEL_VERSION',
-  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY:
-    'PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY',
-  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION:
-    'PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION',
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: 'PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY',
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: 'PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION',
   PERMISSION_TYPE_VIEW_MASTER_LOGS: 'PERMISSION_TYPE_VIEW_MASTER_LOGS',
   PERMISSION_TYPE_VIEW_CLUSTER_USAGE: 'PERMISSION_TYPE_VIEW_CLUSTER_USAGE',
   PERMISSION_TYPE_UPDATE_AGENTS: 'PERMISSION_TYPE_UPDATE_AGENTS',
@@ -5143,13 +5118,11 @@ export const V1PermissionType = {
   PERMISSION_TYPE_EDIT_WEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
   PERMISSION_TYPE_VIEW_WEBHOOKS: 'PERMISSION_TYPE_VIEW_WEBHOOKS',
   PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: 'PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS',
-  PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS:
-    'PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS',
+  PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: 'PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS',
   PERMISSION_TYPE_SET_RESOURCE_QUOTAS: 'PERMISSION_TYPE_SET_RESOURCE_QUOTAS',
   PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: 'PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS',
   PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: 'PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES',
-  PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES:
-    'PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES',
+  PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: 'PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES',
   PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: 'PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES',
   PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: 'PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES',
   PERMISSION_TYPE_ADMINISTRATE_TOKEN: 'PERMISSION_TYPE_ADMINISTRATE_TOKEN',
@@ -5204,9 +5177,7 @@ export interface V1PauseRunsRequest {
   runIds?: number[];
 }
 
-export interface V1PauseGenericTaskResponse {
-  [key: string]: unknown;
-}
+export interface V1PauseGenericTaskResponse { [key: string]: unknown }
 
 /**
  * Response to PauseExperimentsRequest.
@@ -5230,16 +5201,12 @@ export interface V1PauseExperimentsRequest {
 /**
  * Response to PauseExperimentRequest.
  */
-export interface V1PauseExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1PauseExperimentResponse { [key: string]: unknown }
 
 /**
  * The workspace-namespace bindings and resource quotas created.
  */
-export type V1PatchWorkspaceResponseNamespaceBindings = {
-  [key: string]: V1WorkspaceNamespaceBinding;
-};
+export type V1PatchWorkspaceResponseNamespaceBindings = {[key: string]: V1WorkspaceNamespaceBinding};
 
 /**
  * Response to PatchWorkspaceRequest.
@@ -5255,7 +5222,7 @@ export interface V1PatchWorkspaceResponse {
 workspace-namespace binding and the resource quota placed on the namespace
 bound to the workspace for a given cluster).
  */
-export type V1PatchWorkspaceClusterNamespaceMeta = { [key: string]: V1WorkspaceNamespaceMeta };
+export type V1PatchWorkspaceClusterNamespaceMeta = {[key: string]: V1WorkspaceNamespaceMeta};
 
 /**
  * Optional checkpoint storage config.
@@ -5290,9 +5257,7 @@ bound to the workspace for a given cluster). */
 /**
  * Response to PatchWebhookRequest.
  */
-export interface V1PatchWebhookResponse {
-  [key: string]: unknown;
-}
+export interface V1PatchWebhookResponse { [key: string]: unknown }
 
 export interface V1PatchWebhook {
   /** The new url of the webhook. */
@@ -5464,9 +5429,7 @@ export interface V1PatchModel {
 /**
  * Response to PatchMasterConfigRequest.
  */
-export interface V1PatchMasterConfigResponse {
-  [key: string]: unknown;
-}
+export interface V1PatchMasterConfigResponse { [key: string]: unknown }
 
 /**
  * Patch master config.
@@ -5504,9 +5467,7 @@ export interface V1PatchExperiment {
 /**
  * Intentionally don't send the updated response for performance reasons.
  */
-export interface V1PatchCheckpointsResponse {
-  [key: string]: unknown;
-}
+export interface V1PatchCheckpointsResponse { [key: string]: unknown }
 
 /**
  * Request to change checkpoint database information.
@@ -5564,9 +5525,7 @@ export interface V1Pagination {
 /**
  * Overwrite and replace the workspaces bound to an RP response.
  */
-export interface V1OverwriteRPWorkspaceBindingsResponse {
-  [key: string]: unknown;
-}
+export interface V1OverwriteRPWorkspaceBindingsResponse { [key: string]: unknown }
 
 /**
  * Overwrite and replace the workspaces bound to an RP request.
@@ -5587,7 +5546,8 @@ export interface V1OverwriteRPWorkspaceBindingsRequest {
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
  */
-export type V1OrderBy = (typeof V1OrderBy)[keyof typeof V1OrderBy];
+export type V1OrderBy = typeof V1OrderBy[keyof typeof V1OrderBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1OrderBy = {
@@ -5712,9 +5672,7 @@ export interface V1MoveRunsRequest {
 /**
  * Response to MoveProjectRequest.
  */
-export interface V1MoveProjectResponse {
-  [key: string]: unknown;
-}
+export interface V1MoveProjectResponse { [key: string]: unknown }
 
 /**
  * Request to move a project into a workspace.
@@ -5726,9 +5684,7 @@ export interface V1MoveProjectRequest {
   projectId: number;
 }
 
-export interface V1MoveModelResponse {
-  [key: string]: unknown;
-}
+export interface V1MoveModelResponse { [key: string]: unknown }
 
 /**
  * Request to move a model to a workspace.
@@ -5764,9 +5720,7 @@ export interface V1MoveExperimentsRequest {
 /**
  * Response to MoveExperimentRequest.
  */
-export interface V1MoveExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1MoveExperimentResponse { [key: string]: unknown }
 
 /**
  * Request to move an experiment into a project.
@@ -5924,7 +5878,8 @@ export interface V1Metrics {
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  */
-export type V1MetricType = (typeof V1MetricType)[keyof typeof V1MetricType];
+export type V1MetricType = typeof V1MetricType[keyof typeof V1MetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1MetricType = {
@@ -5963,9 +5918,7 @@ export interface V1MasterLogsResponse {
 /**
  * Response to MarkAllocationResourcesDaemonRequest.
  */
-export interface V1MarkAllocationResourcesDaemonResponse {
-  [key: string]: unknown;
-}
+export interface V1MarkAllocationResourcesDaemonResponse { [key: string]: unknown }
 
 /**
  * Mark some reservation as a daemon.
@@ -5980,9 +5933,7 @@ export interface V1MarkAllocationResourcesDaemonRequest {
 /**
  * Response to LogoutRequest.
  */
-export interface V1LogoutResponse {
-  [key: string]: unknown;
-}
+export interface V1LogoutResponse { [key: string]: unknown }
 
 /**
  * Response to LoginRequest.
@@ -6016,7 +5967,8 @@ export interface V1LoginRequest {
  - LOG_LEVEL_ERROR: A log level of ERROR.
  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
  */
-export type V1LogLevel = (typeof V1LogLevel)[keyof typeof V1LogLevel];
+export type V1LogLevel = typeof V1LogLevel[keyof typeof V1LogLevel];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1LogLevel = {
@@ -6059,7 +6011,8 @@ export interface V1LogConfig {
  - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
  - LOCATION_TYPE_RUN_METADATA: Column is located on the run's arbitrary metadata
  */
-export type V1LocationType = (typeof V1LocationType)[keyof typeof V1LocationType];
+export type V1LocationType = typeof V1LocationType[keyof typeof V1LocationType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1LocationType = {
@@ -6086,9 +6039,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
 /**
  * List of workspace-namespace bindings for a given workspace.
  */
-export type V1ListWorkspaceNamespaceBindingsResponseNamespaceBindings = {
-  [key: string]: V1WorkspaceNamespaceBinding;
-};
+export type V1ListWorkspaceNamespaceBindingsResponseNamespaceBindings = {[key: string]: V1WorkspaceNamespaceBinding};
 
 /**
  * Response for listing namespaces bound to a workspace.
@@ -6160,7 +6111,8 @@ export interface V1LimitedJob {
  - LAUNCH_WARNING_UNSPECIFIED: Default value
  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
  */
-export type V1LaunchWarning = (typeof V1LaunchWarning)[keyof typeof V1LaunchWarning];
+export type V1LaunchWarning = typeof V1LaunchWarning[keyof typeof V1LaunchWarning];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1LaunchWarning = {
@@ -6341,9 +6293,7 @@ export interface V1LaunchCommandRequest {
 /**
  * Response to KillTrialRequest.
  */
-export interface V1KillTrialResponse {
-  [key: string]: unknown;
-}
+export interface V1KillTrialResponse { [key: string]: unknown }
 
 /**
  * Response to KillTensorboardRequest.
@@ -6404,9 +6354,7 @@ export interface V1KillNotebookResponse {
   notebook?: V1Notebook;
 }
 
-export interface V1KillGenericTaskResponse {
-  [key: string]: unknown;
-}
+export interface V1KillGenericTaskResponse { [key: string]: unknown }
 
 export interface V1KillGenericTaskRequest {
   killFromRoot?: boolean;
@@ -6436,9 +6384,7 @@ export interface V1KillExperimentsRequest {
 /**
  * Response to KillExperimentRequest.
  */
-export interface V1KillExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1KillExperimentResponse { [key: string]: unknown }
 
 /**
  * Response to KillCommandRequest.
@@ -6521,9 +6467,7 @@ export interface V1Int32FieldFilter {
 /**
  * Response to IdleNotebookRequest.
  */
-export interface V1IdleNotebookResponse {
-  [key: string]: unknown;
-}
+export interface V1IdleNotebookResponse { [key: string]: unknown }
 
 /**
  * Kill the requested notebook if idle.
@@ -6591,8 +6535,8 @@ export interface V1GetWorkspacesResponse {
  - SORT_BY_ID: Returns workspaces sorted by id.
  - SORT_BY_NAME: Returns workspaces sorted by name.
  */
-export type V1GetWorkspacesRequestSortBy =
-  (typeof V1GetWorkspacesRequestSortBy)[keyof typeof V1GetWorkspacesRequestSortBy];
+export type V1GetWorkspacesRequestSortBy = typeof V1GetWorkspacesRequestSortBy[keyof typeof V1GetWorkspacesRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetWorkspacesRequestSortBy = {
@@ -6627,8 +6571,8 @@ export interface V1GetWorkspaceProjectsResponse {
  - SORT_BY_DESCRIPTION: Returns projects sorted by description.
  - SORT_BY_ID: Returns projects sorted by ID.
  */
-export type V1GetWorkspaceProjectsRequestSortBy =
-  (typeof V1GetWorkspaceProjectsRequestSortBy)[keyof typeof V1GetWorkspaceProjectsRequestSortBy];
+export type V1GetWorkspaceProjectsRequestSortBy = typeof V1GetWorkspaceProjectsRequestSortBy[keyof typeof V1GetWorkspaceProjectsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetWorkspaceProjectsRequestSortBy = {
@@ -6693,8 +6637,8 @@ export interface V1GetUsersResponse {
  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
  */
-export type V1GetUsersRequestSortBy =
-  (typeof V1GetUsersRequestSortBy)[keyof typeof V1GetUsersRequestSortBy];
+export type V1GetUsersRequestSortBy = typeof V1GetUsersRequestSortBy[keyof typeof V1GetUsersRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetUsersRequestSortBy = {
@@ -6817,8 +6761,8 @@ export interface V1GetTensorboardsResponse {
  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
  */
-export type V1GetTensorboardsRequestSortBy =
-  (typeof V1GetTensorboardsRequestSortBy)[keyof typeof V1GetTensorboardsRequestSortBy];
+export type V1GetTensorboardsRequestSortBy = typeof V1GetTensorboardsRequestSortBy[keyof typeof V1GetTensorboardsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetTensorboardsRequestSortBy = {
@@ -6854,8 +6798,8 @@ export interface V1GetTemplatesResponse {
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
  */
-export type V1GetTemplatesRequestSortBy =
-  (typeof V1GetTemplatesRequestSortBy)[keyof typeof V1GetTemplatesRequestSortBy];
+export type V1GetTemplatesRequestSortBy = typeof V1GetTemplatesRequestSortBy[keyof typeof V1GetTemplatesRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetTemplatesRequestSortBy = {
@@ -6883,7 +6827,7 @@ export interface V1GetTelemetryResponse {
 /**
  * Information about a task for external display.
  */
-export type V1GetTasksResponseAllocationIdToSummary = { [key: string]: V1AllocationSummary };
+export type V1GetTasksResponseAllocationIdToSummary = {[key: string]: V1AllocationSummary};
 
 /**
  * Response to GetTasksRequest.
@@ -6946,8 +6890,8 @@ export interface V1GetShellsResponse {
  - SORT_BY_START_TIME: Return shells sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
  */
-export type V1GetShellsRequestSortBy =
-  (typeof V1GetShellsRequestSortBy)[keyof typeof V1GetShellsRequestSortBy];
+export type V1GetShellsRequestSortBy = typeof V1GetShellsRequestSortBy[keyof typeof V1GetShellsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetShellsRequestSortBy = {
@@ -7073,8 +7017,8 @@ export interface V1GetNotebooksResponse {
  - SORT_BY_START_TIME: Return notebooks sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
  */
-export type V1GetNotebooksRequestSortBy =
-  (typeof V1GetNotebooksRequestSortBy)[keyof typeof V1GetNotebooksRequestSortBy];
+export type V1GetNotebooksRequestSortBy = typeof V1GetNotebooksRequestSortBy[keyof typeof V1GetNotebooksRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetNotebooksRequestSortBy = {
@@ -7119,8 +7063,8 @@ export interface V1GetModelsResponse {
  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
  - SORT_BY_WORKSPACE: Returns models sorted by workspace name.
  */
-export type V1GetModelsRequestSortBy =
-  (typeof V1GetModelsRequestSortBy)[keyof typeof V1GetModelsRequestSortBy];
+export type V1GetModelsRequestSortBy = typeof V1GetModelsRequestSortBy[keyof typeof V1GetModelsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetModelsRequestSortBy = {
@@ -7150,8 +7094,8 @@ export interface V1GetModelVersionsResponse {
  - SORT_BY_VERSION: Returns model versions sorted by version number.
  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
  */
-export type V1GetModelVersionsRequestSortBy =
-  (typeof V1GetModelVersionsRequestSortBy)[keyof typeof V1GetModelVersionsRequestSortBy];
+export type V1GetModelVersionsRequestSortBy = typeof V1GetModelVersionsRequestSortBy[keyof typeof V1GetModelVersionsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetModelVersionsRequestSortBy = {
@@ -7290,7 +7234,7 @@ export interface V1GetMasterConfigResponse {
 /**
  * List of workspace-namespace bindings for a given workspace.
  */
-export type V1GetKubernetesResourceQuotasResponseResourceQuotas = { [key: string]: number };
+export type V1GetKubernetesResourceQuotasResponseResourceQuotas = {[key: string]: number};
 
 /**
  * Response for listing namespaces bound to a workspace.
@@ -7429,8 +7373,8 @@ returned after the ones with end_time.
  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
  */
-export type V1GetExperimentsRequestSortBy =
-  (typeof V1GetExperimentsRequestSortBy)[keyof typeof V1GetExperimentsRequestSortBy];
+export type V1GetExperimentsRequestSortBy = typeof V1GetExperimentsRequestSortBy[keyof typeof V1GetExperimentsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetExperimentsRequestSortBy = {
@@ -7490,8 +7434,8 @@ specified by `searcher.metric` in the experiment configuration.
  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
  */
-export type V1GetExperimentTrialsRequestSortBy =
-  (typeof V1GetExperimentTrialsRequestSortBy)[keyof typeof V1GetExperimentTrialsRequestSortBy];
+export type V1GetExperimentTrialsRequestSortBy = typeof V1GetExperimentTrialsRequestSortBy[keyof typeof V1GetExperimentTrialsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetExperimentTrialsRequestSortBy = {
@@ -7559,8 +7503,8 @@ export interface V1GetCommandsResponse {
  - SORT_BY_START_TIME: Return commands sorted by start time.
  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
  */
-export type V1GetCommandsRequestSortBy =
-  (typeof V1GetCommandsRequestSortBy)[keyof typeof V1GetCommandsRequestSortBy];
+export type V1GetCommandsRequestSortBy = typeof V1GetCommandsRequestSortBy[keyof typeof V1GetCommandsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetCommandsRequestSortBy = {
@@ -7628,8 +7572,8 @@ export interface V1GetAgentsResponse {
  - SORT_BY_ID: Returns agents sorted by id.
  - SORT_BY_TIME: Returns agents sorted by time.
  */
-export type V1GetAgentsRequestSortBy =
-  (typeof V1GetAgentsRequestSortBy)[keyof typeof V1GetAgentsRequestSortBy];
+export type V1GetAgentsRequestSortBy = typeof V1GetAgentsRequestSortBy[keyof typeof V1GetAgentsRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetAgentsRequestSortBy = {
@@ -7679,8 +7623,8 @@ export interface V1GetAccessTokensResponse {
  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
  */
-export type V1GetAccessTokensRequestSortBy =
-  (typeof V1GetAccessTokensRequestSortBy)[keyof typeof V1GetAccessTokensRequestSortBy];
+export type V1GetAccessTokensRequestSortBy = typeof V1GetAccessTokensRequestSortBy[keyof typeof V1GetAccessTokensRequestSortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GetAccessTokensRequestSortBy = {
@@ -7705,7 +7649,8 @@ export const V1GetAccessTokensRequestSortBy = {
  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown
  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
  */
-export type V1GenericTaskState = (typeof V1GenericTaskState)[keyof typeof V1GenericTaskState];
+export type V1GenericTaskState = typeof V1GenericTaskState[keyof typeof V1GenericTaskState];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1GenericTaskState = {
@@ -7833,7 +7778,8 @@ k8s scheduler so the fitting policy is not relevant.
  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.
  - FITTING_POLICY_PBS: A PBS placeholder. When running on PBS, task placement is delegated.
  */
-export type V1FittingPolicy = (typeof V1FittingPolicy)[keyof typeof V1FittingPolicy];
+export type V1FittingPolicy = typeof V1FittingPolicy[keyof typeof V1FittingPolicy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1FittingPolicy = {
@@ -7903,7 +7849,8 @@ blip.
  - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure
 type.
  */
-export type V1FailureType = (typeof V1FailureType)[keyof typeof V1FailureType];
+export type V1FailureType = typeof V1FailureType[keyof typeof V1FailureType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1FailureType = {
@@ -8044,7 +7991,8 @@ export interface V1ExpMetricNamesResponse {
  * - ENTITY_TYPE_UNSPECIFIED: Default entity type.
  - ENTITY_TYPE_PROJECT: Represents a project.
  */
-export type V1EntityType = (typeof V1EntityType)[keyof typeof V1EntityType];
+export type V1EntityType = typeof V1EntityType[keyof typeof V1EntityType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1EntityType = {
@@ -8131,7 +8079,7 @@ export interface V1DisableAgentRequest {
 /**
  * The number of slots in each state if there's an associated container.
  */
-export type V1DeviceStatsStates = { [key: string]: number };
+export type V1DeviceStatsStates = {[key: string]: number};
 
 /**
  * DeviceStats contains statistics about a single device group.
@@ -8171,37 +8119,27 @@ export interface V1DeleteWorkspaceResponse {
 /**
  * Response to DeleteWorkspaceNamespaceBindingsRequest.
  */
-export interface V1DeleteWorkspaceNamespaceBindingsResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteWorkspaceNamespaceBindingsResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteWorkspaceConfigPoliciesRequest.
  */
-export interface V1DeleteWorkspaceConfigPoliciesResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteWorkspaceConfigPoliciesResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteWebhookRequest.
  */
-export interface V1DeleteWebhookResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteWebhookResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteTensorboardRequest.
  */
-export interface V1DeleteTensorboardFilesResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteTensorboardFilesResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteTemplateRequest.
  */
-export interface V1DeleteTemplateResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteTemplateResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteSearchesRequest.
@@ -8249,28 +8187,20 @@ export interface V1DeleteProjectResponse {
   completed: boolean;
 }
 
-export interface V1DeleteModelVersionResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteModelVersionResponse { [key: string]: unknown }
 
-export interface V1DeleteModelResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteModelResponse { [key: string]: unknown }
 
 /**
  * DeleteGroupResponse is the body of the response for the call
 to delete a group.
  */
-export interface V1DeleteGroupResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteGroupResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteGlobalConfigPoliciesRequest.
  */
-export interface V1DeleteGlobalConfigPoliciesResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteGlobalConfigPoliciesResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteExperimentsRequest.
@@ -8294,9 +8224,7 @@ export interface V1DeleteExperimentsRequest {
 /**
  * Response to DeleteExperimentRequest.
  */
-export interface V1DeleteExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteExperimentResponse { [key: string]: unknown }
 
 /**
  * Response to DeleteExperimentLabelRequest.
@@ -8309,13 +8237,9 @@ export interface V1DeleteExperimentLabelResponse {
 /**
  * Response to DeleteClusterMessageRequest.
  */
-export interface V1DeleteClusterMessageResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteClusterMessageResponse { [key: string]: unknown }
 
-export interface V1DeleteCheckpointsResponse {
-  [key: string]: unknown;
-}
+export interface V1DeleteCheckpointsResponse { [key: string]: unknown }
 
 export interface V1DeleteCheckpointsRequest {
   /** The list of checkpoint_uuids for the requested checkpoint. */
@@ -8556,7 +8480,8 @@ export interface V1Command {
  - COLUMN_TYPE_DATE: data type is a date
  - COLUMN_TYPE_ARRAY: data type is an array
  */
-export type V1ColumnType = (typeof V1ColumnType)[keyof typeof V1ColumnType];
+export type V1ColumnType = typeof V1ColumnType[keyof typeof V1ColumnType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1ColumnType = {
@@ -8592,9 +8517,7 @@ export interface V1CleanupLogsResponse {
 /**
  * Response to CheckpointRemoveFilesRequest.
  */
-export interface V1CheckpointsRemoveFilesResponse {
-  [key: string]: unknown;
-}
+export interface V1CheckpointsRemoveFilesResponse { [key: string]: unknown }
 
 /**
  * Request to delete files matching globs in checkpoints.
@@ -8612,7 +8535,7 @@ have its metadata refreshed. */
  * Dictionary of file paths to file sizes in bytes of all files in the
 checkpoint.
  */
-export type V1CheckpointWorkloadResources = { [key: string]: string };
+export type V1CheckpointWorkloadResources = {[key: string]: string};
 
 /**
  * User defined metadata associated with the checkpoint.
@@ -8670,7 +8593,7 @@ of the checkpoint. */
  * Dictionary of file paths to file sizes in bytes of all files in the
 checkpoint.
  */
-export type V1CheckpointResources = { [key: string]: string };
+export type V1CheckpointResources = {[key: string]: string};
 
 /**
  * User defined metadata associated with the checkpoint.
@@ -8744,9 +8667,7 @@ export interface V1CancelExperimentsRequest {
 /**
  * Response to CancelExperimentRequest.
  */
-export interface V1CancelExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1CancelExperimentResponse { [key: string]: unknown }
 
 /**
  * Filters to apply actions to multiple experiments.
@@ -8775,9 +8696,7 @@ userIds. */
 /**
  * Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
  */
-export interface V1BulkAutoCreateWorkspaceNamespaceBindingsResponse {
-  [key: string]: unknown;
-}
+export interface V1BulkAutoCreateWorkspaceNamespaceBindingsResponse { [key: string]: unknown }
 
 /**
  * Request for binding the given workpaces to new auto-created namespaces.
@@ -8790,9 +8709,7 @@ export interface V1BulkAutoCreateWorkspaceNamespaceBindingsRequest {
 /**
  * Bind a resource pool to workspaces response.
  */
-export interface V1BindRPToWorkspaceResponse {
-  [key: string]: unknown;
-}
+export interface V1BindRPToWorkspaceResponse { [key: string]: unknown }
 
 export interface V1BindRPToWorkspaceRequest {
   /** The resource pool name. */
@@ -8812,9 +8729,7 @@ export interface V1AwsCustomTag {
  * AssignRolesResponse is the body of the request for the call
 to grant a user or group a role.
  */
-export interface V1AssignRolesResponse {
-  [key: string]: unknown;
-}
+export interface V1AssignRolesResponse { [key: string]: unknown }
 
 /**
  * AssignRolesRequest is the body of the request for the call to
@@ -8831,9 +8746,7 @@ export interface V1AssignRolesRequest {
 /**
  * Response to AssignMultipleGroupsRequest.
  */
-export interface V1AssignMultipleGroupsResponse {
-  [key: string]: unknown;
-}
+export interface V1AssignMultipleGroupsResponse { [key: string]: unknown }
 
 /**
  * Add and remove multiple users from multiple groups.
@@ -8850,9 +8763,7 @@ export interface V1AssignMultipleGroupsRequest {
 /**
  * Response to ArchiveWorkspaceRequest.
  */
-export interface V1ArchiveWorkspaceResponse {
-  [key: string]: unknown;
-}
+export interface V1ArchiveWorkspaceResponse { [key: string]: unknown }
 
 /**
  * Response to ArchiveSearchesRequest.
@@ -8889,13 +8800,9 @@ export interface V1ArchiveRunsRequest {
 /**
  * Response to ArchiveProjectRequest.
  */
-export interface V1ArchiveProjectResponse {
-  [key: string]: unknown;
-}
+export interface V1ArchiveProjectResponse { [key: string]: unknown }
 
-export interface V1ArchiveModelResponse {
-  [key: string]: unknown;
-}
+export interface V1ArchiveModelResponse { [key: string]: unknown }
 
 /**
  * Response to ArchiveExperimentsRequest.
@@ -8919,16 +8826,12 @@ export interface V1ArchiveExperimentsRequest {
 /**
  * Response to ArchiveExperimentRequest.
  */
-export interface V1ArchiveExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1ArchiveExperimentResponse { [key: string]: unknown }
 
 /**
  * Response to AllocationWaitingRequest.
  */
-export interface V1AllocationWaitingResponse {
-  [key: string]: unknown;
-}
+export interface V1AllocationWaitingResponse { [key: string]: unknown }
 
 /**
  * Mark the given task as waiting.
@@ -8975,9 +8878,7 @@ export interface V1AllocationRendezvousInfoResponse {
 /**
  * Response to AllocationReadyRequest.
  */
-export interface V1AllocationReadyResponse {
-  [key: string]: unknown;
-}
+export interface V1AllocationReadyResponse { [key: string]: unknown }
 
 /**
  * Mark the given task as ready.
@@ -8995,9 +8896,7 @@ export interface V1AllocationPreemptionSignalResponse {
   preempt?: boolean;
 }
 
-export interface V1AllocationPendingPreemptionSignalResponse {
-  [key: string]: unknown;
-}
+export interface V1AllocationPendingPreemptionSignalResponse { [key: string]: unknown }
 
 export interface V1AllocationPendingPreemptionSignalRequest {
   /** The id of the allocation. */
@@ -9081,12 +8980,12 @@ export interface V1AgentUserGroup {
 /**
  * A map of slot id to each slot of this agent.
  */
-export type V1AgentSlots = { [key: string]: V1Slot };
+export type V1AgentSlots = {[key: string]: V1Slot};
 
 /**
  * A map of container id to all containers assigned to this agent.
  */
-export type V1AgentContainers = { [key: string]: V1Container };
+export type V1AgentContainers = {[key: string]: V1Container};
 
 /**
  * Agent is a pool of resources where containers are run.
@@ -9144,7 +9043,8 @@ export interface V1AddProjectNoteResponse {
  * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.
  - ACTIVITY_TYPE_GET: Represents a get request.
  */
-export type V1ActivityType = (typeof V1ActivityType)[keyof typeof V1ActivityType];
+export type V1ActivityType = typeof V1ActivityType[keyof typeof V1ActivityType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const V1ActivityType = {
@@ -9174,16 +9074,12 @@ export interface V1ActivateExperimentsRequest {
 /**
  * Response to ActivateExperimentRequest.
  */
-export interface V1ActivateExperimentResponse {
-  [key: string]: unknown;
-}
+export interface V1ActivateExperimentResponse { [key: string]: unknown }
 
 /**
  * Response to AckAllocationPreemptionSignalRequest.
  */
-export interface V1AckAllocationPreemptionSignalResponse {
-  [key: string]: unknown;
-}
+export interface V1AckAllocationPreemptionSignalResponse { [key: string]: unknown }
 
 /**
  * Acknowledge the receipt of some stop signal.
@@ -9293,7 +9189,8 @@ export interface RuntimeError {
 
  - NULL_VALUE: Null value.
  */
-export type ProtobufNullValue = (typeof ProtobufNullValue)[keyof typeof ProtobufNullValue];
+export type ProtobufNullValue = typeof ProtobufNullValue[keyof typeof ProtobufNullValue];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ProtobufNullValue = {
@@ -9338,7 +9235,8 @@ export interface RuntimeStreamError {
  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
 configuration setting.
  */
-export type Checkpointv1SortBy = (typeof Checkpointv1SortBy)[keyof typeof Checkpointv1SortBy];
+export type Checkpointv1SortBy = typeof Checkpointv1SortBy[keyof typeof Checkpointv1SortBy];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Checkpointv1SortBy = {
@@ -9360,8 +9258,8 @@ export const Checkpointv1SortBy = {
 from the dataloader took.
  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  */
-export type TrialProfilerMetricLabelsProfilerMetricType =
-  (typeof TrialProfilerMetricLabelsProfilerMetricType)[keyof typeof TrialProfilerMetricLabelsProfilerMetricType];
+export type TrialProfilerMetricLabelsProfilerMetricType = typeof TrialProfilerMetricLabelsProfilerMetricType[keyof typeof TrialProfilerMetricLabelsProfilerMetricType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TrialProfilerMetricLabelsProfilerMetricType = {
@@ -9406,7 +9304,7 @@ export interface PatchExperimentPatchCheckpointStorage {
 /**
  * Resources.
  */
-export type PatchCheckpointOptionalResourcesResources = { [key: string]: string };
+export type PatchCheckpointOptionalResourcesResources = {[key: string]: string};
 
 /**
  * Gets around not being able to do "Optional map<string, int64>".
@@ -9425,8 +9323,8 @@ export interface PatchCheckpointOptionalResources {
  - FILTER_OPTION_VALIDATION: Only validation workloads.
  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
  */
-export type GetTrialWorkloadsRequestFilterOption =
-  (typeof GetTrialWorkloadsRequestFilterOption)[keyof typeof GetTrialWorkloadsRequestFilterOption];
+export type GetTrialWorkloadsRequestFilterOption = typeof GetTrialWorkloadsRequestFilterOption[keyof typeof GetTrialWorkloadsRequestFilterOption];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetTrialWorkloadsRequestFilterOption = {
@@ -9440,8 +9338,8 @@ export const GetTrialWorkloadsRequestFilterOption = {
  * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering
  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
  */
-export type GetMasterResponseProduct =
-  (typeof GetMasterResponseProduct)[keyof typeof GetMasterResponseProduct];
+export type GetMasterResponseProduct = typeof GetMasterResponseProduct[keyof typeof GetMasterResponseProduct];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetMasterResponseProduct = {
@@ -9449,140 +9347,144 @@ export const GetMasterResponseProduct = {
   PRODUCT_COMMUNITY: 'PRODUCT_COMMUNITY',
 } as const;
 
-/**
+
+
+
+
+  /**
  * @summary Get a set of agents from the cluster.
  */
 export const getAgents = <TData = AxiosResponse<V1GetAgentsResponse>>(
-  params?: GetAgentsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/agents`, {
+    params?: GetAgentsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/agents`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get the requested agent.
  */
 export const getAgent = <TData = AxiosResponse<V1GetAgentResponse>>(
-  agentId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/agents/${agentId}`, options);
-};
+    agentId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/agents/${agentId}`,options
+    );
+  }
 
 /**
  * @summary Disable the agent.
  */
 export const disableAgent = <TData = AxiosResponse<V1DisableAgentResponse>>(
-  agentId: string,
-  v1DisableAgentRequest: V1DisableAgentRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/agents/${agentId}/disable`, v1DisableAgentRequest, options);
-};
+    agentId: string,
+    v1DisableAgentRequest: V1DisableAgentRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/agents/${agentId}/disable`,
+      v1DisableAgentRequest,options
+    );
+  }
 
 /**
  * @summary Enable the agent.
  */
 export const enableAgent = <TData = AxiosResponse<V1EnableAgentResponse>>(
-  agentId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/agents/${agentId}/enable`, undefined, options);
-};
+    agentId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/agents/${agentId}/enable`,undefined,options
+    );
+  }
 
 /**
  * @summary Get all the slots for an agent.
  */
 export const getSlots = <TData = AxiosResponse<V1GetSlotsResponse>>(
-  agentId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/agents/${agentId}/slots`, options);
-};
+    agentId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/agents/${agentId}/slots`,options
+    );
+  }
 
 /**
  * @summary Get the requested slot for an agent.
  */
 export const getSlot = <TData = AxiosResponse<V1GetSlotResponse>>(
-  agentId: string,
-  slotId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/agents/${agentId}/slots/${slotId}`, options);
-};
+    agentId: string,
+    slotId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/agents/${agentId}/slots/${slotId}`,options
+    );
+  }
 
 /**
  * @summary Disable the slot.
  */
 export const disableSlot = <TData = AxiosResponse<V1DisableSlotResponse>>(
-  agentId: string,
-  slotId: string,
-  v1DisableSlotRequest: V1DisableSlotRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/agents/${agentId}/slots/${slotId}/disable`,
-    v1DisableSlotRequest,
-    options,
-  );
-};
+    agentId: string,
+    slotId: string,
+    v1DisableSlotRequest: V1DisableSlotRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/agents/${agentId}/slots/${slotId}/disable`,
+      v1DisableSlotRequest,options
+    );
+  }
 
 /**
  * @summary Enable the slot.
  */
 export const enableSlot = <TData = AxiosResponse<V1EnableSlotResponse>>(
-  agentId: string,
-  slotId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/agents/${agentId}/slots/${slotId}/enable`, undefined, options);
-};
+    agentId: string,
+    slotId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/agents/${agentId}/slots/${slotId}/enable`,undefined,options
+    );
+  }
 
 /**
  * @summary Get details about an Allocation.
  */
 export const getAllocation = <TData = AxiosResponse<V1GetAllocationResponse>>(
-  allocationId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/allocations/${allocationId}`, options);
-};
+    allocationId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/allocations/${allocationId}`,options
+    );
+  }
 
 /**
  * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
  */
-export const postAllocationAcceleratorData = <
-  TData = AxiosResponse<V1PostAllocationAcceleratorDataResponse>,
->(
-  allocationId: string,
-  v1PostAllocationAcceleratorDataRequest: V1PostAllocationAcceleratorDataRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/acceleratorData`,
-    v1PostAllocationAcceleratorDataRequest,
-    options,
-  );
-};
+export const postAllocationAcceleratorData = <TData = AxiosResponse<V1PostAllocationAcceleratorDataResponse>>(
+    allocationId: string,
+    v1PostAllocationAcceleratorDataRequest: V1PostAllocationAcceleratorDataRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/acceleratorData`,
+      v1PostAllocationAcceleratorDataRequest,options
+    );
+  }
 
 /**
  * @summary AllocationAllGather performs an all gather through the master. An
 allocation can only perform once all gather at a time.
  */
 export const allocationAllGather = <TData = AxiosResponse<V1AllocationAllGatherResponse>>(
-  allocationId: string,
-  v1AllocationAllGatherRequest: V1AllocationAllGatherRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/all_gather`,
-    v1AllocationAllGatherRequest,
-    options,
-  );
-};
+    allocationId: string,
+    v1AllocationAllGatherRequest: V1AllocationAllGatherRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/all_gather`,
+      v1AllocationAllGatherRequest,options
+    );
+  }
 
 /**
  * @summary NotifyContainterRunning is used to notify the master that the container
@@ -9593,46 +9495,42 @@ really considered to be in a "Running" state until all the containers
 that are part of the experiment are running and not being pulled.
  */
 export const notifyContainerRunning = <TData = AxiosResponse<V1NotifyContainerRunningResponse>>(
-  allocationId: string,
-  v1NotifyContainerRunningRequest: V1NotifyContainerRunningRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/notify_container_running`,
-    v1NotifyContainerRunningRequest,
-    options,
-  );
-};
+    allocationId: string,
+    v1NotifyContainerRunningRequest: V1NotifyContainerRunningRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/notify_container_running`,
+      v1NotifyContainerRunningRequest,options
+    );
+  }
 
 /**
  * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to
 services provided by an allocation. Upon receipt, the master will also
 register any proxies specified by the task.
  */
-export const postAllocationProxyAddress = <
-  TData = AxiosResponse<V1PostAllocationProxyAddressResponse>,
->(
-  allocationId: string,
-  v1PostAllocationProxyAddressRequest: V1PostAllocationProxyAddressRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/proxy_address`,
-    v1PostAllocationProxyAddressRequest,
-    options,
-  );
-};
+export const postAllocationProxyAddress = <TData = AxiosResponse<V1PostAllocationProxyAddressResponse>>(
+    allocationId: string,
+    v1PostAllocationProxyAddressRequest: V1PostAllocationProxyAddressRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/proxy_address`,
+      v1PostAllocationProxyAddressRequest,options
+    );
+  }
 
 /**
  * @summary Set allocation to ready state.
  */
 export const allocationReady = <TData = AxiosResponse<V1AllocationReadyResponse>>(
-  allocationId: string,
-  v1AllocationReadyRequest: V1AllocationReadyRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/allocations/${allocationId}/ready`, v1AllocationReadyRequest, options);
-};
+    allocationId: string,
+    v1AllocationReadyRequest: V1AllocationReadyRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/ready`,
+      v1AllocationReadyRequest,options
+    );
+  }
 
 /**
  * @summary Mark the given reservation (container, pod, etc) within an allocation as
@@ -9641,20 +9539,16 @@ wait for all resources to exit - unless they are marked as daemon
 resources, in which case Determined will clean them up regardless of
 exit status after all non-daemon resources have exited.
  */
-export const markAllocationResourcesDaemon = <
-  TData = AxiosResponse<V1MarkAllocationResourcesDaemonResponse>,
->(
-  allocationId: string,
-  resourcesId: string,
-  v1MarkAllocationResourcesDaemonRequest: V1MarkAllocationResourcesDaemonRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/resources/${resourcesId}/daemon`,
-    v1MarkAllocationResourcesDaemonRequest,
-    options,
-  );
-};
+export const markAllocationResourcesDaemon = <TData = AxiosResponse<V1MarkAllocationResourcesDaemonResponse>>(
+    allocationId: string,
+    resourcesId: string,
+    v1MarkAllocationResourcesDaemonRequest: V1MarkAllocationResourcesDaemonRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/resources/${resourcesId}/daemon`,
+      v1MarkAllocationResourcesDaemonRequest,options
+    );
+  }
 
 /**
  * @summary Gather an allocation's rendezvous info. Blocks until all trial containers
@@ -9662,15 +9556,13 @@ connect to gather their rendezvous information and responds to them all at
 once.
  */
 export const allocationRendezvousInfo = <TData = AxiosResponse<V1AllocationRendezvousInfoResponse>>(
-  allocationId: string,
-  resourcesId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(
-    `/api/v1/allocations/${allocationId}/resources/${resourcesId}/rendezvous`,
-    options,
-  );
-};
+    allocationId: string,
+    resourcesId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/allocations/${allocationId}/resources/${resourcesId}/rendezvous`,options
+    );
+  }
 
 /**
  * @summary Acknowledge the receipt of a signal to stop the given allocation early.
@@ -9678,19 +9570,15 @@ This is used indicate and exit 0 isn't final; specifically, it is used
 for HP search directed early stops and preemption signals (not necessarily
 just scheduler preemption).
  */
-export const ackAllocationPreemptionSignal = <
-  TData = AxiosResponse<V1AckAllocationPreemptionSignalResponse>,
->(
-  allocationId: string,
-  v1AckAllocationPreemptionSignalRequest: V1AckAllocationPreemptionSignalRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/signals/ack_preemption`,
-    v1AckAllocationPreemptionSignalRequest,
-    options,
-  );
-};
+export const ackAllocationPreemptionSignal = <TData = AxiosResponse<V1AckAllocationPreemptionSignalResponse>>(
+    allocationId: string,
+    v1AckAllocationPreemptionSignalRequest: V1AckAllocationPreemptionSignalRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/signals/ack_preemption`,
+      v1AckAllocationPreemptionSignalRequest,options
+    );
+  }
 
 /**
  * @summary Report the receipt of a signal to stop the given allocation early.
@@ -9698,19 +9586,15 @@ This is used to communicate back from a SLURM job that it has been
 notified of a pending preememption. Upon a call to this API
 the RM should then trigger a checkpoint and immediate exit.
  */
-export const allocationPendingPreemptionSignal = <
-  TData = AxiosResponse<V1AllocationPendingPreemptionSignalResponse>,
->(
-  allocationId: string,
-  v1AllocationPendingPreemptionSignalRequest: V1AllocationPendingPreemptionSignalRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/signals/pending_preemption`,
-    v1AllocationPendingPreemptionSignalRequest,
-    options,
-  );
-};
+export const allocationPendingPreemptionSignal = <TData = AxiosResponse<V1AllocationPendingPreemptionSignalResponse>>(
+    allocationId: string,
+    v1AllocationPendingPreemptionSignalRequest: V1AllocationPendingPreemptionSignalRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/signals/pending_preemption`,
+      v1AllocationPendingPreemptionSignalRequest,options
+    );
+  }
 
 /**
  * @summary Long poll preemption signals for the given allocation. If the allocation
@@ -9718,3291 +9602,3422 @@ has been preempted when called, it will return so immediately. Otherwise,
 the connection will be kept open until the timeout is reached or
 the allocation is preempted.
  */
-export const allocationPreemptionSignal = <
-  TData = AxiosResponse<V1AllocationPreemptionSignalResponse>,
->(
-  allocationId: string,
-  params?: AllocationPreemptionSignalParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/allocations/${allocationId}/signals/preemption`, {
+export const allocationPreemptionSignal = <TData = AxiosResponse<V1AllocationPreemptionSignalResponse>>(
+    allocationId: string,
+    params?: AllocationPreemptionSignalParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/allocations/${allocationId}/signals/preemption`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Set allocation to waiting state.
  */
 export const allocationWaiting = <TData = AxiosResponse<V1AllocationWaitingResponse>>(
-  allocationId: string,
-  v1AllocationWaitingRequest: V1AllocationWaitingRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/allocations/${allocationId}/waiting`,
-    v1AllocationWaitingRequest,
-    options,
-  );
-};
+    allocationId: string,
+    v1AllocationWaitingRequest: V1AllocationWaitingRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/allocations/${allocationId}/waiting`,
+      v1AllocationWaitingRequest,options
+    );
+  }
 
 /**
  * @summary Login the user.
  */
 export const login = <TData = AxiosResponse<V1LoginResponse>>(
-  v1LoginRequest: V1LoginRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/auth/login`, v1LoginRequest, options);
-};
+    v1LoginRequest: V1LoginRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/auth/login`,
+      v1LoginRequest,options
+    );
+  }
 
 /**
  * @summary Logout the user.
  */
 export const logout = <TData = AxiosResponse<V1LogoutResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/auth/logout`, undefined, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/auth/logout`,undefined,options
+    );
+  }
 
 /**
  * @summary Get the current user.
  */
 export const currentUser = <TData = AxiosResponse<V1CurrentUserResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/auth/user`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/auth/user`,options
+    );
+  }
 
 /**
  * @summary Delete Checkpoints.
  */
 export const deleteCheckpoints = <TData = AxiosResponse<V1DeleteCheckpointsResponse>>(
-  v1DeleteCheckpointsRequest: V1DeleteCheckpointsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/checkpoints`, { data: v1DeleteCheckpointsRequest, ...options });
-};
+    v1DeleteCheckpointsRequest: V1DeleteCheckpointsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/checkpoints`,{data:
+      v1DeleteCheckpointsRequest, ...options}
+    );
+  }
 
 /**
  * @summary Record a checkpoint.
  */
 export const reportCheckpoint = <TData = AxiosResponse<V1ReportCheckpointResponse>>(
-  v1Checkpoint: V1Checkpoint,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/checkpoints`, v1Checkpoint, options);
-};
+    v1Checkpoint: V1Checkpoint, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/checkpoints`,
+      v1Checkpoint,options
+    );
+  }
 
 /**
  * @summary Update checkpoints. Won't modify checkpoint files.
  */
 export const patchCheckpoints = <TData = AxiosResponse<V1PatchCheckpointsResponse>>(
-  v1PatchCheckpointsRequest: V1PatchCheckpointsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/checkpoints`, v1PatchCheckpointsRequest, options);
-};
+    v1PatchCheckpointsRequest: V1PatchCheckpointsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/checkpoints`,
+      v1PatchCheckpointsRequest,options
+    );
+  }
 
 /**
  * @summary Remove files from checkpoints.
  */
 export const checkpointsRemoveFiles = <TData = AxiosResponse<V1CheckpointsRemoveFilesResponse>>(
-  v1CheckpointsRemoveFilesRequest: V1CheckpointsRemoveFilesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/checkpoints/rm`, v1CheckpointsRemoveFilesRequest, options);
-};
+    v1CheckpointsRemoveFilesRequest: V1CheckpointsRemoveFilesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/checkpoints/rm`,
+      v1CheckpointsRemoveFilesRequest,options
+    );
+  }
 
 /**
  * @summary Update checkpoint metadata.
  */
 export const postCheckpointMetadata = <TData = AxiosResponse<V1PostCheckpointMetadataResponse>>(
-  v1PostCheckpointMetadataRequest: V1PostCheckpointMetadataRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/checkpoints/checkpoint.uuid}/metadata`,
-    v1PostCheckpointMetadataRequest,
-    options,
-  );
-};
+    v1PostCheckpointMetadataRequest: V1PostCheckpointMetadataRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/checkpoints/checkpoint.uuid}/metadata`,
+      v1PostCheckpointMetadataRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested checkpoint.
  */
 export const getCheckpoint = <TData = AxiosResponse<V1GetCheckpointResponse>>(
-  checkpointUuid: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/checkpoints/${checkpointUuid}`, options);
-};
+    checkpointUuid: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/checkpoints/${checkpointUuid}`,options
+    );
+  }
 
 /**
  * @summary Gets the metrics for all trials associated with this checkpoint
  */
-export const getTrialMetricsByCheckpoint = <
-  TData = AxiosResponse<V1GetTrialMetricsByCheckpointResponse>,
->(
-  checkpointUuid: string,
-  params?: GetTrialMetricsByCheckpointParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/checkpoints/${checkpointUuid}/metrics`, {
+export const getTrialMetricsByCheckpoint = <TData = AxiosResponse<V1GetTrialMetricsByCheckpointResponse>>(
+    checkpointUuid: string,
+    params?: GetTrialMetricsByCheckpointParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/checkpoints/${checkpointUuid}/metrics`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Cleanup task logs according to the retention policy.
  */
 export const cleanupLogs = <TData = AxiosResponse<V1CleanupLogsResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/cleanup_logs`, undefined, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/cleanup_logs`,undefined,options
+    );
+  }
 
 /**
  * @summary Get a list of commands.
  */
 export const getCommands = <TData = AxiosResponse<V1GetCommandsResponse>>(
-  params?: GetCommandsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/commands`, {
+    params?: GetCommandsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/commands`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Launch a command.
  */
 export const launchCommand = <TData = AxiosResponse<V1LaunchCommandResponse>>(
-  v1LaunchCommandRequest: V1LaunchCommandRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/commands`, v1LaunchCommandRequest, options);
-};
+    v1LaunchCommandRequest: V1LaunchCommandRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/commands`,
+      v1LaunchCommandRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested command.
  */
 export const getCommand = <TData = AxiosResponse<V1GetCommandResponse>>(
-  commandId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/commands/${commandId}`, options);
-};
+    commandId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/commands/${commandId}`,options
+    );
+  }
 
 /**
  * @summary Kill the requested command.
  */
 export const killCommand = <TData = AxiosResponse<V1KillCommandResponse>>(
-  commandId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/commands/${commandId}/kill`, undefined, options);
-};
+    commandId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/commands/${commandId}/kill`,undefined,options
+    );
+  }
 
 /**
  * @summary Set the priority of the requested command.
  */
 export const setCommandPriority = <TData = AxiosResponse<V1SetCommandPriorityResponse>>(
-  commandId: string,
-  v1SetCommandPriorityRequest: V1SetCommandPriorityRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/commands/${commandId}/set_priority`,
-    v1SetCommandPriorityRequest,
-    options,
-  );
-};
+    commandId: string,
+    v1SetCommandPriorityRequest: V1SetCommandPriorityRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/commands/${commandId}/set_priority`,
+      v1SetCommandPriorityRequest,options
+    );
+  }
 
 /**
  * @summary Get global task config policies.
  */
 export const getGlobalConfigPolicies = <TData = AxiosResponse<V1GetGlobalConfigPoliciesResponse>>(
-  workloadType: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/config-policies/global/${workloadType}`, options);
-};
+    workloadType: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/config-policies/global/${workloadType}`,options
+    );
+  }
 
 /**
  * @summary Delete global task config policies.
  */
-export const deleteGlobalConfigPolicies = <
-  TData = AxiosResponse<V1DeleteGlobalConfigPoliciesResponse>,
->(
-  workloadType: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/config-policies/global/${workloadType}`, options);
-};
+export const deleteGlobalConfigPolicies = <TData = AxiosResponse<V1DeleteGlobalConfigPoliciesResponse>>(
+    workloadType: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/config-policies/global/${workloadType}`,options
+    );
+  }
 
 /**
  * @summary Add or update global task config policies.
  */
 export const putGlobalConfigPolicies = <TData = AxiosResponse<V1PutGlobalConfigPoliciesResponse>>(
-  workloadType: string,
-  v1PutGlobalConfigPoliciesRequest: V1PutGlobalConfigPoliciesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(
-    `/api/v1/config-policies/global/${workloadType}`,
-    v1PutGlobalConfigPoliciesRequest,
-    options,
-  );
-};
+    workloadType: string,
+    v1PutGlobalConfigPoliciesRequest: V1PutGlobalConfigPoliciesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/config-policies/global/${workloadType}`,
+      v1PutGlobalConfigPoliciesRequest,options
+    );
+  }
 
 /**
  * @summary Get workspace task config policies.
  */
-export const getWorkspaceConfigPolicies = <
-  TData = AxiosResponse<V1GetWorkspaceConfigPoliciesResponse>,
->(
-  workspaceId: number,
-  workloadType: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/config-policies/workspaces/${workspaceId}/${workloadType}`, options);
-};
+export const getWorkspaceConfigPolicies = <TData = AxiosResponse<V1GetWorkspaceConfigPoliciesResponse>>(
+    workspaceId: number,
+    workloadType: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/config-policies/workspaces/${workspaceId}/${workloadType}`,options
+    );
+  }
 
 /**
  * @summary Delete workspace task config policies.
  */
-export const deleteWorkspaceConfigPolicies = <
-  TData = AxiosResponse<V1DeleteWorkspaceConfigPoliciesResponse>,
->(
-  workspaceId: number,
-  workloadType: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/config-policies/workspaces/${workspaceId}/${workloadType}`, options);
-};
+export const deleteWorkspaceConfigPolicies = <TData = AxiosResponse<V1DeleteWorkspaceConfigPoliciesResponse>>(
+    workspaceId: number,
+    workloadType: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/config-policies/workspaces/${workspaceId}/${workloadType}`,options
+    );
+  }
 
 /**
  * @summary Add or update workspace task config policies.
  */
-export const putWorkspaceConfigPolicies = <
-  TData = AxiosResponse<V1PutWorkspaceConfigPoliciesResponse>,
->(
-  workspaceId: number,
-  workloadType: string,
-  v1PutWorkspaceConfigPoliciesRequest: V1PutWorkspaceConfigPoliciesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(
-    `/api/v1/config-policies/workspaces/${workspaceId}/${workloadType}`,
-    v1PutWorkspaceConfigPoliciesRequest,
-    options,
-  );
-};
+export const putWorkspaceConfigPolicies = <TData = AxiosResponse<V1PutWorkspaceConfigPoliciesResponse>>(
+    workspaceId: number,
+    workloadType: string,
+    v1PutWorkspaceConfigPoliciesRequest: V1PutWorkspaceConfigPoliciesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/config-policies/workspaces/${workspaceId}/${workloadType}`,
+      v1PutWorkspaceConfigPoliciesRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of unique experiment labels (sorted by popularity).
  */
 export const getExperimentLabels = <TData = AxiosResponse<V1GetExperimentLabelsResponse>>(
-  params?: GetExperimentLabelsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiment/labels`, {
+    params?: GetExperimentLabelsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiment/labels`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a list of experiments.
  */
 export const getExperiments = <TData = AxiosResponse<V1GetExperimentsResponse>>(
-  params?: GetExperimentsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments`, {
+    params?: GetExperimentsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Create an experiment.
  */
 export const createExperiment = <TData = AxiosResponse<V1CreateExperimentResponse>>(
-  v1CreateExperimentRequest: V1CreateExperimentRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments`, v1CreateExperimentRequest, options);
-};
+    v1CreateExperimentRequest: V1CreateExperimentRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments`,
+      v1CreateExperimentRequest,options
+    );
+  }
 
 /**
  * @summary Get experiments with grouping and search syntax
  */
 export const searchExperiments = <TData = AxiosResponse<V1SearchExperimentsResponse>>(
-  v1SearchExperimentsRequest: V1SearchExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments-search`, v1SearchExperimentsRequest, options);
-};
+    v1SearchExperimentsRequest: V1SearchExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments-search`,
+      v1SearchExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Put an experiment by external id.
  */
 export const putExperiment = <TData = AxiosResponse<V1PutExperimentResponse>>(
-  externalExperimentId: string,
-  v1CreateExperimentRequest: V1CreateExperimentRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(
-    `/api/v1/experiments/by-external-id/${externalExperimentId}`,
-    v1CreateExperimentRequest,
-    options,
-  );
-};
+    externalExperimentId: string,
+    v1CreateExperimentRequest: V1CreateExperimentRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/experiments/by-external-id/${externalExperimentId}`,
+      v1CreateExperimentRequest,options
+    );
+  }
 
 /**
  * @summary Continues an experiment either to make the existing experiment train longer
 or to retry it.
  */
 export const continueExperiment = <TData = AxiosResponse<V1ContinueExperimentResponse>>(
-  v1ContinueExperimentRequest: V1ContinueExperimentRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/continue`, v1ContinueExperimentRequest, options);
-};
+    v1ContinueExperimentRequest: V1ContinueExperimentRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/continue`,
+      v1ContinueExperimentRequest,options
+    );
+  }
 
 /**
  * @summary Get the set of metric names recorded for a list of experiments.
  */
 export const expMetricNames = <TData = AxiosResponse<ExpMetricNames200>>(
-  params: ExpMetricNamesParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/metrics-stream/metric-names`, {
+    params: ExpMetricNamesParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/metrics-stream/metric-names`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Patch an experiment's fields.
  */
 export const patchExperiment = <TData = AxiosResponse<V1PatchExperimentResponse>>(
-  v1PatchExperiment: V1PatchExperiment,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/experiments/experiment.id}`, v1PatchExperiment, options);
-};
+    v1PatchExperiment: V1PatchExperiment, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/experiments/experiment.id}`,
+      v1PatchExperiment,options
+    );
+  }
 
 /**
  * @summary Get the requested experiment.
  */
 export const getExperiment = <TData = AxiosResponse<V1GetExperimentResponse>>(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}`, options);
-};
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}`,options
+    );
+  }
 
 /**
  * @summary Delete the requested experiment.
  */
 export const deleteExperiment = <TData = AxiosResponse<V1DeleteExperimentResponse>>(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/experiments/${experimentId}`, options);
-};
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/experiments/${experimentId}`,options
+    );
+  }
 
 /**
  * @summary Get one file content of model definition of an experiment.
  */
 export const getModelDefFile = <TData = AxiosResponse<V1GetModelDefFileResponse>>(
-  experimentId: number,
-  v1GetModelDefFileRequest: V1GetModelDefFileRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${experimentId}/file`, v1GetModelDefFileRequest, options);
-};
+    experimentId: number,
+    v1GetModelDefFileRequest: V1GetModelDefFileRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${experimentId}/file`,
+      v1GetModelDefFileRequest,options
+    );
+  }
 
 /**
  * @summary Get the model definition file tree of an experiment.
  */
 export const getModelDefTree = <TData = AxiosResponse<V1GetModelDefTreeResponse>>(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/file_tree`, options);
-};
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/file_tree`,options
+    );
+  }
 
 /**
  * @summary Delete a label from the experiment.
  */
 export const deleteExperimentLabel = <TData = AxiosResponse<V1DeleteExperimentLabelResponse>>(
-  experimentId: number,
-  label: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/experiments/${experimentId}/labels/${label}`, options);
-};
+    experimentId: number,
+    label: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/experiments/${experimentId}/labels/${label}`,options
+    );
+  }
 
 /**
  * @summary Put a new label on the experiment.
  */
 export const putExperimentLabel = <TData = AxiosResponse<V1PutExperimentLabelResponse>>(
-  experimentId: number,
-  label: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/experiments/${experimentId}/labels/${label}`, undefined, options);
-};
+    experimentId: number,
+    label: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/experiments/${experimentId}/labels/${label}`,undefined,options
+    );
+  }
 
 /**
  * @summary Get the milestones (in batches processed) at which a metric is recorded by
 an experiment.
  */
 export const metricBatches = <TData = AxiosResponse<MetricBatches200>>(
-  experimentId: number,
-  params: MetricBatchesParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/metrics-stream/batches`, {
+    experimentId: number,
+    params: MetricBatchesParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/metrics-stream/batches`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a sample of the metrics over time for a sample of the trials.
  */
 export const trialsSample = <TData = AxiosResponse<TrialsSample200>>(
-  experimentId: number,
-  params: TrialsSampleParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/metrics-stream/trials-sample`, {
+    experimentId: number,
+    params: TrialsSampleParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/metrics-stream/trials-sample`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a snapshot of a metric across all trials at a certain point of
 progress.
  */
 export const trialsSnapshot = <TData = AxiosResponse<TrialsSnapshot200>>(
-  experimentId: number,
-  params: TrialsSnapshotParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/metrics-stream/trials-snapshot`, {
+    experimentId: number,
+    params: TrialsSnapshotParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/metrics-stream/trials-snapshot`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get the model definition of an experiment.
  */
 export const getModelDef = <TData = AxiosResponse<V1GetModelDefResponse>>(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/model_def`, options);
-};
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/model_def`,options
+    );
+  }
 
 /**
  * @summary Move an experiment into a project.
  */
 export const moveExperiment = <TData = AxiosResponse<V1MoveExperimentResponse>>(
-  experimentId: number,
-  v1MoveExperimentRequest: V1MoveExperimentRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${experimentId}/move`, v1MoveExperimentRequest, options);
-};
+    experimentId: number,
+    v1MoveExperimentRequest: V1MoveExperimentRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${experimentId}/move`,
+      v1MoveExperimentRequest,options
+    );
+  }
 
 /**
  * @summary Retain logs for an experiment.
  */
 export const putExperimentRetainLogs = <TData = AxiosResponse<V1PutExperimentRetainLogsResponse>>(
-  experimentId: number,
-  v1PutExperimentRetainLogsRequest: V1PutExperimentRetainLogsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(
-    `/api/v1/experiments/${experimentId}/retain_logs`,
-    v1PutExperimentRetainLogsRequest,
-    options,
-  );
-};
+    experimentId: number,
+    v1PutExperimentRetainLogsRequest: V1PutExperimentRetainLogsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/experiments/${experimentId}/retain_logs`,
+      v1PutExperimentRetainLogsRequest,options
+    );
+  }
 
 /**
  * @summary Get the best searcher validation for an experiment by the given metric.
  */
-export const getBestSearcherValidationMetric = <
-  TData = AxiosResponse<V1GetBestSearcherValidationMetricResponse>,
->(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(
-    `/api/v1/experiments/${experimentId}/searcher/best_searcher_validation_metric`,
-    options,
-  );
-};
+export const getBestSearcherValidationMetric = <TData = AxiosResponse<V1GetBestSearcherValidationMetricResponse>>(
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/searcher/best_searcher_validation_metric`,options
+    );
+  }
 
 /**
  * @summary Delete tensorboard files.
  */
 export const deleteTensorboardFiles = <TData = AxiosResponse<V1DeleteTensorboardFilesResponse>>(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/experiments/${experimentId}/tensorboard-files`, options);
-};
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/experiments/${experimentId}/tensorboard-files`,options
+    );
+  }
 
 /**
  * @summary Get the list of trials for an experiment.
  */
 export const getExperimentTrials = <TData = AxiosResponse<V1GetExperimentTrialsResponse>>(
-  experimentId: number,
-  params?: GetExperimentTrialsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/trials`, {
+    experimentId: number,
+    params?: GetExperimentTrialsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/trials`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get the validation history for an experiment.
  */
-export const getExperimentValidationHistory = <
-  TData = AxiosResponse<V1GetExperimentValidationHistoryResponse>,
->(
-  experimentId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${experimentId}/validation-history`, options);
-};
+export const getExperimentValidationHistory = <TData = AxiosResponse<V1GetExperimentValidationHistoryResponse>>(
+    experimentId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${experimentId}/validation-history`,options
+    );
+  }
 
 /**
  * @summary Activate an experiment.
  */
 export const activateExperiment = <TData = AxiosResponse<V1ActivateExperimentResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${id}/activate`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${id}/activate`,undefined,options
+    );
+  }
 
 /**
  * @summary Archive an experiment.
  */
 export const archiveExperiment = <TData = AxiosResponse<V1ArchiveExperimentResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${id}/archive`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${id}/archive`,undefined,options
+    );
+  }
 
 /**
  * @summary Cancel an experiment.
  */
 export const cancelExperiment = <TData = AxiosResponse<V1CancelExperimentResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${id}/cancel`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${id}/cancel`,undefined,options
+    );
+  }
 
 /**
  * @summary Get a list of checkpoints for an experiment.
  */
 export const getExperimentCheckpoints = <TData = AxiosResponse<V1GetExperimentCheckpointsResponse>>(
-  id: number,
-  params?: GetExperimentCheckpointsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/experiments/${id}/checkpoints`, {
+    id: number,
+    params?: GetExperimentCheckpointsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/experiments/${id}/checkpoints`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Kill an experiment.
  */
 export const killExperiment = <TData = AxiosResponse<V1KillExperimentResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${id}/kill`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${id}/kill`,undefined,options
+    );
+  }
 
 /**
  * @summary Pause an experiment.
  */
 export const pauseExperiment = <TData = AxiosResponse<V1PauseExperimentResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${id}/pause`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${id}/pause`,undefined,options
+    );
+  }
 
 /**
  * @summary Unarchive an experiment.
  */
 export const unarchiveExperiment = <TData = AxiosResponse<V1UnarchiveExperimentResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/experiments/${id}/unarchive`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/experiments/${id}/unarchive`,undefined,options
+    );
+  }
 
 /**
  * @summary Create an experiment.
  */
 export const createGenericTask = <TData = AxiosResponse<V1CreateGenericTaskResponse>>(
-  v1CreateGenericTaskRequest: V1CreateGenericTaskRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/generic-tasks`, v1CreateGenericTaskRequest, options);
-};
+    v1CreateGenericTaskRequest: V1CreateGenericTaskRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/generic-tasks`,
+      v1CreateGenericTaskRequest,options
+    );
+  }
 
 /**
  * @summary Create a group with optional members on creation.
  */
 export const createGroup = <TData = AxiosResponse<V1CreateGroupResponse>>(
-  v1CreateGroupRequest: V1CreateGroupRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/groups`, v1CreateGroupRequest, options);
-};
+    v1CreateGroupRequest: V1CreateGroupRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/groups`,
+      v1CreateGroupRequest,options
+    );
+  }
 
 /**
  * @summary Search for groups with optional filters.
  */
 export const getGroups = <TData = AxiosResponse<V1GetGroupsResponse>>(
-  v1GetGroupsRequest: V1GetGroupsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/groups/search`, v1GetGroupsRequest, options);
-};
+    v1GetGroupsRequest: V1GetGroupsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/groups/search`,
+      v1GetGroupsRequest,options
+    );
+  }
 
 /**
  * @summary Get a group by id.
  */
 export const getGroup = <TData = AxiosResponse<V1GetGroupResponse>>(
-  groupId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/groups/${groupId}`, options);
-};
+    groupId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/groups/${groupId}`,options
+    );
+  }
 
 /**
  * @summary Remove a group.
  */
 export const deleteGroup = <TData = AxiosResponse<V1DeleteGroupResponse>>(
-  groupId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/groups/${groupId}`, options);
-};
+    groupId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/groups/${groupId}`,options
+    );
+  }
 
 /**
  * @summary Update group info.
  */
 export const updateGroup = <TData = AxiosResponse<V1UpdateGroupResponse>>(
-  groupId: number,
-  v1UpdateGroupRequest: V1UpdateGroupRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/groups/${groupId}`, v1UpdateGroupRequest, options);
-};
+    groupId: number,
+    v1UpdateGroupRequest: V1UpdateGroupRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/groups/${groupId}`,
+      v1UpdateGroupRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of jobs in queue.
  */
 export const getJobs = <TData = AxiosResponse<V1GetJobsResponse>>(
-  params?: GetJobsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/job-queues`, {
+    params?: GetJobsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/job-queues`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Control the job queues.
  */
 export const updateJobQueue = <TData = AxiosResponse<V1UpdateJobQueueResponse>>(
-  v1UpdateJobQueueRequest: V1UpdateJobQueueRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/job-queues`, v1UpdateJobQueueRequest, options);
-};
+    v1UpdateJobQueueRequest: V1UpdateJobQueueRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/job-queues`,
+      v1UpdateJobQueueRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of jobs in queue.
  */
 export const getJobsV2 = <TData = AxiosResponse<V1GetJobsV2Response>>(
-  params?: GetJobsV2Params,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/job-queues-v2`, {
+    params?: GetJobsV2Params, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/job-queues-v2`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get job queue stats for a resource pool.
  */
 export const getJobQueueStats = <TData = AxiosResponse<V1GetJobQueueStatsResponse>>(
-  params?: GetJobQueueStatsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/job-queues/stats`, {
+    params?: GetJobQueueStatsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/job-queues/stats`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a list of all Kubernetes cluster names.
  */
-export const getKubernetesResourceManagers = <
-  TData = AxiosResponse<V1GetKubernetesResourceManagersResponse>,
->(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/k8s-resource-managers`, options);
-};
+export const getKubernetesResourceManagers = <TData = AxiosResponse<V1GetKubernetesResourceManagersResponse>>(
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/k8s-resource-managers`,options
+    );
+  }
 
 /**
  * @summary Get master information.
  */
 export const getMaster = <TData = AxiosResponse<V1GetMasterResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/master`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/master`,options
+    );
+  }
 
 /**
  * @summary Get the currently configured cluster-wide message.
  */
 export const getClusterMessage = <TData = AxiosResponse<V1GetClusterMessageResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/master/cluster_message`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/master/cluster_message`,options
+    );
+  }
 
 /**
  * @summary Clear the cluster-wide message shown to all users.
  */
 export const deleteClusterMessage = <TData = AxiosResponse<V1DeleteClusterMessageResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/master/cluster_message`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/master/cluster_message`,options
+    );
+  }
 
 /**
  * @summary Set the cluster-wide message shown to users. Only one can be set at at
 time, so any existing message will be disabled.
  */
 export const setClusterMessage = <TData = AxiosResponse<V1SetClusterMessageResponse>>(
-  v1SetClusterMessageRequest: V1SetClusterMessageRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/master/cluster_message`, v1SetClusterMessageRequest, options);
-};
+    v1SetClusterMessageRequest: V1SetClusterMessageRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/master/cluster_message`,
+      v1SetClusterMessageRequest,options
+    );
+  }
 
 /**
  * @summary Get master config.
  */
 export const getMasterConfig = <TData = AxiosResponse<V1GetMasterConfigResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/master/config`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/master/config`,options
+    );
+  }
 
 /**
  * @summary Patch master config.
  */
 export const patchMasterConfig = <TData = AxiosResponse<V1PatchMasterConfigResponse>>(
-  v1PatchMasterConfigRequest: V1PatchMasterConfigRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/master/config`, v1PatchMasterConfigRequest, options);
-};
+    v1PatchMasterConfigRequest: V1PatchMasterConfigRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/master/config`,
+      v1PatchMasterConfigRequest,options
+    );
+  }
 
 /**
  * @summary Stream master logs.
  */
 export const masterLogs = <TData = AxiosResponse<MasterLogs200>>(
-  params?: MasterLogsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/master/logs`, {
+    params?: MasterLogsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/master/logs`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get telemetry information.
  */
 export const getTelemetry = <TData = AxiosResponse<V1GetTelemetryResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/master/telemetry`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/master/telemetry`,options
+    );
+  }
 
 /**
  * @summary Get the current user.
  */
 export const getMe = <TData = AxiosResponse<V1GetMeResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/me`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/me`,options
+    );
+  }
 
 /**
  * @summary Get a list of unique model labels (sorted by popularity).
  */
 export const getModelLabels = <TData = AxiosResponse<V1GetModelLabelsResponse>>(
-  params?: GetModelLabelsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/model/labels`, {
+    params?: GetModelLabelsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/model/labels`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a list of models.
  */
 export const getModels = <TData = AxiosResponse<V1GetModelsResponse>>(
-  params?: GetModelsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/models`, {
+    params?: GetModelsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/models`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Create a model in the registry.
  */
 export const postModel = <TData = AxiosResponse<V1PostModelResponse>>(
-  v1PostModelRequest: V1PostModelRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/models`, v1PostModelRequest, options);
-};
+    v1PostModelRequest: V1PostModelRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/models`,
+      v1PostModelRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested model.
  */
 export const getModel = <TData = AxiosResponse<V1GetModelResponse>>(
-  modelName: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/models/${modelName}`, options);
-};
+    modelName: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/models/${modelName}`,options
+    );
+  }
 
 /**
  * @summary Delete a model
  */
 export const deleteModel = <TData = AxiosResponse<V1DeleteModelResponse>>(
-  modelName: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/models/${modelName}`, options);
-};
+    modelName: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/models/${modelName}`,options
+    );
+  }
 
 /**
  * @summary Patch a model's fields.
  */
 export const patchModel = <TData = AxiosResponse<V1PatchModelResponse>>(
-  modelName: string,
-  v1PatchModel: V1PatchModel,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/models/${modelName}`, v1PatchModel, options);
-};
+    modelName: string,
+    v1PatchModel: V1PatchModel, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/models/${modelName}`,
+      v1PatchModel,options
+    );
+  }
 
 /**
  * @summary Archive a model
  */
 export const archiveModel = <TData = AxiosResponse<V1ArchiveModelResponse>>(
-  modelName: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/models/${modelName}/archive`, undefined, options);
-};
+    modelName: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/models/${modelName}/archive`,undefined,options
+    );
+  }
 
 /**
  * @summary Move a model into a workspace
  */
 export const moveModel = <TData = AxiosResponse<V1MoveModelResponse>>(
-  modelName: string,
-  v1MoveModelRequest: V1MoveModelRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/models/${modelName}/move`, v1MoveModelRequest, options);
-};
+    modelName: string,
+    v1MoveModelRequest: V1MoveModelRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/models/${modelName}/move`,
+      v1MoveModelRequest,options
+    );
+  }
 
 /**
  * @summary Unarchive a model
  */
 export const unarchiveModel = <TData = AxiosResponse<V1UnarchiveModelResponse>>(
-  modelName: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/models/${modelName}/unarchive`, undefined, options);
-};
+    modelName: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/models/${modelName}/unarchive`,undefined,options
+    );
+  }
 
 /**
  * @summary Get a list of versions for the requested model.
  */
 export const getModelVersions = <TData = AxiosResponse<V1GetModelVersionsResponse>>(
-  modelName: string,
-  params?: GetModelVersionsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/models/${modelName}/versions`, {
+    modelName: string,
+    params?: GetModelVersionsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/models/${modelName}/versions`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Create a model version.
  */
 export const postModelVersion = <TData = AxiosResponse<V1PostModelVersionResponse>>(
-  modelName: string,
-  v1PostModelVersionRequest: V1PostModelVersionRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/models/${modelName}/versions`, v1PostModelVersionRequest, options);
-};
+    modelName: string,
+    v1PostModelVersionRequest: V1PostModelVersionRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/models/${modelName}/versions`,
+      v1PostModelVersionRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested model version.
  */
 export const getModelVersion = <TData = AxiosResponse<V1GetModelVersionResponse>>(
-  modelName: string,
-  modelVersionNum: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/models/${modelName}/versions/${modelVersionNum}`, options);
-};
+    modelName: string,
+    modelVersionNum: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/models/${modelName}/versions/${modelVersionNum}`,options
+    );
+  }
 
 /**
  * @summary Delete a model version
  */
 export const deleteModelVersion = <TData = AxiosResponse<V1DeleteModelVersionResponse>>(
-  modelName: string,
-  modelVersionNum: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/models/${modelName}/versions/${modelVersionNum}`, options);
-};
+    modelName: string,
+    modelVersionNum: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/models/${modelName}/versions/${modelVersionNum}`,options
+    );
+  }
 
 /**
  * @summary Patch a model version's fields.
  */
 export const patchModelVersion = <TData = AxiosResponse<V1PatchModelVersionResponse>>(
-  modelName: string,
-  modelVersionNum: number,
-  v1PatchModelVersion: V1PatchModelVersion,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(
-    `/api/v1/models/${modelName}/versions/${modelVersionNum}`,
-    v1PatchModelVersion,
-    options,
-  );
-};
+    modelName: string,
+    modelVersionNum: number,
+    v1PatchModelVersion: V1PatchModelVersion, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/models/${modelName}/versions/${modelVersionNum}`,
+      v1PatchModelVersion,options
+    );
+  }
 
 /**
  * @summary Gets the metrics for all trials associated with this model version
  */
-export const getTrialMetricsByModelVersion = <
-  TData = AxiosResponse<V1GetTrialMetricsByModelVersionResponse>,
->(
-  modelName: string,
-  modelVersionNum: number,
-  params?: GetTrialMetricsByModelVersionParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/models/${modelName}/versions/${modelVersionNum}/metrics`, {
+export const getTrialMetricsByModelVersion = <TData = AxiosResponse<V1GetTrialMetricsByModelVersionResponse>>(
+    modelName: string,
+    modelVersionNum: number,
+    params?: GetTrialMetricsByModelVersionParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/models/${modelName}/versions/${modelVersionNum}/metrics`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Binds the given workpaces to new auto-created namespaces.
  */
-export const bulkAutoCreateWorkspaceNamespaceBindings = <
-  TData = AxiosResponse<V1BulkAutoCreateWorkspaceNamespaceBindingsResponse>,
->(
-  v1BulkAutoCreateWorkspaceNamespaceBindingsRequest: V1BulkAutoCreateWorkspaceNamespaceBindingsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/namespace-bindings/bulk-auto-create`,
-    v1BulkAutoCreateWorkspaceNamespaceBindingsRequest,
-    options,
-  );
-};
+export const bulkAutoCreateWorkspaceNamespaceBindings = <TData = AxiosResponse<V1BulkAutoCreateWorkspaceNamespaceBindingsResponse>>(
+    v1BulkAutoCreateWorkspaceNamespaceBindingsRequest: V1BulkAutoCreateWorkspaceNamespaceBindingsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/namespace-bindings/bulk-auto-create`,
+      v1BulkAutoCreateWorkspaceNamespaceBindingsRequest,options
+    );
+  }
 
 /**
  * @summary Gets the ids of all workspaces that are bound to the default namespace for
 atleast one cluster.
  */
-export const getWorkspacesWithDefaultNamespaceBindings = <
-  TData = AxiosResponse<V1GetWorkspacesWithDefaultNamespaceBindingsResponse>,
->(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/namespace-bindings/workspace-ids-with-default-bindings`, options);
-};
+export const getWorkspacesWithDefaultNamespaceBindings = <TData = AxiosResponse<V1GetWorkspacesWithDefaultNamespaceBindingsResponse>>(
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/namespace-bindings/workspace-ids-with-default-bindings`,options
+    );
+  }
 
 /**
  * @summary Get a list of notebooks.
  */
 export const getNotebooks = <TData = AxiosResponse<V1GetNotebooksResponse>>(
-  params?: GetNotebooksParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/notebooks`, {
+    params?: GetNotebooksParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/notebooks`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Launch a notebook.
  */
 export const launchNotebook = <TData = AxiosResponse<V1LaunchNotebookResponse>>(
-  v1LaunchNotebookRequest: V1LaunchNotebookRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/notebooks`, v1LaunchNotebookRequest, options);
-};
+    v1LaunchNotebookRequest: V1LaunchNotebookRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/notebooks`,
+      v1LaunchNotebookRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested notebook.
  */
 export const getNotebook = <TData = AxiosResponse<V1GetNotebookResponse>>(
-  notebookId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/notebooks/${notebookId}`, options);
-};
+    notebookId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/notebooks/${notebookId}`,options
+    );
+  }
 
 /**
  * @summary Kill the requested notebook.
  */
 export const killNotebook = <TData = AxiosResponse<V1KillNotebookResponse>>(
-  notebookId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/notebooks/${notebookId}/kill`, undefined, options);
-};
+    notebookId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/notebooks/${notebookId}/kill`,undefined,options
+    );
+  }
 
 /**
  * @summary Send notebook idle data to master
  */
 export const idleNotebook = <TData = AxiosResponse<V1IdleNotebookResponse>>(
-  notebookId: string,
-  v1IdleNotebookRequest: V1IdleNotebookRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/notebooks/${notebookId}/report_idle`, v1IdleNotebookRequest, options);
-};
+    notebookId: string,
+    v1IdleNotebookRequest: V1IdleNotebookRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/notebooks/${notebookId}/report_idle`,
+      v1IdleNotebookRequest,options
+    );
+  }
 
 /**
  * @summary Set the priority of the requested notebook.
  */
 export const setNotebookPriority = <TData = AxiosResponse<V1SetNotebookPriorityResponse>>(
-  notebookId: string,
-  v1SetNotebookPriorityRequest: V1SetNotebookPriorityRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/notebooks/${notebookId}/set_priority`,
-    v1SetNotebookPriorityRequest,
-    options,
-  );
-};
+    notebookId: string,
+    v1SetNotebookPriorityRequest: V1SetNotebookPriorityRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/notebooks/${notebookId}/set_priority`,
+      v1SetNotebookPriorityRequest,options
+    );
+  }
 
 /**
  * @summary List all permissions for the logged in user in all scopes.
  */
 export const getPermissionsSummary = <TData = AxiosResponse<V1GetPermissionsSummaryResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/permissions/summary`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/permissions/summary`,options
+    );
+  }
 
 /**
  * @summary Preview hyperparameter search.
  */
 export const previewHPSearch = <TData = AxiosResponse<V1PreviewHPSearchResponse>>(
-  v1PreviewHPSearchRequest: V1PreviewHPSearchRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/preview-hp-search`, v1PreviewHPSearchRequest, options);
-};
+    v1PreviewHPSearchRequest: V1PreviewHPSearchRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/preview-hp-search`,
+      v1PreviewHPSearchRequest,options
+    );
+  }
 
 /**
  * @summary Get the request project by key.
  */
 export const getProjectByKey = <TData = AxiosResponse<V1GetProjectByKeyResponse>>(
-  key: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/projects/key/${key}`, options);
-};
+    key: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/projects/key/${key}`,options
+    );
+  }
 
 /**
  * @summary Get the requested project.
  */
 export const getProject = <TData = AxiosResponse<V1GetProjectResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/projects/${id}`, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/projects/${id}`,options
+    );
+  }
 
 /**
  * @summary Delete a project.
  */
 export const deleteProject = <TData = AxiosResponse<V1DeleteProjectResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/projects/${id}`, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/projects/${id}`,options
+    );
+  }
 
 /**
  * @summary Update a project.
  */
 export const patchProject = <TData = AxiosResponse<V1PatchProjectResponse>>(
-  id: number,
-  v1PatchProject: V1PatchProject,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/projects/${id}`, v1PatchProject, options);
-};
+    id: number,
+    v1PatchProject: V1PatchProject, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/projects/${id}`,
+      v1PatchProject,options
+    );
+  }
 
 /**
  * @summary Archive a project.
  */
 export const archiveProject = <TData = AxiosResponse<V1ArchiveProjectResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/projects/${id}/archive`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${id}/archive`,undefined,options
+    );
+  }
 
 /**
  * @summary Get a list of columns for experiment list table.
  */
 export const getProjectColumns = <TData = AxiosResponse<V1GetProjectColumnsResponse>>(
-  id: number,
-  params?: GetProjectColumnsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/projects/${id}/columns`, {
+    id: number,
+    params?: GetProjectColumnsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/projects/${id}/columns`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get metrics range for a project.
  */
-export const getProjectNumericMetricsRange = <
-  TData = AxiosResponse<V1GetProjectNumericMetricsRangeResponse>,
->(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/projects/${id}/experiments/metric-ranges`, options);
-};
+export const getProjectNumericMetricsRange = <TData = AxiosResponse<V1GetProjectNumericMetricsRangeResponse>>(
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/projects/${id}/experiments/metric-ranges`,options
+    );
+  }
 
 /**
  * @summary Unarchive a project.
  */
 export const unarchiveProject = <TData = AxiosResponse<V1UnarchiveProjectResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/projects/${id}/unarchive`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${id}/unarchive`,undefined,options
+    );
+  }
 
 /**
  * @summary Activate multiple experiments.
  */
 export const activateExperiments = <TData = AxiosResponse<V1ActivateExperimentsResponse>>(
-  projectId: number,
-  v1ActivateExperimentsRequest: V1ActivateExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/activate`,
-    v1ActivateExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1ActivateExperimentsRequest: V1ActivateExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/activate`,
+      v1ActivateExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Archive multiple experiments.
  */
 export const archiveExperiments = <TData = AxiosResponse<V1ArchiveExperimentsResponse>>(
-  projectId: number,
-  v1ArchiveExperimentsRequest: V1ArchiveExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/archive`,
-    v1ArchiveExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1ArchiveExperimentsRequest: V1ArchiveExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/archive`,
+      v1ArchiveExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Cancel multiple experiments.
  */
 export const cancelExperiments = <TData = AxiosResponse<V1CancelExperimentsResponse>>(
-  projectId: number,
-  v1CancelExperimentsRequest: V1CancelExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/cancel`,
-    v1CancelExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1CancelExperimentsRequest: V1CancelExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/cancel`,
+      v1CancelExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Delete multiple experiments.
  */
 export const deleteExperiments = <TData = AxiosResponse<V1DeleteExperimentsResponse>>(
-  projectId: number,
-  v1DeleteExperimentsRequest: V1DeleteExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/projects/${projectId}/experiments/delete`, {
-    data: v1DeleteExperimentsRequest,
-    ...options,
-  });
-};
+    projectId: number,
+    v1DeleteExperimentsRequest: V1DeleteExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/projects/${projectId}/experiments/delete`,{data:
+      v1DeleteExperimentsRequest, ...options}
+    );
+  }
 
 /**
  * @summary Kill multiple experiments.
  */
 export const killExperiments = <TData = AxiosResponse<V1KillExperimentsResponse>>(
-  projectId: number,
-  v1KillExperimentsRequest: V1KillExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/kill`,
-    v1KillExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1KillExperimentsRequest: V1KillExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/kill`,
+      v1KillExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Move multiple experiments into a project.
  */
 export const moveExperiments = <TData = AxiosResponse<V1MoveExperimentsResponse>>(
-  projectId: number,
-  v1MoveExperimentsRequest: V1MoveExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/move`,
-    v1MoveExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1MoveExperimentsRequest: V1MoveExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/move`,
+      v1MoveExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Pause multiple experiments.
  */
 export const pauseExperiments = <TData = AxiosResponse<V1PauseExperimentsResponse>>(
-  projectId: number,
-  v1PauseExperimentsRequest: V1PauseExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/pause`,
-    v1PauseExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1PauseExperimentsRequest: V1PauseExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/pause`,
+      v1PauseExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Retain logs for an experiment.
  */
 export const putExperimentsRetainLogs = <TData = AxiosResponse<V1PutExperimentsRetainLogsResponse>>(
-  projectId: number,
-  v1PutExperimentsRetainLogsRequest: V1PutExperimentsRetainLogsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(
-    `/api/v1/projects/${projectId}/experiments/retain_logs`,
-    v1PutExperimentsRetainLogsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1PutExperimentsRetainLogsRequest: V1PutExperimentsRetainLogsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/projects/${projectId}/experiments/retain_logs`,
+      v1PutExperimentsRetainLogsRequest,options
+    );
+  }
 
 /**
  * @summary Unarchive multiple experiments.
  */
 export const unarchiveExperiments = <TData = AxiosResponse<V1UnarchiveExperimentsResponse>>(
-  projectId: number,
-  v1UnarchiveExperimentsRequest: V1UnarchiveExperimentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/projects/${projectId}/experiments/unarchive`,
-    v1UnarchiveExperimentsRequest,
-    options,
-  );
-};
+    projectId: number,
+    v1UnarchiveExperimentsRequest: V1UnarchiveExperimentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/experiments/unarchive`,
+      v1UnarchiveExperimentsRequest,options
+    );
+  }
 
 /**
  * @summary Retrieve run metadata values for a given string typed key within
 a given project.
  */
 export const getMetadataValues = <TData = AxiosResponse<V1GetMetadataValuesResponse>>(
-  projectId: number,
-  key: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/projects/${projectId}/metadata/${key}`, options);
-};
+    projectId: number,
+    key: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/projects/${projectId}/metadata/${key}`,options
+    );
+  }
 
 /**
  * @summary Move a project into a workspace.
  */
 export const moveProject = <TData = AxiosResponse<V1MoveProjectResponse>>(
-  projectId: number,
-  v1MoveProjectRequest: V1MoveProjectRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/projects/${projectId}/move`, v1MoveProjectRequest, options);
-};
+    projectId: number,
+    v1MoveProjectRequest: V1MoveProjectRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/move`,
+      v1MoveProjectRequest,options
+    );
+  }
 
 /**
  * @summary Add a note to a project.
  */
 export const addProjectNote = <TData = AxiosResponse<V1AddProjectNoteResponse>>(
-  projectId: number,
-  v1Note: V1Note,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/projects/${projectId}/notes`, v1Note, options);
-};
+    projectId: number,
+    v1Note: V1Note, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/projects/${projectId}/notes`,
+      v1Note,options
+    );
+  }
 
 /**
  * @summary Set project notes.
  */
 export const putProjectNotes = <TData = AxiosResponse<V1PutProjectNotesResponse>>(
-  projectId: number,
-  v1PutProjectNotesRequest: V1PutProjectNotesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/projects/${projectId}/notes`, v1PutProjectNotesRequest, options);
-};
+    projectId: number,
+    v1PutProjectNotesRequest: V1PutProjectNotesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/projects/${projectId}/notes`,
+      v1PutProjectNotesRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of all resource pools from the cluster.
  */
 export const getResourcePools = <TData = AxiosResponse<V1GetResourcePoolsResponse>>(
-  params?: GetResourcePoolsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/resource-pools`, {
+    params?: GetResourcePoolsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/resource-pools`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary List all workspaces bound to a specific resource pool
  */
 export const listWorkspacesBoundToRP = <TData = AxiosResponse<V1ListWorkspacesBoundToRPResponse>>(
-  resourcePoolName: string,
-  params?: ListWorkspacesBoundToRPParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`, {
+    resourcePoolName: string,
+    params?: ListWorkspacesBoundToRPParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Unbind resource pool to workspace
  */
 export const unbindRPFromWorkspace = <TData = AxiosResponse<V1UnbindRPFromWorkspaceResponse>>(
-  resourcePoolName: string,
-  v1UnbindRPFromWorkspaceRequest: V1UnbindRPFromWorkspaceRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`, {
-    data: v1UnbindRPFromWorkspaceRequest,
-    ...options,
-  });
-};
+    resourcePoolName: string,
+    v1UnbindRPFromWorkspaceRequest: V1UnbindRPFromWorkspaceRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`,{data:
+      v1UnbindRPFromWorkspaceRequest, ...options}
+    );
+  }
 
 /**
  * @summary Bind resource pool to workspace
  */
 export const bindRPToWorkspace = <TData = AxiosResponse<V1BindRPToWorkspaceResponse>>(
-  resourcePoolName: string,
-  v1BindRPToWorkspaceRequest: V1BindRPToWorkspaceRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`,
-    v1BindRPToWorkspaceRequest,
-    options,
-  );
-};
+    resourcePoolName: string,
+    v1BindRPToWorkspaceRequest: V1BindRPToWorkspaceRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`,
+      v1BindRPToWorkspaceRequest,options
+    );
+  }
 
 /**
  * @summary Overwrite resource pool - workspace bindings
  */
-export const overwriteRPWorkspaceBindings = <
-  TData = AxiosResponse<V1OverwriteRPWorkspaceBindingsResponse>,
->(
-  resourcePoolName: string,
-  v1OverwriteRPWorkspaceBindingsRequest: V1OverwriteRPWorkspaceBindingsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(
-    `/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`,
-    v1OverwriteRPWorkspaceBindingsRequest,
-    options,
-  );
-};
+export const overwriteRPWorkspaceBindings = <TData = AxiosResponse<V1OverwriteRPWorkspaceBindingsResponse>>(
+    resourcePoolName: string,
+    v1OverwriteRPWorkspaceBindingsRequest: V1OverwriteRPWorkspaceBindingsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/resource-pools/${resourcePoolName}/workspace-bindings`,
+      v1OverwriteRPWorkspaceBindingsRequest,options
+    );
+  }
 
 /**
  * @summary Get an aggregated view of resource allocation during the given time period.
  */
-export const resourceAllocationAggregated = <
-  TData = AxiosResponse<V1ResourceAllocationAggregatedResponse>,
->(
-  params: ResourceAllocationAggregatedParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/resources/allocation/aggregated`, {
+export const resourceAllocationAggregated = <TData = AxiosResponse<V1ResourceAllocationAggregatedResponse>>(
+    params: ResourceAllocationAggregatedParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/resources/allocation/aggregated`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a detailed view of resource allocation during the given time period.
  */
 export const resourceAllocationRaw = <TData = AxiosResponse<V1ResourceAllocationRawResponse>>(
-  params: ResourceAllocationRawParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/resources/allocation/raw`, {
+    params: ResourceAllocationRawParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/resources/allocation/raw`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary AssignRoles adds a set of role assignments to the system.
  */
 export const assignRoles = <TData = AxiosResponse<V1AssignRolesResponse>>(
-  v1AssignRolesRequest: V1AssignRolesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/roles/add-assignments`, v1AssignRolesRequest, options);
-};
+    v1AssignRolesRequest: V1AssignRolesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/roles/add-assignments`,
+      v1AssignRolesRequest,options
+    );
+  }
 
 /**
  * @summary RemoveAssignments removes a set of role assignments from the system.
  */
 export const removeAssignments = <TData = AxiosResponse<V1RemoveAssignmentsResponse>>(
-  v1RemoveAssignmentsRequest: V1RemoveAssignmentsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/roles/remove-assignments`, v1RemoveAssignmentsRequest, options);
-};
+    v1RemoveAssignmentsRequest: V1RemoveAssignmentsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/roles/remove-assignments`,
+      v1RemoveAssignmentsRequest,options
+    );
+  }
 
 /**
  * @summary ListRoles returns roles and groups/users granted that role.
  */
 export const listRoles = <TData = AxiosResponse<V1ListRolesResponse>>(
-  v1ListRolesRequest: V1ListRolesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/roles/search`, v1ListRolesRequest, options);
-};
+    v1ListRolesRequest: V1ListRolesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/roles/search`,
+      v1ListRolesRequest,options
+    );
+  }
 
 /**
  * @summary Search for roles assignable to a given scope.
  */
-export const searchRolesAssignableToScope = <
-  TData = AxiosResponse<V1SearchRolesAssignableToScopeResponse>,
->(
-  v1SearchRolesAssignableToScopeRequest: V1SearchRolesAssignableToScopeRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/roles/search/by-assignability`,
-    v1SearchRolesAssignableToScopeRequest,
-    options,
-  );
-};
+export const searchRolesAssignableToScope = <TData = AxiosResponse<V1SearchRolesAssignableToScopeResponse>>(
+    v1SearchRolesAssignableToScopeRequest: V1SearchRolesAssignableToScopeRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/roles/search/by-assignability`,
+      v1SearchRolesAssignableToScopeRequest,options
+    );
+  }
 
 /**
  * @summary Get the roles which are assigned to a group.
  */
 export const getRolesAssignedToGroup = <TData = AxiosResponse<V1GetRolesAssignedToGroupResponse>>(
-  groupId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/roles/search/by-group/${groupId}`, options);
-};
+    groupId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/roles/search/by-group/${groupId}`,options
+    );
+  }
 
 /**
  * @summary Get a set of roles with the corresponding IDs.
  */
 export const getRolesByID = <TData = AxiosResponse<V1GetRolesByIDResponse>>(
-  v1GetRolesByIDRequest: V1GetRolesByIDRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/roles/search/by-ids`, v1GetRolesByIDRequest, options);
-};
+    v1GetRolesByIDRequest: V1GetRolesByIDRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/roles/search/by-ids`,
+      v1GetRolesByIDRequest,options
+    );
+  }
 
 /**
  * @summary Get the roles which are assigned to a user.
  */
 export const getRolesAssignedToUser = <TData = AxiosResponse<V1GetRolesAssignedToUserResponse>>(
-  userId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/roles/search/by-user/${userId}`, options);
-};
+    userId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/roles/search/by-user/${userId}`,options
+    );
+  }
 
 /**
  * @summary Get groups and users assigned to a given workspace with what roles are
 assigned.
  */
-export const getGroupsAndUsersAssignedToWorkspace = <
-  TData = AxiosResponse<V1GetGroupsAndUsersAssignedToWorkspaceResponse>,
->(
-  workspaceId: number,
-  params?: GetGroupsAndUsersAssignedToWorkspaceParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/roles/workspace/${workspaceId}`, {
+export const getGroupsAndUsersAssignedToWorkspace = <TData = AxiosResponse<V1GetGroupsAndUsersAssignedToWorkspaceResponse>>(
+    workspaceId: number,
+    params?: GetGroupsAndUsersAssignedToWorkspaceParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/roles/workspace/${workspaceId}`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a list of runs.
  */
 export const searchRuns = <TData = AxiosResponse<V1SearchRunsResponse>>(
-  v1SearchRunsRequest: V1SearchRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs`, v1SearchRunsRequest, options);
-};
+    v1SearchRunsRequest: V1SearchRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs`,
+      v1SearchRunsRequest,options
+    );
+  }
 
 /**
  * @summary Archive runs.
  */
 export const archiveRuns = <TData = AxiosResponse<V1ArchiveRunsResponse>>(
-  v1ArchiveRunsRequest: V1ArchiveRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/archive`, v1ArchiveRunsRequest, options);
-};
+    v1ArchiveRunsRequest: V1ArchiveRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/archive`,
+      v1ArchiveRunsRequest,options
+    );
+  }
 
 /**
  * @summary Delete runs.
  */
 export const deleteRuns = <TData = AxiosResponse<V1DeleteRunsResponse>>(
-  v1DeleteRunsRequest: V1DeleteRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/delete`, v1DeleteRunsRequest, options);
-};
+    v1DeleteRunsRequest: V1DeleteRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/delete`,
+      v1DeleteRunsRequest,options
+    );
+  }
 
 /**
  * @summary Kill runs.
  */
 export const killRuns = <TData = AxiosResponse<V1KillRunsResponse>>(
-  v1KillRunsRequest: V1KillRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/kill`, v1KillRunsRequest, options);
-};
+    v1KillRunsRequest: V1KillRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/kill`,
+      v1KillRunsRequest,options
+    );
+  }
 
 /**
  * @summary Move runs.
  */
 export const moveRuns = <TData = AxiosResponse<V1MoveRunsResponse>>(
-  v1MoveRunsRequest: V1MoveRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/move`, v1MoveRunsRequest, options);
-};
+    v1MoveRunsRequest: V1MoveRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/move`,
+      v1MoveRunsRequest,options
+    );
+  }
 
 /**
  * @summary Pause experiment associated with provided runs.
  */
 export const pauseRuns = <TData = AxiosResponse<V1PauseRunsResponse>>(
-  v1PauseRunsRequest: V1PauseRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/pause`, v1PauseRunsRequest, options);
-};
+    v1PauseRunsRequest: V1PauseRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/pause`,
+      v1PauseRunsRequest,options
+    );
+  }
 
 /**
  * @summary Unpause experiment associated with provided runs.
  */
 export const resumeRuns = <TData = AxiosResponse<V1ResumeRunsResponse>>(
-  v1ResumeRunsRequest: V1ResumeRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/resume`, v1ResumeRunsRequest, options);
-};
+    v1ResumeRunsRequest: V1ResumeRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/resume`,
+      v1ResumeRunsRequest,options
+    );
+  }
 
 /**
  * @summary Start syncing and prepare to be able to report to a run.
 This should be called once per task that will report to the run.
  */
 export const runPrepareForReporting = <TData = AxiosResponse<V1RunPrepareForReportingResponse>>(
-  v1RunPrepareForReportingRequest: V1RunPrepareForReportingRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/start`, v1RunPrepareForReportingRequest, options);
-};
+    v1RunPrepareForReportingRequest: V1RunPrepareForReportingRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/start`,
+      v1RunPrepareForReportingRequest,options
+    );
+  }
 
 /**
  * @summary Unarchive runs.
  */
 export const unarchiveRuns = <TData = AxiosResponse<V1UnarchiveRunsResponse>>(
-  v1UnarchiveRunsRequest: V1UnarchiveRunsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/unarchive`, v1UnarchiveRunsRequest, options);
-};
+    v1UnarchiveRunsRequest: V1UnarchiveRunsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/unarchive`,
+      v1UnarchiveRunsRequest,options
+    );
+  }
 
 /**
  * @summary Get run metadata.
  */
 export const getRunMetadata = <TData = AxiosResponse<V1GetRunMetadataResponse>>(
-  runId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/runs/${runId}/metadata`, options);
-};
+    runId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/runs/${runId}/metadata`,options
+    );
+  }
 
 /**
  * @summary Update run metadata.
  */
 export const postRunMetadata = <TData = AxiosResponse<V1PostRunMetadataResponse>>(
-  runId: number,
-  v1PostRunMetadataRequest: V1PostRunMetadataRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/runs/${runId}/metadata`, v1PostRunMetadataRequest, options);
-};
+    runId: number,
+    v1PostRunMetadataRequest: V1PostRunMetadataRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/runs/${runId}/metadata`,
+      v1PostRunMetadataRequest,options
+    );
+  }
 
 /**
  * @summary Archive searches.
  */
 export const archiveSearches = <TData = AxiosResponse<V1ArchiveSearchesResponse>>(
-  v1ArchiveSearchesRequest: V1ArchiveSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/archive`, v1ArchiveSearchesRequest, options);
-};
+    v1ArchiveSearchesRequest: V1ArchiveSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/archive`,
+      v1ArchiveSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Cancel searches.
  */
 export const cancelSearches = <TData = AxiosResponse<V1CancelSearchesResponse>>(
-  v1CancelSearchesRequest: V1CancelSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/cancel`, v1CancelSearchesRequest, options);
-};
+    v1CancelSearchesRequest: V1CancelSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/cancel`,
+      v1CancelSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Delete searches.
  */
 export const deleteSearches = <TData = AxiosResponse<V1DeleteSearchesResponse>>(
-  v1DeleteSearchesRequest: V1DeleteSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/delete`, v1DeleteSearchesRequest, options);
-};
+    v1DeleteSearchesRequest: V1DeleteSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/delete`,
+      v1DeleteSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Kill searches.
  */
 export const killSearches = <TData = AxiosResponse<V1KillSearchesResponse>>(
-  v1KillSearchesRequest: V1KillSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/kill`, v1KillSearchesRequest, options);
-};
+    v1KillSearchesRequest: V1KillSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/kill`,
+      v1KillSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Move searches.
  */
 export const moveSearches = <TData = AxiosResponse<V1MoveSearchesResponse>>(
-  v1MoveSearchesRequest: V1MoveSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/move`, v1MoveSearchesRequest, options);
-};
+    v1MoveSearchesRequest: V1MoveSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/move`,
+      v1MoveSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Pause experiment associated with provided searches.
  */
 export const pauseSearches = <TData = AxiosResponse<V1PauseSearchesResponse>>(
-  v1PauseSearchesRequest: V1PauseSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/pause`, v1PauseSearchesRequest, options);
-};
+    v1PauseSearchesRequest: V1PauseSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/pause`,
+      v1PauseSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Unpause experiment associated with provided searches.
  */
 export const resumeSearches = <TData = AxiosResponse<V1ResumeSearchesResponse>>(
-  v1ResumeSearchesRequest: V1ResumeSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/resume`, v1ResumeSearchesRequest, options);
-};
+    v1ResumeSearchesRequest: V1ResumeSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/resume`,
+      v1ResumeSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Launch a tensorboard for one or more searches using bulk search filters.
  */
-export const launchTensorboardSearches = <
-  TData = AxiosResponse<V1LaunchTensorboardSearchesResponse>,
->(
-  v1LaunchTensorboardSearchesRequest: V1LaunchTensorboardSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/tensorboards`, v1LaunchTensorboardSearchesRequest, options);
-};
+export const launchTensorboardSearches = <TData = AxiosResponse<V1LaunchTensorboardSearchesResponse>>(
+    v1LaunchTensorboardSearchesRequest: V1LaunchTensorboardSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/tensorboards`,
+      v1LaunchTensorboardSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Unarchive searches.
  */
 export const unarchiveSearches = <TData = AxiosResponse<V1UnarchiveSearchesResponse>>(
-  v1UnarchiveSearchesRequest: V1UnarchiveSearchesRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/searches/unarchive`, v1UnarchiveSearchesRequest, options);
-};
+    v1UnarchiveSearchesRequest: V1UnarchiveSearchesRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/searches/unarchive`,
+      v1UnarchiveSearchesRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of shells.
  */
 export const getShells = <TData = AxiosResponse<V1GetShellsResponse>>(
-  params?: GetShellsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/shells`, {
+    params?: GetShellsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/shells`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Launch a shell.
  */
 export const launchShell = <TData = AxiosResponse<V1LaunchShellResponse>>(
-  v1LaunchShellRequest: V1LaunchShellRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/shells`, v1LaunchShellRequest, options);
-};
+    v1LaunchShellRequest: V1LaunchShellRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/shells`,
+      v1LaunchShellRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested shell.
  */
 export const getShell = <TData = AxiosResponse<V1GetShellResponse>>(
-  shellId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/shells/${shellId}`, options);
-};
+    shellId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/shells/${shellId}`,options
+    );
+  }
 
 /**
  * @summary Kill the requested shell.
  */
 export const killShell = <TData = AxiosResponse<V1KillShellResponse>>(
-  shellId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/shells/${shellId}/kill`, undefined, options);
-};
+    shellId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/shells/${shellId}/kill`,undefined,options
+    );
+  }
 
 /**
  * @summary Set the priority of the requested shell.
  */
 export const setShellPriority = <TData = AxiosResponse<V1SetShellPriorityResponse>>(
-  shellId: string,
-  v1SetShellPriorityRequest: V1SetShellPriorityRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/shells/${shellId}/set_priority`, v1SetShellPriorityRequest, options);
-};
+    shellId: string,
+    v1SetShellPriorityRequest: V1SetShellPriorityRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/shells/${shellId}/set_priority`,
+      v1SetShellPriorityRequest,options
+    );
+  }
 
 /**
  * @summary Persist the given task logs.
  */
 export const postTaskLogs = <TData = AxiosResponse<V1PostTaskLogsResponse>>(
-  v1PostTaskLogsRequest: V1PostTaskLogsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/task/logs`, v1PostTaskLogsRequest, options);
-};
+    v1PostTaskLogsRequest: V1PostTaskLogsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/task/logs`,
+      v1PostTaskLogsRequest,options
+    );
+  }
 
 /**
  * @summary Get all tasks.
  */
 export const getTasks = <TData = AxiosResponse<V1GetTasksResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks`,options
+    );
+  }
 
 /**
  * @summary Get a count of active tasks.
  */
 export const getActiveTasksCount = <TData = AxiosResponse<V1GetActiveTasksCountResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/count`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/count`,options
+    );
+  }
 
 /**
  * @summary Check the status of a requested task.
  */
 export const getTask = <TData = AxiosResponse<V1GetTaskResponse>>(
-  taskId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/${taskId}`, options);
-};
+    taskId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/${taskId}`,options
+    );
+  }
 
 /**
  * @summary GetTaskAcceleratorData gets the accelerator data for each allocation
 associated with a task.
  */
 export const getTaskAcceleratorData = <TData = AxiosResponse<V1GetTaskAcceleratorDataResponse>>(
-  taskId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/${taskId}/acceleratorData`, options);
-};
+    taskId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/${taskId}/acceleratorData`,options
+    );
+  }
 
 /**
  * @summary Get task config
  */
 export const getGenericTaskConfig = <TData = AxiosResponse<V1GetGenericTaskConfigResponse>>(
-  taskId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/${taskId}/config`, options);
-};
+    taskId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/${taskId}/config`,options
+    );
+  }
 
 /**
  * @summary Get the model definition of a task.
  */
 export const getTaskContextDirectory = <TData = AxiosResponse<V1GetTaskContextDirectoryResponse>>(
-  taskId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/${taskId}/context_directory`, options);
-};
+    taskId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/${taskId}/context_directory`,options
+    );
+  }
 
 /**
  * @summary Kill generic task
  */
 export const killGenericTask = <TData = AxiosResponse<V1KillGenericTaskResponse>>(
-  taskId: string,
-  v1KillGenericTaskRequest: V1KillGenericTaskRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/tasks/${taskId}/kill`, v1KillGenericTaskRequest, options);
-};
+    taskId: string,
+    v1KillGenericTaskRequest: V1KillGenericTaskRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tasks/${taskId}/kill`,
+      v1KillGenericTaskRequest,options
+    );
+  }
 
 /**
  * @summary Stream task logs.
  */
 export const taskLogs = <TData = AxiosResponse<TaskLogs200>>(
-  taskId: string,
-  params?: TaskLogsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/${taskId}/logs`, {
+    taskId: string,
+    params?: TaskLogsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/${taskId}/logs`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Stream task log fields.
  */
 export const taskLogsFields = <TData = AxiosResponse<TaskLogsFields200>>(
-  taskId: string,
-  params?: TaskLogsFieldsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tasks/${taskId}/logs/fields`, {
+    taskId: string,
+    params?: TaskLogsFieldsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tasks/${taskId}/logs/fields`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Pause generic task
  */
 export const pauseGenericTask = <TData = AxiosResponse<V1PauseGenericTaskResponse>>(
-  taskId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/tasks/${taskId}/pause`, undefined, options);
-};
+    taskId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tasks/${taskId}/pause`,undefined,options
+    );
+  }
 
 /**
  * @summary Unpause generic task
  */
 export const unpauseGenericTask = <TData = AxiosResponse<V1UnpauseGenericTaskResponse>>(
-  taskId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/tasks/${taskId}/unpause`, undefined, options);
-};
+    taskId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tasks/${taskId}/unpause`,undefined,options
+    );
+  }
 
 /**
  * @summary Patch template name.
  */
 export const patchTemplateName = <TData = AxiosResponse<V1PatchTemplateNameResponse>>(
-  v1PatchTemplateNameRequest: V1PatchTemplateNameRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/template/rename`, v1PatchTemplateNameRequest, options);
-};
+    v1PatchTemplateNameRequest: V1PatchTemplateNameRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/template/rename`,
+      v1PatchTemplateNameRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of templates.
  */
 export const getTemplates = <TData = AxiosResponse<V1GetTemplatesResponse>>(
-  params?: GetTemplatesParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/templates`, {
+    params?: GetTemplatesParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/templates`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Post a new template.
  */
 export const postTemplate = <TData = AxiosResponse<V1PostTemplateResponse>>(
-  v1TemplateBody: V1TemplateBody,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/templates/template.name}`, v1TemplateBody, options);
-};
+    v1TemplateBody: V1TemplateBody, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/templates/template.name}`,
+      v1TemplateBody,options
+    );
+  }
 
 /**
  * @summary Update or create (upsert) the requested template.
  */
 export const putTemplate = <TData = AxiosResponse<V1PutTemplateResponse>>(
-  v1TemplateBody: V1TemplateBody,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/templates/template.name}`, v1TemplateBody, options);
-};
+    v1TemplateBody: V1TemplateBody, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/templates/template.name}`,
+      v1TemplateBody,options
+    );
+  }
 
 /**
  * @summary Get the requested template.
  */
 export const getTemplate = <TData = AxiosResponse<V1GetTemplateResponse>>(
-  templateName: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/templates/${templateName}`, options);
-};
+    templateName: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/templates/${templateName}`,options
+    );
+  }
 
 /**
  * @summary Delete a template.
  */
 export const deleteTemplate = <TData = AxiosResponse<V1DeleteTemplateResponse>>(
-  templateName: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/templates/${templateName}`, options);
-};
+    templateName: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/templates/${templateName}`,options
+    );
+  }
 
 /**
  * @summary Patch template config.
  */
 export const patchTemplateConfig = <TData = AxiosResponse<V1PatchTemplateConfigResponse>>(
-  templateName: string,
-  patchTemplateConfigBody: PatchTemplateConfigBody,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/templates/${templateName}`, patchTemplateConfigBody, options);
-};
+    templateName: string,
+    patchTemplateConfigBody: PatchTemplateConfigBody, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/templates/${templateName}`,
+      patchTemplateConfigBody,options
+    );
+  }
 
 /**
  * @summary Get a list of tensorboards.
  */
 export const getTensorboards = <TData = AxiosResponse<V1GetTensorboardsResponse>>(
-  params?: GetTensorboardsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tensorboards`, {
+    params?: GetTensorboardsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tensorboards`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Launch a tensorboard.
  */
 export const launchTensorboard = <TData = AxiosResponse<V1LaunchTensorboardResponse>>(
-  v1LaunchTensorboardRequest: V1LaunchTensorboardRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/tensorboards`, v1LaunchTensorboardRequest, options);
-};
+    v1LaunchTensorboardRequest: V1LaunchTensorboardRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tensorboards`,
+      v1LaunchTensorboardRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested tensorboard.
  */
 export const getTensorboard = <TData = AxiosResponse<V1GetTensorboardResponse>>(
-  tensorboardId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tensorboards/${tensorboardId}`, options);
-};
+    tensorboardId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tensorboards/${tensorboardId}`,options
+    );
+  }
 
 /**
  * @summary Kill the requested tensorboard.
  */
 export const killTensorboard = <TData = AxiosResponse<V1KillTensorboardResponse>>(
-  tensorboardId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/tensorboards/${tensorboardId}/kill`, undefined, options);
-};
+    tensorboardId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tensorboards/${tensorboardId}/kill`,undefined,options
+    );
+  }
 
 /**
  * @summary Set the priority of the requested TensorBoard.
  */
 export const setTensorboardPriority = <TData = AxiosResponse<V1SetTensorboardPriorityResponse>>(
-  tensorboardId: string,
-  v1SetTensorboardPriorityRequest: V1SetTensorboardPriorityRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/tensorboards/${tensorboardId}/set_priority`,
-    v1SetTensorboardPriorityRequest,
-    options,
-  );
-};
+    tensorboardId: string,
+    v1SetTensorboardPriorityRequest: V1SetTensorboardPriorityRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tensorboards/${tensorboardId}/set_priority`,
+      v1SetTensorboardPriorityRequest,options
+    );
+  }
 
 /**
  * @summary Get a list of all access token records.
  */
 export const getAccessTokens = <TData = AxiosResponse<V1GetAccessTokensResponse>>(
-  params?: GetAccessTokensParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/tokens`, {
+    params?: GetAccessTokensParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/tokens`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Create and get a user's access token
  */
 export const postAccessToken = <TData = AxiosResponse<V1PostAccessTokenResponse>>(
-  v1PostAccessTokenRequest: V1PostAccessTokenRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/tokens`, v1PostAccessTokenRequest, options);
-};
+    v1PostAccessTokenRequest: V1PostAccessTokenRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/tokens`,
+      v1PostAccessTokenRequest,options
+    );
+  }
 
 /**
  * @summary Patch an access token's mutable fields.
  */
 export const patchAccessToken = <TData = AxiosResponse<V1PatchAccessTokenResponse>>(
-  tokenId: number,
-  v1PatchAccessTokenRequest: V1PatchAccessTokenRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/tokens/${tokenId}`, v1PatchAccessTokenRequest, options);
-};
+    tokenId: number,
+    v1PatchAccessTokenRequest: V1PatchAccessTokenRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/tokens/${tokenId}`,
+      v1PatchAccessTokenRequest,options
+    );
+  }
 
 /**
  * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
  */
 export const reportTrialSourceInfo = <TData = AxiosResponse<V1ReportTrialSourceInfoResponse>>(
-  v1ReportTrialSourceInfoRequest: V1ReportTrialSourceInfoRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trial-source-info`, v1ReportTrialSourceInfoRequest, options);
-};
+    v1ReportTrialSourceInfoRequest: V1ReportTrialSourceInfoRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trial-source-info`,
+      v1ReportTrialSourceInfoRequest,options
+    );
+  }
 
 /**
  * @summary Create unmanaged trial.
  */
 export const createTrial = <TData = AxiosResponse<V1CreateTrialResponse>>(
-  v1CreateTrialRequest: V1CreateTrialRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trials`, v1CreateTrialRequest, options);
-};
+    v1CreateTrialRequest: V1CreateTrialRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials`,
+      v1CreateTrialRequest,options
+    );
+  }
 
 /**
  * @summary Put a trial.
  */
 export const putTrial = <TData = AxiosResponse<V1PutTrialResponse>>(
-  v1PutTrialRequest: V1PutTrialRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/trials`, v1PutTrialRequest, options);
-};
+    v1PutTrialRequest: V1PutTrialRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/trials`,
+      v1PutTrialRequest,options
+    );
+  }
 
 /**
  * @summary Get a single trial by external id.
  */
 export const getTrialByExternalID = <TData = AxiosResponse<V1GetTrialByExternalIDResponse>>(
-  externalExperimentId: string,
-  externalTrialId: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(
-    `/api/v1/trials/by-external-id/${externalExperimentId}/${externalTrialId}`,
-    options,
-  );
-};
+    externalExperimentId: string,
+    externalTrialId: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/by-external-id/${externalExperimentId}/${externalTrialId}`,options
+    );
+  }
 
 /**
  * @summary Stream one or more trial's training metrics.
  */
 export const getTrainingMetrics = <TData = AxiosResponse<GetTrainingMetrics200>>(
-  params?: GetTrainingMetricsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/metrics/training_metrics`, {
+    params?: GetTrainingMetricsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/metrics/training_metrics`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Stream one or more trial's metrics.
  */
 export const getMetrics = <TData = AxiosResponse<GetMetrics200>>(
-  params: GetMetricsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/metrics/trial_metrics`, {
+    params: GetMetricsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/metrics/trial_metrics`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Stream one or more trial's validation metrics.
  */
 export const getValidationMetrics = <TData = AxiosResponse<GetValidationMetrics200>>(
-  params?: GetValidationMetricsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/metrics/validation_metrics`, {
+    params?: GetValidationMetricsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/metrics/validation_metrics`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
  */
-export const postTrialProfilerMetricsBatch = <
-  TData = AxiosResponse<V1PostTrialProfilerMetricsBatchResponse>,
->(
-  v1PostTrialProfilerMetricsBatchRequest: V1PostTrialProfilerMetricsBatchRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/trials/profiler/metrics`,
-    v1PostTrialProfilerMetricsBatchRequest,
-    options,
-  );
-};
+export const postTrialProfilerMetricsBatch = <TData = AxiosResponse<V1PostTrialProfilerMetricsBatchResponse>>(
+    v1PostTrialProfilerMetricsBatchRequest: V1PostTrialProfilerMetricsBatchRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/profiler/metrics`,
+      v1PostTrialProfilerMetricsBatchRequest,options
+    );
+  }
 
 /**
  * @summary Return a downsampled time series of metrics from multiple trials to compare
 them side-by-side.
  */
 export const compareTrials = <TData = AxiosResponse<V1CompareTrialsResponse>>(
-  params?: CompareTrialsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/time-series`, {
+    params?: CompareTrialsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/time-series`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a list of checkpoints for a trial.
  */
 export const getTrialCheckpoints = <TData = AxiosResponse<V1GetTrialCheckpointsResponse>>(
-  id: number,
-  params?: GetTrialCheckpointsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${id}/checkpoints`, {
+    id: number,
+    params?: GetTrialCheckpointsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${id}/checkpoints`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Kill a trial.
  */
 export const killTrial = <TData = AxiosResponse<V1KillTrialResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trials/${id}/kill`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/${id}/kill`,undefined,options
+    );
+  }
 
 /**
  * @summary Get the list of trials for an experiment.
  */
-export const getTrialRemainingLogRetentionDays = <
-  TData = AxiosResponse<V1GetTrialRemainingLogRetentionDaysResponse>,
->(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${id}/remaining_log_retention_days`, options);
-};
+export const getTrialRemainingLogRetentionDays = <TData = AxiosResponse<V1GetTrialRemainingLogRetentionDaysResponse>>(
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${id}/remaining_log_retention_days`,options
+    );
+  }
 
 /**
  * @summary Stream trial profiler metrics.
  */
 export const getTrialProfilerMetrics = <TData = AxiosResponse<GetTrialProfilerMetrics200>>(
-  params?: GetTrialProfilerMetricsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/labels.trialId}/profiler/metrics`, {
+    params?: GetTrialProfilerMetricsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/labels.trialId}/profiler/metrics`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Record metrics for specified trial.
  */
 export const reportTrialMetrics = <TData = AxiosResponse<V1ReportTrialMetricsResponse>>(
-  v1ReportTrialMetricsRequest: V1ReportTrialMetricsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/trials/metrics.trialId}/metrics`,
-    v1ReportTrialMetricsRequest,
-    options,
-  );
-};
+    v1ReportTrialMetricsRequest: V1ReportTrialMetricsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/metrics.trialId}/metrics`,
+      v1ReportTrialMetricsRequest,options
+    );
+  }
 
 /**
  * @summary Record training metrics for specified training.
  */
-export const reportTrialTrainingMetrics = <
-  TData = AxiosResponse<V1ReportTrialTrainingMetricsResponse>,
->(
-  v1TrialMetricsBody: V1TrialMetricsBody,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/trials/trainingMetrics.trialId}/training_metrics`,
-    v1TrialMetricsBody,
-    options,
-  );
-};
+export const reportTrialTrainingMetrics = <TData = AxiosResponse<V1ReportTrialTrainingMetricsResponse>>(
+    v1TrialMetricsBody: V1TrialMetricsBody, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/trainingMetrics.trialId}/training_metrics`,
+      v1TrialMetricsBody,options
+    );
+  }
 
 /**
  * @summary Get a single trial.
  */
 export const getTrial = <TData = AxiosResponse<V1GetTrialResponse>>(
-  trialId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${trialId}`, options);
-};
+    trialId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${trialId}`,options
+    );
+  }
 
 /**
  * @summary Patch (an unmanaged) trial.
  */
 export const patchTrial = <TData = AxiosResponse<V1PatchTrialResponse>>(
-  trialId: number,
-  v1PatchTrialRequest: V1PatchTrialRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/trials/${trialId}`, v1PatchTrialRequest, options);
-};
+    trialId: number,
+    v1PatchTrialRequest: V1PatchTrialRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/trials/${trialId}`,
+      v1PatchTrialRequest,options
+    );
+  }
 
 /**
  * @summary Reports to the searcher that the trial has completed the current
 requested amount of training with the given searcher validation
 metric.
  */
-export const reportTrialSearcherEarlyExit = <
-  TData = AxiosResponse<V1ReportTrialSearcherEarlyExitResponse>,
->(
-  trialId: number,
-  v1TrialEarlyExit: V1TrialEarlyExit,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trials/${trialId}/early_exit`, v1TrialEarlyExit, options);
-};
+export const reportTrialSearcherEarlyExit = <TData = AxiosResponse<V1ReportTrialSearcherEarlyExitResponse>>(
+    trialId: number,
+    v1TrialEarlyExit: V1TrialEarlyExit, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/${trialId}/early_exit`,
+      v1TrialEarlyExit,options
+    );
+  }
 
 /**
  * @summary Stream trial logs.
  */
 export const trialLogs = <TData = AxiosResponse<TrialLogs200>>(
-  trialId: number,
-  params?: TrialLogsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${trialId}/logs`, {
+    trialId: number,
+    params?: TrialLogsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${trialId}/logs`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Stream trial log fields.
  */
 export const trialLogsFields = <TData = AxiosResponse<TrialLogsFields200>>(
-  trialId: number,
-  params?: TrialLogsFieldsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${trialId}/logs/fields`, {
+    trialId: number,
+    params?: TrialLogsFieldsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${trialId}/logs/fields`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Stream the available series in a trial's profiler metrics.
  */
-export const getTrialProfilerAvailableSeries = <
-  TData = AxiosResponse<GetTrialProfilerAvailableSeries200>,
->(
-  trialId: number,
-  params?: GetTrialProfilerAvailableSeriesParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${trialId}/profiler/available_series`, {
+export const getTrialProfilerAvailableSeries = <TData = AxiosResponse<GetTrialProfilerAvailableSeries200>>(
+    trialId: number,
+    params?: GetTrialProfilerAvailableSeriesParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${trialId}/profiler/available_series`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary For bookkeeping, updates the progress towards to current requested searcher
 training length.
  */
 export const reportTrialProgress = <TData = AxiosResponse<V1ReportTrialProgressResponse>>(
-  trialId: number,
-  v1ReportTrialProgressRequest: V1ReportTrialProgressRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trials/${trialId}/progress`, v1ReportTrialProgressRequest, options);
-};
+    trialId: number,
+    v1ReportTrialProgressRequest: V1ReportTrialProgressRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/${trialId}/progress`,
+      v1ReportTrialProgressRequest,options
+    );
+  }
 
 /**
  * @summary Retain logs for a Trial.
  */
 export const putTrialRetainLogs = <TData = AxiosResponse<V1PutTrialRetainLogsResponse>>(
-  trialId: number,
-  v1PutTrialRetainLogsRequest: V1PutTrialRetainLogsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.put(`/api/v1/trials/${trialId}/retain_logs`, v1PutTrialRetainLogsRequest, options);
-};
+    trialId: number,
+    v1PutTrialRetainLogsRequest: V1PutTrialRetainLogsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.put(
+      `/api/v1/trials/${trialId}/retain_logs`,
+      v1PutTrialRetainLogsRequest,options
+    );
+  }
 
 /**
  * @summary For bookkeeping, update trial runner metadata (currently just state).
  */
 export const postTrialRunnerMetadata = <TData = AxiosResponse<V1PostTrialRunnerMetadataResponse>>(
-  trialId: number,
-  v1TrialRunnerMetadata: V1TrialRunnerMetadata,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trials/${trialId}/runner/metadata`, v1TrialRunnerMetadata, options);
-};
+    trialId: number,
+    v1TrialRunnerMetadata: V1TrialRunnerMetadata, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/${trialId}/runner/metadata`,
+      v1TrialRunnerMetadata,options
+    );
+  }
 
 /**
  * @summary Start (an unmanaged) trial.
  */
 export const startTrial = <TData = AxiosResponse<V1StartTrialResponse>>(
-  trialId: number,
-  v1StartTrialRequest: V1StartTrialRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/trials/${trialId}/start`, v1StartTrialRequest, options);
-};
+    trialId: number,
+    v1StartTrialRequest: V1StartTrialRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/${trialId}/start`,
+      v1StartTrialRequest,options
+    );
+  }
 
 /**
  * @summary Get the list of workloads for a trial.
  */
 export const getTrialWorkloads = <TData = AxiosResponse<V1GetTrialWorkloadsResponse>>(
-  trialId: number,
-  params?: GetTrialWorkloadsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/trials/${trialId}/workloads`, {
+    trialId: number,
+    params?: GetTrialWorkloadsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/trials/${trialId}/workloads`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Record validation metrics.
  */
-export const reportTrialValidationMetrics = <
-  TData = AxiosResponse<V1ReportTrialValidationMetricsResponse>,
->(
-  v1TrialMetricsBody: V1TrialMetricsBody,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/trials/validationMetrics.trialId}/validation_metrics`,
-    v1TrialMetricsBody,
-    options,
-  );
-};
+export const reportTrialValidationMetrics = <TData = AxiosResponse<V1ReportTrialValidationMetricsResponse>>(
+    v1TrialMetricsBody: V1TrialMetricsBody, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/trials/validationMetrics.trialId}/validation_metrics`,
+      v1TrialMetricsBody,options
+    );
+  }
 
 /**
  * @summary Get projects by user activity
  */
-export const getProjectsByUserActivity = <
-  TData = AxiosResponse<V1GetProjectsByUserActivityResponse>,
->(
-  params?: GetProjectsByUserActivityParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/user/projects/activity`, {
+export const getProjectsByUserActivity = <TData = AxiosResponse<V1GetProjectsByUserActivityResponse>>(
+    params?: GetProjectsByUserActivityParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/user/projects/activity`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a list of users.
  */
 export const getUsers = <TData = AxiosResponse<V1GetUsersResponse>>(
-  params?: GetUsersParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/users`, {
+    params?: GetUsersParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/users`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Create a new user.
  */
 export const postUser = <TData = AxiosResponse<V1PostUserResponse>>(
-  v1PostUserRequest: V1PostUserRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/users`, v1PostUserRequest, options);
-};
+    v1PostUserRequest: V1PostUserRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/users`,
+      v1PostUserRequest,options
+    );
+  }
 
 /**
  * @summary Patch multiple users' activation status.
  */
 export const patchUsers = <TData = AxiosResponse<V1PatchUsersResponse>>(
-  v1PatchUsersRequest: V1PatchUsersRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/users`, v1PatchUsersRequest, options);
-};
+    v1PatchUsersRequest: V1PatchUsersRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/users`,
+      v1PatchUsersRequest,options
+    );
+  }
 
 /**
  * @summary Patch a user's activity
  */
 export const postUserActivity = <TData = AxiosResponse<V1PostUserActivityResponse>>(
-  v1PostUserActivityRequest: V1PostUserActivityRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/users/activity`, v1PostUserActivityRequest, options);
-};
+    v1PostUserActivityRequest: V1PostUserActivityRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/users/activity`,
+      v1PostUserActivityRequest,options
+    );
+  }
 
 /**
  * @summary Assign multiple users to multiple groups.
  */
 export const assignMultipleGroups = <TData = AxiosResponse<V1AssignMultipleGroupsResponse>>(
-  v1AssignMultipleGroupsRequest: V1AssignMultipleGroupsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/users/assignments`, v1AssignMultipleGroupsRequest, options);
-};
+    v1AssignMultipleGroupsRequest: V1AssignMultipleGroupsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/users/assignments`,
+      v1AssignMultipleGroupsRequest,options
+    );
+  }
 
 /**
  * @summary Get a user's settings for website
  */
 export const getUserSetting = <TData = AxiosResponse<V1GetUserSettingResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/users/setting`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/users/setting`,options
+    );
+  }
 
 /**
  * @summary Post a user's settings for website
  */
 export const postUserSetting = <TData = AxiosResponse<V1PostUserSettingResponse>>(
-  v1PostUserSettingRequest: V1PostUserSettingRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/users/setting`, v1PostUserSettingRequest, options);
-};
+    v1PostUserSettingRequest: V1PostUserSettingRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/users/setting`,
+      v1PostUserSettingRequest,options
+    );
+  }
 
 /**
  * @summary Reset a user's settings for website
  */
 export const resetUserSetting = <TData = AxiosResponse<V1ResetUserSettingResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/users/setting/reset`, undefined, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/users/setting/reset`,undefined,options
+    );
+  }
 
 /**
  * @summary Get the requested user.
  */
 export const getUser = <TData = AxiosResponse<V1GetUserResponse>>(
-  userId: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/users/${userId}`, options);
-};
+    userId: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/users/${userId}`,options
+    );
+  }
 
 /**
  * @summary Patch a user's fields.
  */
 export const patchUser = <TData = AxiosResponse<V1PatchUserResponse>>(
-  userId: number,
-  v1PatchUser: V1PatchUser,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/users/${userId}`, v1PatchUser, options);
-};
+    userId: number,
+    v1PatchUser: V1PatchUser, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/users/${userId}`,
+      v1PatchUser,options
+    );
+  }
 
 /**
  * @summary Set the requested user's password.
  */
 export const setUserPassword = <TData = AxiosResponse<V1SetUserPasswordResponse>>(
-  userId: number,
-  setUserPasswordBody: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/users/${userId}/password`, setUserPasswordBody, options);
-};
+    userId: number,
+    setUserPasswordBody: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/users/${userId}/password`,
+      setUserPasswordBody,options
+    );
+  }
 
 /**
  * @summary Get the requested user with username.
  */
 export const getUserByUsername = <TData = AxiosResponse<V1GetUserByUsernameResponse>>(
-  username: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/users/${username}/by-username`, options);
-};
+    username: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/users/${username}/by-username`,options
+    );
+  }
 
 /**
  * @summary Get a list of webhooks.
  */
 export const getWebhooks = <TData = AxiosResponse<V1GetWebhooksResponse>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/webhooks`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/webhooks`,options
+    );
+  }
 
 /**
  * @summary Create a webhook.
 TODO(???): Simplify req/response structs?
  */
 export const postWebhook = <TData = AxiosResponse<V1PostWebhookResponse>>(
-  v1Webhook: V1Webhook,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/webhooks`, v1Webhook, options);
-};
+    v1Webhook: V1Webhook, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/webhooks`,
+      v1Webhook,options
+    );
+  }
 
 /**
  * @summary Trigger custom trigger of webhooks.
  */
 export const postWebhookEventData = <TData = AxiosResponse<V1PostWebhookEventDataResponse>>(
-  v1PostWebhookEventDataRequest: V1PostWebhookEventDataRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/webhooks/custom`, v1PostWebhookEventDataRequest, options);
-};
+    v1PostWebhookEventDataRequest: V1PostWebhookEventDataRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/webhooks/custom`,
+      v1PostWebhookEventDataRequest,options
+    );
+  }
 
 /**
  * @summary Delete a webhook.
  */
 export const deleteWebhook = <TData = AxiosResponse<V1DeleteWebhookResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/webhooks/${id}`, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/webhooks/${id}`,options
+    );
+  }
 
 /**
  * @summary Update a webhook.
  */
 export const patchWebhook = <TData = AxiosResponse<V1PatchWebhookResponse>>(
-  id: number,
-  v1PatchWebhook: V1PatchWebhook,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/webhooks/${id}`, v1PatchWebhook, options);
-};
+    id: number,
+    v1PatchWebhook: V1PatchWebhook, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/webhooks/${id}`,
+      v1PatchWebhook,options
+    );
+  }
 
 /**
  * @summary Test a webhook.
  */
 export const testWebhook = <TData = AxiosResponse<V1TestWebhookResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/webhooks/${id}/test`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/webhooks/${id}/test`,undefined,options
+    );
+  }
 
 /**
  * @summary Get a list of workspaces.
  */
 export const getWorkspaces = <TData = AxiosResponse<V1GetWorkspacesResponse>>(
-  params?: GetWorkspacesParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/workspaces`, {
+    params?: GetWorkspacesParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/workspaces`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Create a workspace.
  */
 export const postWorkspace = <TData = AxiosResponse<V1PostWorkspaceResponse>>(
-  v1PostWorkspaceRequest: V1PostWorkspaceRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/workspaces`, v1PostWorkspaceRequest, options);
-};
+    v1PostWorkspaceRequest: V1PostWorkspaceRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces`,
+      v1PostWorkspaceRequest,options
+    );
+  }
 
 /**
  * @summary Get the requested workspace.
  */
 export const getWorkspace = <TData = AxiosResponse<V1GetWorkspaceResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/workspaces/${id}`, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/workspaces/${id}`,options
+    );
+  }
 
 /**
  * @summary Delete a workspace.
  */
 export const deleteWorkspace = <TData = AxiosResponse<V1DeleteWorkspaceResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/workspaces/${id}`, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/workspaces/${id}`,options
+    );
+  }
 
 /**
  * @summary Update a workspace.
  */
 export const patchWorkspace = <TData = AxiosResponse<V1PatchWorkspaceResponse>>(
-  id: number,
-  v1PatchWorkspace: V1PatchWorkspace,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.patch(`/api/v1/workspaces/${id}`, v1PatchWorkspace, options);
-};
+    id: number,
+    v1PatchWorkspace: V1PatchWorkspace, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.patch(
+      `/api/v1/workspaces/${id}`,
+      v1PatchWorkspace,options
+    );
+  }
 
 /**
  * @summary Archive a workspace.
  */
 export const archiveWorkspace = <TData = AxiosResponse<V1ArchiveWorkspaceResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/workspaces/${id}/archive`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${id}/archive`,undefined,options
+    );
+  }
 
 /**
  * @summary Get Kubernetes Resource Quotas for a workspace by the cluster name.
  */
-export const getKubernetesResourceQuotas = <
-  TData = AxiosResponse<V1GetKubernetesResourceQuotasResponse>,
->(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/workspaces/${id}/get-k8s-resource-quotas`, options);
-};
+export const getKubernetesResourceQuotas = <TData = AxiosResponse<V1GetKubernetesResourceQuotasResponse>>(
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/workspaces/${id}/get-k8s-resource-quotas`,options
+    );
+  }
 
 /**
  * @summary List namespaces bound to a workspace.
  */
-export const listWorkspaceNamespaceBindings = <
-  TData = AxiosResponse<V1ListWorkspaceNamespaceBindingsResponse>,
->(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/workspaces/${id}/list-namespace-bindings`, options);
-};
+export const listWorkspaceNamespaceBindings = <TData = AxiosResponse<V1ListWorkspaceNamespaceBindingsResponse>>(
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/workspaces/${id}/list-namespace-bindings`,options
+    );
+  }
 
 /**
  * @summary Pin a workspace.
  */
 export const pinWorkspace = <TData = AxiosResponse<V1PinWorkspaceResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/workspaces/${id}/pin`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${id}/pin`,undefined,options
+    );
+  }
 
 /**
  * @summary Get projects associated with a workspace.
  */
 export const getWorkspaceProjects = <TData = AxiosResponse<V1GetWorkspaceProjectsResponse>>(
-  id: number,
-  params?: GetWorkspaceProjectsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/workspaces/${id}/projects`, {
+    id: number,
+    params?: GetWorkspaceProjectsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/workspaces/${id}/projects`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Set a resource quota for a workspace (within a specific cluster).
  */
 export const setResourceQuotas = <TData = AxiosResponse<V1SetResourceQuotasResponse>>(
-  id: number,
-  v1SetResourceQuotasRequest: V1SetResourceQuotasRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/workspaces/${id}/set-resource-quota`,
-    v1SetResourceQuotasRequest,
-    options,
-  );
-};
+    id: number,
+    v1SetResourceQuotasRequest: V1SetResourceQuotasRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${id}/set-resource-quota`,
+      v1SetResourceQuotasRequest,options
+    );
+  }
 
 /**
  * @summary Unarchive a workspace.
  */
 export const unarchiveWorkspace = <TData = AxiosResponse<V1UnarchiveWorkspaceResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/workspaces/${id}/unarchive`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${id}/unarchive`,undefined,options
+    );
+  }
 
 /**
  * @summary Unpin a workspace.
  */
 export const unpinWorkspace = <TData = AxiosResponse<V1UnpinWorkspaceResponse>>(
-  id: number,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/workspaces/${id}/unpin`, undefined, options);
-};
+    id: number, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${id}/unpin`,undefined,options
+    );
+  }
 
 /**
  * @summary List all resource pools, bound and unbound, available to a specific
 workspace
  */
 export const listRPsBoundToWorkspace = <TData = AxiosResponse<V1ListRPsBoundToWorkspaceResponse>>(
-  workspaceId: number,
-  params?: ListRPsBoundToWorkspaceParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/api/v1/workspaces/${workspaceId}/available-resource-pools`, {
+    workspaceId: number,
+    params?: ListRPsBoundToWorkspaceParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/api/v1/workspaces/${workspaceId}/available-resource-pools`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Deletes workpace namespace bindings.
  */
-export const deleteWorkspaceNamespaceBindings = <
-  TData = AxiosResponse<V1DeleteWorkspaceNamespaceBindingsResponse>,
->(
-  workspaceId: number,
-  params?: DeleteWorkspaceNamespaceBindingsParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.delete(`/api/v1/workspaces/${workspaceId}/namespace-bindings`, {
+export const deleteWorkspaceNamespaceBindings = <TData = AxiosResponse<V1DeleteWorkspaceNamespaceBindingsResponse>>(
+    workspaceId: number,
+    params?: DeleteWorkspaceNamespaceBindingsParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.delete(
+      `/api/v1/workspaces/${workspaceId}/namespace-bindings`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Bind a namespace to a workspace.
  */
-export const setWorkspaceNamespaceBindings = <
-  TData = AxiosResponse<V1SetWorkspaceNamespaceBindingsResponse>,
->(
-  workspaceId: number,
-  v1SetWorkspaceNamespaceBindingsRequest: V1SetWorkspaceNamespaceBindingsRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(
-    `/api/v1/workspaces/${workspaceId}/namespace-bindings`,
-    v1SetWorkspaceNamespaceBindingsRequest,
-    options,
-  );
-};
+export const setWorkspaceNamespaceBindings = <TData = AxiosResponse<V1SetWorkspaceNamespaceBindingsResponse>>(
+    workspaceId: number,
+    v1SetWorkspaceNamespaceBindingsRequest: V1SetWorkspaceNamespaceBindingsRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${workspaceId}/namespace-bindings`,
+      v1SetWorkspaceNamespaceBindingsRequest,options
+    );
+  }
 
 /**
  * @summary Create a project.
  */
 export const postProject = <TData = AxiosResponse<V1PostProjectResponse>>(
-  workspaceId: number,
-  v1PostProjectRequest: V1PostProjectRequest,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.post(`/api/v1/workspaces/${workspaceId}/projects`, v1PostProjectRequest, options);
-};
+    workspaceId: number,
+    v1PostProjectRequest: V1PostProjectRequest, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.post(
+      `/api/v1/workspaces/${workspaceId}/projects`,
+      v1PostProjectRequest,options
+    );
+  }
 
 /**
  * @summary Get a checkpoint's contents in a tar, tgz, or zip file.
  */
 export const getCheckpoint = <TData = AxiosResponse<unknown>>(
-  checkpointUuid: string,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/checkpoints/${checkpointUuid}`, options);
-};
+    checkpointUuid: string, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/checkpoints/${checkpointUuid}`,options
+    );
+  }
 
 /**
  * @summary Get individual file from modal definitions for download.
  */
 export const getExperimentModelFile = <TData = AxiosResponse<unknown>>(
-  experimentId: number,
-  params: GetExperimentModelFileParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/experiments/${experimentId}/file/download`, {
+    experimentId: number,
+    params: GetExperimentModelFileParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/experiments/${experimentId}/file/download`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get health of Determined and the dependencies.
  */
 export const health = <TData = AxiosResponse<HealthCheck>>(
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/health`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/health`,options
+    );
+  }
 
 /**
  * @summary Get an aggregated view of resource allocation during the given time period (CSV).
  */
 export const getAggregatedResourceAllocationCsv = <TData = AxiosResponse<unknown>>(
-  params: GetAggregatedResourceAllocationCsvParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/resources/allocation/aggregated`, {
+    params: GetAggregatedResourceAllocationCsvParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/resources/allocation/aggregated`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @summary Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
  */
 export const getResourceAllocationCsv = <TData = AxiosResponse<unknown>>(
-  params: GetResourceAllocationCsvParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/resources/allocation/allocations-csv`, {
+    params: GetResourceAllocationCsvParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/resources/allocation/allocations-csv`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
 /**
  * @deprecated
  * @summary Get a detailed view of resource allocation during the given time period (CSV).
  */
 export const getRawResourceAllocationCsv = <TData = AxiosResponse<unknown>>(
-  params: GetRawResourceAllocationCsvParams,
-  options?: AxiosRequestConfig,
-): Promise<TData> => {
-  return axios.get(`/resources/allocation/raw`, {
+    params: GetRawResourceAllocationCsvParams, options?: AxiosRequestConfig
+ ): Promise<TData> => {
+    return axios.get(
+      `/resources/allocation/raw`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
+        params: {...params, ...options?.params},}
+    );
+  }
 
-export type GetAgentsResult = AxiosResponse<V1GetAgentsResponse>;
-export type GetAgentResult = AxiosResponse<V1GetAgentResponse>;
-export type DisableAgentResult = AxiosResponse<V1DisableAgentResponse>;
-export type EnableAgentResult = AxiosResponse<V1EnableAgentResponse>;
-export type GetSlotsResult = AxiosResponse<V1GetSlotsResponse>;
-export type GetSlotResult = AxiosResponse<V1GetSlotResponse>;
-export type DisableSlotResult = AxiosResponse<V1DisableSlotResponse>;
-export type EnableSlotResult = AxiosResponse<V1EnableSlotResponse>;
-export type GetAllocationResult = AxiosResponse<V1GetAllocationResponse>;
-export type PostAllocationAcceleratorDataResult =
-  AxiosResponse<V1PostAllocationAcceleratorDataResponse>;
-export type AllocationAllGatherResult = AxiosResponse<V1AllocationAllGatherResponse>;
-export type NotifyContainerRunningResult = AxiosResponse<V1NotifyContainerRunningResponse>;
-export type PostAllocationProxyAddressResult = AxiosResponse<V1PostAllocationProxyAddressResponse>;
-export type AllocationReadyResult = AxiosResponse<V1AllocationReadyResponse>;
-export type MarkAllocationResourcesDaemonResult =
-  AxiosResponse<V1MarkAllocationResourcesDaemonResponse>;
-export type AllocationRendezvousInfoResult = AxiosResponse<V1AllocationRendezvousInfoResponse>;
-export type AckAllocationPreemptionSignalResult =
-  AxiosResponse<V1AckAllocationPreemptionSignalResponse>;
-export type AllocationPendingPreemptionSignalResult =
-  AxiosResponse<V1AllocationPendingPreemptionSignalResponse>;
-export type AllocationPreemptionSignalResult = AxiosResponse<V1AllocationPreemptionSignalResponse>;
-export type AllocationWaitingResult = AxiosResponse<V1AllocationWaitingResponse>;
-export type LoginResult = AxiosResponse<V1LoginResponse>;
-export type LogoutResult = AxiosResponse<V1LogoutResponse>;
-export type CurrentUserResult = AxiosResponse<V1CurrentUserResponse>;
-export type DeleteCheckpointsResult = AxiosResponse<V1DeleteCheckpointsResponse>;
-export type ReportCheckpointResult = AxiosResponse<V1ReportCheckpointResponse>;
-export type PatchCheckpointsResult = AxiosResponse<V1PatchCheckpointsResponse>;
-export type CheckpointsRemoveFilesResult = AxiosResponse<V1CheckpointsRemoveFilesResponse>;
-export type PostCheckpointMetadataResult = AxiosResponse<V1PostCheckpointMetadataResponse>;
-export type GetCheckpointResult = AxiosResponse<unknown>;
-export type GetTrialMetricsByCheckpointResult =
-  AxiosResponse<V1GetTrialMetricsByCheckpointResponse>;
-export type CleanupLogsResult = AxiosResponse<V1CleanupLogsResponse>;
-export type GetCommandsResult = AxiosResponse<V1GetCommandsResponse>;
-export type LaunchCommandResult = AxiosResponse<V1LaunchCommandResponse>;
-export type GetCommandResult = AxiosResponse<V1GetCommandResponse>;
-export type KillCommandResult = AxiosResponse<V1KillCommandResponse>;
-export type SetCommandPriorityResult = AxiosResponse<V1SetCommandPriorityResponse>;
-export type GetGlobalConfigPoliciesResult = AxiosResponse<V1GetGlobalConfigPoliciesResponse>;
-export type DeleteGlobalConfigPoliciesResult = AxiosResponse<V1DeleteGlobalConfigPoliciesResponse>;
-export type PutGlobalConfigPoliciesResult = AxiosResponse<V1PutGlobalConfigPoliciesResponse>;
-export type GetWorkspaceConfigPoliciesResult = AxiosResponse<V1GetWorkspaceConfigPoliciesResponse>;
-export type DeleteWorkspaceConfigPoliciesResult =
-  AxiosResponse<V1DeleteWorkspaceConfigPoliciesResponse>;
-export type PutWorkspaceConfigPoliciesResult = AxiosResponse<V1PutWorkspaceConfigPoliciesResponse>;
-export type GetExperimentLabelsResult = AxiosResponse<V1GetExperimentLabelsResponse>;
-export type GetExperimentsResult = AxiosResponse<V1GetExperimentsResponse>;
-export type CreateExperimentResult = AxiosResponse<V1CreateExperimentResponse>;
-export type SearchExperimentsResult = AxiosResponse<V1SearchExperimentsResponse>;
-export type PutExperimentResult = AxiosResponse<V1PutExperimentResponse>;
-export type ContinueExperimentResult = AxiosResponse<V1ContinueExperimentResponse>;
-export type ExpMetricNamesResult = AxiosResponse<ExpMetricNames200>;
-export type PatchExperimentResult = AxiosResponse<V1PatchExperimentResponse>;
-export type GetExperimentResult = AxiosResponse<V1GetExperimentResponse>;
-export type DeleteExperimentResult = AxiosResponse<V1DeleteExperimentResponse>;
-export type GetModelDefFileResult = AxiosResponse<V1GetModelDefFileResponse>;
-export type GetModelDefTreeResult = AxiosResponse<V1GetModelDefTreeResponse>;
-export type DeleteExperimentLabelResult = AxiosResponse<V1DeleteExperimentLabelResponse>;
-export type PutExperimentLabelResult = AxiosResponse<V1PutExperimentLabelResponse>;
-export type MetricBatchesResult = AxiosResponse<MetricBatches200>;
-export type TrialsSampleResult = AxiosResponse<TrialsSample200>;
-export type TrialsSnapshotResult = AxiosResponse<TrialsSnapshot200>;
-export type GetModelDefResult = AxiosResponse<V1GetModelDefResponse>;
-export type MoveExperimentResult = AxiosResponse<V1MoveExperimentResponse>;
-export type PutExperimentRetainLogsResult = AxiosResponse<V1PutExperimentRetainLogsResponse>;
-export type GetBestSearcherValidationMetricResult =
-  AxiosResponse<V1GetBestSearcherValidationMetricResponse>;
-export type DeleteTensorboardFilesResult = AxiosResponse<V1DeleteTensorboardFilesResponse>;
-export type GetExperimentTrialsResult = AxiosResponse<V1GetExperimentTrialsResponse>;
-export type GetExperimentValidationHistoryResult =
-  AxiosResponse<V1GetExperimentValidationHistoryResponse>;
-export type ActivateExperimentResult = AxiosResponse<V1ActivateExperimentResponse>;
-export type ArchiveExperimentResult = AxiosResponse<V1ArchiveExperimentResponse>;
-export type CancelExperimentResult = AxiosResponse<V1CancelExperimentResponse>;
-export type GetExperimentCheckpointsResult = AxiosResponse<V1GetExperimentCheckpointsResponse>;
-export type KillExperimentResult = AxiosResponse<V1KillExperimentResponse>;
-export type PauseExperimentResult = AxiosResponse<V1PauseExperimentResponse>;
-export type UnarchiveExperimentResult = AxiosResponse<V1UnarchiveExperimentResponse>;
-export type CreateGenericTaskResult = AxiosResponse<V1CreateGenericTaskResponse>;
-export type CreateGroupResult = AxiosResponse<V1CreateGroupResponse>;
-export type GetGroupsResult = AxiosResponse<V1GetGroupsResponse>;
-export type GetGroupResult = AxiosResponse<V1GetGroupResponse>;
-export type DeleteGroupResult = AxiosResponse<V1DeleteGroupResponse>;
-export type UpdateGroupResult = AxiosResponse<V1UpdateGroupResponse>;
-export type GetJobsResult = AxiosResponse<V1GetJobsResponse>;
-export type UpdateJobQueueResult = AxiosResponse<V1UpdateJobQueueResponse>;
-export type GetJobsV2Result = AxiosResponse<V1GetJobsV2Response>;
-export type GetJobQueueStatsResult = AxiosResponse<V1GetJobQueueStatsResponse>;
-export type GetKubernetesResourceManagersResult =
-  AxiosResponse<V1GetKubernetesResourceManagersResponse>;
-export type GetMasterResult = AxiosResponse<V1GetMasterResponse>;
-export type GetClusterMessageResult = AxiosResponse<V1GetClusterMessageResponse>;
-export type DeleteClusterMessageResult = AxiosResponse<V1DeleteClusterMessageResponse>;
-export type SetClusterMessageResult = AxiosResponse<V1SetClusterMessageResponse>;
-export type GetMasterConfigResult = AxiosResponse<V1GetMasterConfigResponse>;
-export type PatchMasterConfigResult = AxiosResponse<V1PatchMasterConfigResponse>;
-export type MasterLogsResult = AxiosResponse<MasterLogs200>;
-export type GetTelemetryResult = AxiosResponse<V1GetTelemetryResponse>;
-export type GetMeResult = AxiosResponse<V1GetMeResponse>;
-export type GetModelLabelsResult = AxiosResponse<V1GetModelLabelsResponse>;
-export type GetModelsResult = AxiosResponse<V1GetModelsResponse>;
-export type PostModelResult = AxiosResponse<V1PostModelResponse>;
-export type GetModelResult = AxiosResponse<V1GetModelResponse>;
-export type DeleteModelResult = AxiosResponse<V1DeleteModelResponse>;
-export type PatchModelResult = AxiosResponse<V1PatchModelResponse>;
-export type ArchiveModelResult = AxiosResponse<V1ArchiveModelResponse>;
-export type MoveModelResult = AxiosResponse<V1MoveModelResponse>;
-export type UnarchiveModelResult = AxiosResponse<V1UnarchiveModelResponse>;
-export type GetModelVersionsResult = AxiosResponse<V1GetModelVersionsResponse>;
-export type PostModelVersionResult = AxiosResponse<V1PostModelVersionResponse>;
-export type GetModelVersionResult = AxiosResponse<V1GetModelVersionResponse>;
-export type DeleteModelVersionResult = AxiosResponse<V1DeleteModelVersionResponse>;
-export type PatchModelVersionResult = AxiosResponse<V1PatchModelVersionResponse>;
-export type GetTrialMetricsByModelVersionResult =
-  AxiosResponse<V1GetTrialMetricsByModelVersionResponse>;
-export type BulkAutoCreateWorkspaceNamespaceBindingsResult =
-  AxiosResponse<V1BulkAutoCreateWorkspaceNamespaceBindingsResponse>;
-export type GetWorkspacesWithDefaultNamespaceBindingsResult =
-  AxiosResponse<V1GetWorkspacesWithDefaultNamespaceBindingsResponse>;
-export type GetNotebooksResult = AxiosResponse<V1GetNotebooksResponse>;
-export type LaunchNotebookResult = AxiosResponse<V1LaunchNotebookResponse>;
-export type GetNotebookResult = AxiosResponse<V1GetNotebookResponse>;
-export type KillNotebookResult = AxiosResponse<V1KillNotebookResponse>;
-export type IdleNotebookResult = AxiosResponse<V1IdleNotebookResponse>;
-export type SetNotebookPriorityResult = AxiosResponse<V1SetNotebookPriorityResponse>;
-export type GetPermissionsSummaryResult = AxiosResponse<V1GetPermissionsSummaryResponse>;
-export type PreviewHPSearchResult = AxiosResponse<V1PreviewHPSearchResponse>;
-export type GetProjectByKeyResult = AxiosResponse<V1GetProjectByKeyResponse>;
-export type GetProjectResult = AxiosResponse<V1GetProjectResponse>;
-export type DeleteProjectResult = AxiosResponse<V1DeleteProjectResponse>;
-export type PatchProjectResult = AxiosResponse<V1PatchProjectResponse>;
-export type ArchiveProjectResult = AxiosResponse<V1ArchiveProjectResponse>;
-export type GetProjectColumnsResult = AxiosResponse<V1GetProjectColumnsResponse>;
-export type GetProjectNumericMetricsRangeResult =
-  AxiosResponse<V1GetProjectNumericMetricsRangeResponse>;
-export type UnarchiveProjectResult = AxiosResponse<V1UnarchiveProjectResponse>;
-export type ActivateExperimentsResult = AxiosResponse<V1ActivateExperimentsResponse>;
-export type ArchiveExperimentsResult = AxiosResponse<V1ArchiveExperimentsResponse>;
-export type CancelExperimentsResult = AxiosResponse<V1CancelExperimentsResponse>;
-export type DeleteExperimentsResult = AxiosResponse<V1DeleteExperimentsResponse>;
-export type KillExperimentsResult = AxiosResponse<V1KillExperimentsResponse>;
-export type MoveExperimentsResult = AxiosResponse<V1MoveExperimentsResponse>;
-export type PauseExperimentsResult = AxiosResponse<V1PauseExperimentsResponse>;
-export type PutExperimentsRetainLogsResult = AxiosResponse<V1PutExperimentsRetainLogsResponse>;
-export type UnarchiveExperimentsResult = AxiosResponse<V1UnarchiveExperimentsResponse>;
-export type GetMetadataValuesResult = AxiosResponse<V1GetMetadataValuesResponse>;
-export type MoveProjectResult = AxiosResponse<V1MoveProjectResponse>;
-export type AddProjectNoteResult = AxiosResponse<V1AddProjectNoteResponse>;
-export type PutProjectNotesResult = AxiosResponse<V1PutProjectNotesResponse>;
-export type GetResourcePoolsResult = AxiosResponse<V1GetResourcePoolsResponse>;
-export type ListWorkspacesBoundToRPResult = AxiosResponse<V1ListWorkspacesBoundToRPResponse>;
-export type UnbindRPFromWorkspaceResult = AxiosResponse<V1UnbindRPFromWorkspaceResponse>;
-export type BindRPToWorkspaceResult = AxiosResponse<V1BindRPToWorkspaceResponse>;
-export type OverwriteRPWorkspaceBindingsResult =
-  AxiosResponse<V1OverwriteRPWorkspaceBindingsResponse>;
-export type ResourceAllocationAggregatedResult =
-  AxiosResponse<V1ResourceAllocationAggregatedResponse>;
-export type ResourceAllocationRawResult = AxiosResponse<V1ResourceAllocationRawResponse>;
-export type AssignRolesResult = AxiosResponse<V1AssignRolesResponse>;
-export type RemoveAssignmentsResult = AxiosResponse<V1RemoveAssignmentsResponse>;
-export type ListRolesResult = AxiosResponse<V1ListRolesResponse>;
-export type SearchRolesAssignableToScopeResult =
-  AxiosResponse<V1SearchRolesAssignableToScopeResponse>;
-export type GetRolesAssignedToGroupResult = AxiosResponse<V1GetRolesAssignedToGroupResponse>;
-export type GetRolesByIDResult = AxiosResponse<V1GetRolesByIDResponse>;
-export type GetRolesAssignedToUserResult = AxiosResponse<V1GetRolesAssignedToUserResponse>;
-export type GetGroupsAndUsersAssignedToWorkspaceResult =
-  AxiosResponse<V1GetGroupsAndUsersAssignedToWorkspaceResponse>;
-export type SearchRunsResult = AxiosResponse<V1SearchRunsResponse>;
-export type ArchiveRunsResult = AxiosResponse<V1ArchiveRunsResponse>;
-export type DeleteRunsResult = AxiosResponse<V1DeleteRunsResponse>;
-export type KillRunsResult = AxiosResponse<V1KillRunsResponse>;
-export type MoveRunsResult = AxiosResponse<V1MoveRunsResponse>;
-export type PauseRunsResult = AxiosResponse<V1PauseRunsResponse>;
-export type ResumeRunsResult = AxiosResponse<V1ResumeRunsResponse>;
-export type RunPrepareForReportingResult = AxiosResponse<V1RunPrepareForReportingResponse>;
-export type UnarchiveRunsResult = AxiosResponse<V1UnarchiveRunsResponse>;
-export type GetRunMetadataResult = AxiosResponse<V1GetRunMetadataResponse>;
-export type PostRunMetadataResult = AxiosResponse<V1PostRunMetadataResponse>;
-export type ArchiveSearchesResult = AxiosResponse<V1ArchiveSearchesResponse>;
-export type CancelSearchesResult = AxiosResponse<V1CancelSearchesResponse>;
-export type DeleteSearchesResult = AxiosResponse<V1DeleteSearchesResponse>;
-export type KillSearchesResult = AxiosResponse<V1KillSearchesResponse>;
-export type MoveSearchesResult = AxiosResponse<V1MoveSearchesResponse>;
-export type PauseSearchesResult = AxiosResponse<V1PauseSearchesResponse>;
-export type ResumeSearchesResult = AxiosResponse<V1ResumeSearchesResponse>;
-export type LaunchTensorboardSearchesResult = AxiosResponse<V1LaunchTensorboardSearchesResponse>;
-export type UnarchiveSearchesResult = AxiosResponse<V1UnarchiveSearchesResponse>;
-export type GetShellsResult = AxiosResponse<V1GetShellsResponse>;
-export type LaunchShellResult = AxiosResponse<V1LaunchShellResponse>;
-export type GetShellResult = AxiosResponse<V1GetShellResponse>;
-export type KillShellResult = AxiosResponse<V1KillShellResponse>;
-export type SetShellPriorityResult = AxiosResponse<V1SetShellPriorityResponse>;
-export type PostTaskLogsResult = AxiosResponse<V1PostTaskLogsResponse>;
-export type GetTasksResult = AxiosResponse<V1GetTasksResponse>;
-export type GetActiveTasksCountResult = AxiosResponse<V1GetActiveTasksCountResponse>;
-export type GetTaskResult = AxiosResponse<V1GetTaskResponse>;
-export type GetTaskAcceleratorDataResult = AxiosResponse<V1GetTaskAcceleratorDataResponse>;
-export type GetGenericTaskConfigResult = AxiosResponse<V1GetGenericTaskConfigResponse>;
-export type GetTaskContextDirectoryResult = AxiosResponse<V1GetTaskContextDirectoryResponse>;
-export type KillGenericTaskResult = AxiosResponse<V1KillGenericTaskResponse>;
-export type TaskLogsResult = AxiosResponse<TaskLogs200>;
-export type TaskLogsFieldsResult = AxiosResponse<TaskLogsFields200>;
-export type PauseGenericTaskResult = AxiosResponse<V1PauseGenericTaskResponse>;
-export type UnpauseGenericTaskResult = AxiosResponse<V1UnpauseGenericTaskResponse>;
-export type PatchTemplateNameResult = AxiosResponse<V1PatchTemplateNameResponse>;
-export type GetTemplatesResult = AxiosResponse<V1GetTemplatesResponse>;
-export type PostTemplateResult = AxiosResponse<V1PostTemplateResponse>;
-export type PutTemplateResult = AxiosResponse<V1PutTemplateResponse>;
-export type GetTemplateResult = AxiosResponse<V1GetTemplateResponse>;
-export type DeleteTemplateResult = AxiosResponse<V1DeleteTemplateResponse>;
-export type PatchTemplateConfigResult = AxiosResponse<V1PatchTemplateConfigResponse>;
-export type GetTensorboardsResult = AxiosResponse<V1GetTensorboardsResponse>;
-export type LaunchTensorboardResult = AxiosResponse<V1LaunchTensorboardResponse>;
-export type GetTensorboardResult = AxiosResponse<V1GetTensorboardResponse>;
-export type KillTensorboardResult = AxiosResponse<V1KillTensorboardResponse>;
-export type SetTensorboardPriorityResult = AxiosResponse<V1SetTensorboardPriorityResponse>;
-export type GetAccessTokensResult = AxiosResponse<V1GetAccessTokensResponse>;
-export type PostAccessTokenResult = AxiosResponse<V1PostAccessTokenResponse>;
-export type PatchAccessTokenResult = AxiosResponse<V1PatchAccessTokenResponse>;
-export type ReportTrialSourceInfoResult = AxiosResponse<V1ReportTrialSourceInfoResponse>;
-export type CreateTrialResult = AxiosResponse<V1CreateTrialResponse>;
-export type PutTrialResult = AxiosResponse<V1PutTrialResponse>;
-export type GetTrialByExternalIDResult = AxiosResponse<V1GetTrialByExternalIDResponse>;
-export type GetTrainingMetricsResult = AxiosResponse<GetTrainingMetrics200>;
-export type GetMetricsResult = AxiosResponse<GetMetrics200>;
-export type GetValidationMetricsResult = AxiosResponse<GetValidationMetrics200>;
-export type PostTrialProfilerMetricsBatchResult =
-  AxiosResponse<V1PostTrialProfilerMetricsBatchResponse>;
-export type CompareTrialsResult = AxiosResponse<V1CompareTrialsResponse>;
-export type GetTrialCheckpointsResult = AxiosResponse<V1GetTrialCheckpointsResponse>;
-export type KillTrialResult = AxiosResponse<V1KillTrialResponse>;
-export type GetTrialRemainingLogRetentionDaysResult =
-  AxiosResponse<V1GetTrialRemainingLogRetentionDaysResponse>;
-export type GetTrialProfilerMetricsResult = AxiosResponse<GetTrialProfilerMetrics200>;
-export type ReportTrialMetricsResult = AxiosResponse<V1ReportTrialMetricsResponse>;
-export type ReportTrialTrainingMetricsResult = AxiosResponse<V1ReportTrialTrainingMetricsResponse>;
-export type GetTrialResult = AxiosResponse<V1GetTrialResponse>;
-export type PatchTrialResult = AxiosResponse<V1PatchTrialResponse>;
-export type ReportTrialSearcherEarlyExitResult =
-  AxiosResponse<V1ReportTrialSearcherEarlyExitResponse>;
-export type TrialLogsResult = AxiosResponse<TrialLogs200>;
-export type TrialLogsFieldsResult = AxiosResponse<TrialLogsFields200>;
-export type GetTrialProfilerAvailableSeriesResult =
-  AxiosResponse<GetTrialProfilerAvailableSeries200>;
-export type ReportTrialProgressResult = AxiosResponse<V1ReportTrialProgressResponse>;
-export type PutTrialRetainLogsResult = AxiosResponse<V1PutTrialRetainLogsResponse>;
-export type PostTrialRunnerMetadataResult = AxiosResponse<V1PostTrialRunnerMetadataResponse>;
-export type StartTrialResult = AxiosResponse<V1StartTrialResponse>;
-export type GetTrialWorkloadsResult = AxiosResponse<V1GetTrialWorkloadsResponse>;
-export type ReportTrialValidationMetricsResult =
-  AxiosResponse<V1ReportTrialValidationMetricsResponse>;
-export type GetProjectsByUserActivityResult = AxiosResponse<V1GetProjectsByUserActivityResponse>;
-export type GetUsersResult = AxiosResponse<V1GetUsersResponse>;
-export type PostUserResult = AxiosResponse<V1PostUserResponse>;
-export type PatchUsersResult = AxiosResponse<V1PatchUsersResponse>;
-export type PostUserActivityResult = AxiosResponse<V1PostUserActivityResponse>;
-export type AssignMultipleGroupsResult = AxiosResponse<V1AssignMultipleGroupsResponse>;
-export type GetUserSettingResult = AxiosResponse<V1GetUserSettingResponse>;
-export type PostUserSettingResult = AxiosResponse<V1PostUserSettingResponse>;
-export type ResetUserSettingResult = AxiosResponse<V1ResetUserSettingResponse>;
-export type GetUserResult = AxiosResponse<V1GetUserResponse>;
-export type PatchUserResult = AxiosResponse<V1PatchUserResponse>;
-export type SetUserPasswordResult = AxiosResponse<V1SetUserPasswordResponse>;
-export type GetUserByUsernameResult = AxiosResponse<V1GetUserByUsernameResponse>;
-export type GetWebhooksResult = AxiosResponse<V1GetWebhooksResponse>;
-export type PostWebhookResult = AxiosResponse<V1PostWebhookResponse>;
-export type PostWebhookEventDataResult = AxiosResponse<V1PostWebhookEventDataResponse>;
-export type DeleteWebhookResult = AxiosResponse<V1DeleteWebhookResponse>;
-export type PatchWebhookResult = AxiosResponse<V1PatchWebhookResponse>;
-export type TestWebhookResult = AxiosResponse<V1TestWebhookResponse>;
-export type GetWorkspacesResult = AxiosResponse<V1GetWorkspacesResponse>;
-export type PostWorkspaceResult = AxiosResponse<V1PostWorkspaceResponse>;
-export type GetWorkspaceResult = AxiosResponse<V1GetWorkspaceResponse>;
-export type DeleteWorkspaceResult = AxiosResponse<V1DeleteWorkspaceResponse>;
-export type PatchWorkspaceResult = AxiosResponse<V1PatchWorkspaceResponse>;
-export type ArchiveWorkspaceResult = AxiosResponse<V1ArchiveWorkspaceResponse>;
-export type GetKubernetesResourceQuotasResult =
-  AxiosResponse<V1GetKubernetesResourceQuotasResponse>;
-export type ListWorkspaceNamespaceBindingsResult =
-  AxiosResponse<V1ListWorkspaceNamespaceBindingsResponse>;
-export type PinWorkspaceResult = AxiosResponse<V1PinWorkspaceResponse>;
-export type GetWorkspaceProjectsResult = AxiosResponse<V1GetWorkspaceProjectsResponse>;
-export type SetResourceQuotasResult = AxiosResponse<V1SetResourceQuotasResponse>;
-export type UnarchiveWorkspaceResult = AxiosResponse<V1UnarchiveWorkspaceResponse>;
-export type UnpinWorkspaceResult = AxiosResponse<V1UnpinWorkspaceResponse>;
-export type ListRPsBoundToWorkspaceResult = AxiosResponse<V1ListRPsBoundToWorkspaceResponse>;
-export type DeleteWorkspaceNamespaceBindingsResult =
-  AxiosResponse<V1DeleteWorkspaceNamespaceBindingsResponse>;
-export type SetWorkspaceNamespaceBindingsResult =
-  AxiosResponse<V1SetWorkspaceNamespaceBindingsResponse>;
-export type PostProjectResult = AxiosResponse<V1PostProjectResponse>;
-export type GetCheckpointResult = AxiosResponse<unknown>;
-export type GetExperimentModelFileResult = AxiosResponse<unknown>;
-export type HealthResult = AxiosResponse<HealthCheck>;
-export type GetAggregatedResourceAllocationCsvResult = AxiosResponse<unknown>;
-export type GetResourceAllocationCsvResult = AxiosResponse<unknown>;
-export type GetRawResourceAllocationCsvResult = AxiosResponse<unknown>;
+export type GetAgentsResult = AxiosResponse<V1GetAgentsResponse>
+export type GetAgentResult = AxiosResponse<V1GetAgentResponse>
+export type DisableAgentResult = AxiosResponse<V1DisableAgentResponse>
+export type EnableAgentResult = AxiosResponse<V1EnableAgentResponse>
+export type GetSlotsResult = AxiosResponse<V1GetSlotsResponse>
+export type GetSlotResult = AxiosResponse<V1GetSlotResponse>
+export type DisableSlotResult = AxiosResponse<V1DisableSlotResponse>
+export type EnableSlotResult = AxiosResponse<V1EnableSlotResponse>
+export type GetAllocationResult = AxiosResponse<V1GetAllocationResponse>
+export type PostAllocationAcceleratorDataResult = AxiosResponse<V1PostAllocationAcceleratorDataResponse>
+export type AllocationAllGatherResult = AxiosResponse<V1AllocationAllGatherResponse>
+export type NotifyContainerRunningResult = AxiosResponse<V1NotifyContainerRunningResponse>
+export type PostAllocationProxyAddressResult = AxiosResponse<V1PostAllocationProxyAddressResponse>
+export type AllocationReadyResult = AxiosResponse<V1AllocationReadyResponse>
+export type MarkAllocationResourcesDaemonResult = AxiosResponse<V1MarkAllocationResourcesDaemonResponse>
+export type AllocationRendezvousInfoResult = AxiosResponse<V1AllocationRendezvousInfoResponse>
+export type AckAllocationPreemptionSignalResult = AxiosResponse<V1AckAllocationPreemptionSignalResponse>
+export type AllocationPendingPreemptionSignalResult = AxiosResponse<V1AllocationPendingPreemptionSignalResponse>
+export type AllocationPreemptionSignalResult = AxiosResponse<V1AllocationPreemptionSignalResponse>
+export type AllocationWaitingResult = AxiosResponse<V1AllocationWaitingResponse>
+export type LoginResult = AxiosResponse<V1LoginResponse>
+export type LogoutResult = AxiosResponse<V1LogoutResponse>
+export type CurrentUserResult = AxiosResponse<V1CurrentUserResponse>
+export type DeleteCheckpointsResult = AxiosResponse<V1DeleteCheckpointsResponse>
+export type ReportCheckpointResult = AxiosResponse<V1ReportCheckpointResponse>
+export type PatchCheckpointsResult = AxiosResponse<V1PatchCheckpointsResponse>
+export type CheckpointsRemoveFilesResult = AxiosResponse<V1CheckpointsRemoveFilesResponse>
+export type PostCheckpointMetadataResult = AxiosResponse<V1PostCheckpointMetadataResponse>
+export type GetCheckpointResult = AxiosResponse<unknown>
+export type GetTrialMetricsByCheckpointResult = AxiosResponse<V1GetTrialMetricsByCheckpointResponse>
+export type CleanupLogsResult = AxiosResponse<V1CleanupLogsResponse>
+export type GetCommandsResult = AxiosResponse<V1GetCommandsResponse>
+export type LaunchCommandResult = AxiosResponse<V1LaunchCommandResponse>
+export type GetCommandResult = AxiosResponse<V1GetCommandResponse>
+export type KillCommandResult = AxiosResponse<V1KillCommandResponse>
+export type SetCommandPriorityResult = AxiosResponse<V1SetCommandPriorityResponse>
+export type GetGlobalConfigPoliciesResult = AxiosResponse<V1GetGlobalConfigPoliciesResponse>
+export type DeleteGlobalConfigPoliciesResult = AxiosResponse<V1DeleteGlobalConfigPoliciesResponse>
+export type PutGlobalConfigPoliciesResult = AxiosResponse<V1PutGlobalConfigPoliciesResponse>
+export type GetWorkspaceConfigPoliciesResult = AxiosResponse<V1GetWorkspaceConfigPoliciesResponse>
+export type DeleteWorkspaceConfigPoliciesResult = AxiosResponse<V1DeleteWorkspaceConfigPoliciesResponse>
+export type PutWorkspaceConfigPoliciesResult = AxiosResponse<V1PutWorkspaceConfigPoliciesResponse>
+export type GetExperimentLabelsResult = AxiosResponse<V1GetExperimentLabelsResponse>
+export type GetExperimentsResult = AxiosResponse<V1GetExperimentsResponse>
+export type CreateExperimentResult = AxiosResponse<V1CreateExperimentResponse>
+export type SearchExperimentsResult = AxiosResponse<V1SearchExperimentsResponse>
+export type PutExperimentResult = AxiosResponse<V1PutExperimentResponse>
+export type ContinueExperimentResult = AxiosResponse<V1ContinueExperimentResponse>
+export type ExpMetricNamesResult = AxiosResponse<ExpMetricNames200>
+export type PatchExperimentResult = AxiosResponse<V1PatchExperimentResponse>
+export type GetExperimentResult = AxiosResponse<V1GetExperimentResponse>
+export type DeleteExperimentResult = AxiosResponse<V1DeleteExperimentResponse>
+export type GetModelDefFileResult = AxiosResponse<V1GetModelDefFileResponse>
+export type GetModelDefTreeResult = AxiosResponse<V1GetModelDefTreeResponse>
+export type DeleteExperimentLabelResult = AxiosResponse<V1DeleteExperimentLabelResponse>
+export type PutExperimentLabelResult = AxiosResponse<V1PutExperimentLabelResponse>
+export type MetricBatchesResult = AxiosResponse<MetricBatches200>
+export type TrialsSampleResult = AxiosResponse<TrialsSample200>
+export type TrialsSnapshotResult = AxiosResponse<TrialsSnapshot200>
+export type GetModelDefResult = AxiosResponse<V1GetModelDefResponse>
+export type MoveExperimentResult = AxiosResponse<V1MoveExperimentResponse>
+export type PutExperimentRetainLogsResult = AxiosResponse<V1PutExperimentRetainLogsResponse>
+export type GetBestSearcherValidationMetricResult = AxiosResponse<V1GetBestSearcherValidationMetricResponse>
+export type DeleteTensorboardFilesResult = AxiosResponse<V1DeleteTensorboardFilesResponse>
+export type GetExperimentTrialsResult = AxiosResponse<V1GetExperimentTrialsResponse>
+export type GetExperimentValidationHistoryResult = AxiosResponse<V1GetExperimentValidationHistoryResponse>
+export type ActivateExperimentResult = AxiosResponse<V1ActivateExperimentResponse>
+export type ArchiveExperimentResult = AxiosResponse<V1ArchiveExperimentResponse>
+export type CancelExperimentResult = AxiosResponse<V1CancelExperimentResponse>
+export type GetExperimentCheckpointsResult = AxiosResponse<V1GetExperimentCheckpointsResponse>
+export type KillExperimentResult = AxiosResponse<V1KillExperimentResponse>
+export type PauseExperimentResult = AxiosResponse<V1PauseExperimentResponse>
+export type UnarchiveExperimentResult = AxiosResponse<V1UnarchiveExperimentResponse>
+export type CreateGenericTaskResult = AxiosResponse<V1CreateGenericTaskResponse>
+export type CreateGroupResult = AxiosResponse<V1CreateGroupResponse>
+export type GetGroupsResult = AxiosResponse<V1GetGroupsResponse>
+export type GetGroupResult = AxiosResponse<V1GetGroupResponse>
+export type DeleteGroupResult = AxiosResponse<V1DeleteGroupResponse>
+export type UpdateGroupResult = AxiosResponse<V1UpdateGroupResponse>
+export type GetJobsResult = AxiosResponse<V1GetJobsResponse>
+export type UpdateJobQueueResult = AxiosResponse<V1UpdateJobQueueResponse>
+export type GetJobsV2Result = AxiosResponse<V1GetJobsV2Response>
+export type GetJobQueueStatsResult = AxiosResponse<V1GetJobQueueStatsResponse>
+export type GetKubernetesResourceManagersResult = AxiosResponse<V1GetKubernetesResourceManagersResponse>
+export type GetMasterResult = AxiosResponse<V1GetMasterResponse>
+export type GetClusterMessageResult = AxiosResponse<V1GetClusterMessageResponse>
+export type DeleteClusterMessageResult = AxiosResponse<V1DeleteClusterMessageResponse>
+export type SetClusterMessageResult = AxiosResponse<V1SetClusterMessageResponse>
+export type GetMasterConfigResult = AxiosResponse<V1GetMasterConfigResponse>
+export type PatchMasterConfigResult = AxiosResponse<V1PatchMasterConfigResponse>
+export type MasterLogsResult = AxiosResponse<MasterLogs200>
+export type GetTelemetryResult = AxiosResponse<V1GetTelemetryResponse>
+export type GetMeResult = AxiosResponse<V1GetMeResponse>
+export type GetModelLabelsResult = AxiosResponse<V1GetModelLabelsResponse>
+export type GetModelsResult = AxiosResponse<V1GetModelsResponse>
+export type PostModelResult = AxiosResponse<V1PostModelResponse>
+export type GetModelResult = AxiosResponse<V1GetModelResponse>
+export type DeleteModelResult = AxiosResponse<V1DeleteModelResponse>
+export type PatchModelResult = AxiosResponse<V1PatchModelResponse>
+export type ArchiveModelResult = AxiosResponse<V1ArchiveModelResponse>
+export type MoveModelResult = AxiosResponse<V1MoveModelResponse>
+export type UnarchiveModelResult = AxiosResponse<V1UnarchiveModelResponse>
+export type GetModelVersionsResult = AxiosResponse<V1GetModelVersionsResponse>
+export type PostModelVersionResult = AxiosResponse<V1PostModelVersionResponse>
+export type GetModelVersionResult = AxiosResponse<V1GetModelVersionResponse>
+export type DeleteModelVersionResult = AxiosResponse<V1DeleteModelVersionResponse>
+export type PatchModelVersionResult = AxiosResponse<V1PatchModelVersionResponse>
+export type GetTrialMetricsByModelVersionResult = AxiosResponse<V1GetTrialMetricsByModelVersionResponse>
+export type BulkAutoCreateWorkspaceNamespaceBindingsResult = AxiosResponse<V1BulkAutoCreateWorkspaceNamespaceBindingsResponse>
+export type GetWorkspacesWithDefaultNamespaceBindingsResult = AxiosResponse<V1GetWorkspacesWithDefaultNamespaceBindingsResponse>
+export type GetNotebooksResult = AxiosResponse<V1GetNotebooksResponse>
+export type LaunchNotebookResult = AxiosResponse<V1LaunchNotebookResponse>
+export type GetNotebookResult = AxiosResponse<V1GetNotebookResponse>
+export type KillNotebookResult = AxiosResponse<V1KillNotebookResponse>
+export type IdleNotebookResult = AxiosResponse<V1IdleNotebookResponse>
+export type SetNotebookPriorityResult = AxiosResponse<V1SetNotebookPriorityResponse>
+export type GetPermissionsSummaryResult = AxiosResponse<V1GetPermissionsSummaryResponse>
+export type PreviewHPSearchResult = AxiosResponse<V1PreviewHPSearchResponse>
+export type GetProjectByKeyResult = AxiosResponse<V1GetProjectByKeyResponse>
+export type GetProjectResult = AxiosResponse<V1GetProjectResponse>
+export type DeleteProjectResult = AxiosResponse<V1DeleteProjectResponse>
+export type PatchProjectResult = AxiosResponse<V1PatchProjectResponse>
+export type ArchiveProjectResult = AxiosResponse<V1ArchiveProjectResponse>
+export type GetProjectColumnsResult = AxiosResponse<V1GetProjectColumnsResponse>
+export type GetProjectNumericMetricsRangeResult = AxiosResponse<V1GetProjectNumericMetricsRangeResponse>
+export type UnarchiveProjectResult = AxiosResponse<V1UnarchiveProjectResponse>
+export type ActivateExperimentsResult = AxiosResponse<V1ActivateExperimentsResponse>
+export type ArchiveExperimentsResult = AxiosResponse<V1ArchiveExperimentsResponse>
+export type CancelExperimentsResult = AxiosResponse<V1CancelExperimentsResponse>
+export type DeleteExperimentsResult = AxiosResponse<V1DeleteExperimentsResponse>
+export type KillExperimentsResult = AxiosResponse<V1KillExperimentsResponse>
+export type MoveExperimentsResult = AxiosResponse<V1MoveExperimentsResponse>
+export type PauseExperimentsResult = AxiosResponse<V1PauseExperimentsResponse>
+export type PutExperimentsRetainLogsResult = AxiosResponse<V1PutExperimentsRetainLogsResponse>
+export type UnarchiveExperimentsResult = AxiosResponse<V1UnarchiveExperimentsResponse>
+export type GetMetadataValuesResult = AxiosResponse<V1GetMetadataValuesResponse>
+export type MoveProjectResult = AxiosResponse<V1MoveProjectResponse>
+export type AddProjectNoteResult = AxiosResponse<V1AddProjectNoteResponse>
+export type PutProjectNotesResult = AxiosResponse<V1PutProjectNotesResponse>
+export type GetResourcePoolsResult = AxiosResponse<V1GetResourcePoolsResponse>
+export type ListWorkspacesBoundToRPResult = AxiosResponse<V1ListWorkspacesBoundToRPResponse>
+export type UnbindRPFromWorkspaceResult = AxiosResponse<V1UnbindRPFromWorkspaceResponse>
+export type BindRPToWorkspaceResult = AxiosResponse<V1BindRPToWorkspaceResponse>
+export type OverwriteRPWorkspaceBindingsResult = AxiosResponse<V1OverwriteRPWorkspaceBindingsResponse>
+export type ResourceAllocationAggregatedResult = AxiosResponse<V1ResourceAllocationAggregatedResponse>
+export type ResourceAllocationRawResult = AxiosResponse<V1ResourceAllocationRawResponse>
+export type AssignRolesResult = AxiosResponse<V1AssignRolesResponse>
+export type RemoveAssignmentsResult = AxiosResponse<V1RemoveAssignmentsResponse>
+export type ListRolesResult = AxiosResponse<V1ListRolesResponse>
+export type SearchRolesAssignableToScopeResult = AxiosResponse<V1SearchRolesAssignableToScopeResponse>
+export type GetRolesAssignedToGroupResult = AxiosResponse<V1GetRolesAssignedToGroupResponse>
+export type GetRolesByIDResult = AxiosResponse<V1GetRolesByIDResponse>
+export type GetRolesAssignedToUserResult = AxiosResponse<V1GetRolesAssignedToUserResponse>
+export type GetGroupsAndUsersAssignedToWorkspaceResult = AxiosResponse<V1GetGroupsAndUsersAssignedToWorkspaceResponse>
+export type SearchRunsResult = AxiosResponse<V1SearchRunsResponse>
+export type ArchiveRunsResult = AxiosResponse<V1ArchiveRunsResponse>
+export type DeleteRunsResult = AxiosResponse<V1DeleteRunsResponse>
+export type KillRunsResult = AxiosResponse<V1KillRunsResponse>
+export type MoveRunsResult = AxiosResponse<V1MoveRunsResponse>
+export type PauseRunsResult = AxiosResponse<V1PauseRunsResponse>
+export type ResumeRunsResult = AxiosResponse<V1ResumeRunsResponse>
+export type RunPrepareForReportingResult = AxiosResponse<V1RunPrepareForReportingResponse>
+export type UnarchiveRunsResult = AxiosResponse<V1UnarchiveRunsResponse>
+export type GetRunMetadataResult = AxiosResponse<V1GetRunMetadataResponse>
+export type PostRunMetadataResult = AxiosResponse<V1PostRunMetadataResponse>
+export type ArchiveSearchesResult = AxiosResponse<V1ArchiveSearchesResponse>
+export type CancelSearchesResult = AxiosResponse<V1CancelSearchesResponse>
+export type DeleteSearchesResult = AxiosResponse<V1DeleteSearchesResponse>
+export type KillSearchesResult = AxiosResponse<V1KillSearchesResponse>
+export type MoveSearchesResult = AxiosResponse<V1MoveSearchesResponse>
+export type PauseSearchesResult = AxiosResponse<V1PauseSearchesResponse>
+export type ResumeSearchesResult = AxiosResponse<V1ResumeSearchesResponse>
+export type LaunchTensorboardSearchesResult = AxiosResponse<V1LaunchTensorboardSearchesResponse>
+export type UnarchiveSearchesResult = AxiosResponse<V1UnarchiveSearchesResponse>
+export type GetShellsResult = AxiosResponse<V1GetShellsResponse>
+export type LaunchShellResult = AxiosResponse<V1LaunchShellResponse>
+export type GetShellResult = AxiosResponse<V1GetShellResponse>
+export type KillShellResult = AxiosResponse<V1KillShellResponse>
+export type SetShellPriorityResult = AxiosResponse<V1SetShellPriorityResponse>
+export type PostTaskLogsResult = AxiosResponse<V1PostTaskLogsResponse>
+export type GetTasksResult = AxiosResponse<V1GetTasksResponse>
+export type GetActiveTasksCountResult = AxiosResponse<V1GetActiveTasksCountResponse>
+export type GetTaskResult = AxiosResponse<V1GetTaskResponse>
+export type GetTaskAcceleratorDataResult = AxiosResponse<V1GetTaskAcceleratorDataResponse>
+export type GetGenericTaskConfigResult = AxiosResponse<V1GetGenericTaskConfigResponse>
+export type GetTaskContextDirectoryResult = AxiosResponse<V1GetTaskContextDirectoryResponse>
+export type KillGenericTaskResult = AxiosResponse<V1KillGenericTaskResponse>
+export type TaskLogsResult = AxiosResponse<TaskLogs200>
+export type TaskLogsFieldsResult = AxiosResponse<TaskLogsFields200>
+export type PauseGenericTaskResult = AxiosResponse<V1PauseGenericTaskResponse>
+export type UnpauseGenericTaskResult = AxiosResponse<V1UnpauseGenericTaskResponse>
+export type PatchTemplateNameResult = AxiosResponse<V1PatchTemplateNameResponse>
+export type GetTemplatesResult = AxiosResponse<V1GetTemplatesResponse>
+export type PostTemplateResult = AxiosResponse<V1PostTemplateResponse>
+export type PutTemplateResult = AxiosResponse<V1PutTemplateResponse>
+export type GetTemplateResult = AxiosResponse<V1GetTemplateResponse>
+export type DeleteTemplateResult = AxiosResponse<V1DeleteTemplateResponse>
+export type PatchTemplateConfigResult = AxiosResponse<V1PatchTemplateConfigResponse>
+export type GetTensorboardsResult = AxiosResponse<V1GetTensorboardsResponse>
+export type LaunchTensorboardResult = AxiosResponse<V1LaunchTensorboardResponse>
+export type GetTensorboardResult = AxiosResponse<V1GetTensorboardResponse>
+export type KillTensorboardResult = AxiosResponse<V1KillTensorboardResponse>
+export type SetTensorboardPriorityResult = AxiosResponse<V1SetTensorboardPriorityResponse>
+export type GetAccessTokensResult = AxiosResponse<V1GetAccessTokensResponse>
+export type PostAccessTokenResult = AxiosResponse<V1PostAccessTokenResponse>
+export type PatchAccessTokenResult = AxiosResponse<V1PatchAccessTokenResponse>
+export type ReportTrialSourceInfoResult = AxiosResponse<V1ReportTrialSourceInfoResponse>
+export type CreateTrialResult = AxiosResponse<V1CreateTrialResponse>
+export type PutTrialResult = AxiosResponse<V1PutTrialResponse>
+export type GetTrialByExternalIDResult = AxiosResponse<V1GetTrialByExternalIDResponse>
+export type GetTrainingMetricsResult = AxiosResponse<GetTrainingMetrics200>
+export type GetMetricsResult = AxiosResponse<GetMetrics200>
+export type GetValidationMetricsResult = AxiosResponse<GetValidationMetrics200>
+export type PostTrialProfilerMetricsBatchResult = AxiosResponse<V1PostTrialProfilerMetricsBatchResponse>
+export type CompareTrialsResult = AxiosResponse<V1CompareTrialsResponse>
+export type GetTrialCheckpointsResult = AxiosResponse<V1GetTrialCheckpointsResponse>
+export type KillTrialResult = AxiosResponse<V1KillTrialResponse>
+export type GetTrialRemainingLogRetentionDaysResult = AxiosResponse<V1GetTrialRemainingLogRetentionDaysResponse>
+export type GetTrialProfilerMetricsResult = AxiosResponse<GetTrialProfilerMetrics200>
+export type ReportTrialMetricsResult = AxiosResponse<V1ReportTrialMetricsResponse>
+export type ReportTrialTrainingMetricsResult = AxiosResponse<V1ReportTrialTrainingMetricsResponse>
+export type GetTrialResult = AxiosResponse<V1GetTrialResponse>
+export type PatchTrialResult = AxiosResponse<V1PatchTrialResponse>
+export type ReportTrialSearcherEarlyExitResult = AxiosResponse<V1ReportTrialSearcherEarlyExitResponse>
+export type TrialLogsResult = AxiosResponse<TrialLogs200>
+export type TrialLogsFieldsResult = AxiosResponse<TrialLogsFields200>
+export type GetTrialProfilerAvailableSeriesResult = AxiosResponse<GetTrialProfilerAvailableSeries200>
+export type ReportTrialProgressResult = AxiosResponse<V1ReportTrialProgressResponse>
+export type PutTrialRetainLogsResult = AxiosResponse<V1PutTrialRetainLogsResponse>
+export type PostTrialRunnerMetadataResult = AxiosResponse<V1PostTrialRunnerMetadataResponse>
+export type StartTrialResult = AxiosResponse<V1StartTrialResponse>
+export type GetTrialWorkloadsResult = AxiosResponse<V1GetTrialWorkloadsResponse>
+export type ReportTrialValidationMetricsResult = AxiosResponse<V1ReportTrialValidationMetricsResponse>
+export type GetProjectsByUserActivityResult = AxiosResponse<V1GetProjectsByUserActivityResponse>
+export type GetUsersResult = AxiosResponse<V1GetUsersResponse>
+export type PostUserResult = AxiosResponse<V1PostUserResponse>
+export type PatchUsersResult = AxiosResponse<V1PatchUsersResponse>
+export type PostUserActivityResult = AxiosResponse<V1PostUserActivityResponse>
+export type AssignMultipleGroupsResult = AxiosResponse<V1AssignMultipleGroupsResponse>
+export type GetUserSettingResult = AxiosResponse<V1GetUserSettingResponse>
+export type PostUserSettingResult = AxiosResponse<V1PostUserSettingResponse>
+export type ResetUserSettingResult = AxiosResponse<V1ResetUserSettingResponse>
+export type GetUserResult = AxiosResponse<V1GetUserResponse>
+export type PatchUserResult = AxiosResponse<V1PatchUserResponse>
+export type SetUserPasswordResult = AxiosResponse<V1SetUserPasswordResponse>
+export type GetUserByUsernameResult = AxiosResponse<V1GetUserByUsernameResponse>
+export type GetWebhooksResult = AxiosResponse<V1GetWebhooksResponse>
+export type PostWebhookResult = AxiosResponse<V1PostWebhookResponse>
+export type PostWebhookEventDataResult = AxiosResponse<V1PostWebhookEventDataResponse>
+export type DeleteWebhookResult = AxiosResponse<V1DeleteWebhookResponse>
+export type PatchWebhookResult = AxiosResponse<V1PatchWebhookResponse>
+export type TestWebhookResult = AxiosResponse<V1TestWebhookResponse>
+export type GetWorkspacesResult = AxiosResponse<V1GetWorkspacesResponse>
+export type PostWorkspaceResult = AxiosResponse<V1PostWorkspaceResponse>
+export type GetWorkspaceResult = AxiosResponse<V1GetWorkspaceResponse>
+export type DeleteWorkspaceResult = AxiosResponse<V1DeleteWorkspaceResponse>
+export type PatchWorkspaceResult = AxiosResponse<V1PatchWorkspaceResponse>
+export type ArchiveWorkspaceResult = AxiosResponse<V1ArchiveWorkspaceResponse>
+export type GetKubernetesResourceQuotasResult = AxiosResponse<V1GetKubernetesResourceQuotasResponse>
+export type ListWorkspaceNamespaceBindingsResult = AxiosResponse<V1ListWorkspaceNamespaceBindingsResponse>
+export type PinWorkspaceResult = AxiosResponse<V1PinWorkspaceResponse>
+export type GetWorkspaceProjectsResult = AxiosResponse<V1GetWorkspaceProjectsResponse>
+export type SetResourceQuotasResult = AxiosResponse<V1SetResourceQuotasResponse>
+export type UnarchiveWorkspaceResult = AxiosResponse<V1UnarchiveWorkspaceResponse>
+export type UnpinWorkspaceResult = AxiosResponse<V1UnpinWorkspaceResponse>
+export type ListRPsBoundToWorkspaceResult = AxiosResponse<V1ListRPsBoundToWorkspaceResponse>
+export type DeleteWorkspaceNamespaceBindingsResult = AxiosResponse<V1DeleteWorkspaceNamespaceBindingsResponse>
+export type SetWorkspaceNamespaceBindingsResult = AxiosResponse<V1SetWorkspaceNamespaceBindingsResponse>
+export type PostProjectResult = AxiosResponse<V1PostProjectResponse>
+export type GetCheckpointResult = AxiosResponse<unknown>
+export type GetExperimentModelFileResult = AxiosResponse<unknown>
+export type HealthResult = AxiosResponse<HealthCheck>
+export type GetAggregatedResourceAllocationCsvResult = AxiosResponse<unknown>
+export type GetResourceAllocationCsvResult = AxiosResponse<unknown>
+export type GetRawResourceAllocationCsvResult = AxiosResponse<unknown>
