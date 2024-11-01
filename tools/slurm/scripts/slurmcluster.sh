@@ -212,13 +212,7 @@ LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
 LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
-if [[ -n $GPUS ]]; then
-    echo "Installing NVIDIA drivers"
-    gcloud_ssh "nvidia-smi"
-    gcloud_ssh "curl -L https://github.com/GoogleCloudPlatform/compute-gpu-installation/releases/download/cuda-installer-v1.1.0/cuda_installer.pyz --output cuda_installer.pyz"
-    gcloud_ssh "sudo python3 cuda_installer.pyz install_driver"
-    gcloud_ssh "nvidia-smi"
-fi
+
 # Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     # Find the file and assign its name to CPU_IMAGE_SQSH & CUDA_IMAGE_SQSH
