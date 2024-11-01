@@ -1075,12 +1075,6 @@ end of the spectrum, ``conservative`` mode performs significantly less downsampl
 consequence does not explore as many configurations given the same budget. We recommend using either
 ``aggressive`` or ``standard`` mode.
 
-``stop_once`` (deprecated)
---------------------------
-
-Previously, this field determined whether the ASHA algorithm was promotion-based or
-preemption-based. This field is now deprecated and ASHA search is always preemption-based.
-
 ``divisor``
 -----------
 
