@@ -341,6 +341,7 @@ export const trialContinueConfig = (
       name: 'single',
       smaller_is_better: experimentConfig.searcher.smaller_is_better,
       source_trial_id: trialId,
+      max_length: experimentConfig.searcher.max_length,
     },
     workspace: workspaceName,
   };
