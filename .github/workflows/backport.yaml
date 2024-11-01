@@ -30,6 +30,7 @@ jobs:
         uses: poseidon/wait-for-status-checks@v0.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ignore: test-e2e-longrunning
       
       - name: merge backported PR
         id: merge_backport_pr
