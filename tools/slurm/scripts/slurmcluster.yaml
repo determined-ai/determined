@@ -103,7 +103,7 @@ stages:
           # allows us to use it is schedule GPUs more easily. For systems without this plugin, set
           # this to false and add contraints to ensure select node have GPUs if desired.
           tres_supported: true
-          # gres_supported: $OPT_GRESSUPPORTED
+          gres_supported: $OPT_GRESSUPPORTED
           # rendezvous_network_interface: $OPT_RENDEVOUSIFACE
           # default_aux_resource_pool: $OPT_DEFAULTAUXRESOURCEPOOL
           # default_compute_resource_pool: $OPT_DEFAULTCOMPUTERESOURCEPOOL

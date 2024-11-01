@@ -203,9 +203,11 @@ export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 if [[ -z $GPUS ]]; then
-    export OPT_SLOTTYPE="cpu" 
+    export OPT_SLOTTYPE="cpu"
+    export OPT_GRESSUPPORTED=false
 else
     export OPT_SLOTTYPE="cuda"
+    export OPT_GRESSUPPORTED=true
 fi
 
 LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
@@ -226,7 +228,6 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     if [[ $CUDA_IMAGE_SQSH != "$LOCAL_CUDA_IMAGE_SQSH" ]]; then
         echo "WARNING: Local CUDAImage ${LOCAL_CUDA_IMAGE_STRING} does not match the CUDA Image found on existing ${OPT_WORKLOAD_MANAGER} image."
         echo "   Regenerate base image with: make -C tools/slurm/packer build WORKLOAD_MANAGER=${OPT_WORKLOAD_MANAGER}"
-       
     fi
 
     # If the image has to download during circleci jobs it may cause a timeout waiting for make slurmcluster

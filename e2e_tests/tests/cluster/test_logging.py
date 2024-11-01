@@ -83,7 +83,9 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
         exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})])
         assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
         treq = bindings.v1LaunchTensorboardRequest(config=task_config, experimentIds=[exp_ref.id])
-        task_id = bindings.post_LaunchTensorboard(sess, body=treq).tensorboard.id
+        resp = bindings.post_LaunchTensorboard(sess, body=treq)
+        print(f"DNJ DEBUG tensorboard create response: {resp}")
+        task_id = resp.tensorboard.id
     elif task_type == "notebook":
         nreq = bindings.v1LaunchNotebookRequest(config=task_config)
         task_id = bindings.post_LaunchNotebook(sess, body=nreq).notebook.id
