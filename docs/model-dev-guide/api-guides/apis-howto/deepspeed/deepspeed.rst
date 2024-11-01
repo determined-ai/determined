@@ -528,7 +528,7 @@ Example workflow of frequent iterations between local debugging and cluster depl
    +       # On-cluster: Determined will automatically detect distributed context.
    +       distributed_context = None
    +       # On-cluster: configure the latest checkpoint for pause/resume training functionality.
-   +       latest_checkpoint = det.get_cluster_info().latest_checkpoint
+   +       latest_checkpoint = info.latest_checkpoint
 
    +     with det_ds.init(
    +       distributed=distributed_context
