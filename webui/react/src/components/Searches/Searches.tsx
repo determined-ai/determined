@@ -88,7 +88,7 @@ interface Props {
   project: Project;
 }
 
-const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal', 'archived']);
 const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const makeSortString = (sorts: ValidSort[]): string =>

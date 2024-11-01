@@ -101,7 +101,7 @@ interface Props {
 
 const NO_PINS_WIDTH = 200;
 
-export const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+export const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal', 'archived']);
 const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const makeSortString = (sorts: ValidSort[]): string =>
