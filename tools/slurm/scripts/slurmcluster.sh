@@ -160,15 +160,14 @@ SOCKS5_PROXY_PORT=60000
 SOCKS5_PROXY_TUNNEL_OPTS="-D ${SOCKS5_PROXY_PORT} -nNT"
 
 
-gcloud_start_tunnel() {
-    # Launch SSH tunnels.
-    echo "Launching SSH tunnels"
-    gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL ${OPT_LAUNCHER_PORT}:localhost:${OPT_LAUNCHER_PORT} -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
-    TUNNEL_PID=$!
-    trap 'kill $TUNNEL_PID' EXIT
-    echo "Started bidirectional tunnels to $INSTANCE_NAME"
-}
-gcloud_start_tunnel
+
+# Launch SSH tunnels.
+echo "Launching SSH tunnels"
+gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL ${OPT_LAUNCHER_PORT}:localhost:${OPT_LAUNCHER_PORT} -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
+TUNNEL_PID=$!
+trap 'kill $TUNNEL_PID' EXIT
+echo "Started bidirectional tunnels to $INSTANCE_NAME"
+
 
 # Grab launcher token.
 REMOTE_TOKEN_SOURCE=/opt/launcher/jetty/base/etc/.launcher.token
@@ -206,7 +205,7 @@ export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 if [[ -z $GPUS ]]; then
     export OPT_SLOTTYPE="cpu" 
 else
-    export OPT_SLOTTYPE="gpu"
+    export OPT_SLOTTYPE="cuda"
 fi
 
 LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
@@ -215,8 +214,10 @@ LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
 if [[ -n $GPUS ]]; then
     echo "Installing NVIDIA drivers"
+    gcloud_ssh "nvidia-smi"
     gcloud_ssh "curl -L https://github.com/GoogleCloudPlatform/compute-gpu-installation/releases/download/cuda-installer-v1.1.0/cuda_installer.pyz --output cuda_installer.pyz"
     gcloud_ssh "sudo python3 cuda_installer.pyz install_driver"
+    gcloud_ssh "nvidia-smi"
 fi
 # Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
