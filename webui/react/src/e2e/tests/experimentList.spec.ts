@@ -713,8 +713,6 @@ test.describe('Experiment List', () => {
       await experimentActionDropdown.stopKillModal.footer.pwLocator.getByText('Kill').click();
       await experimentActionDropdown.stopKillModal.pwLocator.waitFor({ state: 'hidden' });
 
-      // eslint-disable-next-line no-console
-      console.log((await newExperimentRow.getCellByColumnName('State')).pwLocator.innerText());
       const experiments: ExperimentBase[] = JSON.parse(
         detExecSync(`project list-experiments --json ${workspace.name} ${project.name}`),
       );
