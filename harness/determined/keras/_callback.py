@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import os
+import pathlib
 import pickle
 import shutil
 import tempfile
@@ -337,34 +338,8 @@ class DeterminedCallback(callbacks.ProgbarLogger):  # type: ignore
             # Load model.
             self.load_model(self.model, str(path / "model_checkpoint"), self._core.distributed)
 
-            # Load training state also.
-            state_path = path / "callback_state"
-            if not state_path.exists():
-                return None
-            with state_path.open("rb") as f:
-                state = pickle.load(f)
-            if state["continue_id"] != self._continue_id:
-                return None
-            # Continue training where we left off.
-            self._steps_completed = state["steps_completed"]
-            self._training_length = state["training_length"]
-            self._validation_length = state["validation_length"]
-            initial_epoch: int = state["epoch"] + 1
-
-            # HACK: Trick the training loop into starting on a different epoch.  Internally, this is
-            # how keras.callbacks.BackupAndRestore() sets the initial_epoch.
-            class WorkerTrainingState:
-                # For tf.keras.
-                def maybe_load_initial_epoch_from_ckpt(*_: Any, **__: Any) -> int:
-                    return initial_epoch
-
-                # For plain keras.
-                def maybe_load_initial_counters_from_ckpt(*_: Any, **__: Any) -> Tuple[int, int]:
-                    # We only save on epoch boundaries.
-                    initial_batch = 0
-                    return initial_epoch, initial_batch
-
-            self.model._training_state = WorkerTrainingState()
+            # Load our own state.
+            self._load_training_state(path)
 
             # Success! Don't delete the checkpoint until after the first batch runs though, because
             # the checkpoint isn't actually read until then.
@@ -372,6 +347,35 @@ class DeterminedCallback(callbacks.ProgbarLogger):  # type: ignore
 
         # mypy thinks it's possible to arrive here, but it isn't.
         raise RuntimeError("impossible codepath")
+
+    def _load_training_state(self, path: pathlib.Path) -> None:
+        state_path = path / "callback_state"
+        if not state_path.exists():
+            return
+        with state_path.open("rb") as f:
+            state = pickle.load(f)
+        if state["continue_id"] != self._continue_id:
+            return
+        # Continue training where we left off.
+        self._steps_completed = state["steps_completed"]
+        self._training_length = state["training_length"]
+        self._validation_length = state["validation_length"]
+        initial_epoch: int = state["epoch"] + 1
+
+        # HACK: Trick the training loop into starting on a different epoch.  Internally, this is
+        # how keras.callbacks.BackupAndRestore() sets the initial_epoch.
+        class WorkerTrainingState:
+            # For tf.keras.
+            def maybe_load_initial_epoch_from_ckpt(*_: Any, **__: Any) -> int:
+                return initial_epoch
+
+            # For plain keras.
+            def maybe_load_initial_counters_from_ckpt(*_: Any, **__: Any) -> Tuple[int, int]:
+                # We only save on epoch boundaries.
+                initial_batch = 0
+                return initial_epoch, initial_batch
+
+        self.model._training_state = WorkerTrainingState()
 
     def save_model(
         self, model: models.Model, path: str, distributed: core.DistributedContext
