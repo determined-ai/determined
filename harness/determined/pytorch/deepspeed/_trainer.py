@@ -65,7 +65,9 @@ class Trainer:
             max_length: The maximum number of steps to train for. This is a ``TrainUnit`` type
                 (``Batch`` or ``Epoch``) which takes an ``int``. For example, ``Epoch(1)`` would
                 train for a maximum length of one epoch.
+
                 .. note::
+
                    If using an ASHA searcher, this value should match the searcher config values in
                    the experiment config (i.e. ``Epoch(1)`` = `max_time: 1` and `time_metric:
                    "epochs"`).

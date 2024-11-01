@@ -47,7 +47,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
         self.discriminator = self.context.wrap_model_engine(discriminator)
         self.fixed_noise = self.context.to_device(
             torch.randn(
-                self.context.train_micro_batch_size_per_gpu, self.hparams["noise_length"], 1, 1
+                self.context.get_train_micro_batch_size_per_gpu(), self.hparams["noise_length"], 1, 1
             )
         )
         self.criterion = nn.BCELoss()
@@ -63,7 +63,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
             torch.Tensor,
             self.context.to_device(
                 torch.randn(
-                    self.context.train_micro_batch_size_per_gpu,
+                    self.context.get_train_micro_batch_size_per_gpu(),
                     self.hparams["noise_length"],
                     1,
                     1,
@@ -94,7 +94,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
         else:
             dtype = torch.float32
         real_label, fake_label = self._get_label_constants(
-            self.context.train_micro_batch_size_per_gpu, dtype
+            self.context.get_train_micro_batch_size_per_gpu(), dtype
         )
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
@@ -107,7 +107,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
         D_x = 0.0
         D_G_z1 = 0.0
         fake_sample_count = (
-            self.context.train_micro_batch_size_per_gpu * self.gradient_accumulation_steps
+            self.context.get_train_micro_batch_size_per_gpu() * self.gradient_accumulation_steps
         )
 
         for i in range(self.gradient_accumulation_steps):
@@ -133,7 +133,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
             output = self.discriminator(fake.detach())
             errD_fake = self.criterion(output, fake_label)
             self.discriminator.backward(errD_fake)
-            errD_fake_sum += errD_fake * self.context.train_micro_batch_size_per_gpu
+            errD_fake_sum += errD_fake * self.context.get_train_micro_batch_size_per_gpu()
             D_G_z1 += output.sum().item()
             # update
             self.discriminator.step()
@@ -154,7 +154,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
             output = self.discriminator(fake)
             errG = self.criterion(output, real_label)  # fake labels are real for generator cost
             self.generator.backward(errG)
-            errG_sum += errG * self.context._train_micro_batch_size_per_gpu
+            errG_sum += errG * self.context.get_train_micro_batch_size_per_gpu()
             D_G_z2_sum += output.sum().item()
             self.generator.step()
 
@@ -189,7 +189,7 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
         dataset = data.get_dataset(self.data_config)
         return DataLoader(
             dataset,
-            batch_size=self.context.train_micro_batch_size_per_gpu,
+            batch_size=self.context.get_train_micro_batch_size_per_gpu(),
             shuffle=True,
             num_workers=int(self.hparams["data_workers"]),
         )
@@ -201,9 +201,9 @@ class DCGANTrial(det_ds.DeepSpeedTrial):
             dataset,
             list(
                 range(
-                    self.context.train_micro_batch_size_per_gpu
+                    self.context.get_train_micro_batch_size_per_gpu()
                     * self.context.distributed.get_size()
                 )
             ),
         )
-        return DataLoader(dataset, batch_size=self.context.train_micro_batch_size_per_gpu)
+        return DataLoader(dataset, batch_size=self.context.get_train_micro_batch_size_per_gpu())
