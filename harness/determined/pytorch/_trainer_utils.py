@@ -87,7 +87,7 @@ class Epoch(TrainUnit):
 
     Epoch(int) values are treated as periods, e.g. Epoch(100) will checkpoint/validate every 100
     epochs.
-    Epoch(collections.abc.Container) values are treated as schedules, e.g. Epoch(1,5,10) will
+    Epoch(collections.abc.Container) values are treated as schedules, e.g. Epoch([1,5,10]) will
     checkpoint/validate on epochs 1, 5, and 10.
     """
 
@@ -100,7 +100,7 @@ class Batch(TrainUnit):
 
     Batch(int) values are treated as periods, e.g. Batch(100) will checkpoint/validate every 100
     batches.
-    Batch(collections.abc.Container) values are treated as schedules, e.g. Batch(1,5,10) will
+    Batch(collections.abc.Container) values are treated as schedules, e.g. Batch([1,5,10]) will
     checkpoint/validate on batches 1, 5, and 10.
     """
 

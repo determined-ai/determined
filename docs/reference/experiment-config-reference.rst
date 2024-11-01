@@ -182,19 +182,20 @@ Example:
 
 .. _scheduling-unit:
 
-``scheduling_unit``
-===================
+``scheduling_unit`` (deprecated)
+================================
 
 Optional. Instructs how frequent to perform system operations, such as periodic checkpointing and
-preemption, in the unit of batches. The number of records in a batch is controlled by the
-:ref:`global_batch_size <config-global-batch-size>` hyperparameter. Defaults to ``100``.
+preemption, in the unit of batches. This field has been deprecated and the behavior should be
+configured in training code directly. Please see :ref:`apis-howto-overview` for details specific to
+your training framework.
 
--  Setting this value too small can increase the overhead of system operations and decrease training
-   throughput.
--  Setting this value too large might prevent the system from reallocating resources from this
-   workload to another, potentially more important, workload.
--  As a rule of thumb, it should be set to the number of batches that can be trained in roughly
-   60--180 seconds.
+.. _config-records-per-epoch:
+
+``records_per_epoch`` (deprecated)
+==================================
+
+Optional. The number of records in the training data set. This field has been deprecated.
 
 .. _max-restarts:
 
@@ -319,6 +320,15 @@ While debugging, the logger will display lines highlighted in blue for easy iden
  Validation Policy
 *******************
 
+.. _experiment-config-min-validation-period:
+
+``min_validation_period`` (deprecated)
+======================================
+
+Optional. Specifies the minimum frequency at which validation should be run for each trial. This
+field has been deprecated and should be specified directly in training code. Please see
+:ref:`apis-howto-overview` for details specific to your training framework.
+
 .. _experiment-config-perform-initial-validation:
 
 ``perform_initial_validation``
@@ -340,6 +350,15 @@ Determined checkpoints in the following situations:
 -  Upon completion of the trial.
 -  Prior to the searcher making a decision based on the validation of trials, ensuring consistency
    in case of a failure.
+
+.. _experiment-config-min-checkpoint-period:
+
+``min_checkpoint_period`` (deprecated)
+======================================
+
+Optional. Specifies the minimum frequency for running checkpointing for each trial. This field has
+been deprecated and should be specified directly in training code. Please see
+:ref:`apis-howto-overview` for details specific to your training framework.
 
 ``checkpoint_policy``
 =====================

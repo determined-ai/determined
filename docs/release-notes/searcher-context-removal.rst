@@ -12,6 +12,10 @@
    and are now being removed. Users are encouraged to use a preset searcher, which can be easily
    :ref:`configured <experiment-configuration_searcher>` for any experiment.
 
+-  DeepSpeed: the ``num_micro_batches_per_slot`` and ``train_micro_batch_size_per_gpu`` attributes
+   on ``DeepSpeedContext`` have been replaced with ``get_train_micro_batch_size_per_gpu()`` and
+   ``get_num_micro_batches_per_slot()``.
+
 **New Features**
 
 -  API: introduce ``keras.DeterminedCallback``, a new high-level training API for TF Keras that
@@ -30,8 +34,9 @@
 -  Experiment Config: the ``optimizations`` config has been deprecated. Please see :ref:`Training
    APIs <apis-howto-overview>` to configure supported optimizations through training code directly.
 
--  Experiment Config: the ``scheduling_unit`` config field has been deprecated. min
-   checkpoint/val/records per epoch
+-  Experiment Config: the ``scheduling_unit``, ``min_checkpoint_period``, and
+   ``min_validation_period`` config fields have been deprecated. Instead, these configuration
+   options should be specified in training code.
 
 -  Experiment Config: the ``entrypoint`` field no longer accepts ``model_def:TrialClass`` as trial
    definitions. Please invoke your training script directly (``python3 train.py``).
