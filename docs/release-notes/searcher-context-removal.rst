@@ -41,6 +41,10 @@
    longer requires ``core.searcher.operations`` to run, and progress should be reported through
    ``core.train.report_progress``.
 
+-  DeepSpeed: the ``num_micro_batches_per_slot`` and ``train_micro_batch_size_per_gpu`` attributes
+   on ``DeepSpeedContext`` have been replaced with ``get_train_micro_batch_size_per_gpu()`` and
+   ``get_num_micro_batches_per_slot()``.
+
 -  Horovod: the horovod distributed training backend has been deprecated. Users are encouraged to
    migrate to the native distributed backend of their training framework (``torch.distributed`` or
    ``tf.distribute``).
