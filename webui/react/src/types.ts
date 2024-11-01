@@ -457,8 +457,8 @@ export const ContinuableNonSingleSearcherName = new Set<ExperimentSearcherName>(
 const Searcher = t.intersection([
   t.partial({
     max_length: t.record(
-        t.union([t.literal('batches'), t.literal('records'), t.literal('epochs')]),
-        t.number,
+      t.union([t.literal('batches'), t.literal('records'), t.literal('epochs')]),
+      t.number,
     ),
     max_trials: t.number,
     sourceTrialId: t.number,
