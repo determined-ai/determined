@@ -56,6 +56,9 @@ export class ApiProjectFixture extends apiFixture(ProjectsApi) {
       await this.api.deleteProject(id);
     } catch (error) {
       if (error instanceof Response && error.body) {
+        if (error.status === 404) {
+          return;
+        }
         const bodyText = error.text();
         throw new Error(
           `Delete Project Request failed. Status: ${error.status} Request: ${JSON.stringify({
