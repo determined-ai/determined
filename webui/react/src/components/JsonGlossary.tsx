@@ -23,7 +23,7 @@ const JsonGlossary: React.FC<Props> = ({ json, translateLabel, alignValues }: Pr
       textValue = jsonValue.toString();
     }
     return {
-      label: isString(label) ? translateLabel?.(label) ?? label : label,
+      label: isString(label) ? (translateLabel?.(label) ?? label) : label,
       value: textValue,
     };
   });

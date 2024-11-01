@@ -97,7 +97,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 }: TableProps) => {
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
-  const colSpan = (Array.isArray(experiment) ? experiment.length : trialIds?.length ?? 0) + 1;
+  const colSpan = (Array.isArray(experiment) ? experiment.length : (trialIds?.length ?? 0)) + 1;
   const f_flat_runs = useFeature().isOn('flat_runs');
 
   // the loadable has the flat run type here to make the getOrElse later on succeed.

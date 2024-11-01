@@ -10,7 +10,7 @@ import handleError from 'utils/error';
 const ClusterLogs: React.FC = () => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
-    const offsetId = isNumber(config.offsetLog?.id) ? config.offsetLog?.id ?? 0 : 0;
+    const offsetId = isNumber(config.offsetLog?.id) ? (config.offsetLog?.id ?? 0) : 0;
 
     if (type === FetchType.Initial) {
       if (config.fetchDirection === FetchDirection.Older) options.offset = -config.limit;

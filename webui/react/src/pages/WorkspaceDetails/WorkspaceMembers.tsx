@@ -91,7 +91,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
           userOrGroup,
           userOrGroupId: isUserWithRoleInfo(userOrGroup)
             ? userOrGroup.userId
-            : userOrGroup.groupId ?? 0,
+            : (userOrGroup.groupId ?? 0),
         }}
       />
     </div>
@@ -207,8 +207,8 @@ const WorkspaceMembers: React.FC<Props> = ({
         key: 'name',
         render: nameRenderer,
         sorter: (a: Readonly<UserOrGroupWithRoleInfo>, b: Readonly<UserOrGroupWithRoleInfo>) => {
-          const aName = isUserWithRoleInfo(a) ? a.displayName || a.username : a.groupName ?? '';
-          const bName = isUserWithRoleInfo(b) ? b.displayName || b.username : b.groupName ?? '';
+          const aName = isUserWithRoleInfo(a) ? a.displayName || a.username : (a.groupName ?? '');
+          const bName = isUserWithRoleInfo(b) ? b.displayName || b.username : (b.groupName ?? '');
           return alphaNumericSorter(aName, bName);
         },
         title: 'Name',

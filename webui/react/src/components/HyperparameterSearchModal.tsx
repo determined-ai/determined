@@ -197,7 +197,8 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         } else {
           const prevBase: number | undefined = baseConfig.hyperparameters[hpInfo.name]?.base;
           baseConfig.hyperparameters[hpInfo.name] = {
-            base: hpInfo.type === HyperparameterType.Log ? prevBase ?? DEFAULT_LOG_BASE : undefined,
+            base:
+              hpInfo.type === HyperparameterType.Log ? (prevBase ?? DEFAULT_LOG_BASE) : undefined,
             count: fields.searcher === SEARCH_METHODS.Grid.id ? hpInfo.count : undefined,
             maxval:
               hpInfo.type === HyperparameterType.Int

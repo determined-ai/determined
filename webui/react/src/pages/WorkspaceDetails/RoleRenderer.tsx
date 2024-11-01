@@ -40,7 +40,7 @@ const RoleRenderer: React.FC<Props> = ({
         const roleIdValue = value as number;
         const userOrGroupId = isUserWithRoleInfo(userOrGroupWithRoleInfo)
           ? userOrGroupWithRoleInfo.userId
-          : userOrGroupWithRoleInfo.groupId ?? 0;
+          : (userOrGroupWithRoleInfo.groupId ?? 0);
         const oldRoleIds = memberRoleId ? [memberRoleId] : [];
         try {
           // Try to add the new role and then remove the old role
