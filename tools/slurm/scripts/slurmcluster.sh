@@ -217,11 +217,6 @@ if [[ -n $GPUS ]]; then
     echo "Installing NVIDIA drivers"
     gcloud_ssh "curl -L https://github.com/GoogleCloudPlatform/compute-gpu-installation/releases/download/cuda-installer-v1.1.0/cuda_installer.pyz --output cuda_installer.pyz"
     gcloud_ssh "sudo python3 cuda_installer.pyz install_driver"
-    gcloud_ssh "sudo python3 cuda_installer.pyz install_cuda"
-    sleep 180 # DNJ DEBUG TODO - wait until reboot done, then run again to finish install
-    gcloud_start_tunnel
-    gcloud_ssh "sudo python3 cuda_installer.pyz install_cuda"
-    gcloud_ssh "sudo python3 cuda_installer.pyz verify_cuda"
 fi
 # Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
