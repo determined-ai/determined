@@ -2853,7 +2853,8 @@ jobs:
             sudo apt-get install iproute2
             if [ <<parameters.environment-gpu-enabled>> == "1" ]; then
               echo "allocating gpus"
-              gpu_param="-g nvidia-tesla-t4:1"
+              # test_mnist_pytorch_distributed needs 8, T4s seem cheapest
+              gpu_param="-g nvidia-tesla-t4:8" 
             fi
             yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster \
               FLAGS="${gpu_param} -c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-users\\\"}'" \
