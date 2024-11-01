@@ -99,10 +99,12 @@ def test(args, model, device, test_loader, core_context, steps_completed, epochs
         )
     )
 
+    # Docs snippet start: report epochs
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss, "epochs": epochs_completed},
     )
+    # Docs snippet end: report epochs
 
 
 def load_state(checkpoint_directory, trial_id):
