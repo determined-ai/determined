@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@glideapps/glide-data-grid": "^6.0.3",
+    "ajv": "^8.17.1",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.1.7",
     "core-js": "3.37.0",
