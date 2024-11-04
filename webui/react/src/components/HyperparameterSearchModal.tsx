@@ -291,7 +291,18 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   );
 
   const maxSlots = useMemo(
-    () => (resourcePool ? maxPoolSlotCapacity(resourcePool) : 0),
+    /**
+     * On-premise deployments don't have dynamic agents and we don't know how many
+     * agents might connect.
+     *
+     * This is a work around for dynamic agents such as Kubernetes where `slotsAvailable`,
+     * `slotsPerAgents` and `maxAgents` are all zero. This value is used for form
+     * validation and it is too strict to allow anything to run experiments. Intentially
+     * generalized and not matching against Kubernetes, in case other schedulers return
+     * zeroes, and this would at least unblock experiments, and the backend would be able
+     * to return capacity issues.
+     */
+    () => (resourcePool ? maxPoolSlotCapacity(resourcePool) || Infinity : 0),
     [resourcePool],
   );
 
