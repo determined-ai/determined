@@ -268,4 +268,8 @@ message RunGroup {
   repeated string resource_pools = 11;
   // The number of runs in the group.
   int32 run_count = 12;
+  // The run ids of the runs that belong to the group
+  repeated int32 run_ids = 13;
+  // hyperparameters.
+  optional google.protobuf.Struct hyperparameters = 14;
 }

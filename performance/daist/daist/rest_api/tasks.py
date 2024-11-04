@@ -92,6 +92,10 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
             tasks.append(LocustGetTaskWithMeta(
                 f"/api/v1/projects/{resources.project_id}/columns",
                 test_name="get project columns"))
+            
+        tasks.append(LocustGetTaskWithMeta(
+            f"/api/v1/runs/groups?projectId={resources.project_id}&group=state",
+            test_name="get groups"))
 
     if resources.workspace_id is not None:
         tasks.append(LocustGetTaskWithMeta(
