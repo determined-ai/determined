@@ -110,6 +110,7 @@ def run_command_master_checkpoint_download(sess: api.Session, uuid: str) -> None
 
 
 @pytest.mark.e2e_gpu
+@pytest.mark.iterate
 def test_gc_checkpoints(checkpoint_storage_config: Dict[str, Any]) -> None:
     run_gc_checkpoints_test(checkpoint_storage_config)
 
