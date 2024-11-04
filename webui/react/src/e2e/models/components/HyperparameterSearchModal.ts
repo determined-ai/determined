@@ -66,4 +66,38 @@ class HyperparameterPage extends BaseComponent {
   constructor(args: Omit<BaseComponentArgs, 'selector'>) {
     super({ ...args, selector: 'div[id="hyperparameter-page"]' });
   }
+
+  readonly hpNameInput = new BaseComponent({
+    parent: this,
+    selector: 'input[id*="name"]',
+  });
+  readonly hpTypeInput = new Select({
+    parent: this,
+    selector: '[data-test*="type"]',
+  });
+  readonly hpValInput = new BaseComponent({
+    parent: this,
+    selector: 'input[id*="value"]',
+  });
+  readonly hpMinInput = new BaseComponent({
+    parent: this,
+    selector: 'input[id*="min"]',
+  });
+  readonly hpMaxInput = new BaseComponent({
+    parent: this,
+    selector: 'input[id*="max"]',
+  });
+  readonly hpCountInput = new BaseComponent({
+    parent: this,
+    selector: 'input[id*="count"]',
+  });
+  readonly hpDeleteButton = new BaseComponent({
+    parent: this,
+    selector: '[class*="HyperparameterSearchModal_delete"]',
+  });
+
+  readonly addHpButton = new BaseComponent({
+    parent: this,
+    selector: '[id="add"]',
+  });
 }

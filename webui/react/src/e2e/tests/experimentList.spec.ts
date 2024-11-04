@@ -345,6 +345,8 @@ test.describe('Experiment List', () => {
     // });
   });
 
+  //const hyperparameterRow = () => {};
+
   // Search Method
   // When we select adaptive we can set limits
   // Set max concurrent trials
@@ -401,6 +403,8 @@ test.describe('Experiment List', () => {
 
       await hpSearchModal.footer.submit.pwLocator.click(); // switch to page 2
       await expect(hpSearchModal.footer.submit.pwLocator).toHaveText('Run Experiment');
+
+      //const numHps = await hpSearchModal.hyperparameterPage.hpNameInput.pwLocator.count();
 
       // handle hp types and values
       // create some sort of helper function to handle rows
