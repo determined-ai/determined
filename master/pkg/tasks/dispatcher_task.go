@@ -280,6 +280,10 @@ func (t *TaskSpec) ToDispatcherManifest(
 	launchParameters.SetImages(map[string]string{
 		"default": image,
 	})
+	// DNJ DEBUG
+	syslog.WithField("slot_type", slotType).
+		WithField("image", image).
+		Warning("DNJ DEBUG got image")
 
 	// Add some data volumes
 	launchParameters.SetData(mounts)
