@@ -204,10 +204,8 @@ export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw interna
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 if [[ -z $GPUS ]]; then
     export OPT_SLOTTYPE="cpu"
-    export OPT_GRESSUPPORTED=false
 else
     export OPT_SLOTTYPE="cuda"
-    export OPT_GRESSUPPORTED=true
 fi
 
 LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
