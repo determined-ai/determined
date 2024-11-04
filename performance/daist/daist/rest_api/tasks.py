@@ -205,9 +205,6 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
             f"/best_searcher_validation_metric",
             test_name="get experiment best searcher validation metric"))
         tasks.append(LocustGetTaskWithMeta(
-            f"/api/v1/experiments/{resources.experiment_id}/searcher_events",
-            test_name="get experiment searcher events"))
-        tasks.append(LocustGetTaskWithMeta(
             f"/api/v1/experiments/{resources.experiment_id}/validation-history",
             test_name="get experiment validation history"))
         if resources.experiment_file is not None:
