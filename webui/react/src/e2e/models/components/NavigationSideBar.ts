@@ -47,7 +47,7 @@ export class NavigationSideBar extends BaseReactFragment {
   });
   readonly cluster = new BaseComponent({
     parent: this.#nav,
-    selector: `a[aria-label="${'Cluster'}"]`,
+    selector: `a[aria-label="${'Cluster'}"][class*=NavigationSideBar_navItem]`, // if cluster is active there will be two selector matches without the class selector
   });
   readonly workspaces = new BaseComponent({
     parent: this.#nav,

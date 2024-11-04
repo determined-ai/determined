@@ -36,7 +36,7 @@ test.describe('Authentication', () => {
     await test.step('Login and Redirect', async () => {
       await auth.login({ expectedURL: /clusters\/logs/ });
       const clusterPage = new Cluster(page);
-      await expect(page).toHaveDeterminedTitle(clusterPage.title);
+      await expect(page).toHaveDeterminedTitle(new RegExp(`${clusterPage.title}( - \\d{1,3}%)?`)); // Cluster page title might contain a percentage value if cluster is active
       await expect(clusterPage.overviewTab.pwLocator).toHaveAttribute('aria-selected', 'false');
       await expect(clusterPage.historicalUsageTab.pwLocator).toHaveAttribute(
         'aria-selected',

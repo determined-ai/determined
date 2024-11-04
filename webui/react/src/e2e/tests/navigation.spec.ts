@@ -42,7 +42,7 @@ test.describe('Navigation', () => {
       await userManagementPage.nav.sidebar.cluster.pwLocator.click();
       const expectedURL = /clusters/;
       await authedPage.waitForURL(expectedURL);
-      await expect.soft(authedPage).toHaveDeterminedTitle('Cluster');
+      await expect.soft(authedPage).toHaveDeterminedTitle(new RegExp('Cluster( - \\d{1,3}%)?')); // Cluster page title might contain a percentage value if cluster is active
     });
 
     await test.step('Workspaces', async () => {
