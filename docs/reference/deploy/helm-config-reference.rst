@@ -248,7 +248,7 @@
       to: ``determinedai/pytorch-ngc-dev:0736b6d``.
 
    -  ``logPolicies``: Sets log policies for trials. For details, visit :ref:`log_policies
-      <experiment-config-min-validation-period>`.
+      <config-log-policies>`.
 
       .. code:: yaml
 

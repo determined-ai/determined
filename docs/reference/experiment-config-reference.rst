@@ -182,19 +182,20 @@ Example:
 
 .. _scheduling-unit:
 
-``scheduling_unit``
-===================
+``scheduling_unit`` (deprecated)
+================================
 
 Optional. Instructs how frequent to perform system operations, such as periodic checkpointing and
-preemption, in the unit of batches. The number of records in a batch is controlled by the
-:ref:`global_batch_size <config-global-batch-size>` hyperparameter. Defaults to ``100``.
+preemption, in the unit of batches. This field has been deprecated and the behavior should be
+configured in training code directly. Please see :ref:`apis-howto-overview` for details specific to
+your training framework.
 
--  Setting this value too small can increase the overhead of system operations and decrease training
-   throughput.
--  Setting this value too large might prevent the system from reallocating resources from this
-   workload to another, potentially more important, workload.
--  As a rule of thumb, it should be set to the number of batches that can be trained in roughly
-   60--180 seconds.
+.. _config-records-per-epoch:
+
+``records_per_epoch`` (deprecated)
+==================================
+
+Optional. The number of records in the training data set. This field has been deprecated.
 
 .. _max-restarts:
 
@@ -321,22 +322,12 @@ While debugging, the logger will display lines highlighted in blue for easy iden
 
 .. _experiment-config-min-validation-period:
 
-``min_validation_period``
-=========================
+``min_validation_period`` (deprecated)
+======================================
 
-Optional. Specifies the minimum frequency at which validation should be run for each trial.
-
--  The frequency should be defined using a nested dictionary indicating the unit as records,
-   batches, or epochs. For example:
-
-.. code:: yaml
-
-   min_validation_period:
-      epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs, ``records_per_epoch``
-   must be specified.
+Optional. Specifies the minimum frequency at which validation should be run for each trial. This
+field has been deprecated and should be specified directly in training code. Please see
+:ref:`apis-howto-overview` for details specific to your training framework.
 
 .. _experiment-config-perform-initial-validation:
 
@@ -362,22 +353,12 @@ Determined checkpoints in the following situations:
 
 .. _experiment-config-min-checkpoint-period:
 
-``min_checkpoint_period``
-=========================
+``min_checkpoint_period`` (deprecated)
+======================================
 
-Optional. Specifies the minimum frequency for running checkpointing for each trial.
-
--  This value should be set using a nested dictionary in the form of records, batches, or epochs.
-   For example:
-
-   .. code:: yaml
-
-      min_checkpoint_period:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If the unit is in epochs, you must also specify
-   ``records_per_epoch``.
+Optional. Specifies the minimum frequency for running checkpointing for each trial. This field has
+been deprecated and should be specified directly in training code. Please see
+:ref:`apis-howto-overview` for details specific to your training framework.
 
 ``checkpoint_policy``
 =====================
@@ -394,8 +375,7 @@ Should be set to one of the following values:
 
 -  ``none``: A checkpoint will never be taken *due* to a validation. However, even with this policy
    selected, checkpoints are still expected to be taken after the trial is finished training, due to
-   cluster scheduling decisions, before search method decisions, or due to
-   :ref:`min_checkpoint_period <experiment-config-min-checkpoint-period>`.
+   cluster scheduling decisions, or when specified in training code.
 
 .. _checkpoint-storage:
 
@@ -835,9 +815,6 @@ Single
 The ``single`` search method does not perform a hyperparameter search at all; rather, it trains a
 single trial for a fixed length. When using this search method, all of the hyperparameters specified
 in the :ref:`hyperparameters <experiment-configuration_hyperparameters>` section must be constants.
-By default, validation metrics are only computed once, after the specified length of training has
-been completed; :ref:`min_validation_period <experiment-config-min-validation-period>` can be used
-to specify that validation metrics should be computed more frequently.
 
 ``metric``
 ----------
@@ -846,6 +823,12 @@ Required. The name of the validation metric used to evaluate the performance of 
 configuration.
 
 .. _experiment-configuration_single-searcher-max-length:
+
+``max_length`` (deprecated)
+---------------------------
+
+Previously, ``max_length`` was required to determine the length of each trial. This field has been
+deprecated and all training lengths should be specified directly in training code.
 
 **Optional Fields**
 
@@ -873,10 +856,7 @@ Random
 
 The ``random`` search method implements a simple random search. The user specifies how many
 hyperparameter configurations should be trained and how long each configuration should be trained
-for; the configurations are sampled randomly from the hyperparameter space. Each trial is trained
-for the specified length and then validation metrics are computed. :ref:`min_validation_period
-<experiment-config-min-validation-period>` can be used to specify that validation metrics should be
-computed more frequently.
+for; the configurations are sampled randomly from the hyperparameter space.
 
 ``metric``
 ----------
@@ -888,6 +868,12 @@ configuration.
 --------------
 
 Required. The number of trials, i.e., hyperparameter configurations, to evaluate.
+
+``max_length`` (deprecated)
+---------------------------
+
+Previously, ``max_length`` was required to determine the length of each trial. This field has been
+deprecated and all training lengths should be specified directly in training code.
 
 **Optional Fields**
 
@@ -928,6 +914,12 @@ specified via the ``hyperparameters`` field. For more details see the
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
+
+``max_length`` (deprecated)
+---------------------------
+
+Previously, ``max_length`` was required to determine the length of each trial. This field has been
+deprecated and all training lengths should be specified directly in training code.
 
 **Optional Fields**
 
@@ -970,6 +962,12 @@ to terminate training. Once trials are stopped, they will not be resumed.
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
+
+``max_length`` (deprecated)
+---------------------------
+
+The length of the trial. This field has been deprecated and should be replaced with ``time_metric``
+and ``max_time`` below.
 
 ``time_metric``
 ---------------
@@ -1401,12 +1399,13 @@ details.
 
 .. _exp-config-optimizations:
 
-***************
- Optimizations
-***************
+****************************
+ Optimizations (deprecated)
+****************************
 
 The ``optimizations`` section contains configuration options that influence the performance of the
-experiment.
+experiment. This section has been deprecated and should be configured in training code. Please see
+:ref:`apis-howto-overview` for details specific to your training framework.
 
 .. _config-aggregation-frequency:
 

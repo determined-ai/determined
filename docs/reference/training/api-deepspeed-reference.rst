@@ -48,3 +48,16 @@ documentation):
 -  :ref:`determined.pytorch.samplers <pytorch-samplers>`
 -  :ref:`determined.pytorch.MetricReducer <pytorch-metric-reducer>`
 -  :ref:`determined.pytorch.PyTorchCallback <pytorch-callbacks>`
+
+******************************************
+ ``determined.pytorch.deepspeed.Trainer``
+******************************************
+
+.. autoclass:: determined.pytorch.deepspeed.Trainer
+   :members:
+
+*****************************************
+ ``determined.pytorch.deepspeed.init()``
+*****************************************
+
+.. autofunction:: determined.pytorch.deepspeed.init

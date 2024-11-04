@@ -18,8 +18,14 @@ Reference conversion example:
 
 .. code:: diff
 
-   -class MyTrial(PyTorchTrial):
-   +class MyTrial(DeepSpeedTrial):
+   +import deepspeed
+
+   -from determined import pytorch
+   +from determined.pytorch import deepspeed as det_ds
+
+
+   -class MyTrial(pytorch.PyTorchTrial):
+   +class MyTrial(det_ds.DeepSpeedTrial):
         def __init__(self, context):
            self.context = context
            self.args = AttrDict(self.context.get_hparams())
