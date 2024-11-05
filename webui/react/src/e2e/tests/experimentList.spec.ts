@@ -65,10 +65,15 @@ test.describe('Experiment List', () => {
       const count = await getCount();
       if (count !== 0) {
         await grid.headRow.clickSelectHeader();
-        const isClearSelectionVisible =
-          await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.isVisible();
-        if (isClearSelectionVisible) {
-          await projectDetailsPage.f_experimentList.tableActionBar.clearSelection.pwLocator.click();
+        const selectAllButton = projectDetailsPage.f_experimentList.tableActionBar.selectAll;
+        const clearAllButton = projectDetailsPage.f_experimentList.tableActionBar.clearSelection;
+        if (await selectAllButton.pwLocator.isVisible()) {
+          await selectAllButton.pwLocator.click();
+          await clearAllButton.pwLocator.click();
+        } else if (await clearAllButton.pwLocator.isVisible()) {
+          await clearAllButton.pwLocator.click();
+        } else {
+          await grid.headRow.clickSelectHeader();
         }
       }
     });
