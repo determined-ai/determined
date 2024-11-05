@@ -691,7 +691,7 @@ test.describe('Experiment List', () => {
     }) => {
       killExperiment = Number(
         detExecSync(
-          `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --project_id ${project.id}`,
+          `experiment create ${fullPath('examples/tutorials/core_api/2_checkpoints.yaml')} --paused --project_id ${project.id}`,
         ).split(' ')[2],
       );
       if (Number.isNaN(killExperiment)) throw new Error('No experiment ID was found');
