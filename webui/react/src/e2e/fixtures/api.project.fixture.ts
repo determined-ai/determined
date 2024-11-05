@@ -52,22 +52,28 @@ export class ApiProjectFixture extends apiFixture(ProjectsApi) {
    * @param {number} id The id of the project.
    */
   async deleteProject(id: number): Promise<void> {
+    try {
+      await this.api.deleteProject(id);
+    } catch (error) {
+      if (error instanceof Response && error.body) {
+        if (error.status === 404) {
+          return;
+        }
+        const bodyText = error.text();
+        throw new Error(
+          `Delete Project Request failed. Status: ${error.status} Request: ${JSON.stringify({
+            id,
+          })} Response: ${bodyText}`,
+        );
+      }
+    }
     await expect
       .poll(
-        async () => {
-          const projectResp = await this.api.deleteProject(id).catch(async function (error) {
-            const respBody = await streamConsumers.text(error.body);
-            if (error.status === 404) {
-              return { completed: true };
-            }
-            throw new Error(
-              `Delete Project Request failed. Status: ${error.status} Request: ${JSON.stringify(
-                id,
-              )} Response: ${respBody}`,
-            );
-          });
-          return projectResp.completed;
-        },
+        () =>
+          this.api
+            .getProject(id)
+            .then(() => false)
+            .catch((res) => res.status === 404),
         {
           message: `Delete Project Request failed ${JSON.stringify(id)}`,
           timeout: 15_000,
