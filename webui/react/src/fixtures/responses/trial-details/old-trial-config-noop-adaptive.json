@@ -30,8 +30,8 @@
   "name": "noop_adaptive",
   "environment": {
     "image": {
-      "cpu": "determinedai/pytorch-ngc-dev:0736b6d",
-      "gpu": "determinedai/pytorch-ngc-dev:0736b6d"
+      "cpu": "determinedai/pytorch-ngc:0.38.0",
+      "gpu": "determinedai/pytorch-ngc:0.38.0"
     },
     "ports": null,
     "force_pull_image": false,
