@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
+	"golang.org/x/sync/errgroup"
 	batchV1 "k8s.io/api/batch/v1"
 	k8sV1 "k8s.io/api/core/v1"
 	k8error "k8s.io/apimachinery/pkg/api/errors"
@@ -71,6 +72,8 @@ const (
 	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
 	// ResourceTypeNvidia describes the GPU resource type.
 	ResourceTypeNvidia = "nvidia.com/gpu"
+	// DefaultClientBurst is the default Kubernetes burst limit for the k8s Go client.
+	DefaultClientBurst = 10
 )
 
 var cacheSyncs []cache.InformerSynced
@@ -348,6 +351,7 @@ func (j *jobsService) startClientSet(namespaces []string) error {
 		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
+	j.podInterfaces[""] = j.clientSet.CoreV1().Pods("")
 	for _, ns := range namespaces {
 		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
 		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
@@ -1082,20 +1086,47 @@ func (j *jobsService) GetSlot(msg *apiv1.GetSlotRequest) *apiv1.GetSlotResponse 
 	return j.getSlot(msg.AgentId, msg.SlotId)
 }
 
+func (j *jobsService) healthStatusFallback(ctx context.Context) model.HealthStatus {
+	g := errgroup.Group{}
+	cnt := 0
+	for n, podInterface := range j.podInterfaces {
+		if len(n) == 0 {
+			continue
+		}
+		g.Go(func() error {
+			time.Sleep(time.Duration(cnt/DefaultClientBurst) * 1050 * time.Millisecond)
+			_, err := podInterface.List(ctx, metaV1.ListOptions{Limit: 1})
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		cnt++
+	}
+	err := g.Wait()
+	if err != nil {
+		return model.Unhealthy
+	}
+	return model.Healthy
+}
+
 func (j *jobsService) HealthStatus() model.HealthStatus {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	for _, podInterface := range j.podInterfaces {
-		_, err := podInterface.List(context.TODO(), metaV1.ListOptions{Limit: 1})
-		if err != nil {
-			j.syslog.WithError(err).Error("kubernetes resource manager marked as unhealthy")
-			return model.Unhealthy
-		}
-		return model.Healthy
+	ctx := context.TODO()
+	if len(j.podInterfaces) == 0 {
+		logrus.Error("expected podInterface to be non empty")
+		return model.Unhealthy
 	}
 
-	logrus.Error("expected jobInterface to be non empty")
-	return model.Unhealthy
+	_, err := j.podInterfaces[""].List(ctx, metaV1.ListOptions{Limit: 1})
+	if err != nil {
+		if k8error.IsForbidden(err) {
+			return j.healthStatusFallback(ctx)
+		}
+		return model.Unhealthy
+	}
+	return model.Healthy
 }
 
 func (j *jobsService) startNodeInformer() error {
@@ -2114,20 +2145,56 @@ func (j *jobsService) listJobsInAllNamespaces(
 	return res, nil
 }
 
+func (j *jobsService) listImportantPods(ctx context.Context, opts metaV1.ListOptions) (*k8sV1.PodList, error) {
+	resLock := sync.Mutex{}
+	res := &k8sV1.PodList{}
+	g := errgroup.Group{}
+	cnt := 0
+	for n, podInterface := range j.podInterfaces {
+		if len(n) == 0 {
+			continue
+		}
+		g.Go(func() error {
+			time.Sleep(time.Duration(cnt/DefaultClientBurst) * 1050 * time.Millisecond)
+			pods, err := podInterface.List(ctx, opts)
+			if err != nil {
+				return fmt.Errorf("error listing pods for namespace %s: %w", n, err)
+			}
+			resLock.Lock()
+			res.Items = append(res.Items, pods.Items...)
+			resLock.Unlock()
+			return nil
+		})
+		cnt++
+	}
+	err := g.Wait()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (j *jobsService) listPodsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
 ) (*k8sV1.PodList, error) {
-	res := &k8sV1.PodList{}
-	for n, i := range j.podInterfaces {
-		pods, err := i.List(ctx, opts)
-		if err != nil {
-			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
+	allPods, err := j.podInterfaces[""].List(ctx, opts)
+	if err != nil {
+		if k8error.IsForbidden(err) {
+			return j.listImportantPods(ctx, opts)
 		}
-
-		res.Items = append(res.Items, pods.Items...)
+		return nil, err
 	}
 
-	return res, nil
+	var podsWeWant k8sV1.PodList
+	namespaces := set.FromKeys(j.podInterfaces)
+	for _, pod := range allPods.Items {
+		if namespaces.Contains(pod.Namespace) {
+			podsWeWant.Items = append(podsWeWant.Items, pod)
+		}
+	}
+
+	allPods.Items, podsWeWant.Items = podsWeWant.Items, allPods.Items
+	return allPods, nil
 }
 
 func (j *jobsService) listConfigMapsInAllNamespaces(
