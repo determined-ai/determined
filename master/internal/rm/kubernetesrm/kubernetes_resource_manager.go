@@ -183,7 +183,7 @@ func (k *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
 			ClusterName: k.config.ClusterName,
-			Status:      k.jobsService.HealthStatus(),
+			Status:      k.jobsService.HealthStatus(context.TODO()),
 		},
 	}
 }
@@ -283,7 +283,6 @@ func (k *ResourceManager) GetResourcePools() (*apiv1.GetResourcePoolsResponse, e
 			// But best to handle it anyway in case the implementation changes in the future.
 			return nil, err
 		}
-
 		jobStats, err := k.getPoolJobStats(pool)
 		if err != nil {
 			return nil, err
