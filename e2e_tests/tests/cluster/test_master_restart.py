@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Iterator
 
 import docker
 import pytest
