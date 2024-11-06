@@ -15,12 +15,7 @@ from tests import command as cmd
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
-from tests.cluster import (
-    abstract_cluster,
-    managed_cluster,
-    managed_cluster_k8s,
-    utils,
-)
+from tests.cluster import abstract_cluster, managed_cluster, managed_cluster_k8s, utils
 from tests.experiment import noop
 from tests.task import task
 
@@ -77,7 +72,6 @@ def test_master_restart_ok_k8s(k8s_managed_cluster: managed_cluster_k8s.ManagedK
     _test_master_restart_ok(k8s_managed_cluster)
 
 
-
 def _test_master_restart_ok(managed_cluster: abstract_cluster.Cluster) -> None:
     # - Kill master
     # - Restart master
@@ -121,7 +115,6 @@ def test_master_restart_reattach_recover_experiment_k8s(
     downtime: int,
 ) -> None:
     _test_master_restart_reattach_recover_experiment(k8s_managed_cluster, downtime)
-
 
 
 @pytest.mark.managed_devcluster
