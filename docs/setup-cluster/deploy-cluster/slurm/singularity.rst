@@ -30,9 +30,9 @@ by default in this version of Determined are described below.
    -  -  Environment
       -  File Name
    -  -  CPUs
-      -  ``determinedai/pytorch-ngc-dev:0736b6d``
+      -  ``determinedai/pytorch-ngc:0.38.0``
    -  -  NVIDIA GPUs
-      -  ``determinedai/pytorch-ngc-dev:0736b6d``
+      -  ``determinedai/pytorch-ngc:0.38.0``
    -  -  AMD GPUs
       -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512``
 
