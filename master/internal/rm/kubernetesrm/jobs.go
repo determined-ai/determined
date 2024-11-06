@@ -398,6 +398,12 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 		// and it expects to find files:
 		//   - /var/run/secrets/kubernetes.io/serviceaccount/token
 		//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+		c, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		c.QPS = 100
+		c.Burst = 100
 		return rest.InClusterConfig()
 	}
 
@@ -1088,20 +1094,18 @@ func (j *jobsService) GetSlot(msg *apiv1.GetSlotRequest) *apiv1.GetSlotResponse 
 
 func (j *jobsService) healthStatusFallback(ctx context.Context) model.HealthStatus {
 	g := errgroup.Group{}
-	cnt := 0
 	for n, podInterface := range j.podInterfaces {
 		if len(n) == 0 {
 			continue
 		}
 		g.Go(func() error {
-			time.Sleep(time.Duration(cnt/DefaultClientBurst) * 1050 * time.Millisecond)
+			time.Sleep(time.Duration(200 * time.Millisecond))
 			_, err := podInterface.List(ctx, metaV1.ListOptions{Limit: 1})
 			if err != nil {
 				return err
 			}
 			return nil
 		})
-		cnt++
 	}
 	err := g.Wait()
 	if err != nil {
@@ -2149,13 +2153,13 @@ func (j *jobsService) listImportantPods(ctx context.Context, opts metaV1.ListOpt
 	resLock := sync.Mutex{}
 	res := &k8sV1.PodList{}
 	g := errgroup.Group{}
-	cnt := 0
+	// cnt := 0
 	for n, podInterface := range j.podInterfaces {
 		if len(n) == 0 {
 			continue
 		}
 		g.Go(func() error {
-			time.Sleep(time.Duration(cnt/DefaultClientBurst) * 1050 * time.Millisecond)
+			// time.Sleep(time.Duration(cnt/DefaultClientBurst) * 1050 * time.Millisecond)
 			pods, err := podInterface.List(ctx, opts)
 			if err != nil {
 				return fmt.Errorf("error listing pods for namespace %s: %w", n, err)
@@ -2165,7 +2169,7 @@ func (j *jobsService) listImportantPods(ctx context.Context, opts metaV1.ListOpt
 			resLock.Unlock()
 			return nil
 		})
-		cnt++
+		// cnt++
 	}
 	err := g.Wait()
 	if err != nil {
