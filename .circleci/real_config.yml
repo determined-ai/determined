@@ -4424,8 +4424,8 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-          parallelism: 6
-          resource-class: xlarge
+          parallelism: 3
+          resource-class: large
           tf2: true
           mark: e2e_cpu
 
