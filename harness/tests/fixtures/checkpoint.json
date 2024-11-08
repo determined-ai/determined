@@ -69,8 +69,8 @@
           },
           "force_pull_image":false,
           "image":{
-            "cpu":"determinedai/pytorch-ngc:0.35.0",
-            "cuda":"determinedai/pytorch-ngc:0.35.0",
+            "cpu":"determinedai/pytorch-ngc:0.35.1",
+            "cuda":"determinedai/pytorch-ngc:0.35.1",
             "rocm":"determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512"
           },
           "pod_spec":null,
