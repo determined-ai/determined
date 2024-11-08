@@ -1605,6 +1605,10 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 	jobsClientSet.On("CoreV1").Return(coreV1Interface)
 	jobsClientSet.On("BatchV1").Return(batchV1Interface)
 
+	emptyNS := &mocks.PodInterface{}
+	emptyNS.On("List", mock.Anything, mock.Anything).Return(&podsList, nil)
+
+	podInterfaces := map[string]typedV1.PodInterface{"": emptyNS}
 	return &jobsService{
 		namespace:           "default",
 		clusterName:         "",
@@ -1619,5 +1623,6 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 		slotResourceRequests:    config.PodSlotResourceRequests{CPU: 2},
 		clientSet:               jobsClientSet,
 		namespacesWithInformers: make(map[string]bool),
+		podInterfaces:           podInterfaces,
 	}
 }
