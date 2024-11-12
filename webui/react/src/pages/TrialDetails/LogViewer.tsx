@@ -33,7 +33,6 @@ export interface Props<T> {
     idSet: Set<RecordKey>;
     isScrollReady: boolean;
   }>;
-  scrollToIndex: number;
 }
 
 export interface ViewerLog extends Log {
@@ -101,7 +100,6 @@ function LogViewer<T>({
   setLogs,
   logsRef,
   local,
-  scrollToIndex,
 }: Props<T>): JSX.Element {
   const componentId = useId();
 
@@ -141,11 +139,6 @@ function LogViewer<T>({
   );
 
   useEffect(() => {
-    if (scrollToIndex < 0) return;
-    virtuosoRef.current?.scrollToIndex({ index: scrollToIndex });
-  }, [scrollToIndex]);
-
-  useEffect(() => {
     setScrolledForSearch(false);
   }, [selectedLog]);
 
@@ -153,7 +146,7 @@ function LogViewer<T>({
     if (scrolledForSearch || !selectedLog || !local.current.isScrollReady) return;
     setTimeout(() => {
       const index = logs.findIndex((l) => l.id === selectedLog.id);
-      if (index > -1) {
+      if (index > -1 && index + 1 < logs.length) {
         virtuosoRef.current?.scrollToIndex({
           behavior: 'smooth',
           index: index,

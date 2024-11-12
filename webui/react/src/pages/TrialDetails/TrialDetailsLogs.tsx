@@ -60,11 +60,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const [searchOn, setSearchOn] = useState<boolean>(false);
   const [logViewerOn, setLogViewerOn] = useState<boolean>(true);
-  const [searchInput, setSearchInput] = useState<string | undefined>(undefined);
+  const [searchInput, setSearchInput] = useState<string>('');
   const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
   const [selectedLog, setSelectedLog] = useState<ViewerLog>();
   const [searchWidth, setSearchWidth] = useState(INITIAL_SEARCH_WIDTH);
-  const [scrollToIndex, setScrollToIndex] = useState(-1);
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
   const container = useRef<HTMLDivElement>(null);
@@ -106,8 +105,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       updateSettings({
         agentId: filters.agentIds,
         containerId: filters.containerIds,
+        enableRegex: filters.enableRegex,
         level: filters.levels,
         rankId: filters.rankIds,
+        searchText: filters.searchText,
       });
     },
     [updateSettings],
@@ -291,9 +292,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
       const logEntry = formatLogEntry(l);
 
-      const i = settings.enableRegex
-        ? content.match(`${key}`)?.index
-        : content.toLowerCase().indexOf(key.toLowerCase());
+      const i = settings.enableRegex ? content.match(`${key}`)?.index : content.indexOf(key);
       if (_.isUndefined(i) || i < 0) return;
       const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;
       const j = i + keyLen;
@@ -448,14 +447,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     if (logsRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
-  const onSwitchSearch = useCallback(() => {
-    setSearchOn((prev) => !prev);
-    // open log pane when closing the search pane
-    searchOn && setLogViewerOn(true);
-    // sometime the selected log of the log pane would offset when closing the search pane, since the width of the log pane changes
-    searchOn && selectedLog && setScrollToIndex(logs.findIndex((l) => l.id === selectedLog.id));
-  }, [searchOn, selectedLog, logs]);
-
   const rightButtons = (
     <Row>
       <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
@@ -480,11 +471,16 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
             <Input
               allowClear
               placeholder="Search Logs..."
-              value={searchInput ?? settings.searchText}
+              value={searchInput || settings.searchText}
               width={240}
               onChange={onSearchChange}
             />
-            <Button type={searchOn ? 'primary' : 'default'} onClick={onSwitchSearch}>
+            <Button
+              type={searchOn ? 'primary' : 'default'}
+              onClick={() => {
+                setSearchOn((prev) => !prev);
+                searchOn && setLogViewerOn(true);
+              }}>
               <Icon name="search" showTooltip title={`${searchOn ? 'Close' : 'Open'} Search`} />
             </Button>
             <Button
@@ -512,7 +508,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
                 local={local}
                 logs={logs}
                 logsRef={logsRef}
-                scrollToIndex={scrollToIndex}
                 selectedLog={selectedLog}
                 serverAddress={serverAddress}
                 setLogs={setLogs}
