@@ -121,8 +121,6 @@ message TrialLogsRequest {
   OrderBy order_by = 14;
   // Search the logs by whether the text contains a substring.
   string search_text = 15;
-  // Search text is regex. Default to false.
-  bool enable_regex = 16;
 }
 
 // Response to TrialLogsRequest.
