@@ -1041,7 +1041,6 @@ export interface TrialLog {
   level?: LogLevel;
   message: string;
   time: string;
-  log?: string;
 }
 
 export interface Template {
