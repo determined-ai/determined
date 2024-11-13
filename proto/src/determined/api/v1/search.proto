@@ -19,10 +19,12 @@ message SearchActionResult {
 // Request to move the search to a different project.
 message MoveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "source_project_id", "destination_project_id" ] }
+    json_schema: {
+      required: [ "source_project_id", "destination_project_id", "search_ids" ]
+    }
   };
 
-  // The ids of the searches being moved. Leave empty if using filter.
+  // The ids of the searches being moved.
   repeated int32 search_ids = 1;
   // The id of the current parent project.
   int32 source_project_id = 2;
@@ -45,9 +47,9 @@ message MoveSearchesResponse {
 // Kill searches.
 message KillSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
+    json_schema: { required: [ "search_ids", "source_project_id" ] }
   };
-  // The ids of the searches being killed. Leave empty if using filter.
+  // The ids of the searches being killed.
   repeated int32 search_ids = 1;
   // Project id of the searches being killed.
   int32 project_id = 2;
@@ -66,9 +68,9 @@ message KillSearchesResponse {
 // Delete searches.
 message DeleteSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
+    json_schema: { required: [ "search_ids" ] }
   };
-  // The ids of the searches being deleted. Leave empty if using filter.
+  // The ids of the searches being deleted.
   repeated int32 search_ids = 1;
   // Project id of the searches being deleted.
   int32 project_id = 2;
@@ -87,10 +89,10 @@ message DeleteSearchesResponse {
 // Request to archive the search
 message ArchiveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
+    json_schema: { required: [ "project_id", "search_ids" ] }
   };
 
-  // The ids of the searches being archived. Leave empty if using filter.
+  // The ids of the searches being archived.
   repeated int32 search_ids = 1;
   // The id of the current parent project.
   int32 project_id = 2;
@@ -111,10 +113,10 @@ message ArchiveSearchesResponse {
 // Request to unarchive the search
 message UnarchiveSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
+    json_schema: { required: [ "project_id", "search_ids" ] }
   };
 
-  // The ids of the searches being unarchived. Leave empty if using filter.
+  // The ids of the searches being unarchived.
   repeated int32 search_ids = 1;
   // The id of the current parent project.
   int32 project_id = 2;
@@ -135,10 +137,10 @@ message UnarchiveSearchesResponse {
 // Request to pause the experiment associated witha search.
 message PauseSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
+    json_schema: { required: [ "project_id", "search_ids" ] }
   };
 
-  // The ids of the searches being moved. Leave empty if using filter.
+  // The ids of the searches being moved.
   repeated int32 search_ids = 1;
   // The id of the project of the searches being paused.
   int32 project_id = 2;
@@ -159,10 +161,10 @@ message PauseSearchesResponse {
 // Request to unpause the experiment associated witha search.
 message ResumeSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
+    json_schema: { required: [ "project_id", "search_ids" ] }
   };
 
-  // The ids of the searches being moved. Leave empty if using filter.
+  // The ids of the searches being moved.
   repeated int32 search_ids = 1;
   // The id of the project of the searches being unpaused.
   int32 project_id = 2;
