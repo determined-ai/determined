@@ -26,7 +26,6 @@ export class TableActionBar extends NamedComponent {
   heatmapToggle = new BaseComponent({ parent: this, selector: '[data-test="heatmapToggle"]' });
   compare = new BaseComponent({ parent: this, selector: '[data-test="compare"]' });
   clearSelection = new BaseComponent({ parent: this, selector: '[data-test="clear-selection"]' });
-  selectAll = new BaseComponent({ parent: this, selector: '[data-test="select-all"]' });
   // TODO a bunch of modals
 }
 

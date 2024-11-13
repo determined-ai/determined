@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { Loaded, NotLoaded } from 'hew/utils/loadable';
-import { noop } from 'lodash';
 
 import LoadableCount from './LoadableCount';
 
@@ -25,11 +24,9 @@ const setup = (totalCount: number, selectedCount?: number, loaded?: boolean) => 
   const total = loaded ? Loaded(totalCount) : NotLoaded;
   render(
     <LoadableCount
-      handleSelectionChange={noop}
       labelPlural={LABEL_PLURAL}
       labelSingular={LABEL_SINGULAR}
       selectedCount={selectedCount ?? 0}
-      selectionAction="NONE"
       total={total}
     />,
   );

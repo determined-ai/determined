@@ -1,5 +1,4 @@
 import Button from 'hew/Button';
-import { HandleSelectionChangeType } from 'hew/DataGrid/DataGrid';
 import { Loadable } from 'hew/utils/loadable';
 import { useMemo } from 'react';
 
@@ -8,23 +7,24 @@ import { pluralizer } from 'utils/string';
 
 import css from './LoadableCount.module.scss';
 
-export type SelectionAction = 'SELECT_ALL' | 'CLEAR_SELECTION' | 'NONE';
 interface Props {
   total: Loadable<number>;
   labelSingular: string;
   labelPlural: string;
+  onActualSelectAll?: () => void;
+  onClearSelect?: () => void;
+  pageSize?: number;
   selectedCount: number;
-  selectionAction: SelectionAction;
-  handleSelectionChange: HandleSelectionChangeType;
 }
 
 const LoadableCount: React.FC<Props> = ({
   total,
   labelPlural,
   labelSingular,
+  onActualSelectAll,
+  onClearSelect,
+  pageSize = 20,
   selectedCount,
-  selectionAction,
-  handleSelectionChange,
 }: Props) => {
   const isMobile = useMobile();
 
@@ -51,31 +51,25 @@ const LoadableCount: React.FC<Props> = ({
   const actualSelectAll = useMemo(() => {
     return Loadable.match(total, {
       _: () => null,
-      Loaded: () => {
-        switch (selectionAction) {
-          case 'SELECT_ALL': {
-            const onClick = () => handleSelectionChange('add-all');
-            return (
-              <Button data-test="select-all" type="text" onClick={onClick}>
-                Select all {labelPlural} in table
-              </Button>
-            );
-          }
-          case 'CLEAR_SELECTION': {
-            const onClick = () => handleSelectionChange('remove-all');
-            return (
-              <Button data-test="clear-selection" type="text" onClick={onClick}>
-                Clear Selection
-              </Button>
-            );
-          }
-          case 'NONE': {
-            return null;
-          }
+      Loaded: (loadedTotal) => {
+        if (onActualSelectAll && selectedCount >= pageSize && selectedCount < loadedTotal) {
+          return (
+            <Button data-test="select-all" type="text" onClick={onActualSelectAll}>
+              Select all {labelPlural} in table
+            </Button>
+          );
+        } else if (onClearSelect && (selectedCount >= pageSize || selectedCount === loadedTotal)) {
+          return (
+            <Button data-test="clear-selection" type="text" onClick={onClearSelect}>
+              Clear Selection
+            </Button>
+          );
         }
+
+        return null;
       },
     });
-  }, [labelPlural, handleSelectionChange, selectionAction, total]);
+  }, [labelPlural, onActualSelectAll, onClearSelect, pageSize, selectedCount, total]);
 
   if (!isMobile) {
     return (

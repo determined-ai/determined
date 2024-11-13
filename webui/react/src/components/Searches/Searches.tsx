@@ -637,6 +637,14 @@ const Searches: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
+  const handleActualSelectAll = useCallback(() => {
+    handleSelectionChange?.('add-all');
+  }, [handleSelectionChange]);
+
+  const handleClearSelect = useCallback(() => {
+    handleSelectionChange?.('remove-all');
+  }, [handleSelectionChange]);
+
   const handleHeaderClick = useCallback(
     (columnId: string): void => {
       if (columnId === MULTISELECT) {
@@ -779,10 +787,8 @@ const Searches: React.FC<Props> = ({ project }) => {
         columnGroups={[V1LocationType.EXPERIMENT]}
         entityCopy="Show searches…"
         formStore={formStore}
-        handleSelectionChange={handleSelectionChange}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
-        isRangeSelected={isRangeSelected}
         labelPlural="searches"
         labelSingular="search"
         pageSize={settings.pageLimit}
@@ -797,6 +803,8 @@ const Searches: React.FC<Props> = ({ project }) => {
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
+        onActualSelectAll={handleActualSelectAll}
+        onClearSelect={handleClearSelect}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
