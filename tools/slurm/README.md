@@ -148,9 +148,7 @@ By default, the `test-e2e-*-gcp` jobs are not run within the `test-e2e` workflow
 
 **On branch `main` and `release/rc` branches, these jobs always run without needing to set the `ci-run-allgcp` label.**
 
-The following test suites currently run only on hardware. They do not run successfully with `make slurmcluster` and thus are not executed via GCP as part of the CI/CD gate:
-  - `test-e2e-slurm-preemption-quarantine`: Currently runs on znode as a part of the nightly test suite.
-  - `test-e2e-slurm-restart`: Dependent upon znode configuration, so not worth testing on GCP.
+
 
 ## Important Workaround Explained
 
