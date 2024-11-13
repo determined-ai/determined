@@ -42,27 +42,6 @@ message MoveSearchesResponse {
   repeated SearchActionResult results = 1;
 }
 
-// Cancel searches.
-message CancelSearchesRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id" ] }
-  };
-  // The ids of the searches being canceled. Leave empty if using filter.
-  repeated int32 search_ids = 1;
-  // Project id of the searches being canceled.
-  int32 project_id = 2;
-  // Filter expression
-  optional string filter = 3;
-}
-// Response to CancelSearchesRequest.
-message CancelSearchesResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
-  };
-  // Details on success or error for each search.
-  repeated SearchActionResult results = 1;
-}
-
 // Kill searches.
 message KillSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -75,7 +54,7 @@ message KillSearchesRequest {
   // Filter expression
   optional string filter = 3;
 }
-// Response to KillSearchesRequest.
+// Response to KillSearchesResponse.
 message KillSearchesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "results" ] }
@@ -96,7 +75,7 @@ message DeleteSearchesRequest {
   // Filter expression
   optional string filter = 3;
 }
-// Response to DeleteSearchesRequest.
+// Response to DeleteSearchesResponse.
 message DeleteSearchesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "results" ] }

@@ -202,122 +202,6 @@ func (x *MoveSearchesResponse) GetResults() []*SearchActionResult {
 	return nil
 }
 
-// Cancel searches.
-type CancelSearchesRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The ids of the searches being canceled. Leave empty if using filter.
-	SearchIds []int32 `protobuf:"varint,1,rep,packed,name=search_ids,json=searchIds,proto3" json:"search_ids,omitempty"`
-	// Project id of the searches being canceled.
-	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	// Filter expression
-	Filter *string `protobuf:"bytes,3,opt,name=filter,proto3,oneof" json:"filter,omitempty"`
-}
-
-func (x *CancelSearchesRequest) Reset() {
-	*x = CancelSearchesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CancelSearchesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CancelSearchesRequest) ProtoMessage() {}
-
-func (x *CancelSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CancelSearchesRequest.ProtoReflect.Descriptor instead.
-func (*CancelSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *CancelSearchesRequest) GetSearchIds() []int32 {
-	if x != nil {
-		return x.SearchIds
-	}
-	return nil
-}
-
-func (x *CancelSearchesRequest) GetProjectId() int32 {
-	if x != nil {
-		return x.ProjectId
-	}
-	return 0
-}
-
-func (x *CancelSearchesRequest) GetFilter() string {
-	if x != nil && x.Filter != nil {
-		return *x.Filter
-	}
-	return ""
-}
-
-// Response to CancelSearchesRequest.
-type CancelSearchesResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Details on success or error for each search.
-	Results []*SearchActionResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
-}
-
-func (x *CancelSearchesResponse) Reset() {
-	*x = CancelSearchesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CancelSearchesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CancelSearchesResponse) ProtoMessage() {}
-
-func (x *CancelSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CancelSearchesResponse.ProtoReflect.Descriptor instead.
-func (*CancelSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *CancelSearchesResponse) GetResults() []*SearchActionResult {
-	if x != nil {
-		return x.Results
-	}
-	return nil
-}
-
 // Kill searches.
 type KillSearchesRequest struct {
 	state         protoimpl.MessageState
@@ -335,7 +219,7 @@ type KillSearchesRequest struct {
 func (x *KillSearchesRequest) Reset() {
 	*x = KillSearchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[5]
+		mi := &file_determined_api_v1_search_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -348,7 +232,7 @@ func (x *KillSearchesRequest) String() string {
 func (*KillSearchesRequest) ProtoMessage() {}
 
 func (x *KillSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[5]
+	mi := &file_determined_api_v1_search_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +245,7 @@ func (x *KillSearchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillSearchesRequest.ProtoReflect.Descriptor instead.
 func (*KillSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{5}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *KillSearchesRequest) GetSearchIds() []int32 {
@@ -385,7 +269,7 @@ func (x *KillSearchesRequest) GetFilter() string {
 	return ""
 }
 
-// Response to KillSearchesRequest.
+// Response to KillSearchesResponse.
 type KillSearchesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -398,7 +282,7 @@ type KillSearchesResponse struct {
 func (x *KillSearchesResponse) Reset() {
 	*x = KillSearchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[6]
+		mi := &file_determined_api_v1_search_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -411,7 +295,7 @@ func (x *KillSearchesResponse) String() string {
 func (*KillSearchesResponse) ProtoMessage() {}
 
 func (x *KillSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[6]
+	mi := &file_determined_api_v1_search_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +308,7 @@ func (x *KillSearchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillSearchesResponse.ProtoReflect.Descriptor instead.
 func (*KillSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{6}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *KillSearchesResponse) GetResults() []*SearchActionResult {
@@ -451,7 +335,7 @@ type DeleteSearchesRequest struct {
 func (x *DeleteSearchesRequest) Reset() {
 	*x = DeleteSearchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[7]
+		mi := &file_determined_api_v1_search_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -464,7 +348,7 @@ func (x *DeleteSearchesRequest) String() string {
 func (*DeleteSearchesRequest) ProtoMessage() {}
 
 func (x *DeleteSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[7]
+	mi := &file_determined_api_v1_search_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -477,7 +361,7 @@ func (x *DeleteSearchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSearchesRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{7}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DeleteSearchesRequest) GetSearchIds() []int32 {
@@ -501,7 +385,7 @@ func (x *DeleteSearchesRequest) GetFilter() string {
 	return ""
 }
 
-// Response to DeleteSearchesRequest.
+// Response to DeleteSearchesResponse.
 type DeleteSearchesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -514,7 +398,7 @@ type DeleteSearchesResponse struct {
 func (x *DeleteSearchesResponse) Reset() {
 	*x = DeleteSearchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[8]
+		mi := &file_determined_api_v1_search_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -527,7 +411,7 @@ func (x *DeleteSearchesResponse) String() string {
 func (*DeleteSearchesResponse) ProtoMessage() {}
 
 func (x *DeleteSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[8]
+	mi := &file_determined_api_v1_search_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -540,7 +424,7 @@ func (x *DeleteSearchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSearchesResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{8}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeleteSearchesResponse) GetResults() []*SearchActionResult {
@@ -567,7 +451,7 @@ type ArchiveSearchesRequest struct {
 func (x *ArchiveSearchesRequest) Reset() {
 	*x = ArchiveSearchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[9]
+		mi := &file_determined_api_v1_search_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -580,7 +464,7 @@ func (x *ArchiveSearchesRequest) String() string {
 func (*ArchiveSearchesRequest) ProtoMessage() {}
 
 func (x *ArchiveSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[9]
+	mi := &file_determined_api_v1_search_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -593,7 +477,7 @@ func (x *ArchiveSearchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveSearchesRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{9}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ArchiveSearchesRequest) GetSearchIds() []int32 {
@@ -630,7 +514,7 @@ type ArchiveSearchesResponse struct {
 func (x *ArchiveSearchesResponse) Reset() {
 	*x = ArchiveSearchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[10]
+		mi := &file_determined_api_v1_search_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -643,7 +527,7 @@ func (x *ArchiveSearchesResponse) String() string {
 func (*ArchiveSearchesResponse) ProtoMessage() {}
 
 func (x *ArchiveSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[10]
+	mi := &file_determined_api_v1_search_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +540,7 @@ func (x *ArchiveSearchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveSearchesResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{10}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ArchiveSearchesResponse) GetResults() []*SearchActionResult {
@@ -683,7 +567,7 @@ type UnarchiveSearchesRequest struct {
 func (x *UnarchiveSearchesRequest) Reset() {
 	*x = UnarchiveSearchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[11]
+		mi := &file_determined_api_v1_search_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -696,7 +580,7 @@ func (x *UnarchiveSearchesRequest) String() string {
 func (*UnarchiveSearchesRequest) ProtoMessage() {}
 
 func (x *UnarchiveSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[11]
+	mi := &file_determined_api_v1_search_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +593,7 @@ func (x *UnarchiveSearchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveSearchesRequest.ProtoReflect.Descriptor instead.
 func (*UnarchiveSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{11}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UnarchiveSearchesRequest) GetSearchIds() []int32 {
@@ -746,7 +630,7 @@ type UnarchiveSearchesResponse struct {
 func (x *UnarchiveSearchesResponse) Reset() {
 	*x = UnarchiveSearchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[12]
+		mi := &file_determined_api_v1_search_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -759,7 +643,7 @@ func (x *UnarchiveSearchesResponse) String() string {
 func (*UnarchiveSearchesResponse) ProtoMessage() {}
 
 func (x *UnarchiveSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[12]
+	mi := &file_determined_api_v1_search_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -772,7 +656,7 @@ func (x *UnarchiveSearchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveSearchesResponse.ProtoReflect.Descriptor instead.
 func (*UnarchiveSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{12}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UnarchiveSearchesResponse) GetResults() []*SearchActionResult {
@@ -799,7 +683,7 @@ type PauseSearchesRequest struct {
 func (x *PauseSearchesRequest) Reset() {
 	*x = PauseSearchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[13]
+		mi := &file_determined_api_v1_search_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -812,7 +696,7 @@ func (x *PauseSearchesRequest) String() string {
 func (*PauseSearchesRequest) ProtoMessage() {}
 
 func (x *PauseSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[13]
+	mi := &file_determined_api_v1_search_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -825,7 +709,7 @@ func (x *PauseSearchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseSearchesRequest.ProtoReflect.Descriptor instead.
 func (*PauseSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{13}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PauseSearchesRequest) GetSearchIds() []int32 {
@@ -862,7 +746,7 @@ type PauseSearchesResponse struct {
 func (x *PauseSearchesResponse) Reset() {
 	*x = PauseSearchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[14]
+		mi := &file_determined_api_v1_search_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -875,7 +759,7 @@ func (x *PauseSearchesResponse) String() string {
 func (*PauseSearchesResponse) ProtoMessage() {}
 
 func (x *PauseSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[14]
+	mi := &file_determined_api_v1_search_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -888,7 +772,7 @@ func (x *PauseSearchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseSearchesResponse.ProtoReflect.Descriptor instead.
 func (*PauseSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{14}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PauseSearchesResponse) GetResults() []*SearchActionResult {
@@ -915,7 +799,7 @@ type ResumeSearchesRequest struct {
 func (x *ResumeSearchesRequest) Reset() {
 	*x = ResumeSearchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[15]
+		mi := &file_determined_api_v1_search_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -928,7 +812,7 @@ func (x *ResumeSearchesRequest) String() string {
 func (*ResumeSearchesRequest) ProtoMessage() {}
 
 func (x *ResumeSearchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[15]
+	mi := &file_determined_api_v1_search_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -941,7 +825,7 @@ func (x *ResumeSearchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeSearchesRequest.ProtoReflect.Descriptor instead.
 func (*ResumeSearchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{15}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ResumeSearchesRequest) GetSearchIds() []int32 {
@@ -978,7 +862,7 @@ type ResumeSearchesResponse struct {
 func (x *ResumeSearchesResponse) Reset() {
 	*x = ResumeSearchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_search_proto_msgTypes[16]
+		mi := &file_determined_api_v1_search_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -991,7 +875,7 @@ func (x *ResumeSearchesResponse) String() string {
 func (*ResumeSearchesResponse) ProtoMessage() {}
 
 func (x *ResumeSearchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_search_proto_msgTypes[16]
+	mi := &file_determined_api_v1_search_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1004,7 +888,7 @@ func (x *ResumeSearchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeSearchesResponse.ProtoReflect.Descriptor instead.
 func (*ResumeSearchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{16}
+	return file_determined_api_v1_search_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ResumeSearchesResponse) GetResults() []*SearchActionResult {
@@ -1044,22 +928,6 @@ var file_determined_api_v1_search_proto_rawDesc = []byte{
 	0x69, 0x64, 0xd2, 0x01, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
 	0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x42, 0x09, 0x0a, 0x07, 0x5f,
 	0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x22, 0x68, 0x0a, 0x14, 0x4d, 0x6f, 0x76, 0x65, 0x53, 0x65,
-	0x61, 0x72, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f,
-	0x0a, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x25, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x3a,
-	0x0f, 0x92, 0x41, 0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
-	0x22, 0x91, 0x01, 0x0a, 0x15, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x53, 0x65, 0x61, 0x72, 0x63,
-	0x68, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x65,
-	0x61, 0x72, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x09,
-	0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x49, 0x64, 0x73, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f,
-	0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x70,
-	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x12, 0x1b, 0x0a, 0x06, 0x66, 0x69, 0x6c, 0x74,
-	0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x74,
-	0x65, 0x72, 0x88, 0x01, 0x01, 0x3a, 0x12, 0x92, 0x41, 0x0f, 0x0a, 0x0d, 0xd2, 0x01, 0x0a, 0x70,
-	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x66, 0x69,
-	0x6c, 0x74, 0x65, 0x72, 0x22, 0x6a, 0x0a, 0x16, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x53, 0x65,
 	0x61, 0x72, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f,
 	0x0a, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
 	0x25, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69,
@@ -1181,40 +1049,37 @@ func file_determined_api_v1_search_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_search_proto_rawDescData
 }
 
-var file_determined_api_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_determined_api_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_determined_api_v1_search_proto_goTypes = []interface{}{
 	(*SearchActionResult)(nil),        // 0: determined.api.v1.SearchActionResult
 	(*MoveSearchesRequest)(nil),       // 1: determined.api.v1.MoveSearchesRequest
 	(*MoveSearchesResponse)(nil),      // 2: determined.api.v1.MoveSearchesResponse
-	(*CancelSearchesRequest)(nil),     // 3: determined.api.v1.CancelSearchesRequest
-	(*CancelSearchesResponse)(nil),    // 4: determined.api.v1.CancelSearchesResponse
-	(*KillSearchesRequest)(nil),       // 5: determined.api.v1.KillSearchesRequest
-	(*KillSearchesResponse)(nil),      // 6: determined.api.v1.KillSearchesResponse
-	(*DeleteSearchesRequest)(nil),     // 7: determined.api.v1.DeleteSearchesRequest
-	(*DeleteSearchesResponse)(nil),    // 8: determined.api.v1.DeleteSearchesResponse
-	(*ArchiveSearchesRequest)(nil),    // 9: determined.api.v1.ArchiveSearchesRequest
-	(*ArchiveSearchesResponse)(nil),   // 10: determined.api.v1.ArchiveSearchesResponse
-	(*UnarchiveSearchesRequest)(nil),  // 11: determined.api.v1.UnarchiveSearchesRequest
-	(*UnarchiveSearchesResponse)(nil), // 12: determined.api.v1.UnarchiveSearchesResponse
-	(*PauseSearchesRequest)(nil),      // 13: determined.api.v1.PauseSearchesRequest
-	(*PauseSearchesResponse)(nil),     // 14: determined.api.v1.PauseSearchesResponse
-	(*ResumeSearchesRequest)(nil),     // 15: determined.api.v1.ResumeSearchesRequest
-	(*ResumeSearchesResponse)(nil),    // 16: determined.api.v1.ResumeSearchesResponse
+	(*KillSearchesRequest)(nil),       // 3: determined.api.v1.KillSearchesRequest
+	(*KillSearchesResponse)(nil),      // 4: determined.api.v1.KillSearchesResponse
+	(*DeleteSearchesRequest)(nil),     // 5: determined.api.v1.DeleteSearchesRequest
+	(*DeleteSearchesResponse)(nil),    // 6: determined.api.v1.DeleteSearchesResponse
+	(*ArchiveSearchesRequest)(nil),    // 7: determined.api.v1.ArchiveSearchesRequest
+	(*ArchiveSearchesResponse)(nil),   // 8: determined.api.v1.ArchiveSearchesResponse
+	(*UnarchiveSearchesRequest)(nil),  // 9: determined.api.v1.UnarchiveSearchesRequest
+	(*UnarchiveSearchesResponse)(nil), // 10: determined.api.v1.UnarchiveSearchesResponse
+	(*PauseSearchesRequest)(nil),      // 11: determined.api.v1.PauseSearchesRequest
+	(*PauseSearchesResponse)(nil),     // 12: determined.api.v1.PauseSearchesResponse
+	(*ResumeSearchesRequest)(nil),     // 13: determined.api.v1.ResumeSearchesRequest
+	(*ResumeSearchesResponse)(nil),    // 14: determined.api.v1.ResumeSearchesResponse
 }
 var file_determined_api_v1_search_proto_depIdxs = []int32{
 	0, // 0: determined.api.v1.MoveSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 1: determined.api.v1.CancelSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 2: determined.api.v1.KillSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 3: determined.api.v1.DeleteSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 4: determined.api.v1.ArchiveSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 5: determined.api.v1.UnarchiveSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 6: determined.api.v1.PauseSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	0, // 7: determined.api.v1.ResumeSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0, // 1: determined.api.v1.KillSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
+	0, // 2: determined.api.v1.DeleteSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
+	0, // 3: determined.api.v1.ArchiveSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
+	0, // 4: determined.api.v1.UnarchiveSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
+	0, // 5: determined.api.v1.PauseSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
+	0, // 6: determined.api.v1.ResumeSearchesResponse.results:type_name -> determined.api.v1.SearchActionResult
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_search_proto_init() }
@@ -1260,30 +1125,6 @@ func file_determined_api_v1_search_proto_init() {
 			}
 		}
 		file_determined_api_v1_search_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelSearchesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_search_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelSearchesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_search_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*KillSearchesRequest); i {
 			case 0:
 				return &v.state
@@ -1295,7 +1136,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*KillSearchesResponse); i {
 			case 0:
 				return &v.state
@@ -1307,7 +1148,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteSearchesRequest); i {
 			case 0:
 				return &v.state
@@ -1319,7 +1160,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteSearchesResponse); i {
 			case 0:
 				return &v.state
@@ -1331,7 +1172,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ArchiveSearchesRequest); i {
 			case 0:
 				return &v.state
@@ -1343,7 +1184,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ArchiveSearchesResponse); i {
 			case 0:
 				return &v.state
@@ -1355,7 +1196,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UnarchiveSearchesRequest); i {
 			case 0:
 				return &v.state
@@ -1367,7 +1208,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UnarchiveSearchesResponse); i {
 			case 0:
 				return &v.state
@@ -1379,7 +1220,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PauseSearchesRequest); i {
 			case 0:
 				return &v.state
@@ -1391,7 +1232,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PauseSearchesResponse); i {
 			case 0:
 				return &v.state
@@ -1403,7 +1244,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResumeSearchesRequest); i {
 			case 0:
 				return &v.state
@@ -1415,7 +1256,7 @@ func file_determined_api_v1_search_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_search_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_search_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResumeSearchesResponse); i {
 			case 0:
 				return &v.state
@@ -1435,14 +1276,13 @@ func file_determined_api_v1_search_proto_init() {
 	file_determined_api_v1_search_proto_msgTypes[9].OneofWrappers = []interface{}{}
 	file_determined_api_v1_search_proto_msgTypes[11].OneofWrappers = []interface{}{}
 	file_determined_api_v1_search_proto_msgTypes[13].OneofWrappers = []interface{}{}
-	file_determined_api_v1_search_proto_msgTypes[15].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_search_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
