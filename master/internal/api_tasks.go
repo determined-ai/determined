@@ -729,19 +729,11 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 	}
 
 	if req.SearchText != "" {
-		if req.EnableRegex {
-			filters = append(filters, api.Filter{
-				Field:     "log",
-				Operation: api.FilterOperationRegexContainment,
-				Values:    req.SearchText,
-			})
-		} else {
-			filters = append(filters, api.Filter{
-				Field:     "log",
-				Operation: api.FilterOperationStringContainment,
-				Values:    req.SearchText,
-			})
-		}
+		filters = append(filters, api.Filter{
+			Field:     "log",
+			Operation: api.FilterOperationStringContainment,
+			Values:    req.SearchText,
+		})
 	}
 	return filters, nil
 }

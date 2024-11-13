@@ -203,7 +203,6 @@ func (a *apiServer) TrialLogs(
 				TimestampAfter:  req.TimestampAfter,
 				OrderBy:         req.OrderBy,
 				SearchText:      req.SearchText,
-				EnableRegex:     req.EnableRegex,
 			}, res)
 			err := processBatches(res, func(b api.Batch) error {
 				return b.ForEach(func(i interface{}) error {
