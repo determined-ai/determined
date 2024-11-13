@@ -5,6 +5,7 @@ import {
 } from 'playwright-page-model-base/BaseComponent';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { printMap } from 'e2e/utils/debug';
 
 class IndexNotFoundError extends Error {}
@@ -395,6 +396,14 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     parent: this,
     selector: 'th',
   });
+  readonly selectDropdown = new HeaderDropdown({
+    clickThisComponentToOpen: new BaseComponent({
+      parent: this,
+      selector: `[${DataGrid.columnIndexAttribute}="1"]`,
+    }),
+    openMethod: this.clickSelectDropdown.bind(this),
+    root: this.root,
+  });
 
   #columnDefs = new Map<string, number>();
 
@@ -464,8 +473,18 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
   /**
    * Clicks the head row's select button
    */
-  async clickSelectHeader(): Promise<void> {
+  async clickSelectDropdown(): Promise<void> {
     // magic numbers for the select button
     await this.parentTable.pwLocator.click({ position: { x: 5, y: 5 } });
   }
+}
+
+/**
+ * Represents the HeaderDropdown from the DataGrid component
+ */
+class HeaderDropdown extends DropdownMenu {
+  readonly select5 = this.menuItem('select-5');
+  readonly select10 = this.menuItem('select-10');
+  readonly select25 = this.menuItem('select-25');
+  readonly selectAll = this.menuItem('select-all');
 }

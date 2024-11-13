@@ -207,8 +207,7 @@ const RunActionDropdown: React.FC<Props> = ({
 
   const shared = (
     <FlatRunMoveComponentModal
-      runIds={[run.id]}
-      selectionSize={1}
+      flatRuns={[run]}
       sourceProjectId={projectId}
       sourceWorkspaceId={run.workspaceId}
       onSubmit={() => onComplete?.(FlatRunAction.Move, run.id)}

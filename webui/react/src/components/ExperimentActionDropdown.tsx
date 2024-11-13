@@ -353,7 +353,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       />
       <ExperimentMoveModal.Component
         experimentIds={[experiment.id]}
-        selectionSize={1}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleMoveComplete}
