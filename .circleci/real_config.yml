@@ -4083,7 +4083,7 @@ workflows:
           requires:
             - build-go-ee
           parallelism: 6
-          resource-class: xlarge
+          resource-class: large
           tf2: true
           mark: e2e_cpu
 
