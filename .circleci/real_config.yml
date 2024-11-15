@@ -4082,7 +4082,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-          parallelism: 2
+          parallelism: 3
           resource-class: large
           tf2: true
           mark: e2e_cpu
@@ -4093,7 +4093,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-          parallelism: 5
+          parallelism: 3
           resource-class: large
           tf2: true
           mark: e2e_cpu_2a
