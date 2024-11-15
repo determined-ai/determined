@@ -321,25 +321,6 @@ commands:
     steps:
       - run: pip install codecov
 
-  upload-junit-datadog:
-    parameters:
-      service:
-        type: string
-        default: ""
-      env:
-        type: string
-        default: "ci-cpu"
-      path:
-        type: string
-        default: "/tmp/test-results"
-    steps:
-      - run:
-          name: Upload Tests to DataDog
-          when: always
-          command: |
-              curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" --output "./datadog-ci" && chmod +x ./datadog-ci
-              ./datadog-ci junit upload --service "determined-ai/<< parameters.service >>" --env "<< parameters.env >>" << parameters.path >>
-
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
@@ -610,50 +591,6 @@ commands:
         type: boolean
         default: true
     steps:
-      - when:
-          condition:
-            and:
-              - equal: [<<parameters.master-host>>,'localhost']
-              - <<parameters.wait-for-master>>
-              - not: <<parameters.managed-devcluster>>
-          steps:
-            - run:
-                name: Install DataDog agent
-                command: |
-                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
-                    host_tags="test.mark:<<parameters.mark>>,\
-                    ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
-                    ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
-                    ci.job_num:${CIRCLE_BUILD_NUM},\
-                    ci.username:${CIRCLE_USERNAME},\
-                    git.tag:${CIRCLE_TAG},\
-                    git.commit:${CIRCLE_SHA1},\
-                    git.repo:${CIRCLE_PROJECT_REPONAME},\
-                    ci.totalNodes:${CIRCLE_NODE_TOTAL},\
-                    ci.nodeIdx:${CIRCLE_NODE_INDEX},\
-                    git.pr_num:${CIRCLE_PR_NUMBER}"
-
-                    sudo mkdir -p /tmp/artifacts/logs
-                    sudo chmod -R a+rw /tmp/artifacts/logs
-
-                    DD_ENV="ci-${CIRCLE_JOB}" \
-                    DD_HOST_TAGS="$host_tags" \
-                    DD_SERVICE="determined-pytest-<<parameters.mark>>" \
-                    bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
-
-                    # config files for the agent have an expected file structure
-                    sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
-                    sudo chmod a+rw /etc/datadog-agent/datadog.yaml
-                    sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
-                    sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
-                    sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
-                    # restart agent with config
-                    sudo usermod -a -G docker dd-agent
-                    sudo systemctl stop datadog-agent
-                    sudo systemctl start datadog-agent
-                    sleep 5
-                    sudo datadog-agent status
-                  fi
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -690,28 +627,12 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            tags="test.mark:<<parameters.mark>>,\
-            ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
-            ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
-            ci.job_num:${CIRCLE_BUILD_NUM},\
-            ci.username:${CIRCLE_USERNAME},\
-            git.tag:${CIRCLE_TAG},\
-            git.commit:${CIRCLE_SHA1},\
-            ci.totalNodes:${CIRCLE_NODE_TOTAL},\
-            ci.nodeIdx:${CIRCLE_NODE_INDEX},\
-            git.pr_num:${CIRCLE_PR_NUMBER}"
-
-            CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_TAGS='${tags}' \
-            DD_ENV='ci-<<parameters.mark>>' \
-            DD_SERVICE='determined-pytest-<<parameters.mark>>' \
-            DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
+            CMD="DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
             xargs pytest --capture=tee-sys -vv \
             -m '<<parameters.mark>>' \
             --durations=0 \
-            --ddtrace \
             --master-scheme='<<parameters.master-scheme>>' \
             --master-host='<<parameters.master-host>>' \
             --master-port='<<parameters.master-port>>' \
@@ -736,20 +657,6 @@ commands:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
-      - when:
-          condition:
-            and:
-              - equal: [<<parameters.master-host>>,'localhost']
-              - <<parameters.wait-for-master>>
-              - not: <<parameters.managed-devcluster>>
-          steps:
-            - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
-                name: Stop DataDog agent
-                when: always
-                command: |
-                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
-                    sudo systemctl stop datadog-agent || true
-                  fi
 
 
   run-det-deploy-tests:
@@ -2167,15 +2074,11 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
-      - run: npm install --save-dev dd-trace # DataDog integration
       - run:
           environment:
             PW_EE: << parameters.ee >>
-            NODE_OPTIONS: "-r dd-trace/ci/init"
           command: |
               if [[ "$PW_EE" -eq 1 ]]; then env="ee"; else env="oss"; fi
-              DD_ENV="ci-devcluster-$env" \
-              DD_SERVICE=determined-ui-e2e \
               PW_PASSWORD=${INITIAL_USER_PASSWORD} \
               npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
@@ -2203,9 +2106,6 @@ jobs:
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
-      - upload-junit-datadog:
-          service:
-          env: "ci-cpu"
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
@@ -2319,10 +2219,6 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
-      - upload-junit-datadog:
-          service: master/test-intg
-          env: ci-cpu
-          path: master/test-intg.junit.xml
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -2351,10 +2247,6 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
-      - upload-junit-datadog:
-          service: agent/test-intg
-          env: ci-cpu
-          path: agent/test-intg.junit.xml
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
@@ -2473,9 +2365,6 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-cpu
-          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2500,9 +2389,6 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-gpu
-          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2527,9 +2413,6 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-pytorch2-gpu
-          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2553,9 +2436,6 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-pytorch2-cpu
-          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2580,9 +2460,6 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-gpu-parallel
-          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2607,9 +2484,6 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-gpu-deepseed
-          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2634,9 +2508,6 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-harness-tf2
-          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2662,9 +2533,6 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-storage
-          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
