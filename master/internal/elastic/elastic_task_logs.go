@@ -463,15 +463,7 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 						},
 					},
 				})
-		case api.FilterOperationRegexContainment:
-			terms = append(terms,
-				jsonObj{
-					"regexp": jsonObj{
-						f.Field: jsonObj{
-							"value": fmt.Sprintf("%s", f.Values),
-						},
-					},
-				})
+
 		default:
 			panic(fmt.Sprintf("unsupported filter operation: %d", f.Operation))
 		}
