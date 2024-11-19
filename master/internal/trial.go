@@ -766,16 +766,16 @@ func (t *trial) transition(s model.StateWithReason) error {
 				InformationalReason: s.InformationalReason,
 			})
 		default:
-			// For StoppingKilled and StoppingErrorState, default to KillAllocation.
-			action := task.KillAllocation
-
-			if (t.state == model.StoppingCompletedState) || (t.state == model.StoppingCanceledState) {
-				action = task.TerminateAllocation
-			}
-
-			t.syslog.Infof("decided to %s trial", action)
-			if err := task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason); err != nil {
-				t.syslog.WithError(err).Warnf("could not %s allocation during stop", action)
+			if action, ok := map[model.State]task.AllocationSignal{
+				model.StoppingCanceledState: task.TerminateAllocation,
+				model.StoppingKilledState:   task.KillAllocation,
+				model.StoppingErrorState:    task.KillAllocation,
+			}[t.state]; ok {
+				t.syslog.Infof("decided to %s trial", action)
+				err := task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason)
+				if err != nil {
+					t.syslog.WithError(err).Warnf("could not %s allocation during stop", action)
+				}
 			}
 		}
 	case model.TerminalStates[t.state]:
