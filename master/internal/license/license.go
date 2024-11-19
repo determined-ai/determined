@@ -1,9 +1,5 @@
 package license
 
-import (
-	"github.com/golang-jwt/jwt/v4"
-)
-
 const (
 	licenseRequiredMsg = "An enterprise license is required to use this feature"
 	errCheckingLicense = "error when validating license"
@@ -15,17 +11,8 @@ var licenseKey string
 // publicKey stores the public key used to verify licenses. Defaults to empty.
 var publicKey string
 
-// decodedLicense contains the body of a decoded licenseKey.
-type decodedLicense struct {
-	jwt.RegisteredClaims
-
-	LicenseVersion string `json:"licenseVersion"`
-}
-
 // RequireLicense is a no-op.
-func RequireLicense(resource string) {
-	return
-}
+func RequireLicense(resource string) {}
 
 // IsEE returns true if a license is detected.
 func IsEE() bool {
