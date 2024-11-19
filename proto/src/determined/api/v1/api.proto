@@ -2842,4 +2842,39 @@ service Determined {
       tags: "Alpha"
     };
   }
+
+  // Create and get a user's access token
+  rpc PostAccessToken(PostAccessTokenRequest)
+      returns (PostAccessTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tokens",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tokens"
+    };
+  }
+
+  // Get a list of all access token records.
+  rpc GetAccessTokens(GetAccessTokensRequest)
+      returns (GetAccessTokensResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tokens"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tokens"
+    };
+  }
+
+  // Patch an access token's mutable fields.
+  rpc PatchAccessToken(PatchAccessTokenRequest)
+      returns (PatchAccessTokenResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/tokens/{token_id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tokens"
+    };
+  }
 }
