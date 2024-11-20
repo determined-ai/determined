@@ -21270,7 +21270,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23852,7 +23852,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -25116,7 +25116,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get a list of runs.
+         * @summary Kill runs.
          * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26105,7 +26105,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get a list of runs.
+     * @summary Kill runs.
      * @param {V1KillRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

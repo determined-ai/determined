@@ -4559,7 +4559,7 @@ type DeterminedClient interface {
 	SearchRuns(ctx context.Context, in *SearchRunsRequest, opts ...grpc.CallOption) (*SearchRunsResponse, error)
 	// Move runs.
 	MoveRuns(ctx context.Context, in *MoveRunsRequest, opts ...grpc.CallOption) (*MoveRunsResponse, error)
-	// Get a list of runs.
+	// Kill runs.
 	KillRuns(ctx context.Context, in *KillRunsRequest, opts ...grpc.CallOption) (*KillRunsResponse, error)
 	// Delete a list of runs.
 	DeleteRuns(ctx context.Context, in *DeleteRunsRequest, opts ...grpc.CallOption) (*DeleteRunsResponse, error)
@@ -7805,7 +7805,7 @@ type DeterminedServer interface {
 	SearchRuns(context.Context, *SearchRunsRequest) (*SearchRunsResponse, error)
 	// Move runs.
 	MoveRuns(context.Context, *MoveRunsRequest) (*MoveRunsResponse, error)
-	// Get a list of runs.
+	// Kill runs.
 	KillRuns(context.Context, *KillRunsRequest) (*KillRunsResponse, error)
 	// Delete a list of runs.
 	DeleteRuns(context.Context, *DeleteRunsRequest) (*DeleteRunsResponse, error)

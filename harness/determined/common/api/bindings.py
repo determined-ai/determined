@@ -21692,7 +21692,7 @@ def post_KillRuns(
     *,
     body: "v1KillRunsRequest",
 ) -> "v1KillRunsResponse":
-    """Get a list of runs."""
+    """Kill runs."""
     _params = None
     _resp = session._do_request(
         method="POST",
