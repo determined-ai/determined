@@ -1,10 +1,5 @@
 package license
 
-const (
-	licenseRequiredMsg = "An enterprise license is required to use this feature"
-	errCheckingLicense = "error when validating license"
-)
-
 // licenseKey stores the MLDE licenseKey if provided, else defaulting to no licenseKey.
 var licenseKey string
 
