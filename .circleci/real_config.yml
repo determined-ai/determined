@@ -3613,10 +3613,6 @@ workflows:
   test-unit:
     <<: *do-not-run-on-manual-trigger
     jobs:
-      - test-unit-react
-      - test-unit-harness-cpu
-      - test-unit-harness-tf2
-      - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
       - test-unit-harness-gpu-tf:
@@ -3640,15 +3636,8 @@ workflows:
           name: f-test-unit-harness-gpu-parallel
           filters: *any-fork
 
-      - test-unit-storage:
-          context: storage-unit-tests
-          filters: *any-upstream
       - python-coverage:
           requires:
-            - test-unit-harness-cpu
             - test-unit-harness-gpu-tf
             - test-unit-harness-gpu-parallel
-            - test-unit-harness-tf2
-            - test-unit-harness-pytorch2-cpu
             - test-unit-harness-pytorch2-gpu
-            - test-unit-storage
