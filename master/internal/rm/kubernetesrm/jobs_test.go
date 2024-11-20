@@ -3,6 +3,7 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -10,7 +11,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
+	k8error "k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -60,24 +63,180 @@ func TestGetNonDetPods(t *testing.T) {
 		},
 	}
 
-	ns1 := &mocks.PodInterface{}
-	ns1.On("List", mock.Anything, mock.Anything).Once().
-		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[0])}, nil)
-
-	ns2 := &mocks.PodInterface{}
-	ns2.On("List", mock.Anything, mock.Anything).Once().
-		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[1])}, nil)
+	emptyNS := &mocks.PodInterface{}
+	emptyNS.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[0], expectedPods[1])}, nil)
 
 	js := jobsService{
 		podInterfaces: map[string]typedV1.PodInterface{
-			"ns1": ns1,
-			"ns2": ns2,
+			"ns1": &mocks.PodInterface{},
+			"ns2": &mocks.PodInterface{},
+			"":    emptyNS,
 		},
 	}
 
 	actualPods, err := js.getNonDetPods()
 	require.NoError(t, err)
 	require.ElementsMatch(t, expectedPods, actualPods)
+}
+
+func TestListPodsInAllNamespaces(t *testing.T) {
+	detPods := []k8sV1.Pod{
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "ns1",
+			},
+			Spec: k8sV1.PodSpec{
+				NodeName: "a",
+			},
+		},
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "ns2",
+			},
+			Spec: k8sV1.PodSpec{
+				NodeName: "a",
+			},
+		},
+	}
+
+	ns1 := &mocks.PodInterface{}
+	ns2 := &mocks.PodInterface{}
+
+	emptyNS := &mocks.PodInterface{}
+
+	js := jobsService{
+		podInterfaces: map[string]typedV1.PodInterface{
+			"ns1": ns1,
+			"ns2": ns2,
+			"":    emptyNS,
+		},
+	}
+
+	// This pod is not part of js.podInterfaces.
+	outsidePod := k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "ns3",
+		},
+		Spec: k8sV1.PodSpec{
+			NodeName: "b",
+		},
+	}
+
+	var expectedPods []k8sV1.Pod
+	copy(expectedPods, append(detPods, outsidePod))
+	expectedPodList := k8sV1.PodList{Items: expectedPods}
+	emptyNS.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: expectedPods}, nil)
+
+	ctx := context.Background()
+	opts := metaV1.ListOptions{}
+	actualPodList, err := js.listPodsInAllNamespaces(ctx, opts)
+	require.NoError(t, err)
+	require.NotNil(t, actualPodList)
+	require.ElementsMatch(t, expectedPodList.Items, actualPodList)
+
+	forbiddenErr := k8error.NewForbidden(schema.GroupResource{}, "forbidden",
+		fmt.Errorf("forbidden"))
+
+	emptyNS.On("List", mock.Anything, mock.Anything).Twice().
+		Return(nil, forbiddenErr)
+
+	ns1.On("List", mock.Anything, mock.Anything).Twice().
+		Return(&k8sV1.PodList{Items: []k8sV1.Pod{detPods[0]}}, nil)
+
+	ns2.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: []k8sV1.Pod{detPods[1]}}, nil)
+
+	actualPodList, err = js.listPodsInAllNamespaces(ctx, opts)
+	require.NoError(t, err)
+	require.NotNil(t, actualPodList)
+	require.ElementsMatch(t, detPods, actualPodList)
+
+	listErr := fmt.Errorf("something bad happened")
+	ns2.On("List", mock.Anything, mock.Anything).Once().
+		Return(nil, listErr)
+	actualPodList, err = js.listPodsInAllNamespaces(ctx, opts)
+	require.ErrorIs(t, err, listErr)
+	require.Nil(t, actualPodList)
+}
+
+func TestHealthStatus(t *testing.T) {
+	detPods := []k8sV1.Pod{
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "ns1",
+			},
+			Spec: k8sV1.PodSpec{
+				NodeName: "a",
+			},
+		},
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "ns2",
+			},
+			Spec: k8sV1.PodSpec{
+				NodeName: "a",
+			},
+		},
+	}
+
+	ns1 := &mocks.PodInterface{}
+	ns2 := &mocks.PodInterface{}
+
+	emptyNS := &mocks.PodInterface{}
+
+	js := jobsService{
+		podInterfaces: map[string]typedV1.PodInterface{
+			"ns1": ns1,
+			"ns2": ns2,
+			"":    emptyNS,
+		},
+	}
+
+	// This pod is not part of js.podInterfaces.
+	outsidePod := k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "ns3",
+		},
+		Spec: k8sV1.PodSpec{
+			NodeName: "b",
+		},
+	}
+
+	var expectedPods []k8sV1.Pod
+	copy(expectedPods, append(detPods, outsidePod))
+	emptyNS.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: expectedPods}, nil)
+
+	health := js.HealthStatus(context.TODO())
+	require.Equal(t, model.Healthy, health)
+
+	emptyNS.On("List", mock.Anything, mock.Anything).Once().
+		Return(nil, fmt.Errorf("couldnt list all pods"))
+
+	health = js.HealthStatus(context.TODO())
+	require.Equal(t, model.Unhealthy, health)
+
+	forbiddenErr := k8error.NewForbidden(schema.GroupResource{}, "forbidden",
+		fmt.Errorf("forbidden"))
+
+	emptyNS.On("List", mock.Anything, mock.Anything).Twice().
+		Return(nil, forbiddenErr)
+
+	ns1.On("List", mock.Anything, mock.Anything).Twice().
+		Return(&k8sV1.PodList{Items: []k8sV1.Pod{detPods[0]}}, nil)
+
+	ns2.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: []k8sV1.Pod{detPods[1]}}, nil)
+
+	health = js.HealthStatus(context.TODO())
+	require.Equal(t, model.Healthy, health)
+
+	ns2.On("List", mock.Anything, mock.Anything).Once().
+		Return(nil, fmt.Errorf("couldnt list pods in namespace ns2"))
+	health = js.HealthStatus(context.TODO())
+	require.Equal(t, model.Unhealthy, health)
 }
 
 func TestJobScheduledStatus(t *testing.T) {
