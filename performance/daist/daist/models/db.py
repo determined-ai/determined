@@ -31,42 +31,6 @@ class PerfTestRun(BaseObj):
                      fmt: Format.type_ = Format.TXT) -> Path:
         return super().get_filename(fmt, tags=tags)
 
-    def upload(self):
-        conn = psycopg2.connect(f'dbname={self.DB_NAME} '
-                                f'user={environment.perf_result_db_user} '
-                                f'password={environment.secrets.perf_result_db_pass} '
-                                f'host={environment.perf_result_db_host}')
-
-        for run_row in self._perf_test_runs_table:
-            with conn.cursor() as cursor:
-                query = sql.SQL(f'INSERT INTO {self.Table.PERF_TEST_RUNS} (commit, branch) '
-                                'VALUES ({commit}, {branch}) '
-                                'RETURNING id;').format(
-                    commit=sql.Literal(run_row.commit),
-                    branch=sql.Literal(run_row.branch))
-                cursor.execute(query)
-                run_id = cursor.fetchone()[0]
-
-                for row in self._perf_tests_table:
-                    query = sql.SQL(
-                        f'INSERT INTO {self.Table.PERF_TESTS} '
-                        '(test_name, run_id, avg, min, med, max, p90, p95, passes, fails) '
-                        'VALUES ({test_name}, {run_id}, {avg}, {min}, {med}, {max}, {p90}, '
-                        '{p95}, {passes}, {fails});').format(
-                        test_name=sql.Literal(row.test_name),
-                        run_id=sql.Literal(run_id),
-                        avg=sql.Literal(row.avg),
-                        min=sql.Literal(row.min),
-                        med=sql.Literal(row.med),
-                        max=sql.Literal(row.max),
-                        p90=sql.Literal(row.p90),
-                        p95=sql.Literal(row.p95),
-                        passes=sql.Literal(row.passes),
-                        fails=sql.Literal(row.fails),
-                    )
-                    cursor.execute(query)
-        conn.commit()
-
     def __str__(self):
         return '\n'.join([f'{self._perf_test_runs_table.get_qualname()}:',
                           str(self._perf_test_runs_table),
