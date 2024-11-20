@@ -49,7 +49,7 @@ const ExperimentEntityCopyMap = {
   trial: 'trial',
 };
 
-export const RunActionCopyMap = {
+const RunActionCopyMap = {
   [CreateExperimentType.ContinueTrial]: 'Continue Run',
   [CreateExperimentType.Fork]: 'Fork',
 };
@@ -328,7 +328,7 @@ const ExperimentCreateModalComponent = ({
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: ExperimentActionCopyMap[type],
+        text: type,
       }}
       title={titleLabel}
       onClose={handleModalClose}>

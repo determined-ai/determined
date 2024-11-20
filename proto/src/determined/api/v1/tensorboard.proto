@@ -127,31 +127,3 @@ message LaunchTensorboardResponse {
   // List of any related warnings.
   repeated LaunchWarning warnings = 3;
 }
-
-// Request to launch a tensorboard using searches matching a filter.
-message LaunchTensorboardSearchesRequest {
-  // Targets all searches matching filter expression. Leave empty if using IDs.
-  optional string filter = 1;
-  // Tensorboard config (JSON).
-  google.protobuf.Struct config = 2;
-  // Tensorboard template name.
-  string template_name = 3;
-  // The files to run with the command.
-  repeated determined.util.v1.File files = 4;
-  // Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
-  int32 workspace_id = 5;
-  // Target search IDs. Leave empty if using filter.
-  repeated int32 search_ids = 6;
-}
-// Response to LaunchTensorboardSearchesRequest.
-message LaunchTensorboardSearchesResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "tensorboard", "config" ] }
-  };
-  // The requested tensorboard.
-  determined.tensorboard.v1.Tensorboard tensorboard = 1;
-  // The config;
-  google.protobuf.Struct config = 2;
-  // List of any related warnings.
-  repeated LaunchWarning warnings = 3;
-}

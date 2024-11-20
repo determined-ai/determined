@@ -10,8 +10,6 @@ import { List } from 'immutable';
 import { useObservable } from 'micro-observables';
 import React, { Ref, useCallback, useEffect, useId, useRef } from 'react';
 
-import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
-import { FilterFormSet } from 'components/FilterForm/components/type';
 import RunFilterInterstitialModalComponent, {
   ControlledModalRef,
 } from 'components/RunFilterInterstitialModalComponent';
@@ -21,12 +19,10 @@ import RunMoveWarningModalComponent, {
 import usePermissions from 'hooks/usePermissions';
 import { formStore } from 'pages/FlatRuns/FlatRuns';
 import { moveRuns } from 'services/api';
-import { V1MoveRunsRequest } from 'services/api-ts-sdk';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
-import { BulkActionResult, Project, SelectionType, XOR } from 'types';
+import { BulkActionResult, FlatRun, Project } from 'types';
 import handleError from 'utils/error';
-import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 import { pluralizer } from 'utils/string';
 
 const FORM_ID = 'move-flat-run-form';
@@ -36,21 +32,15 @@ type FormInputs = {
   destinationWorkspaceId?: number;
 };
 
-interface BaseProps {
-  selectionSize: number;
+interface Props {
+  flatRuns: Readonly<FlatRun>[];
   sourceProjectId: number;
   sourceWorkspaceId?: number;
   onSubmit?: (results: BulkActionResult, destinationProjectId: number) => void | Promise<void>;
 }
 
-type Props = BaseProps &
-  XOR<{ runIds: number[] }, { selection: SelectionType; tableFilters: string }>;
-
 const FlatRunMoveModalComponent: React.FC<Props> = ({
-  runIds,
-  tableFilters,
-  selection,
-  selectionSize,
+  flatRuns,
   sourceProjectId,
   sourceWorkspaceId,
   onSubmit,
@@ -107,38 +97,24 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
           return;
       }
 
-      const moveRunsArgs: V1MoveRunsRequest = {
+      const results = await moveRuns({
         destinationProjectId: projId,
+        runIds: flatRuns.map((flatRun) => flatRun.id),
         sourceProjectId,
-      };
-
-      if (tableFilters !== undefined) {
-        const filterFormSet =
-          selection.type === 'ALL_EXCEPT'
-            ? (JSON.parse(tableFilters) as FilterFormSet)
-            : INIT_FORMSET;
-        const filter = getRunIdsFilter(filterFormSet, selection);
-        moveRunsArgs.filter = JSON.stringify(filter);
-      } else {
-        moveRunsArgs.runIds = runIds;
-      }
-
-      const results = await moveRuns(moveRunsArgs);
+      });
       await onSubmit?.(results, projId);
       form.resetFields();
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to move runs' });
     }
   }, [
+    flatRuns,
     form,
-    destinationWorkspaceId,
-    sourceWorkspaceId,
-    sourceProjectId,
-    openToast,
-    tableFilters,
     onSubmit,
-    selection,
-    runIds,
+    openToast,
+    sourceProjectId,
+    sourceWorkspaceId,
+    destinationWorkspaceId,
   ]);
 
   return (
@@ -151,9 +127,9 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
           form: idPrefix + FORM_ID,
           handleError,
           handler: handleSubmit,
-          text: `Move ${pluralizer(selectionSize, 'Run')}`,
+          text: `Move ${pluralizer(flatRuns.length, 'Run')}`,
         }}
-        title={`Move ${pluralizer(selectionSize, 'Run')}`}>
+        title={`Move ${pluralizer(flatRuns.length, 'Run')}`}>
         <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
           <Form.Item
             initialValue={sourceWorkspaceId ?? 1}
@@ -219,9 +195,8 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
       <RunMoveWarningModalComponent ref={runMoveWarningFlowRef} />
       <RunFilterInterstitialModalComponent
         filterFormSet={filterFormSetWithoutId}
-        projectId={sourceProjectId}
         ref={controlledModalRef}
-        selection={selection ?? { selections: runIds, type: 'ONLY_IN' }}
+        selection={{ selections: flatRuns.map((flatRun) => flatRun.id), type: 'ONLY_IN' }}
       />
     </>
   );

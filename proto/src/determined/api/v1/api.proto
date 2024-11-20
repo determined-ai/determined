@@ -20,7 +20,6 @@ import "determined/api/v1/notebook.proto";
 import "determined/api/v1/project.proto";
 import "determined/api/v1/rbac.proto";
 import "determined/api/v1/run.proto";
-import "determined/api/v1/search.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
@@ -1618,17 +1617,6 @@ service Determined {
       tags: "Tensorboards"
     };
   }
-  // Launch a tensorboard for one or more searches using bulk search filters.
-  rpc LaunchTensorboardSearches(LaunchTensorboardSearchesRequest)
-      returns (LaunchTensorboardSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/tensorboards"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
   // Delete tensorboard files.
   rpc DeleteTensorboardFiles(DeleteTensorboardFilesRequest)
       returns (DeleteTensorboardFilesResponse) {
@@ -2698,7 +2686,7 @@ service Determined {
     };
   }
 
-  // Delete runs.
+  // Delete a list of runs.
   rpc DeleteRuns(DeleteRunsRequest) returns (DeleteRunsResponse) {
     option (google.api.http) = {
       post: "/api/v1/runs/delete"
@@ -2852,96 +2840,6 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Alpha"
-    };
-  }
-
-  // Move searches.
-  rpc MoveSearches(MoveSearchesRequest) returns (MoveSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/move"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Cancel searches.
-  rpc CancelSearches(CancelSearchesRequest) returns (CancelSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/cancel"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Kill searches.
-  rpc KillSearches(KillSearchesRequest) returns (KillSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/kill"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Delete searches.
-  rpc DeleteSearches(DeleteSearchesRequest) returns (DeleteSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/delete"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Archive searches.
-  rpc ArchiveSearches(ArchiveSearchesRequest)
-      returns (ArchiveSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/archive"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Unarchive searches.
-  rpc UnarchiveSearches(UnarchiveSearchesRequest)
-      returns (UnarchiveSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/unarchive"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Pause experiment associated with provided searches.
-  rpc PauseSearches(PauseSearchesRequest) returns (PauseSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/pause"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Unpause experiment associated with provided searches.
-  rpc ResumeSearches(ResumeSearchesRequest) returns (ResumeSearchesResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/searches/resume"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
     };
   }
 

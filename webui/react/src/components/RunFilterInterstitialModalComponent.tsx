@@ -1,5 +1,5 @@
 import { useModal } from 'hew/Modal';
-import { Failed, Loadable, NotLoaded } from 'hew/utils/loadable';
+import { Failed, NotLoaded } from 'hew/utils/loadable';
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 
 import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
@@ -74,13 +74,11 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
 
     useImperativeHandle(ref, () => ({ close, open }));
 
-    const selectionHasSearchRuns: Loadable<boolean> = useAsync(
+    const selectionHasSearchRuns = useAsync(
       async (canceler) => {
         if (!isOpen) return NotLoaded;
         const mergedCanceler = mergeAbortControllers(canceler, closeController.current);
-
-        const filter: FilterFormSetWithoutId = getIdsFilter(filterFormSet, selection);
-        filter.filterGroup = combine(filter.filterGroup, 'and', {
+        const filterWithSingleFilter = combine(filterFormSet.filterGroup, 'and', {
           columnName: 'searcherType',
           kind: 'field',
           location: 'LOCATION_TYPE_RUN',
@@ -88,6 +86,13 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
           type: 'COLUMN_TYPE_TEXT',
           value: 'single',
         });
+        const filter: FilterFormSetWithoutId = getIdsFilter(
+          {
+            ...filterFormSet,
+            filterGroup: filterWithSingleFilter,
+          },
+          selection,
+        );
 
         try {
           const results = await searchRuns(

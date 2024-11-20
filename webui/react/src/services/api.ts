@@ -7,7 +7,7 @@ import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import { EmptyParams, RawJson, SingleEntityParams } from 'types';
 import * as Type from 'types';
 import { generateDetApi } from 'utils/service';
-import { tensorBoardMatchesSource, tensorBoardSearchesMatchesSource } from 'utils/task';
+import { tensorBoardMatchesSource } from 'utils/task';
 
 /* Authentication */
 
@@ -492,75 +492,6 @@ export const changeExperimentLogRetention = generateDetApi<
   Api.V1PutExperimentsRetainLogsResponse,
   Type.BulkActionResult
 >(Config.changeExperimentLogRetention);
-
-/* Searches */
-
-export const archiveSearches = generateDetApi<
-  Api.V1ArchiveSearchesRequest,
-  Api.V1ArchiveSearchesResponse,
-  Type.BulkActionResult
->(Config.archiveSearches);
-
-export const deleteSearches = generateDetApi<
-  Api.V1DeleteSearchesRequest,
-  Api.V1DeleteSearchesResponse,
-  Type.BulkActionResult
->(Config.deleteSearches);
-
-export const killSearches = generateDetApi<
-  Api.V1KillSearchesRequest,
-  Api.V1KillSearchesResponse,
-  Type.BulkActionResult
->(Config.killSearches);
-
-export const moveSearches = generateDetApi<
-  Api.V1MoveSearchesRequest,
-  Api.V1MoveSearchesResponse,
-  Type.BulkActionResult
->(Config.moveSearches);
-
-export const unarchiveSearches = generateDetApi<
-  Api.V1UnarchiveSearchesRequest,
-  Api.V1UnarchiveSearchesResponse,
-  void
->(Config.unarchiveSearches);
-
-export const pauseSearches = generateDetApi<
-  Api.V1ResumeSearchesRequest,
-  Api.V1ResumeSearchesResponse,
-  Type.BulkActionResult
->(Config.pauseSearches);
-
-export const resumeSearches = generateDetApi<
-  Api.V1ResumeSearchesRequest,
-  Api.V1ResumeSearchesResponse,
-  Type.BulkActionResult
->(Config.resumeSearches);
-
-export const cancelSearches = generateDetApi<
-  Api.V1ResumeSearchesRequest,
-  Api.V1ResumeSearchesResponse,
-  Type.BulkActionResult
->(Config.resumeSearches);
-
-export const launchTensorBoardSearches = generateDetApi<
-  Service.LaunchTensorBoardSearchesParams,
-  Api.V1LaunchTensorboardSearchesResponse,
-  Type.CommandResponse
->(Config.launchTensorBoardSearches);
-
-export const openOrCreateTensorBoardSearches = async (
-  params: Service.LaunchTensorBoardSearchesParams,
-): Promise<Type.CommandResponse> => {
-  const tensorboards = await getTensorBoards({});
-  const match = tensorboards.find(
-    (tensorboard) =>
-      !terminalCommandStates.has(tensorboard.state) &&
-      tensorBoardSearchesMatchesSource(tensorboard, params),
-  );
-  if (match) return { command: match, warnings: [V1LaunchWarning.CURRENTSLOTSEXCEEDED] };
-  return launchTensorBoardSearches(params);
-};
 
 /* Tasks */
 

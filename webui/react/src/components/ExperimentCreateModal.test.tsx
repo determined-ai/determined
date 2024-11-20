@@ -8,7 +8,6 @@ import React from 'react';
 
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
-  RunActionCopyMap,
 } from 'components/ExperimentCreateModal';
 import { ThemeProvider } from 'components/ThemeProvider';
 import { createExperiment as mockCreateExperiment } from 'services/api';
@@ -67,9 +66,7 @@ describe('Create Experiment Modal', () => {
   it('submits a valid create experiment request', async () => {
     await setup();
 
-    await user.click(
-      screen.getByRole('button', { name: RunActionCopyMap[CreateExperimentType.Fork] }),
-    );
+    await user.click(screen.getByRole('button', { name: CreateExperimentType.Fork }));
     expect(mockCreateExperiment).toHaveBeenCalled();
   });
 });
