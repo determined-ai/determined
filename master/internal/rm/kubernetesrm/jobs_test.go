@@ -123,8 +123,7 @@ func TestListPodsInAllNamespaces(t *testing.T) {
 		},
 	}
 
-	var expectedPods []k8sV1.Pod
-	copy(expectedPods, append(detPods, outsidePod))
+	var expectedPods []k8sV1.Pod = append(detPods, outsidePod)
 	expectedPodList := k8sV1.PodList{Items: expectedPods}
 	emptyNS.On("List", mock.Anything, mock.Anything).Once().
 		Return(&k8sV1.PodList{Items: expectedPods}, nil)
@@ -133,7 +132,7 @@ func TestListPodsInAllNamespaces(t *testing.T) {
 	opts := metaV1.ListOptions{}
 	actualPodList, err := js.listPodsInAllNamespaces(ctx, opts)
 	require.NoError(t, err)
-	require.NotNil(t, actualPodList)
+	require.NotEmpty(t, actualPodList)
 	require.ElementsMatch(t, expectedPodList.Items, actualPodList)
 
 	forbiddenErr := k8error.NewForbidden(schema.GroupResource{}, "forbidden",
@@ -204,8 +203,7 @@ func TestHealthStatus(t *testing.T) {
 		},
 	}
 
-	var expectedPods []k8sV1.Pod
-	copy(expectedPods, append(detPods, outsidePod))
+	var expectedPods []k8sV1.Pod = append(detPods, outsidePod)
 	emptyNS.On("List", mock.Anything, mock.Anything).Once().
 		Return(&k8sV1.PodList{Items: expectedPods}, nil)
 
