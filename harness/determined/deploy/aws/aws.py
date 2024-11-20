@@ -398,8 +398,8 @@ def deploy_stack(
                         "Previous value of --deployment-type was 'simple'. This deployment type\n"
                         "was removed in 0.38.0 because AWS Aurora V1 is EoL. Please follow this\n"
                         "guide to migrate to RDS:\n"
-                        "\thttps://gist.github.com/rb-determined-ai/"
-                        "bfa10182e53968e00a3c88df624e777e"
+                        "\thttps://gist.github.com/maxrussell/"
+                        "c67f4f7d586d55c4eb2658cc2dd1c290"
                     )
                     print()
 
