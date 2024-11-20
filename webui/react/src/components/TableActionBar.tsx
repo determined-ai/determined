@@ -1,6 +1,6 @@
 import Button from 'hew/Button';
 import Column from 'hew/Column';
-import { Sort } from 'hew/DataGrid/DataGrid';
+import { HandleSelectionChangeType, Sort } from 'hew/DataGrid/DataGrid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -57,7 +57,7 @@ import { capitalizeWord } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import { FilterFormSet } from './FilterForm/components/type';
-import LoadableCount from './LoadableCount';
+import LoadableCount, { SelectionAction } from './LoadableCount';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -91,14 +91,14 @@ const actionIcons: Record<BatchAction, IconName> = {
 interface Props {
   compareViewOn?: boolean;
   formStore: FilterFormStore;
+  handleSelectionChange: HandleSelectionChangeType;
   heatmapBtnVisible?: boolean;
   heatmapOn?: boolean;
   initialVisibleColumns: string[];
   isOpenFilter: boolean;
+  isRangeSelected: (range: [number, number]) => boolean;
   onActionComplete?: () => Promise<void>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
-  onActualSelectAll?: () => void;
-  onClearSelect?: () => void;
   onComparisonViewToggle?: () => void;
   onHeatmapToggle?: (heatmapOn: boolean) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
@@ -106,7 +106,7 @@ interface Props {
   onSortChange?: (sorts: Sort[]) => void;
   onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
   onHeatmapSelectionRemove?: (id: string) => void;
-  pageSize?: number;
+  pageSize: number;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
@@ -129,14 +129,14 @@ const TableActionBar: React.FC<Props> = ({
   compareViewOn,
   formStore,
   tableFilterString,
+  handleSelectionChange,
   heatmapBtnVisible,
   heatmapOn,
   initialVisibleColumns,
   isOpenFilter,
+  isRangeSelected,
   onActionComplete,
   onActionSuccess,
-  onActualSelectAll,
-  onClearSelect,
   onComparisonViewToggle,
   onHeatmapToggle,
   onIsOpenFilterChange,
@@ -412,6 +412,20 @@ const TableActionBar: React.FC<Props> = ({
     }, [] as MenuItem[]);
   }, [availableBatchActions]);
 
+  const selectionAction: SelectionAction = useMemo(() => {
+    return total.match({
+      _: () => 'NONE' as const,
+      Loaded: (loadedTotal) => {
+        if (isRangeSelected([0, pageSize]) && selectionSize < loadedTotal) {
+          return 'SELECT_ALL';
+        } else if (selectionSize > pageSize) {
+          return 'CLEAR_SELECTION';
+        }
+        return 'NONE';
+      },
+    });
+  }, [isRangeSelected, selectionSize, pageSize, total]);
+
   return (
     <div className={css.base} data-test-component="tableActionBar">
       <Row>
@@ -455,13 +469,12 @@ const TableActionBar: React.FC<Props> = ({
               </Dropdown>
             )}
             <LoadableCount
+              handleSelectionChange={handleSelectionChange}
               labelPlural={labelPlural}
               labelSingular={labelSingular}
-              pageSize={pageSize}
               selectedCount={selectionSize}
+              selectionAction={selectionAction}
               total={total}
-              onActualSelectAll={onActualSelectAll}
-              onClearSelect={onClearSelect}
             />
           </Row>
         </Column>
