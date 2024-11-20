@@ -2675,7 +2675,7 @@ service Determined {
     };
   }
 
-  // Get a list of runs.
+  // Kill runs.
   rpc KillRuns(KillRunsRequest) returns (KillRunsResponse) {
     option (google.api.http) = {
       post: "/api/v1/runs/kill"
