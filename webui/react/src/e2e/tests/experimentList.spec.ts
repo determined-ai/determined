@@ -19,7 +19,7 @@ test.describe('Experiment List', () => {
   const getCount = async () => {
     const count =
       await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
-    if (count === null) return 0;
+    if (count === null) throw new Error('Count is null');
     return parseInt(count);
   };
 
@@ -62,19 +62,11 @@ test.describe('Experiment List', () => {
       timeout: 10_000,
     });
     await test.step('Deselect', async () => {
-      const count = await getCount();
-      if (count !== 0) {
-        await grid.headRow.clickSelectHeader();
-        const selectAllButton = projectDetailsPage.f_experimentList.tableActionBar.selectAll;
-        const clearAllButton = projectDetailsPage.f_experimentList.tableActionBar.clearSelection;
-        if (await selectAllButton.pwLocator.isVisible()) {
-          await selectAllButton.pwLocator.click();
-          await clearAllButton.pwLocator.click();
-        } else if (await clearAllButton.pwLocator.isVisible()) {
-          await clearAllButton.pwLocator.click();
-        } else {
-          await grid.headRow.clickSelectHeader();
-        }
+      try {
+        await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
+      } catch (e) {
+        // close the dropdown by clicking elsewhere
+        await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.click();
       }
     });
     await test.step('Reset Columns', async () => {
@@ -309,6 +301,11 @@ test.describe('Experiment List', () => {
     });
     await test.step('Read Cell Value', async () => {
       await expect.soft((await row.getCellByColumnName('ID')).pwLocator).toHaveText(/\d+/);
+    });
+    await test.step('Select 5', async () => {
+      await (
+        await projectDetailsPage.f_experimentList.dataGrid.headRow.selectDropdown.open()
+      ).select5.pwLocator.click();
     });
     await test.step('Experiment Overview Navigation', async () => {
       await projectDetailsPage.f_experimentList.dataGrid.scrollLeft();

@@ -5,7 +5,7 @@ import { F_ExperimentList } from 'e2e/models/components/F_ExperimentList';
 import { PageComponent } from 'e2e/models/components/Page';
 
 /**
- * Represents the ProjectDetails page from src/pages/ProjectDetails.tsx
+ * Represents the SignIn page from src/pages/ProjectDetails.tsx
  */
 export class ProjectDetails extends DeterminedPage {
   readonly title = /Uncategorized Experiments|Project Details/;
@@ -34,8 +34,6 @@ export class ProjectDetails extends DeterminedPage {
     if (matches === null) throw new Error('No ID found in the URL');
     return Number(matches[1]);
   }
-
-  // async getRowsSelected(): Promise<{ selected: number; total?: number }> {}
 
   readonly pageComponent = new PageComponent({ parent: this });
   readonly dynamicTabs = new DynamicTabs({ parent: this.pageComponent });

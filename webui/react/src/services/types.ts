@@ -164,18 +164,6 @@ export interface SearchRunsParams extends PaginationParams {
   sort?: string;
 }
 
-export interface RunBulkActionParams {
-  projectId: number;
-  filter?: string;
-  runIds?: number[];
-}
-
-export interface SearchBulkActionParams {
-  projectId: number;
-  filter?: string;
-  searchIds?: number[];
-}
-
 export interface GetTaskParams {
   taskId: string;
 }
@@ -298,12 +286,6 @@ export interface LaunchTensorBoardParams {
   trialIds?: Array<number>;
   workspaceId?: number;
   filters?: Api.V1BulkExperimentFilters;
-}
-
-export interface LaunchTensorBoardSearchesParams {
-  searchIds?: Array<number>;
-  workspaceId?: number;
-  filter?: string;
 }
 
 export interface LaunchJupyterLabParams {

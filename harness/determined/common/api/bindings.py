@@ -1726,40 +1726,36 @@ class v1ArchiveExperimentsResponse(Printable):
 
 class v1ArchiveRunsRequest(Printable):
     filter: "typing.Optional[str]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
         projectId: int,
+        runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
         self.projectId = projectId
+        self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ArchiveRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "projectId": self.projectId,
+            "runIds": self.runIds,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
         return out
 
 class v1ArchiveRunsResponse(Printable):
@@ -1776,67 +1772,6 @@ class v1ArchiveRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1ArchiveRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1ArchiveSearchesRequest(Printable):
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ArchiveSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1ArchiveSearchesResponse(Printable):
-    """Response to ArchiveSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ArchiveSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -2138,68 +2073,6 @@ class v1CancelExperimentsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1CancelExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1CancelSearchesRequest(Printable):
-    """Cancel searches."""
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CancelSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1CancelSearchesResponse(Printable):
-    """Response to CancelSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CancelSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -3374,40 +3247,40 @@ class v1DeleteProjectResponse(Printable):
 class v1DeleteRunsRequest(Printable):
     """Delete runs."""
     filter: "typing.Optional[str]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
+    projectId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        projectId: int,
+        runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
     ):
-        self.projectId = projectId
+        self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DeleteRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
+            "runIds": self.runIds,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
         return out
 
 class v1DeleteRunsResponse(Printable):
@@ -3424,68 +3297,6 @@ class v1DeleteRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1DeleteRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1DeleteSearchesRequest(Printable):
-    """Delete searches."""
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1DeleteSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1DeleteSearchesResponse(Printable):
-    """Response to DeleteSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1DeleteSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -7920,43 +7731,39 @@ class v1KillRunsRequest(Printable):
     """Kill runs."""
     filter: "typing.Optional[str]" = None
     projectId: "typing.Optional[int]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
+        runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
+        self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
         if not isinstance(projectId, Unset):
             self.projectId = projectId
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1KillRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "runIds": obj["runIds"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
         if "projectId" in obj:
             kwargs["projectId"] = obj["projectId"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "runIds": self.runIds,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
         if not omit_unset or "projectId" in vars(self):
             out["projectId"] = self.projectId
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
         return out
 
 class v1KillRunsResponse(Printable):
@@ -7973,68 +7780,6 @@ class v1KillRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1KillRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1KillSearchesRequest(Printable):
-    """Kill searches."""
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1KillSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1KillSearchesResponse(Printable):
-    """Response to KillSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1KillSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -8473,108 +8218,6 @@ class v1LaunchTensorboardResponse(Printable):
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "config": obj["config"],
-            "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
-        }
-        if "warnings" in obj:
-            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "config": self.config,
-            "tensorboard": self.tensorboard.to_json(omit_unset),
-        }
-        if not omit_unset or "warnings" in vars(self):
-            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
-        return out
-
-class v1LaunchTensorboardSearchesRequest(Printable):
-    """Request to launch a tensorboard using searches matching a filter."""
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    files: "typing.Optional[typing.Sequence[v1File]]" = None
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-    templateName: "typing.Optional[str]" = None
-    workspaceId: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-        templateName: "typing.Union[str, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(config, Unset):
-            self.config = config
-        if not isinstance(files, Unset):
-            self.files = files
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-        if not isinstance(templateName, Unset):
-            self.templateName = templateName
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1LaunchTensorboardSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
-        if "files" in obj:
-            kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        if "templateName" in obj:
-            kwargs["templateName"] = obj["templateName"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
-        if not omit_unset or "files" in vars(self):
-            out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        if not omit_unset or "templateName" in vars(self):
-            out["templateName"] = self.templateName
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
-        return out
-
-class v1LaunchTensorboardSearchesResponse(Printable):
-    """Response to LaunchTensorboardSearchesRequest."""
-    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
-
-    def __init__(
-        self,
-        *,
-        config: "typing.Dict[str, typing.Any]",
-        tensorboard: "v1Tensorboard",
-        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
-    ):
-        self.config = config
-        self.tensorboard = tensorboard
-        if not isinstance(warnings, Unset):
-            self.warnings = warnings
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1LaunchTensorboardSearchesResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
             "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
@@ -9609,24 +9252,22 @@ class v1MoveProjectRequest(Printable):
 class v1MoveRunsRequest(Printable):
     """Request to move the run to a different project."""
     filter: "typing.Optional[str]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
     skipMultitrial: "typing.Optional[bool]" = None
 
     def __init__(
         self,
         *,
         destinationProjectId: int,
+        runIds: "typing.Sequence[int]",
         sourceProjectId: int,
         filter: "typing.Union[str, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         skipMultitrial: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.destinationProjectId = destinationProjectId
+        self.runIds = runIds
         self.sourceProjectId = sourceProjectId
         if not isinstance(filter, Unset):
             self.filter = filter
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
         if not isinstance(skipMultitrial, Unset):
             self.skipMultitrial = skipMultitrial
 
@@ -9634,12 +9275,11 @@ class v1MoveRunsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1MoveRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "destinationProjectId": obj["destinationProjectId"],
+            "runIds": obj["runIds"],
             "sourceProjectId": obj["sourceProjectId"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
         if "skipMultitrial" in obj:
             kwargs["skipMultitrial"] = obj["skipMultitrial"]
         return cls(**kwargs)
@@ -9647,12 +9287,11 @@ class v1MoveRunsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "destinationProjectId": self.destinationProjectId,
+            "runIds": self.runIds,
             "sourceProjectId": self.sourceProjectId,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
         if not omit_unset or "skipMultitrial" in vars(self):
             out["skipMultitrial"] = self.skipMultitrial
         return out
@@ -9671,72 +9310,6 @@ class v1MoveRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1MoveRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1MoveSearchesRequest(Printable):
-    """Request to move the search to a different project."""
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        destinationProjectId: int,
-        sourceProjectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.destinationProjectId = destinationProjectId
-        self.sourceProjectId = sourceProjectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1MoveSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "destinationProjectId": obj["destinationProjectId"],
-            "sourceProjectId": obj["sourceProjectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "destinationProjectId": self.destinationProjectId,
-            "sourceProjectId": self.sourceProjectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1MoveSearchesResponse(Printable):
-    """Response to MoveSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1MoveSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -11047,40 +10620,36 @@ class v1PauseExperimentsResponse(Printable):
 class v1PauseRunsRequest(Printable):
     """Request to pause the experiment associated witha run."""
     filter: "typing.Optional[str]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
         projectId: int,
+        runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
         self.projectId = projectId
+        self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PauseRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "projectId": self.projectId,
+            "runIds": self.runIds,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
         return out
 
 class v1PauseRunsResponse(Printable):
@@ -11097,68 +10666,6 @@ class v1PauseRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1PauseRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1PauseSearchesRequest(Printable):
-    """Request to pause the experiment associated witha search."""
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PauseSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1PauseSearchesResponse(Printable):
-    """Response to PauseSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PauseSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -14121,40 +13628,36 @@ class v1ResourcesSummary(Printable):
 class v1ResumeRunsRequest(Printable):
     """Request to unpause the experiment associated witha run."""
     filter: "typing.Optional[str]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
         projectId: int,
+        runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
         self.projectId = projectId
+        self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResumeRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "projectId": self.projectId,
+            "runIds": self.runIds,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
         return out
 
 class v1ResumeRunsResponse(Printable):
@@ -14171,68 +13674,6 @@ class v1ResumeRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1ResumeRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1ResumeSearchesRequest(Printable):
-    """Request to unpause the experiment associated witha search."""
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ResumeSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1ResumeSearchesResponse(Printable):
-    """Response to ResumeSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ResumeSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -14590,33 +14031,6 @@ class v1ScopeTypeMask(Printable):
             out["cluster"] = self.cluster
         if not omit_unset or "workspace" in vars(self):
             out["workspace"] = self.workspace
-        return out
-
-class v1SearchActionResult(Printable):
-    """Message for results of individual searches in a multi-search action."""
-
-    def __init__(
-        self,
-        *,
-        error: str,
-        id: int,
-    ):
-        self.error = error
-        self.id = id
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SearchActionResult":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "error": obj["error"],
-            "id": obj["id"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "error": self.error,
-            "id": self.id,
-        }
         return out
 
 class v1SearchExperimentExperiment(Printable):
@@ -16960,40 +16374,36 @@ class v1UnarchiveExperimentsResponse(Printable):
 
 class v1UnarchiveRunsRequest(Printable):
     filter: "typing.Optional[str]" = None
-    runIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
         projectId: int,
+        runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
-        runIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
         self.projectId = projectId
+        self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
-        if not isinstance(runIds, Unset):
-            self.runIds = runIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UnarchiveRunsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
-        if "runIds" in obj:
-            kwargs["runIds"] = obj["runIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "projectId": self.projectId,
+            "runIds": self.runIds,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
-        if not omit_unset or "runIds" in vars(self):
-            out["runIds"] = self.runIds
         return out
 
 class v1UnarchiveRunsResponse(Printable):
@@ -17010,67 +16420,6 @@ class v1UnarchiveRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1UnarchiveRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
-class v1UnarchiveSearchesRequest(Printable):
-    filter: "typing.Optional[str]" = None
-    searchIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        projectId: int,
-        filter: "typing.Union[str, None, Unset]" = _unset,
-        searchIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.projectId = projectId
-        if not isinstance(filter, Unset):
-            self.filter = filter
-        if not isinstance(searchIds, Unset):
-            self.searchIds = searchIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1UnarchiveSearchesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "projectId": obj["projectId"],
-        }
-        if "filter" in obj:
-            kwargs["filter"] = obj["filter"]
-        if "searchIds" in obj:
-            kwargs["searchIds"] = obj["searchIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "projectId": self.projectId,
-        }
-        if not omit_unset or "filter" in vars(self):
-            out["filter"] = self.filter
-        if not omit_unset or "searchIds" in vars(self):
-            out["searchIds"] = self.searchIds
-        return out
-
-class v1UnarchiveSearchesResponse(Printable):
-    """Response to UnarchiveSearchesRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1SearchActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1UnarchiveSearchesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1SearchActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -18221,27 +17570,6 @@ def post_ArchiveRuns(
         return v1ArchiveRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_ArchiveRuns", _resp)
 
-def post_ArchiveSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1ArchiveSearchesRequest",
-) -> "v1ArchiveSearchesResponse":
-    """Archive searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/archive",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1ArchiveSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_ArchiveSearches", _resp)
-
 def post_ArchiveWorkspace(
     session: "api.BaseSession",
     *,
@@ -18404,27 +17732,6 @@ def post_CancelExperiments(
     if _resp.status_code == 200:
         return v1CancelExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_CancelExperiments", _resp)
-
-def post_CancelSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1CancelSearchesRequest",
-) -> "v1CancelSearchesResponse":
-    """Cancel searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/cancel",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1CancelSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_CancelSearches", _resp)
 
 def post_CheckpointsRemoveFiles(
     session: "api.BaseSession",
@@ -18940,7 +18247,7 @@ def post_DeleteRuns(
     *,
     body: "v1DeleteRunsRequest",
 ) -> "v1DeleteRunsResponse":
-    """Delete runs."""
+    """Delete a list of runs."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18955,27 +18262,6 @@ def post_DeleteRuns(
     if _resp.status_code == 200:
         return v1DeleteRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_DeleteRuns", _resp)
-
-def post_DeleteSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1DeleteSearchesRequest",
-) -> "v1DeleteSearchesResponse":
-    """Delete searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/delete",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1DeleteSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_DeleteSearches", _resp)
 
 def delete_DeleteTemplate(
     session: "api.BaseSession",
@@ -22422,27 +21708,6 @@ def post_KillRuns(
         return v1KillRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_KillRuns", _resp)
 
-def post_KillSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1KillSearchesRequest",
-) -> "v1KillSearchesResponse":
-    """Kill searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/kill",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1KillSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_KillSearches", _resp)
-
 def post_KillShell(
     session: "api.BaseSession",
     *,
@@ -22602,27 +21867,6 @@ def post_LaunchTensorboard(
     if _resp.status_code == 200:
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
-
-def post_LaunchTensorboardSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1LaunchTensorboardSearchesRequest",
-) -> "v1LaunchTensorboardSearchesResponse":
-    """Launch a tensorboard for one or more searches using bulk search filters."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/tensorboards",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1LaunchTensorboardSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_LaunchTensorboardSearches", _resp)
 
 def get_ListRPsBoundToWorkspace(
     session: "api.BaseSession",
@@ -23029,27 +22273,6 @@ def post_MoveRuns(
     if _resp.status_code == 200:
         return v1MoveRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_MoveRuns", _resp)
-
-def post_MoveSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1MoveSearchesRequest",
-) -> "v1MoveSearchesResponse":
-    """Move searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/move",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1MoveSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_MoveSearches", _resp)
 
 def post_NotifyContainerRunning(
     session: "api.BaseSession",
@@ -23555,27 +22778,6 @@ def post_PauseRuns(
     if _resp.status_code == 200:
         return v1PauseRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_PauseRuns", _resp)
-
-def post_PauseSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1PauseSearchesRequest",
-) -> "v1PauseSearchesResponse":
-    """Pause experiment associated with provided searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/pause",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1PauseSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_PauseSearches", _resp)
 
 def post_PinWorkspace(
     session: "api.BaseSession",
@@ -24617,27 +23819,6 @@ def post_ResumeRuns(
         return v1ResumeRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_ResumeRuns", _resp)
 
-def post_ResumeSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1ResumeSearchesRequest",
-) -> "v1ResumeSearchesResponse":
-    """Unpause experiment associated with provided searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/resume",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1ResumeSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_ResumeSearches", _resp)
-
 def post_RunPrepareForReporting(
     session: "api.BaseSession",
     *,
@@ -25483,27 +24664,6 @@ def post_UnarchiveRuns(
     if _resp.status_code == 200:
         return v1UnarchiveRunsResponse.from_json(_resp.json())
     raise APIHttpError("post_UnarchiveRuns", _resp)
-
-def post_UnarchiveSearches(
-    session: "api.BaseSession",
-    *,
-    body: "v1UnarchiveSearchesRequest",
-) -> "v1UnarchiveSearchesResponse":
-    """Unarchive searches."""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/searches/unarchive",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1UnarchiveSearchesResponse.from_json(_resp.json())
-    raise APIHttpError("post_UnarchiveSearches", _resp)
 
 def post_UnarchiveWorkspace(
     session: "api.BaseSession",

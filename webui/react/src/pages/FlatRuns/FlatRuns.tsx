@@ -1,3 +1,4 @@
+import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Button from 'hew/Button';
 import Column from 'hew/Column';
@@ -13,7 +14,15 @@ import {
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
-import DataGrid, { DataGridHandle, Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
+import DataGrid, {
+  DataGridHandle,
+  HandleSelectionChangeType,
+  RangelessSelectionType,
+  SelectionType,
+  Sort,
+  validSort,
+  ValidSort,
+} from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Link from 'hew/Link';
@@ -29,15 +38,10 @@ import { v4 as uuidv4 } from 'uuid';
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import ComparisonView from 'components/ComparisonView';
 import { Error } from 'components/exceptions';
-import {
-  FilterFormStore,
-  INIT_FORMSET,
-  ROOT_ID,
-} from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
   FilterFormSet,
-  FilterFormSetWithoutId,
   FormField,
   FormGroup,
   FormKind,
@@ -46,7 +50,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
-import LoadableCount, { SelectionAction } from 'components/LoadableCount';
+import LoadableCount from 'components/LoadableCount';
 import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
@@ -63,7 +67,6 @@ import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
-import useSelection from 'hooks/useSelection';
 import { useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
@@ -72,9 +75,15 @@ import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'se
 import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
+import {
+  DetailedUser,
+  FlatRun,
+  FlatRunAction,
+  ProjectColumn,
+  RunState,
+  SelectionType as SelectionState,
+} from 'types';
 import handleError from 'utils/error';
-import { combine } from 'utils/filterFormSet';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
@@ -183,7 +192,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     _: () => [],
     Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
   });
-  const filtersString = useObservable(formStore.asJsonString) || JSON.stringify(INIT_FORMSET);
+  const filtersString = useObservable(formStore.asJsonString);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -193,19 +202,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const { openToast } = useToast();
   const { width: containerWidth } = useResize(contentRef);
-
-  const {
-    selectionSize,
-    dataGridSelection,
-    handleSelectionChange,
-    loadedSelectedRecords: loadedSelectedRuns,
-    isRangeSelected,
-  } = useSelection({
-    records: runs,
-    selection: settings.selection,
-    total,
-    updateSettings,
-  });
 
   const {
     ui: { theme: appTheme },
@@ -252,6 +248,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     return new Set([...BANNED_SORT_COLUMNS, ...arrayTypeColumns]);
   }, [arrayTypeColumns]);
 
+  const selectedRunIdSet = useMemo(() => {
+    return new Set(settings.selection.type === 'ONLY_IN' ? settings.selection.selections : []);
+  }, [settings.selection]);
+
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -263,18 +263,41 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
-  const loadedRunIdMap = useMemo(() => {
-    const runMap = new Map<number, { run: FlatRun; index: number }>();
+  const loadedSelectedRunIds = useMemo(() => {
+    const selectedMap = new Map<number, { run: FlatRun; index: number }>();
+    const selectedArray: FlatRun[] = [];
+    if (isLoadingSettings) {
+      return selectedMap;
+    }
 
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
-        runMap.set(run.id, { index, run });
+        if (selectedRunIdSet.has(run.id)) {
+          selectedMap.set(run.id, { index, run });
+          selectedArray.push(run);
+        }
       });
     });
-    return runMap;
-  }, [runs]);
+    return selectedMap;
+  }, [isLoadingSettings, runs, selectedRunIdSet]);
 
-  const colorMap = useGlasbey([...loadedRunIdMap.keys()]);
+  const selection = useMemo<GridSelection>(() => {
+    let rows = CompactSelection.empty();
+    loadedSelectedRunIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
+    return {
+      columns: CompactSelection.empty(),
+      rows,
+    };
+  }, [loadedSelectedRunIds]);
+
+  const selectedRuns: FlatRun[] = useMemo(() => {
+    const selected = runs.flatMap((run) => {
+      return run.isLoaded && selectedRunIdSet.has(run.data.id) ? [run.data] : [];
+    });
+    return selected;
+  }, [runs, selectedRunIdSet]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -282,6 +305,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       formStore.sweep();
     }
   }, []);
+
+  const colorMap = useGlasbey([...loadedSelectedRunIds.keys()]);
 
   const handleToggleComparisonView = useCallback(() => {
     updateSettings({ compare: !settings.compare });
@@ -311,7 +336,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return defaultSelectionColumn(dataGridSelection.rows, false);
+          return defaultSelectionColumn(selection.rows, false);
         }
 
         if (!Loadable.isLoaded(projectColumnsMap)) {
@@ -454,7 +479,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     isDarkMode,
     projectColumns,
     projectHeatmap,
-    dataGridSelection.rows,
+    selection.rows,
     settings.columnWidths,
     settings.compare,
     settings.heatmapOn,
@@ -513,30 +538,31 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     setRuns(INITIAL_LOADING_RUNS);
   }, [setPage]);
 
-  const filterFormSetString = useMemo(() => {
-    const filter = JSON.parse(filtersString) as FilterFormSetWithoutId;
-    if (searchId) {
-      // only display trials for search
-      const searchFilter = {
-        columnName: 'experimentId',
-        kind: 'field' as const,
-        location: V1LocationType.RUN,
-        operator: Operator.Eq,
-        type: V1ColumnType.NUMBER,
-        value: searchId,
-      };
-      filter.filterGroup = combine(filter.filterGroup, 'and', searchFilter);
-    }
-    return JSON.stringify(filter);
-  }, [filtersString, searchId]);
-
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
+      const filters = JSON.parse(filtersString);
+      if (searchId) {
+        // only display trials for search
+        const existingFilterGroup = { ...filters.filterGroup };
+        const searchFilter = {
+          columnName: 'experimentId',
+          kind: 'field',
+          location: 'LOCATION_TYPE_RUN',
+          operator: '=',
+          type: 'COLUMN_TYPE_NUMBER',
+          value: searchId,
+        };
+        filters.filterGroup = {
+          children: [existingFilterGroup, searchFilter],
+          conjunction: 'and',
+          kind: 'group',
+        };
+      }
       const offset = page * settings.pageLimit;
       const response = await searchRuns(
         {
-          filter: filterFormSetString,
+          filter: JSON.stringify(filters),
           limit: settings.pageLimit,
           offset,
           projectId: projectId,
@@ -560,15 +586,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       setIsLoading(false);
     }
   }, [
+    canceler.signal,
+    filtersString,
     isLoadingSettings,
     loadableFormset,
     page,
-    settings.pageLimit,
-    filterFormSetString,
     projectId,
-    sortString,
-    canceler.signal,
     resetPagination,
+    settings.pageLimit,
+    sortString,
+    searchId,
   ]);
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
@@ -676,6 +703,70 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     [settings.columnWidths, updateColumnWidths],
   );
 
+  const rowRangeToIds = useCallback(
+    (range: [number, number]) => {
+      const slice = runs.slice(range[0], range[1]);
+      return Loadable.filterNotLoaded(slice).map((run) => run.id);
+    },
+    [runs],
+  );
+
+  const handleSelectionChange: HandleSelectionChangeType = useCallback(
+    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
+      let newSettings: SelectionState = { ...settings.selection };
+
+      switch (selectionType) {
+        case 'add':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.add(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'add-all':
+          newSettings = {
+            exclusions: [],
+            type: 'ALL_EXCEPT' as const,
+          };
+
+          break;
+        case 'remove':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'remove-all':
+          newSettings = DEFAULT_SELECTION;
+
+          break;
+        case 'set':
+          if (!range) return;
+          newSettings = {
+            ...DEFAULT_SELECTION,
+            selections: Array.from(rowRangeToIds(range)),
+          };
+
+          break;
+      }
+      updateSettings({ selection: newSettings });
+    },
+    [rowRangeToIds, settings.selection, updateSettings],
+  );
+
   const onActionComplete = useCallback(async () => {
     handleSelectionChange('remove-all');
     await fetchRuns();
@@ -779,23 +870,36 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     [updateSettings],
   );
 
-  const handleHeaderClick = useCallback(
-    (columnId: string): void => {
-      if (columnId === MULTISELECT) {
-        if (isRangeSelected([0, settings.pageLimit])) {
-          handleSelectionChange('remove', [0, settings.pageLimit]);
-        } else {
-          handleSelectionChange('add', [0, settings.pageLimit]);
-        }
-      }
-    },
-    [handleSelectionChange, isRangeSelected, settings.pageLimit],
-  );
-
   const getHeaderMenuItems = useCallback(
     (columnId: string, colIdx: number): MenuItem[] => {
       if (columnId === MULTISELECT) {
-        return [];
+        const items: MenuItem[] = [
+          settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
+            ? {
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  handleSelectionChange?.('remove-all');
+                },
+              }
+            : null,
+          ...[5, 10, 25].map((n) => ({
+            key: `select-${n}`,
+            label: `Select first ${n}`,
+            onClick: () => {
+              handleSelectionChange?.('set', [0, n]);
+              dataGridRef.current?.scrollToTop();
+            },
+          })),
+          {
+            key: 'select-all',
+            label: 'Select all',
+            onClick: () => {
+              handleSelectionChange?.('add', [0, settings.pageLimit]);
+            },
+          },
+        ];
+        return items;
       }
 
       const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
@@ -947,9 +1051,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       bannedSortColumns,
       projectColumns,
       settings.pinnedColumnsCount,
+      settings.selection,
+      settings.pageLimit,
       settings.heatmapOn,
       settings.heatmapSkipped,
       isMobile,
+      handleSelectionChange,
       columnsIfLoaded,
       handleColumnsOrderChange,
       rootFilterChildren,
@@ -966,20 +1073,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
-
-  const selectionAction: SelectionAction = useMemo(() => {
-    return total.match({
-      _: () => 'NONE' as const,
-      Loaded: (loadedTotal) => {
-        if (isRangeSelected([0, settings.pageLimit]) && selectionSize < loadedTotal) {
-          return 'SELECT_ALL';
-        } else if (selectionSize > settings.pageLimit) {
-          return 'CLEAR_SELECTION';
-        }
-        return 'NONE';
-      },
-    });
-  }, [isRangeSelected, selectionSize, settings.pageLimit, total]);
 
   return (
     <div className={css.content} ref={contentRef}>
@@ -1025,21 +1118,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onRowHeightChange={onRowHeightChange}
             />
             <FlatRunActionButton
-              filter={filterFormSetString}
               isMobile={isMobile}
               projectId={projectId}
-              selectedRuns={loadedSelectedRuns}
-              selection={settings.selection}
-              selectionSize={selectionSize}
+              selectedRuns={selectedRuns}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
             />
             <LoadableCount
-              handleSelectionChange={handleSelectionChange}
               labelPlural="runs"
               labelSingular="run"
-              selectedCount={selectionSize}
-              selectionAction={selectionAction}
+              selectedCount={selectedRunIdSet.size}
               total={total}
             />
           </Row>
@@ -1089,8 +1177,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             open={settings.compare}
             projectId={projectId}
             runSelection={settings.selection}
-            searchId={searchId}
-            tableFilters={filtersString}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}
@@ -1122,13 +1208,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 );
               }}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-              selection={dataGridSelection}
+              selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onHeaderClicked={handleHeaderClick}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />

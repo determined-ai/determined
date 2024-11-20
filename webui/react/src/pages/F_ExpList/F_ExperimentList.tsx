@@ -1,3 +1,4 @@
+import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
@@ -10,7 +11,15 @@ import {
   MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
-import DataGrid, { DataGridHandle, Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
+import DataGrid, {
+  DataGridHandle,
+  HandleSelectionChangeType,
+  RangelessSelectionType,
+  SelectionType,
+  Sort,
+  validSort,
+  ValidSort,
+} from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
@@ -52,7 +61,6 @@ import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
-import useSelection from 'hooks/useSelection';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
@@ -72,6 +80,7 @@ import {
   ProjectColumn,
   ProjectMetricsRange,
   RunState,
+  SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -98,6 +107,8 @@ import {
 interface Props {
   project: Project;
 }
+
+type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const NO_PINS_WIDTH = 200;
 
@@ -179,24 +190,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const isMobile = useMobile();
   const { openToast } = useToast();
 
-  const {
-    ui: { theme: appTheme },
-    isDarkMode,
-  } = useUI();
-
-  const {
-    selectionSize,
-    dataGridSelection,
-    handleSelectionChange,
-    isRangeSelected,
-    loadedSelectedRecordIds: loadedSelectedExperimentIds,
-  } = useSelection({
-    records: experiments.map((loadable) => loadable.map((exp) => exp.experiment)),
-    selection: settings.selection,
-    total,
-    updateSettings,
-  });
-
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
@@ -255,7 +248,38 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  const colorMap = useGlasbey(loadedSelectedExperimentIds);
+  const allSelectedExperimentIds = useMemo(() => {
+    return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
+  }, [settings.selection]);
+
+  const loadedSelectedExperimentIds = useMemo(() => {
+    const selectedMap = new Map<number, ExperimentWithIndex>();
+    if (isLoadingSettings) {
+      return selectedMap;
+    }
+    const selectedIdSet = new Set(allSelectedExperimentIds);
+    experiments.forEach((e, index) => {
+      Loadable.forEach(e, ({ experiment }) => {
+        if (selectedIdSet.has(experiment.id)) {
+          selectedMap.set(experiment.id, { experiment, index });
+        }
+      });
+    });
+    return selectedMap;
+  }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
+
+  const selection = useMemo<GridSelection>(() => {
+    let rows = CompactSelection.empty();
+    loadedSelectedExperimentIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
+    return {
+      columns: CompactSelection.empty(),
+      rows,
+    };
+  }, [loadedSelectedExperimentIds]);
+
+  const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
 
   const experimentFilters = useMemo(() => {
@@ -412,6 +436,71 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
+
+  const rowRangeToIds = useCallback(
+    (range: [number, number]) => {
+      const slice = experiments.slice(range[0], range[1]);
+      return Loadable.filterNotLoaded(slice).map(({ experiment }) => experiment.id);
+    },
+    [experiments],
+  );
+
+  const handleSelectionChange: HandleSelectionChangeType = useCallback(
+    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
+      let newSettings: SelectionState = { ...settings.selection };
+
+      switch (selectionType) {
+        case 'add':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.add(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'add-all':
+          newSettings = {
+            exclusions: [],
+            type: 'ALL_EXCEPT' as const,
+          };
+
+          break;
+        case 'remove':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'remove-all':
+          newSettings = DEFAULT_SELECTION;
+
+          break;
+        case 'set':
+          if (!range) return;
+          newSettings = {
+            ...DEFAULT_SELECTION,
+            selections: Array.from(rowRangeToIds(range)),
+          };
+
+          break;
+      }
+
+      updateSettings({ selection: newSettings });
+    },
+    [rowRangeToIds, settings.selection, updateSettings],
+  );
 
   const handleActionComplete = useCallback(async () => {
     /**
@@ -645,6 +734,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
+  const {
+    ui: { theme: appTheme },
+    isDarkMode,
+  } = useUI();
+
   const users = useObservable(usersStore.getUsers());
 
   const columns: ColumnDef<ExperimentWithTrial>[] = useMemo(() => {
@@ -667,7 +761,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(dataGridSelection.rows, false));
+          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
 
         if (!Loadable.isLoaded(projectColumnsMap)) {
@@ -798,36 +892,49 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;
   }, [
-    projectColumns,
-    appTheme,
-    settings.columnWidths,
     settings.compare,
     settings.pinnedColumnsCount,
-    settings.heatmapOn,
+    projectColumns,
+    settings.columnWidths,
     settings.heatmapSkipped,
-    isDarkMode,
-    users,
-    columnsIfLoaded,
-    dataGridSelection.rows,
     projectHeatmap,
+    settings.heatmapOn,
+    columnsIfLoaded,
+    appTheme,
+    isDarkMode,
+    selection.rows,
+    users,
   ]);
-
-  const handleHeaderClick = useCallback(
-    (columnId: string): void => {
-      if (columnId === MULTISELECT) {
-        if (isRangeSelected([0, settings.pageLimit])) {
-          handleSelectionChange?.('remove', [0, settings.pageLimit]);
-        } else {
-          handleSelectionChange?.('add', [0, settings.pageLimit]);
-        }
-      }
-    },
-    [handleSelectionChange, isRangeSelected, settings.pageLimit],
-  );
 
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
-      return [];
+      const items: MenuItem[] = [
+        settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
+          ? {
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
+          : null,
+        ...[5, 10, 25].map((n) => ({
+          key: `select-${n}`,
+          label: `Select first ${n}`,
+          onClick: () => {
+            handleSelectionChange?.('set', [0, n]);
+            dataGridRef.current?.scrollToTop();
+          },
+        })),
+        {
+          key: 'select-all',
+          label: 'Select all',
+          onClick: () => {
+            handleSelectionChange?.('add', [0, settings.pageLimit]);
+          },
+        },
+      ];
+      return items;
     }
     const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
     if (!column) {
@@ -979,24 +1086,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         compareViewOn={settings.compare}
         entityCopy="Show experiments…"
         formStore={formStore}
-        handleSelectionChange={handleSelectionChange}
         heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
-        isRangeSelected={isRangeSelected}
         labelPlural="experiments"
         labelSingular="experiment"
-        pageSize={settings.pageLimit}
         pinnedColumnsCount={settings.pinnedColumnsCount}
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
-        selectedExperimentIds={loadedSelectedExperimentIds}
-        selection={settings.selection}
-        selectionSize={selectionSize}
+        selectedExperimentIds={allSelectedExperimentIds}
         sorts={sorts}
-        tableFilterString={filtersString}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
@@ -1029,7 +1130,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
-              tableFilters={filtersString}
               onWidthChange={handleCompareWidthChange}>
               <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}
@@ -1065,13 +1165,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                   );
                 }}
                 rowHeight={rowHeightMap[globalSettings.rowHeight]}
-                selection={dataGridSelection}
+                selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                onHeaderClicked={handleHeaderClick}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onSelectionChange={handleSelectionChange}
               />

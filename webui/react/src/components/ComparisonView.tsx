@@ -15,16 +15,13 @@ import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { searchExperiments, searchRuns } from 'services/api';
-import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { ExperimentWithTrial, FlatRun, SelectionType, XOR } from 'types';
 import handleError from 'utils/error';
 import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
-import { combine } from 'utils/filterFormSet';
 import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 
 import CompareMetrics from './CompareMetrics';
 import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
-import { FilterFormSet, Operator } from './FilterForm/components/type';
 
 export const EMPTY_MESSAGE = 'No items selected.';
 
@@ -36,8 +33,6 @@ interface BaseProps {
   onWidthChange: (width: number) => void;
   fixedColumnsCount: number;
   projectId: number;
-  searchId?: number;
-  tableFilters: string;
 }
 
 type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: SelectionType }> &
@@ -137,8 +132,6 @@ const ComparisonView: React.FC<Props> = ({
   projectId,
   experimentSelection,
   runSelection,
-  searchId,
-  tableFilters,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
@@ -155,10 +148,7 @@ const ComparisonView: React.FC<Props> = ({
       return NotLoaded;
     }
     try {
-      const filterFormSet =
-        experimentSelection.type === 'ALL_EXCEPT'
-          ? (JSON.parse(tableFilters) as FilterFormSet)
-          : INIT_FORMSET;
+      const filterFormSet = INIT_FORMSET;
       const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
       const response = await searchExperiments({
         filter: JSON.stringify(filter),
@@ -172,7 +162,7 @@ const ComparisonView: React.FC<Props> = ({
       handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
       return NotLoaded;
     }
-  }, [experimentSelection, open, tableFilters]);
+  }, [experimentSelection, open]);
 
   const loadableSelectedRuns = useAsync(async () => {
     if (
@@ -182,28 +172,12 @@ const ComparisonView: React.FC<Props> = ({
     ) {
       return NotLoaded;
     }
-    const filterFormSet =
-      runSelection.type === 'ALL_EXCEPT'
-        ? (JSON.parse(tableFilters) as FilterFormSet)
-        : INIT_FORMSET;
+    const filterFormSet = INIT_FORMSET;
     try {
       const filter = getRunIdsFilter(filterFormSet, runSelection);
-      if (searchId) {
-        // only display trials for search
-        const searchFilter = {
-          columnName: 'experimentId',
-          kind: 'field' as const,
-          location: V1LocationType.RUN,
-          operator: Operator.Eq,
-          type: V1ColumnType.NUMBER,
-          value: searchId,
-        };
-        filter.filterGroup = combine(filter.filterGroup, 'and', searchFilter);
-      }
       const response = await searchRuns({
         filter: JSON.stringify(filter),
         limit: SELECTION_LIMIT,
-        projectId,
       });
       setIsSelectionLimitReached(
         !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
@@ -213,7 +187,7 @@ const ComparisonView: React.FC<Props> = ({
       handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
       return NotLoaded;
     }
-  }, [open, projectId, runSelection, searchId, tableFilters]);
+  }, [open, runSelection]);
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
