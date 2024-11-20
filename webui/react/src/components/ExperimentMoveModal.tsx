@@ -14,17 +14,13 @@ import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { moveSearches } from 'services/api';
-import { V1MoveSearchesRequest } from 'services/api-ts-sdk';
+import { moveExperiments } from 'services/api';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
-import { Project, SelectionType, XOR } from 'types';
+import { Project } from 'types';
 import handleError from 'utils/error';
-import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
 import { capitalize, pluralizer } from 'utils/string';
-
-import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
-import { FilterFormSet } from './FilterForm/components/type';
 
 const FORM_ID = 'move-experiment-form';
 
@@ -33,21 +29,19 @@ type FormInputs = {
   workspaceId?: number;
 };
 
-interface BaseProps {
+interface Props {
+  excludedExperimentIds?: Map<number, unknown>;
+  experimentIds: number[];
+  filters?: V1BulkExperimentFilters;
   onSubmit?: (successfulIds?: number[]) => void;
-  selectionSize: number;
   sourceProjectId: number;
   sourceWorkspaceId?: number;
 }
 
-type Props = BaseProps &
-  XOR<{ experimentIds: number[] }, { selection: SelectionType; tableFilters: string }>;
-
 const ExperimentMoveModalComponent: React.FC<Props> = ({
+  excludedExperimentIds,
   experimentIds,
-  selection,
-  selectionSize,
-  tableFilters,
+  filters,
   onSubmit,
   sourceProjectId,
   sourceWorkspaceId,
@@ -59,6 +53,8 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const workspaceId = Form.useWatch('workspaceId', form);
   const projectId = Form.useWatch('projectId', form);
   const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const entityName = f_flat_runs ? 'searches' : 'experiments';
 
   useEffect(() => {
     setDisabled(workspaceId !== 1 && !projectId);
@@ -80,14 +76,6 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     }
   }, [workspaceId]);
 
-  // use plurals for indeterminate case
-  const pluralizerArgs = f_flat_runs
-    ? (['search', 'searches'] as const)
-    : (['experiment'] as const);
-  // we use apply instead of a direct call here because typescript errors when you spread a tuple into arguments
-  const plural = pluralizer.apply(null, [selectionSize, ...pluralizerArgs]);
-  const actionCopy = `Move ${capitalize(plural)}`;
-
   const handleSubmit = async () => {
     if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
       openToast({ title: 'No changes to save.' });
@@ -96,23 +84,16 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    const moveSearchesArgs: V1MoveSearchesRequest = {
-      destinationProjectId: projId,
-      sourceProjectId,
-    };
-
-    if (tableFilters !== undefined) {
-      const filterFormSet =
-        selection.type === 'ALL_EXCEPT'
-          ? (JSON.parse(tableFilters) as FilterFormSet)
-          : INIT_FORMSET;
-      const filter = getExperimentIdsFilter(filterFormSet, selection);
-      moveSearchesArgs.filter = JSON.stringify(filter);
-    } else {
-      moveSearchesArgs.searchIds = experimentIds;
+    if (excludedExperimentIds?.size) {
+      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds.keys()) };
     }
 
-    const results = await moveSearches(moveSearchesArgs);
+    const results = await moveExperiments({
+      destinationProjectId: projId,
+      experimentIds,
+      filters,
+      projectId: sourceProjectId,
+    });
 
     onSubmit?.(results.successful);
 
@@ -125,19 +106,19 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     if (numSuccesses === 0 && numFailures === 0) {
       openToast({
-        description: `No selected ${plural} were eligible for moving`,
-        title: `No eligible ${plural}`,
+        description: `No selected ${entityName} were eligible for moving`,
+        title: `No eligible ${entityName}`,
       });
     } else if (numFailures === 0) {
       openToast({
         closeable: true,
-        description: `${results.successful.length} ${pluralizer.apply(null, [results.successful.length, ...pluralizerArgs])} moved to project ${destinationProjectName}`,
+        description: `${results.successful.length} ${entityName} moved to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         title: 'Move Success',
       });
     } else if (numSuccesses === 0) {
       openToast({
-        description: `Unable to move ${numFailures} ${pluralizer.apply(null, [numFailures, ...pluralizerArgs])}`,
+        description: `Unable to move ${numFailures} ${entityName}`,
         severity: 'Warning',
         title: 'Move Failure',
       });
@@ -146,7 +127,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         closeable: true,
         description: `${numFailures} out of ${
           numFailures + numSuccesses
-        } eligible ${plural} failed to move
+        } eligible ${entityName} failed to move
       to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         severity: 'Warning',
@@ -160,6 +141,15 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     form.setFieldValue('projectId', sourceProjectId);
     form.setFieldValue('workspaceId', sourceWorkspaceId ?? 1);
   }, [form, sourceProjectId, sourceWorkspaceId]);
+
+  // use plurals for indeterminate case
+  const entityCount = filters !== undefined ? 2 : experimentIds.length;
+  const pluralizerArgs = f_flat_runs
+    ? (['search', 'searches'] as const)
+    : (['experiment'] as const);
+  // we use apply instead of a direct call here because typescript errors when you spread a tuple into arguments
+  const plural = pluralizer.apply(null, [entityCount, ...pluralizerArgs]);
+  const actionCopy = `Move ${capitalize(plural)}`;
 
   return (
     <Modal

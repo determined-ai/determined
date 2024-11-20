@@ -1045,7 +1045,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       />
       <ExperimentMoveModal.Component
         experimentIds={batchMovingExperimentIds ?? []}
-        selectionSize={batchMovingExperimentIds?.length ?? 0}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleActionComplete}
