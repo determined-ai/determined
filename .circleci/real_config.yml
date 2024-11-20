@@ -2468,8 +2468,6 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-gpu-deepspeed:
-    docker:
-      - image: determinedai/pytorch-ngc-dev:0736b6d
     machine:
       image: linux-cuda-12:default
       resource_class: gpu.nvidia.small
