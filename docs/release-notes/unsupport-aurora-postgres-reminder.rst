@@ -5,7 +5,7 @@
 -  Cluster: A reminder that Amazon Aurora V1 will reach End of Life at the end of 2024. It is no
    longer supported as the default persistent storage for AWS Determined deployments. We recommend
    that users migrate to Amazon RDS for PostgreSQL. For more information, visit the `migration
-   instructions <https://gist.github.com/rb-determined-ai/bfa10182e53968e00a3c88df624e777e>`_.
+   instructions <https://gist.github.com/maxrussell/c67f4f7d586d55c4eb2658cc2dd1c290>`_.
 
 -  Cluster: After Amazon Aurora V1 reaches End of Life, support for Amazon Aurora V1 in ``det deploy
    aws`` will be removed. Future deployments will default to the ``simple-rds`` type, which uses
