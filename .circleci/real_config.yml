@@ -2483,7 +2483,7 @@ jobs:
       - install-codecov
       - setup-paths
       - setup-python-venv:
-          install-python: false
+          install-python: true
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: linux-cuda-12:default
