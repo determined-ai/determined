@@ -14,8 +14,7 @@ publish:
 	twine upload --verbose --non-interactive dist/*
 
 .PHONY: publish-ee
-publish-ee:
-	twine upload --verbose --non-interactive dist/* --repository-url https://push.fury.io/determined-ai
+publish-ee: ;
 
 .PHONY: publish-dryrun
 publish-dryrun:
