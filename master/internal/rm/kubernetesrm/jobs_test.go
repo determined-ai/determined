@@ -123,7 +123,8 @@ func TestListPodsInAllNamespaces(t *testing.T) {
 		},
 	}
 
-	var expectedPods []k8sV1.Pod = append(detPods, outsidePod)
+	//nolint:gocritic
+	expectedPods := append(detPods, outsidePod)
 	expectedPodList := k8sV1.PodList{Items: expectedPods}
 	emptyNS.On("List", mock.Anything, mock.Anything).Once().
 		Return(&k8sV1.PodList{Items: expectedPods}, nil)
@@ -203,7 +204,8 @@ func TestHealthStatus(t *testing.T) {
 		},
 	}
 
-	var expectedPods []k8sV1.Pod = append(detPods, outsidePod)
+	//nolint:gocritic
+	expectedPods := append(detPods, outsidePod)
 	emptyNS.On("List", mock.Anything, mock.Anything).Once().
 		Return(&k8sV1.PodList{Items: expectedPods}, nil)
 
