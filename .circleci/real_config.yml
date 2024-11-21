@@ -1419,6 +1419,13 @@ commands:
               make -C <<parameters.component>> <<parameters.target>>
             fi
 
+  install-nvidia-apex:
+    description: "Dependency for some of the GPU tests"
+    steps:
+      - run: git clone https://github.com/NVIDIA/apex
+      - run: pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./apex
+
+
 jobs:
   build-helm:
     docker:
@@ -2420,6 +2427,7 @@ jobs:
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: linux-cuda-12:default
+      - install-nvidia-apex
       - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2472,6 +2480,7 @@ jobs:
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: linux-cuda-12:default
+      - install-nvidia-apex
       - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
