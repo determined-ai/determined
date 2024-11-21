@@ -2373,9 +2373,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-gpu-tf:
-    docker:
-      - image: determinedai/tensorflow-ngc-dev:0736b6d
-    resource_class: determined-ai/container-runner-gpu
+    machine:
+      image: linux-cuda-12:default
+      resource_class: gpu.nvidia.small.multi
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2386,6 +2386,11 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: linux-cuda-12:default
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2397,9 +2402,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
-    docker:
-      - image: determinedai/pytorch-ngc-dev:0736b6d
-    resource_class: determined-ai/container-runner-gpu
+    machine:
+      image: linux-cuda-12:default
+      resource_class: gpu.nvidia.small.multi
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2410,6 +2415,11 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: linux-cuda-12:default
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2444,9 +2454,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-gpu-parallel:
-    docker:
-      - image: determinedai/pytorch-ngc-dev:0736b6d
-    resource_class: determined-ai/container-runner-multi-gpu
+    machine:
+      image: linux-cuda-12:default
+      resource_class: gpu.nvidia.small.multi
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2457,6 +2467,11 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: linux-cuda-12:default
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
