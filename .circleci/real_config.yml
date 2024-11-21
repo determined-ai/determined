@@ -2506,7 +2506,6 @@ jobs:
       image: linux-cuda-12:default
       resource_class: gpu.nvidia.small.multi
     steps:
-      - run: nvidia-smi
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
       - add-and-fetch-upstream
@@ -3649,9 +3648,55 @@ jobs:
               gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil -m rm -r || true
 
 workflows:
+  lint:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - build-proto
+      - check-py-bindings:
+          requires:
+            - build-proto
+      - check-ts-bindings:
+          requires:
+            - build-proto
+      - lint-docs
+      - lint-python
+      - lint-go
+      - lint-sql
+      - lint-react
+      - lint-secrets
+
+  previews:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - publish-docs-new:
+          requires:
+            - build-docs
+          context: aws
+          filters: *any-upstream
+
+  test-cli:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - test-cli:
+          matrix:
+            parameters:
+              executor-name:
+                - "python-38"
+                - "python-39"
+                - "win/default"
   test-unit:
     <<: *do-not-run-on-manual-trigger
     jobs:
+      - test-unit-react
+      - test-unit-harness-cpu
+      - test-unit-harness-tf2
+      - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
       - test-unit-harness-gpu-tf:
@@ -3675,8 +3720,1504 @@ workflows:
           name: f-test-unit-harness-gpu-parallel
           filters: *any-fork
 
+      - test-unit-storage:
+          context: storage-unit-tests
+          filters: *any-upstream
       - python-coverage:
           requires:
+            - test-unit-harness-cpu
             - test-unit-harness-gpu-tf
             - test-unit-harness-gpu-parallel
+            - test-unit-harness-tf2
+            - test-unit-harness-pytorch2-cpu
             - test-unit-harness-pytorch2-gpu
+            - test-unit-storage
+
+  send-alerts:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - send-job-level-alerts:
+          filters:
+            branches:
+              only:
+                - main
+
+  test-go:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - test-intg-master:
+          context:
+            - storage-unit-tests
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+      - test-intg-agent
+      - go-coverage:
+          requires:
+            - test-intg-master
+            - test-intg-agent
+      - check-go-coverage-master:
+          requires:
+            - go-coverage
+      - check-go-coverage-agent:
+          requires:
+            - go-coverage
+
+  package-and-deploy-oss:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      # These jobs are important for docs and latest main and have been moved
+      # here from test-e2e. These jobs are OSS focused while test-e2e now only
+      # uses EE images (with the exception of test-det-deploy, which requires
+      # both).
+      - build-proto
+      - build-helm
+      - build-react:
+          name: build-react-oss
+          dev-mode: true
+      - test-e2e-react:
+          name: test-e2e-react-oss
+          devcluster-config: react.devcluster.yaml
+          requires:
+            - build-go-oss
+          context:
+            - playwright
+            - github-read
+            - dev-ci-cluster-default-user-credentials
+          filters: *any-upstream
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          name: build-go-oss
+          ee: false
+          context: github-read
+
+      - package-and-push-system-local:
+          requires:
+            - build-react-oss
+            - build-docs
+          filters:
+            branches:
+              only:
+                - main
+
+      - package-and-push-system-dev:
+          requires:
+            - build-react-oss
+            - build-docs
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters:
+            branches:
+              only:
+                - main
+
+      - check-docs-links:
+          requires:
+            - build-docs
+          filters:
+            branches:
+              only:
+                - main
+
+      - deploy:
+          name: deploy-latest-main-cluster
+          enable-cors: true
+          reattach-enabled: true
+          extra-tags: "long_running=determined_preview_cluster"
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev
+          max-dynamic-agents: 2
+
+      - deploy:
+          name: deploy-preview-cluster
+          enable-cors: true
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev
+          max-dynamic-agents: 1
+          cluster-id: determined-preview-rds
+          compute-agent-instance-type: t2.medium
+
+  test-e2e:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - test-e2e-react:
+          name: test-e2e-react-ee
+          ee: true
+          devcluster-config: react-rbac.devcluster.yaml
+          requires:
+            - build-go-ee
+          context:
+            - playwright
+            - github-read
+            - dev-ci-cluster-default-user-credentials
+          filters: *any-upstream
+      # this will be used once sso tests are prioritized (after rbac tests)
+      # - test-e2e-react:
+      #     name: test-e2e-react-ee-sso
+      #     ee: true
+      #     devcluster-config: react-sso.devcluster.yaml
+      #     playwright-options: "-g sso"
+      #     requires:
+      #       - build-go-ee
+      #     context:
+      #       - playwright
+      #       - github-read
+      #       - dev-ci-cluster-default-user-credentials
+      #     filters: *any-upstream
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          name: build-go-ee
+          context: github-read
+
+      - package-and-push-system-local:
+          requires:
+            - build-react
+            - build-docs
+          filters:
+            branches:
+              only:
+                - main
+
+      - package-and-push-system-local-ee:
+          requires:
+            - build-react
+            - build-docs
+            - package-and-push-system-local
+          context: github-read
+          filters:
+            branches:
+              only:
+                - main
+
+      - package-and-push-system-dev-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+
+      - test-debian-packaging:
+          requires:
+            - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only:
+                - main
+
+      # Singularity over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-singularity-gcp]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      # Podman over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-podman-gcp]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      # Enroot over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      # Singularity over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-singularity-gcp]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      # Podman over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-podman-gcp]
+              container-run-type: ["podman"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      # Enroot over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-enroot-gcp]
+              container-run-type: ["enroot"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
+
+      - test-e2e:
+          name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_rbac
+          devcluster-config: single-rbac.devcluster.yaml
+
+      - test-e2e:
+          name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 6
+          resource-class: xlarge
+          tf2: true
+          mark: e2e_cpu
+
+      - test-e2e:
+          name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 5
+          resource-class: large
+          tf2: true
+          mark: e2e_cpu_2a
+          target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
+
+      - test-e2e:
+          name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: oauth.devcluster.yaml
+          mark: test_oauth
+          target-stage: agent1
+
+      - test-e2e:
+          name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: rbac-model-registry.yaml
+          mark: test_model_registry_rbac
+          target-stage: agent1
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster
+          managed-devcluster: true
+          # Managed devcluster restarts the master over the course of the tests,
+          # so `compare_stats` cannot get the full logs from `det master logs`.
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster-resource-pools
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster_resource_pools
+          managed-devcluster: true
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
+          multi-k8s: true
+
+      - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_single_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
+          run-minikubes: true
+
+      - test-e2e:
+          name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
+
+      - test-e2e:
+          name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          resource-class: large
+          mark: e2e_cpu_elastic
+          devcluster-config: elastic.devcluster.yaml
+          target-stage: agent
+
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "10"
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "14"
+
+      - test-e2e:
+          name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: custom-agent-version.devcluster.yaml
+          target-stage: agent
+          matrix:
+            parameters:
+              agent-version: ["0.17.10"]
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: saml.devcluster.yaml
+          mark: e2e_saml
+
+      - test-perf:
+          name: test-perf
+          snapshot-after-migrations: true
+          deploy-db: false
+          requires:
+            - build-go-ee
+          context:
+            - perf-tests
+            - aws
+          filters:
+            branches:
+              only:
+                - main
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-parallel
+          context:
+            - aws
+            - determined-ee
+            - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m6i.large"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-single
+          context:
+            - aws
+            - determined-ee
+            - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["e2e-gpu"]
+              enable-tls: [true]
+              mark: ["e2e_gpu"]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-gpu
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              parallelism: [1]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-parallel
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              parallelism: [1]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+              max-slots-per-pod: [4]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-cpu
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
+              parallelism: [1]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              max-slots-per-pod: [1]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+      - test-det-deploy:
+          name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - package-and-push-system-local
+            - package-and-push-system-local-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
+
+      - deploy-latest-gke:
+          name: deploy-latest-gke-master
+          context: gcp
+          det-version: $CIRCLE_SHA1
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev-ee
+
+  test-e2e-longrunning:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      # Build and publish artifacts used in tests
+      - build-helm:
+          filters: *upstream-feature-branch
+      - build-proto:
+          filters: *upstream-feature-branch
+      - build-react:
+          dev-mode: true
+          filters: *upstream-feature-branch
+      - build-docs:
+          filters: *upstream-feature-branch
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          filters: *upstream-feature-branch
+          context: github-read
+      - package-and-push-system-dev-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read
+          filters: *upstream-feature-branch
+
+      - package-and-push-system-local:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+
+      - package-and-push-system-local-ee:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - package-and-push-system-local
+
+      # Distributed tests
+      - request-e2e-cpu-distributed:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-cpu-distributed
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-e2e-cpu-distributed
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed and not gpu_required"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m6i.large"]
+              max-dynamic-agents: [16]
+
+      # DeepSpeed tests
+      - request-deepspeed-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+        # DeepSpeed tests do not work on K80s, so we need V100 instances.
+      - test-e2e-aws:
+          name: test-e2e-deepspeed
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-deepspeed-tests
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["g4dn.12xlarge"]
+              aux-agent-instance-type: ["m6i.large"]
+              cluster-id-prefix: ["deepspeed"]
+              mark: ["deepspeed"]
+              max-dynamic-agents: [2]
+
+      # K8s GPU tests
+      - request-k8-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-gpu
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              parallelism: [1]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-parallel
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              parallelism: [1]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+              max-slots-per-pod: [4]
+
+      # K8s CPU tests
+      - request-k8-tests-cpu:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-cpu
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
+              parallelism: [1]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              max-slots-per-pod: [1]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach
+          context:
+            - gcp-ci
+            - determined-ee
+            - gcp-ci-cluster-default-user-credentials
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+      # Nightly distributed tests
+      - request-gpu-distributed-nightly:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-distributed-nightly
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - hugging-face
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-distributed-nightly
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m6i.large"]
+              max-dynamic-agents: [2]
+
+      # Perf tests.
+      - request-perf-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-perf:
+          name: test-perf-feature-branch
+          snapshot-after-migrations: false
+          deploy-db: true
+          requires:
+            - build-go
+            - request-perf-tests
+          context:
+            - perf-tests
+            - aws
+          filters: *upstream-feature-branch
+
+      # Nightly tests
+      - request-gpu-nightly:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-nightly
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-nightly
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
+
+      # GPU tests
+      - request-gpu-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-parallel
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-tests
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m6i.large"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-single
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-tests
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["e2e-gpu"]
+              enable-tls: [true]
+              mark: ["e2e_gpu"]
+
+      # packaging tests
+      - request-packaging-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-debian-packaging:
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local-ee
+            - request-packaging-tests
+          context:
+            - dev-ci-cluster-default-user-credentials
+
+      # Local deployment
+      - test-det-deploy:
+          name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - package-and-push-system-local
+            - package-and-push-system-local-ee
+            - request-packaging-tests
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
+
+      # Request AWS FS tests
+      - request-aws-fs-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-aws-fs:
+          name: test-aws-fs-fsx
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-aws-fs-tests
+            - package-and-push-system-dev-ee
+          cluster-id-prefix: aws-fs-fsx
+          deployment-type: fsx
+
+      - test-aws-fs:
+          name: test-aws-fs-efs
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-aws-fs-tests
+            - package-and-push-system-dev-ee
+          cluster-id-prefix: aws-fs-efs
+          deployment-type: efs
+
+      # Request HPC tests
+      - request-hpc-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+
+      # Singularity over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-singularity-gcp]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-podman-gcp]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Enroot over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Singularity over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-singularity-gcp]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-podman-gcp]
+              container-run-type: ["podman"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Enroot over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+            - gcp-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-enroot-gcp]
+              container-run-type: ["enroot"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+  nightly:
+    when: << pipeline.parameters.do_nightly_tests >>
+    jobs:
+      - test-e2e-aws:
+          name: test-e2e-gpu-nightly
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-distributed
+          context:
+            - aws
+            - determined-ee
+            - hugging-face
+            - aws-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m6i.large"]
+              max-dynamic-agents: [2]
+      - test-e2e-aws:
+          name: test-e2e-gpu-deepspeed
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["deepspeed"]
+              mark: ["deepspeed"]
+              compute-agent-instance-type: ["g4dn.12xlarge"]
+              aux-agent-instance-type: ["m6i.large"]
+              max-dynamic-agents: [2]
+      - test-e2e-aws:
+          name: test-e2e-cpu-distributed
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed and not gpu_required"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m6i.large"]
+              max-dynamic-agents: [16]
+      - test-aws-fs:
+          name: test-aws-fs-fsx
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          cluster-id-prefix: aws-fs-fsx
+          deployment-type: fsx
+
+      - test-aws-fs:
+          name: test-aws-fs-efs
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          cluster-id-prefix: aws-fs-efs
+          deployment-type: efs
+
+      - run-shared-cluster-cleanup:
+          name: gke-cleanup
+          context: gcp-shared-cluster
+
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-proto
+            - build-helm
+      - build-react:
+          name: build-react-ee
+          ee: true
+      - package-and-push-system-local-ee:
+          requires:
+            - build-docs
+            - build-react-ee
+          context: github-read
+
+  manual-e2e-react:
+    when: << pipeline.parameters.e2e-react >>
+    jobs:
+      - build-go:
+          name: build-go
+          ee: << pipeline.parameters.ee >>
+          context: github-read
+      - test-e2e-react:
+          ee: << pipeline.parameters.ee >>
+          devcluster-config: react.devcluster.yaml
+          playwright-options: << pipeline.parameters.e2e-react >>
+          requires:
+            - build-go
+          context:
+            - playwright
+            - github-read
+            - dev-ci-cluster-default-user-credentials
+
+  release-dryrun:
+    jobs:
+      - build-helm:
+          filters: *release-dryrun
+
+      - build-proto:
+          filters: *release-dryrun
+
+      - build-react:
+          context: determined-production
+          filters: *release-dryrun
+
+      - build-docs:
+          context: determined-production
+          filters: *release-dryrun
+          requires:
+            - build-helm
+            - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - package-and-push-system-release:
+          dryrun: true
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-python-package:
+          name: publish-python-package-release
+          matrix:
+            parameters:
+              path: ["harness"]
+              dryrun: [true]
+          context: determined-dryrun
+          filters: *release-dryrun
+          requires:
+            - package-and-push-system-release
+
+      - publish-docs:
+          dryrun: true
+          name: publish-docs
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-helm-gh:
+          dryrun: true
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-dryrun
+
+  release:
+    jobs:
+      - build-helm:
+          filters: *release-and-rc-filters
+      - build-proto:
+          filters: *release-and-rc-filters
+      - build-react:
+          force: true
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-docs:
+          context: determined-production
+          filters: *release-and-rc-filters
+          requires:
+            - build-helm
+            - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - package-and-push-system-rc:
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *rc-filters
+
+      - publish-python-package:
+          name: publish-python-package-rc
+          matrix:
+            parameters:
+              path:
+                - "harness"
+          context: determined-production
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc
+
+      - package-and-push-system-release:
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-python-package:
+          name: publish-python-package-release
+          matrix:
+            parameters:
+              path:
+                - "harness"
+          context: determined-production
+          filters: *release-filters
+          requires:
+            - package-and-push-system-release
+
+      - publish-docs:
+          name: publish-docs-rc
+          matrix:
+            parameters:
+              dryrun: [true]
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *rc-filters
+
+      - publish-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-helm-gh:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
+
+      - publish-helm-gh-rc:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *rc-filters
+
+      - upload-try-now-template:
+          context: determined-production
+          filters: *release-filters
+
+  release-ee:
+    jobs:
+      - build-helm:
+          filters: *release-and-rc-filters
+      - build-proto:
+          filters: *release-and-rc-filters
+      - build-react:
+          context: determined-production
+          matrix:
+            parameters:
+              ee: [true]
+          filters: *release-and-rc-filters
+      - build-docs:
+          matrix:
+            parameters:
+              ee: [true]
+          context: determined-production
+          filters: *release-and-rc-filters
+          requires:
+            - build-helm
+            - build-proto
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - package-and-push-system-rc-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read
+          filters: *rc-filters
+
+      - publish-python-package:
+          name: publish-python-package-rc-ee
+          matrix:
+            parameters:
+              path: ["harness"]
+              ee: [true]
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc-ee
+
+      - package-and-push-system-release-ee:
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-python-package:
+          name: publish-python-package-release-ee
+          matrix:
+            parameters:
+              path: ["harness"]
+              ee: [true]
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
+          filters: *release-filters
+          requires:
+            - package-and-push-system-release-ee
+
+      - publish-docs:
+          matrix:
+            parameters:
+              ee: [true]
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-helm-gh:
+          matrix:
+            parameters:
+              ee: [true]
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
