@@ -23,7 +23,7 @@ Version 0.38.0
    training loops now automatically report ``batches`` and ``epochs`` with metrics, which you can
    use as your ``time_metric``. ASHA experiments without this modification will no longer run.
 
--  Custom Searchers: all custom searchers including DeepSpeed Autotune were deprecated in ``0.36.0``
+-  Custom Searchers: All custom searchers including DeepSpeed Autotune were deprecated in ``0.36.0``
    and are now being removed. Users are encouraged to use a preset searcher, which can be easily
    :ref:`configured <experiment-configuration_searcher>` for any experiment.
 
@@ -58,11 +58,11 @@ Version 0.38.0
       -  ``GET /api/v1/tokens``: Retrieve a list of access tokens.
       -  ``PATCH /api/v1/tokens/{token_id}``: Edit an existing access token.
 
--  API: introduce ``keras.DeterminedCallback``, a new high-level training API for TF Keras that
+-  API: Introduce ``keras.DeterminedCallback``, a new high-level training API for TF Keras that
    integrates Keras training code with Determined through a single :ref:`Keras Callback
    <api-keras-ug>`.
 
--  API: introduce ``deepspeed.Trainer``, a new high-level training API for DeepSpeedTrial that
+-  API: Introduce ``deepspeed.Trainer``, a new high-level training API for DeepSpeedTrial that
    allows for Python-side training loop configurations and includes support for local training.
 
 -  Cluster: In the enterprise edition of Determined, add :ref:`config policies <config-policies>` to
@@ -126,46 +126,46 @@ Version 0.38.0
 
 **Deprecations**
 
--  Experiment Config: the ``max_length`` field of the searcher configuration section has been
+-  Experiment Config: The ``max_length`` field of the searcher configuration section has been
    deprecated for all experiments and searchers. Users are expected to configure the desired
    training length directly in training code.
 
--  Experiment Config: the ``optimizations`` config has been deprecated. Please see :ref:`Training
+-  Experiment Config: The ``optimizations`` config has been deprecated. Please see :ref:`Training
    APIs <apis-howto-overview>` to configure supported optimizations through training code directly.
 
--  Experiment Config: the ``scheduling_unit``, ``min_checkpoint_period``, and
+-  Experiment Config: The ``scheduling_unit``, ``min_checkpoint_period``, and
    ``min_validation_period`` config fields have been deprecated. Instead, these configuration
    options should be specified in training code.
 
--  Experiment Config: the ``entrypoint`` field no longer accepts ``model_def:TrialClass`` as trial
+-  Experiment Config: The ``entrypoint`` field no longer accepts ``model_def:TrialClass`` as trial
    definitions. Please invoke your training script directly (``python3 train.py``).
 
--  Core API: the ``SearcherContext`` (``core.searcher``) has been deprecated. Training code no
+-  Core API: The ``SearcherContext`` (``core.searcher``) has been deprecated. Training code no
    longer requires ``core.searcher.operations`` to run, and progress should be reported through
    ``core.train.report_progress``.
 
--  DeepSpeed: the ``num_micro_batches_per_slot`` and ``train_micro_batch_size_per_gpu`` attributes
+-  DeepSpeed: The ``num_micro_batches_per_slot`` and ``train_micro_batch_size_per_gpu`` attributes
    on ``DeepSpeedContext`` have been replaced with ``get_train_micro_batch_size_per_gpu()`` and
    ``get_num_micro_batches_per_slot()``.
 
--  Horovod: the Horovod distributed training backend has been deprecated. Users are encouraged to
+-  Horovod: The Horovod distributed training backend has been deprecated. Users are encouraged to
    migrate to the native distributed backend of their training framework (``torch.distributed`` or
    ``tf.distribute``).
 
 -  Trial APIs: ``TFKerasTrial`` has been deprecated. Users are encouraged to migrate to the new
    :ref:`Keras Callback <api-keras-ug>`.
 
--  Launchers: the ``--trial`` argument in Determined launchers has been deprecated. Please invoke
+-  Launchers: The ``--trial`` argument in Determined launchers has been deprecated. Please invoke
    your training script directly.
 
--  ASHA: the ``stop_once`` field of the ``searcher`` config for ASHA searchers has been deprecated.
+-  ASHA: The ``stop_once`` field of the ``searcher`` config for ASHA searchers has been deprecated.
    All ASHA searches are now early-stopping based (``stop_once: true``) instead of promotion based.
 
 -  CLI: The ``--test`` and ``--local`` flags for ``det experiment create`` have been deprecated. All
    training APIs now support local execution (``python3 train.py``). Please see ``training apis``
    for details specific to your framework.
 
--  Web UI: previously, trials that reported an ``epoch`` metric enabled an epoch X-axis in the Web
+-  Web UI: Previously, trials that reported an ``epoch`` metric enabled an epoch X-axis in the Web
    UI metrics tab. This metric name has been changed to ``epochs``, with ``epoch`` as a fallback
    option.
 
