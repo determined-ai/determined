@@ -148,7 +148,7 @@ Version 0.38.0
    on ``DeepSpeedContext`` have been replaced with ``get_train_micro_batch_size_per_gpu()`` and
    ``get_num_micro_batches_per_slot()``.
 
--  Horovod: the horovod distributed training backend has been deprecated. Users are encouraged to
+-  Horovod: the Horovod distributed training backend has been deprecated. Users are encouraged to
    migrate to the native distributed backend of their training framework (``torch.distributed`` or
    ``tf.distribute``).
 
@@ -169,15 +169,11 @@ Version 0.38.0
    UI metrics tab. This metric name has been changed to ``epochs``, with ``epoch`` as a fallback
    option.
 
--  Cluster: A reminder that Amazon Aurora V1 will reach End of Life at the end of 2024. It is no
-   longer supported as the default persistent storage for AWS Determined deployments. We recommend
-   that users migrate to Amazon RDS for PostgreSQL. For more information, visit the `migration
-   instructions <https://gist.github.com/maxrussell/c67f4f7d586d55c4eb2658cc2dd1c290>`_.
-
--  Cluster: After Amazon Aurora V1 reaches End of Life, support for Amazon Aurora V1 in ``det deploy
-   aws`` will be removed. Future deployments will default to the ``simple-rds`` type, which uses
-   Amazon RDS for PostgreSQL. Changes to the deployment code will ensure this transition to the new
-   default.
+-  Database: After Amazon Aurora V1 reaches End of Life, support for Amazon Aurora V1 in ``det
+   deploy aws`` will be removed. Future deployments will default to the ``simple-rds`` type, which
+   uses Amazon RDS for PostgreSQL. We recommend that users migrate to Amazon RDS for PostgreSQL. For
+   more information, visit the `migration instructions
+   <https://gist.github.com/maxrussell/c67f4f7d586d55c4eb2658cc2dd1c290>`_.
 
 -  Database: As a follow-up to the earlier notice, PostgreSQL 12 will reach End of Life on November
    14, 2024. Instances still using PostgreSQL 12 or earlier should upgrade to PostgreSQL 13 or later
