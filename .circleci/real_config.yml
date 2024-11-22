@@ -31,6 +31,9 @@ parameters:
   gpu-machine-image:
     type: string
     default: linux-cuda-12:default
+  gpu-machine-resource-class:
+    type: string
+    default: gpu.nvidia.small.multi
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   default-pt-gpu-hpc-image:
     type: string
@@ -405,6 +408,10 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
+      install-nvidia-apex:
+        description: "Install dependency for some of the GPU tests."
+        type: boolean
+        default: false
     steps:
       - run:
           name: Write cache key
@@ -422,6 +429,7 @@ commands:
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
             echo '<<parameters.install-python>>' >> /tmp/cachefile
+            echo '<<parameters.install-nvidia-apex>>' >> /tmp/cachefile
             date -u '+%y/%m/%d' >> /tmp/cachefile
 
       - restore_cache:
@@ -504,6 +512,21 @@ commands:
                 tools/scripts/retry.sh pip install -r $i
               done
             fi
+      - when:
+          condition: <<parameters.install-nvidia-apex>>
+          steps:
+            - run:
+                name: Install Nvidia Apex
+                description: "Apex installation needs Cuda 12.1 because Pytorch binaries were compiled by Cuda 12.1."
+                command: |
+                  if ! pip show apex; then
+                    wget https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run
+                    sudo sh cuda_12.1.0_530.30.02_linux.run --toolkit --silent
+                    nvcc --version
+                    git clone https://github.com/NVIDIA/apex ~/apex
+                    pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ~/apex
+                  fi
+
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
@@ -2367,9 +2390,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-gpu-tf:
-    docker:
-      - image: determinedai/tensorflow-ngc:0.38.1
-    resource_class: determined-ai/container-runner-gpu
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2380,7 +2403,12 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
+      - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -2391,9 +2419,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
-    docker:
-      - image: determinedai/pytorch-ngc:0.38.1
-    resource_class: determined-ai/container-runner-gpu
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2404,7 +2432,13 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
+          install-nvidia-apex: true
+      - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -2438,9 +2472,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-gpu-parallel:
-    docker:
-      - image: determinedai/pytorch-ngc:0.38.1
-    resource_class: determined-ai/container-runner-multi-gpu
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2451,7 +2485,13 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
+          install-nvidia-apex: true
+      - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -2462,9 +2502,9 @@ jobs:
           path: /tmp/test-results
 
   test-unit-harness-gpu-deepspeed:
-    docker:
-      - image: determinedai/pytorch-ngc:0.38.1
-    resource_class: determined-ai/container-runner-gpu
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2475,7 +2515,12 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
+      - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
