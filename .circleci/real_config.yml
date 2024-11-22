@@ -31,6 +31,9 @@ parameters:
   gpu-machine-image:
     type: string
     default: linux-cuda-12:default
+  gpu-machine-resource-class:
+    type: string
+    default: gpu.nvidia.small.multi
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   default-pt-gpu-hpc-image:
     type: string
@@ -528,6 +531,7 @@ commands:
           paths:
             - "/tmp/venv"
             - "/tmp/conda"
+          when: on_success
       - python-report
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
@@ -2393,8 +2397,8 @@ jobs:
 
   test-unit-harness-gpu-tf:
     machine:
-      image: linux-cuda-12:default
-      resource_class: gpu.nvidia.small.multi
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2409,7 +2413,7 @@ jobs:
           install-python: true
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: linux-cuda-12:default
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
       - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2422,8 +2426,8 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     machine:
-      image: linux-cuda-12:default
-      resource_class: gpu.nvidia.small.multi
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2438,7 +2442,7 @@ jobs:
           install-python: true
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: linux-cuda-12:default
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
           install-nvidia-apex: true
       - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
@@ -2475,8 +2479,8 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     machine:
-      image: linux-cuda-12:default
-      resource_class: gpu.nvidia.small.multi
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2491,7 +2495,7 @@ jobs:
           install-python: true
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: linux-cuda-12:default
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
           install-nvidia-apex: true
       - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
@@ -2505,8 +2509,8 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     machine:
-      image: linux-cuda-12:default
-      resource_class: gpu.nvidia.small.multi
+      image: <<pipeline.parameters.gpu-machine-image>>
+      resource_class: <<pipeline.parameters.gpu-machine-resource-class>>
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2521,7 +2525,7 @@ jobs:
           install-python: true
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: linux-cuda-12:default
+          executor: machine-<<pipeline.parameters.gpu-machine-resource-class>>
       - run: COVERAGE_FILE=/home/circleci/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
