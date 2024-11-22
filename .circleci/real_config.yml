@@ -429,6 +429,7 @@ commands:
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
             echo '<<parameters.install-python>>' >> /tmp/cachefile
+            echo '<<parameters.install-nvidia-apex>>' >> /tmp/cachefile
             date -u '+%y/%m/%d' >> /tmp/cachefile
 
       - restore_cache:
@@ -531,7 +532,6 @@ commands:
           paths:
             - "/tmp/venv"
             - "/tmp/conda"
-          when: on_success
       - python-report
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
