@@ -1,7 +1,6 @@
+import { UPlotData } from 'components/UPlot/types';
 import { useCallback, useMemo, useRef } from 'react';
 import uPlot, { Plugin } from 'uplot';
-
-import { UPlotData } from 'components/UPlot/types';
 import { isNumber } from 'utils/data';
 import { humanReadableNumber } from 'utils/number';
 import { generateAlphaNumeric } from 'utils/string';
@@ -85,7 +84,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
       const y = yData[dataIndex];
       if (x == null || y == null) return;
 
-      const keyValues = u.data[seriesIndex]
+      const keyValues = Array.from(u.data[seriesIndex])
         .map((data: unknown, index: number) => {
           if (data == null) return null;
 
@@ -147,7 +146,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
           rootRef.current?.appendChild(tooltipRef.current);
         },
         setCursor: (u: uPlot) => {
-          uPlotRef.current.dataIndex = u.cursor.dataIdx?.(u, 1, 0, 0);
+          uPlotRef.current.dataIndex = u.cursor.dataIdx?.(u, 1, 0, 0) ?? undefined;
 
           if (uPlotRef.current.dataIndex != null) {
             setTooltip(u);
