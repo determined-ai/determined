@@ -524,7 +524,10 @@ commands:
                     sudo sh cuda_12.1.0_530.30.02_linux.run --toolkit --silent
                     nvcc --version
                     git clone https://github.com/NVIDIA/apex ~/apex
+                    cd ~/apex
+                    git checkout tags/24.04.01
                     pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ~/apex
+                    cd -
                   fi
 
       - save_cache:
