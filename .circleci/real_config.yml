@@ -2222,7 +2222,7 @@ jobs:
   test-intg-master:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - add-and-fetch-upstream
