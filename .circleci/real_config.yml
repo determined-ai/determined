@@ -2118,7 +2118,7 @@ jobs:
       - image: cimg/node:20.9.0
         environment:
           CI: "true"
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout-with-sm
       - add-and-fetch-upstream
@@ -2222,7 +2222,7 @@ jobs:
   test-intg-master:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -2253,7 +2253,7 @@ jobs:
   test-intg-agent:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - add-and-fetch-upstream
