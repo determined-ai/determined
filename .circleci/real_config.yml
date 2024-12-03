@@ -517,13 +517,13 @@ commands:
           steps:
             - run:
                 name: Install Nvidia Apex
-                description: "Apex installation needs Cuda 12.1 because Pytorch binaries were compiled by Cuda 12.1."
                 command: |
                   if ! pip show apex; then
                     # Ninja speeds up Apex compilation.
                     if ! pip show ninja; then
                       pip install ninja
                     fi
+                    # Apex installation needs Cuda 12.1 because Pytorch binaries were compiled by Cuda 12.1.
                     wget https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run
                     sudo sh cuda_12.1.0_530.30.02_linux.run --toolkit --silent
                     nvcc --version
