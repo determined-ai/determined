@@ -430,7 +430,7 @@ commands:
             echo '<<parameters.python-version>>' >> /tmp/cachefile
             echo '<<parameters.install-python>>' >> /tmp/cachefile
             echo '<<parameters.install-nvidia-apex>>' >> /tmp/cachefile
-            date -v+1d -u '+%y/%m/%d' >> /tmp/cachefile
+            date -d '+1 day' -u '+%y/%m/%d' >> /tmp/cachefile
 
       - restore_cache:
           keys:
