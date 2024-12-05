@@ -1,3 +1,4 @@
+import time
 import uuid
 from typing import Dict, List
 
@@ -13,6 +14,7 @@ from tests.experiment import noop
 def test_archived_proj_exp_list() -> None:
     admin = api_utils.admin_session()
     workspaces: List[bindings.v1Workspace] = []
+    created_projects: List[int] = []
     count = 2
 
     for _ in range(count):
@@ -34,6 +36,7 @@ def test_archived_proj_exp_list() -> None:
                 workspaceId=wrkspc.id,
             ).project.id
             workspace_projects.append(pid)
+            created_projects.append(pid)
 
         for p in workspace_projects:
             for _ in range(count):
@@ -105,5 +108,8 @@ def test_archived_proj_exp_list() -> None:
     for e_id in experiments:
         assert e_id in returned_e_id
 
+    for pid in created_projects:
+        bindings.delete_DeleteProject(admin, id=pid)
+    time.sleep(0.5)
     for w in workspaces:
         bindings.delete_DeleteWorkspace(admin, id=w.id)

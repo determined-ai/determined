@@ -3,6 +3,7 @@ import datetime
 import io
 import re
 import sys
+import time
 import uuid
 from typing import Optional
 
@@ -99,6 +100,8 @@ def test_experiment_capture() -> None:
     assert r.status_code == requests.codes.ok, r.text
     validate_trial_csv_rows(r.text, exp_ref.id, w1.name)
 
+    bindings.delete_DeleteProject(session=sess, id=p1.id)
+    time.sleep(0.5)
     # Clean up test workspaces
     bindings.delete_DeleteWorkspace(session=sess, id=w1.id)
     bindings.delete_DeleteWorkspace(session=sess, id=w2.id)
