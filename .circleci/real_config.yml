@@ -3836,38 +3836,6 @@ workflows:
               only:
                 - main
 
-      - deploy:
-          name: deploy-latest-main-cluster
-          enable-cors: true
-          reattach-enabled: true
-          extra-tags: "long_running=determined_preview_cluster"
-          context:
-            - aws
-            - aws-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - package-and-push-system-dev
-          max-dynamic-agents: 2
-
-      - deploy:
-          name: deploy-preview-cluster
-          enable-cors: true
-          context:
-            - aws
-            - aws-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - package-and-push-system-dev
-          max-dynamic-agents: 1
-          cluster-id: determined-preview-rds
-          compute-agent-instance-type: t2.medium
-
   test-e2e:
     <<: *do-not-run-on-manual-trigger
     jobs:
