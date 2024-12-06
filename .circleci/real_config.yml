@@ -7,7 +7,7 @@ orbs:
   gh: circleci/github-cli@2.0
   helm: circleci/helm@1.2.0
   kubernetes: circleci/kubernetes@0.11.0
-  queue: eddiewebb/queue@2.2.1
+  queue: eddiewebb/queue@3.2.1
   win: circleci/windows@5.0.0
 
 executors:
@@ -2962,8 +2962,9 @@ jobs:
     resource_class: xlarge
     steps:
       - queue/until_front_of_line:
-          only-on-branch: main
-          time: "120" # Wait two hours at most. Adjust this over time.
+          my-pipeline: <<pipeline.number>>
+          # only-on-branch: main
+          max-wait-time: "120" # Wait two hours at most. Adjust this over time.
       - checkout
       - add-and-fetch-upstream
       - attach_workspace:
@@ -3126,10 +3127,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - queue/until_front_of_line:
-          only-on-branch: main
-          # Basically wait forever -- we would prefer not to fail deploys, and
-          # we'll likely never be this backed up.
-          time: "10000"
+          my-pipeline: <<pipeline.number>>
+          # only-on-branch: main
+          # Wait 2 hours at most
+          max-wait-time: "120"
       - checkout
       - set-slack-user-id
       - setup-python-venv:
@@ -3340,10 +3341,10 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - queue/until_front_of_line:
-          only-on-branch: main
-          # Basically wait forever -- we would prefer not to fail tests, and
-          # we'll likely never be this backed up.
-          time: "10000"
+          my-pipeline: <<pipeline.number>>
+          # only-on-branch: main
+          # wait 2 hours at most
+          max-wait-time: "120"
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           labels: test-mark=<<parameters.mark>>
