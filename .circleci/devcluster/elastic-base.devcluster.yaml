@@ -1,6 +1,6 @@
 stages:
   - db:
       name: db
-
+      image_name: "postgres:${DET_POSTGRES_VERSION}"
   - elastic:
       name: elastic
