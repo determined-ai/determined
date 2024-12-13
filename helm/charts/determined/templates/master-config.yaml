@@ -91,6 +91,7 @@ stringData:
       credential: {{ .Values.checkpointStorage.credential }}
       {{- end }}
       {{- end }}
+      {{- end }}
       save_experiment_best: {{ .Values.checkpointStorage.saveExperimentBest | default 0 }}
       save_trial_best: {{ .Values.checkpointStorage.saveTrialBest | default 1 }}
       save_trial_latest: {{ .Values.checkpointStorage.saveTrialLatest | default 1 }}
