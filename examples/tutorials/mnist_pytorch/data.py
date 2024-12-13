@@ -4,9 +4,12 @@ from typing import Any
 import filelock
 from torchvision import datasets, transforms
 
-
+import tarfile
 def get_dataset(data_dir: pathlib.Path, train: bool) -> Any:
     data_dir.mkdir(parents=True, exist_ok=True)
+    tar = tarfile.open('./data/MNIST.tar.gz', 'r:gz')
+    tar.extractall('./data')
+    tar.close()
 
     # Use a file lock so that only one worker on each node downloads.
     with filelock.FileLock(str(data_dir / "lock")):

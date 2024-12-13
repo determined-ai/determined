@@ -1,10 +1,13 @@
 name: mnist_pytorch_const
+checkpoint_storage:
+  save_trial_latest: 5
 hyperparameters:
   learning_rate: 1.0
   n_filters1: 32
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
+  checkpoint_freq: 100
 searcher:
   name: single
   metric: validation_loss

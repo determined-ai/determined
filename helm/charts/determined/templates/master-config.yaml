@@ -30,6 +30,41 @@ stringData:
       color: {{ .Values.logColor | default true }}
 
     checkpoint_storage:
+      {{- if not (empty .Values.checkpointStorage.cosiSecretName) }}
+      {{- if empty .Values.checkpointStorage.secretNamespace }}
+      {{- fail "The namespace of the COSI secret must be specified." }}
+      {{- end }}
+      {{- $secret := (lookup "v1" "Secret" .Values.checkpointStorage.secretNamespace .Values.checkpointStorage.cosiSecretName) }}
+      {{- if empty $secret }}
+      {{- fail "Failed to find COSI secret." }}
+      {{- end }}
+      {{- $info := $secret.data.BucketInfo | b64dec | fromJson }}
+      {{- range $k, $v := $info }}
+      {{- if eq $k "spec" }}
+      {{- range $k, $v := $v }}
+      {{- if eq $k "bucketName" }}
+      bucket: {{ $v }}
+      {{- end }}
+      {{- if eq $k "protocols" }}
+      type: {{ index $v 0 | quote }}
+      {{- end }}
+      {{- if eq $k "secretS3" }}
+      {{- range $k, $v := $v }}
+      {{- if eq $k "accessKeyID" }}
+      access_key: {{ $v | quote }}
+      {{- end }}
+      {{- if eq $k "accessSecretKey" }}
+      secret_key: {{ $v | quote }}
+      {{- end }}
+      {{- if eq $k "endpoint" }}
+      endpoint_url: {{ $v | quote }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- else }}
       type: {{ required "A valid Values.checkpointStorage.type entry is required!" .Values.checkpointStorage.type | quote}}
       {{- if eq .Values.checkpointStorage.type "shared_fs" }}
       host_path: {{ required "A valid Values.checkpointStorage.hostPath entry is required!" .Values.checkpointStorage.hostPath | quote }}
@@ -378,7 +413,7 @@ stringData:
       schedule: {{ .Values.retentionPolicy.schedule | quote }}
       {{- end }}
     {{- end }}
-    
+
   {{- if .Values.logging }}
   {{- if .Values.logging.security }}
   {{- if .Values.logging.security.tls }}
