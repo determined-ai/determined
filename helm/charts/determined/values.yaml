@@ -248,7 +248,7 @@ checkpointStorage:
   #bucket: bc114c5600f-1b60-48b9-9602-e79b6394bcb3
   #accessKey: admins3
   #secretKey: wrMFpZhUMzWkYSfFj3D+d77f1OsaRscgCSbYwJKRblNf45F1LBw2vd1dgw4LpoMN
-  #endpointUrl: http://10.157.37.124:8080
+  #endpointUrl: http://127.0.0.1:8080
 
   # For storing in Azure Blob Storage with a connection string.
   # Do NOT use if already using Azure Blob Storage with account URL
