@@ -4,7 +4,7 @@ description: A Helm chart for Determined
 
 # This is a placeholder value. The actual version string is passed through the
 # --version flag during helm package.
-version: "0.0.0"
+version: "0.35.0"
 
 icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
 home: https://github.com/determined-ai/determined.git
@@ -16,4 +16,4 @@ home: https://github.com/determined-ai/determined.git
 #
 # This is a placeholder value. The actual version string is passed through the
 # --app-version flag during helm package.
-appVersion: "0.0.0"
+appVersion: "0.35.0"
