@@ -49,7 +49,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.31.0
-	golang.org/x/net v0.26.0
+	golang.org/x/net v0.33.0
 	google.golang.org/api v0.169.0
 	google.golang.org/grpc v1.64.1
 	google.golang.org/grpc/examples v0.0.0-20210525230658-4bae49e05b28 // indirect
