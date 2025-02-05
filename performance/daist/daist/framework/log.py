@@ -15,7 +15,7 @@ class StdoutFilter(logging.Filter):
         self._level = level
 
     def filter(self, record: logging.LogRecord) -> bool:
-        return record.levelno <= self._level
+        return record.levelno >= self._level
 
 
 def start(path: Path, file_level: int, stdout_level: int):
