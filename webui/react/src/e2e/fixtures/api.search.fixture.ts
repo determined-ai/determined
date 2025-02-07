@@ -211,9 +211,9 @@ export class ApiSearchFixture extends apiFixture(InternalApi) {
       entrypoint: 'echo bonjour!',
       name: safeName('apisearch'),
       searcher: {
+        max_trials: 1,
         metric: 'x',
-        name: 'custom',
-        unit: 'batches',
+        name: 'random',
       },
       ...config,
     };
