@@ -1,6 +1,8 @@
 ---
 # currently just a thin wrapper around real_config to add dynamic parameters
-version: '2.1'
+# 
+# For more information, see this directory's README.md
+version: 2.1
 setup: true
 
 orbs:
