@@ -1,9 +1,10 @@
 import abc
+import collections
 import datetime
 import logging
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import psutil
 
@@ -142,33 +143,72 @@ class DummyProfilerContext(ProfilerContext):
         pass
 
 
-def _average_metric_samples_depth_one(metric_samples: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Helper method to merge a list of dictionary averaging their values by their keys.
+# Define the types for reading and collection
+TimestampedValue = collections.namedtuple("TimestampedValue", ["timestamp", "value"])
+Reading = Dict[str, Union[float, "Reading"]]
+Collection = Dict[str, Union[List[TimestampedValue], "Collection"]]
 
-    Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
-    averaged across all dictionaries in the given list by key.
-    # TODO (MD-338): find a cleaner way to do this.
+
+def _add_reading(collection: Collection, reading: Reading, timestamp: float) -> None:
+    """Recursively adds samples from a Reading dict to a Collection dict.
+
+    This function traverses a nested dictionary of readings, where leaves are float
+    samples, and replicates the structure in a collection dictionary, appending the
+    samples to lists at the corresponding leaves.
+
+    Args:
+        reading (Reading): A nested dictionary with arbitrary depth where the leaves are
+            float samples.
+        collection (Collection): A nested dictionary to which the samples from the reading
+            will be added. The structure mirrors that of the reading, but the leaves are
+            lists of floats.
+
+    Raises:
+        ValueError: If an unsupported value type is encountered in the reading dictionary.
     """
-    aggregated_metrics: Dict[str, Any] = {}
-    for sample in metric_samples:
-        for k, v in sample.items():
-            if isinstance(v, dict):
-                aggregated_metrics[k] = aggregated_metrics.get(k, {})
-                for k1, v1 in v.items():
-                    if isinstance(v1, dict):
-                        raise ValueError("only one level of nested is supported")
-                    aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
-            else:
-                aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
-
-    for k, v in aggregated_metrics.items():
-        if isinstance(v, dict):
-            for k1, v1 in v.items():
-                aggregated_metrics[k][k1] = v1 / len(metric_samples)
+    for k, v in reading.items():
+        if isinstance(v, float):
+            if k not in collection:
+                collection[k] = []
+            reading_list = collection[k]
+            # the collection should have the same structure as the reading
+            assert isinstance(reading_list, list)
+            reading_list.append(TimestampedValue(timestamp, v))
+        elif isinstance(v, dict):
+            if k not in collection:
+                collection[k] = {}
+            child_collection = collection[k]
+            assert isinstance(child_collection, dict)
+            cast(Collection, child_collection)
+            _add_samples(child_collection, v, timestamp)
         else:
-            aggregated_metrics[k] = v / len(metric_samples)
+            raise ValueError(f"Unsupported value '{v}' found of type {type(v)}")
 
-    return aggregated_metrics
+
+def _agg_collection(
+    collection: Collection, aggregator: Callable[[List[TimestampedValue]], float]
+) -> Reading:
+    """Applies an aggregation function to each leaf in the collection and returns a new dict.
+
+    Traverses a nested dictionary (collection) where each leaf is a list of floats. Applies
+    the passed aggregator function to each list, replacing it with a single float in the
+    resulting dictionary, which mirrors the structure of the input collection.
+
+    Args:
+        collection: A nested dictionary where the leaves are lists of floats.
+        aggregator: The aggregation function to apply to each list of floats.
+
+    Returns:
+        Reading: A new nested dictionary with the same structure as collection, where each
+        list of floats has been replaced by a single float, the result of applying agg_vals.
+    """
+    aggregated = {}
+    for k, v in collection.items():
+        if isinstance(v, dict):
+            aggregated[k] = _agg_collection(v, aggregator)
+        elif isinstance(v, list):
+            aggregated[k] = aggregator(v)
+    return aggregated
 
 
 class _MetricGroupCollector(metaclass=abc.ABCMeta):
@@ -179,30 +219,20 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
     """
 
     def __init__(self) -> None:
-        self.metric_samples: List[Dict[str, Any]] = []
+        self.metric_samples: Collection = {}
 
     @property
     @abc.abstractmethod
     def group(self) -> str:
         pass
 
-    def aggregate(self) -> Dict[str, Any]:
-        """Merge the list of `self.metric_samples` into a single dictionary with aggregate values.
-
-        This method should return a single dictionary where the values represent meaningful
-        aggregation for this metric group.
-
-        By default, this averages all the values across `self.metric_samples` by keys. This should
-        be the aggregation method for most if not all metrics, but individual metric group
-        collectors should override this method should they need an alternate aggregation method.
-        """
-        return _average_metric_samples_depth_one(self.metric_samples)
-
-    def reset(self) -> None:
-        self.metric_samples = []
+    @abc.abstractmethod
+    def aggregate_values(self, values: List[TimestampedValue]) -> float:
+        """Aggregate a list of values into a single value depending on the metric."""
+        pass
 
     @abc.abstractmethod
-    def sample_metrics(self) -> None:
+    def take_reading(self) -> Reading:
         """Sample all metrics for this group.
 
         Records metrics as a dictionary mapping each metric name to its metric value and appends
@@ -225,37 +255,45 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
         """
         pass
 
+    def aggregate(self) -> Reading:
+        """Merge the list of `self.metric_samples` into a single dictionary with aggregate values.
+
+        This method should return a single dictionary where the values represent meaningful
+        aggregation for this metric group.
+
+        By default, this averages all the values across `self.metric_samples` by keys. This should
+        be the aggregation method for most if not all metrics, but individual metric group
+        collectors should override this method should they need an alternate aggregation method.
+        """
+        return _agg_collection(self.metric_samples, self.aggregate_values)
+
+    def reset(self) -> None:
+        self.metric_samples = {}
+
+    def add_reading(self) -> None:
+        """Take a single Reading and add it to a Collection of them."""
+        _add_reading(self.metric_samples, self.take_reading(), time.time())
+
 
 class _Network(_MetricGroupCollector):
-    def __init__(self) -> None:
-        # Set initial values for throughput calculations.
-        self._interval_start_ts = time.time()
-        self._interval_start_vals = psutil.net_io_counters()
-
-        super().__init__()
-
     @property
     def group(self) -> str:
         return "network"
 
-    def sample_metrics(self) -> None:
-        ts = time.time()
+    def aggregate_values(self, list_of_values: List[TimestampedValue]) -> float:
+        """rate between first and last value in the list of values."""
+        sorted_values = sorted(list_of_values, key=lambda x: x.timestamp)
+        interval_len = sorted_values[-1].timestamp - sorted_values[0].timestamp
+        val_diff = sorted_values[-1].value - sorted_values[0].value
+        return val_diff / interval_len
+
+    def take_reading(self) -> Reading:
         vals = psutil.net_io_counters()
 
-        sent_thru = (vals.bytes_sent - self._interval_start_vals.bytes_sent) / (
-            ts - self._interval_start_ts
-        )
-        recv_thru = (vals.bytes_recv - self._interval_start_vals.bytes_recv) / (
-            ts - self._interval_start_ts
-        )
-
-        self._interval_start_ts, self._interval_start_vals = ts, vals
-
-        metrics = {
-            "net_throughput_sent": sent_thru,
-            "net_throughput_recv": recv_thru,
+        return {
+            "bytes_sent": vals.bytes_sent,
+            "bytes_recv": vals.bytes_recv,
         }
-        self.metric_samples.append(metrics)
 
 
 class _Disk(_MetricGroupCollector):
@@ -281,74 +319,80 @@ class _Disk(_MetricGroupCollector):
     def group(self) -> str:
         return "disk"
 
-    def sample_metrics(self) -> None:
-        ts = time.time()
-        vals = psutil.disk_io_counters()
+    def aggregate_values(self, list_of_values: List[TimestampedValue]) -> float:
+        """rate between first and last value in the list of values."""
+        sorted_values = sorted(list_of_values, key=lambda x: x.timestamp)
+        interval_len = sorted_values[-1].timestamp - sorted_values[0].timestamp
+        val_diff = sorted_values[-1].value - sorted_values[0].value
+        return val_diff / interval_len
 
-        read_thru = (vals.read_bytes - self._interval_start_vals.read_bytes) / (
-            ts - self._interval_start_ts
-        )
-        write_thru = (vals.write_bytes - self._interval_start_vals.write_bytes) / (
-            ts - self._interval_start_ts
-        )
-        iops = (
-            (vals.read_count + vals.write_count)
-            - (self._interval_start_vals.read_count + self._interval_start_vals.write_count)
-        ) / (ts - self._interval_start_ts)
-        self._interval_start_ts, self._interval_start_vals = ts, vals
+    def take_reading(self) -> Reading:
+        vals = psutil.disk_io_counters()
+        assert vals
 
         metrics = {
-            "disk_iops": iops,
-            "disk_throughput_read": read_thru,
-            "disk_throughput_write": write_thru,
+            "disk_iops": vals.read_count + vals.write_count,
+            "disk_throughput_read": vals.read_bytes,
+            "disk_throughput_write": vals.write_bytes,
         }
 
         for path in self._paths:
             disk_usage = psutil.disk_usage(path)
             metrics.update({path: {"disk_util": disk_usage.percent}})
-        self.metric_samples.append(metrics)
+        return metrics
 
 
 class _Memory(_MetricGroupCollector):
-    def sample_metrics(self) -> None:
-        free_mem_bytes = psutil.virtual_memory().available
-        metrics = {
-            "memory_free": free_mem_bytes,
-        }
-        self.metric_samples.append(metrics)
+    # TODO: Actually... maybe we shouldn't record a reading when an object is instantiated.
 
     @property
     def group(self) -> str:
         return "memory"
 
+    def aggregate_values(self, list_of_values: List[TimestampedValue]) -> float:
+        """Average the values in the list of values."""
+        return sum([v.value for v in list_of_values]) / len(list_of_values)
+
+    def take_reading(self) -> Reading:
+        free_mem_bytes = psutil.virtual_memory().available
+        return {
+            "memory_free": free_mem_bytes / 1e9,
+        }
+
 
 class _CPU(_MetricGroupCollector):
-    def sample_metrics(self) -> None:
-        cpu_util = psutil.cpu_percent()
-        metrics = {
-            "cpu_util_simple": cpu_util,
-        }
-        self.metric_samples.append(metrics)
-
     @property
     def group(self) -> str:
-        return "cpu"
+        return "memory"
+
+    def aggregate_values(self, list_of_values: List[TimestampedValue]) -> float:
+        """Average the values in the list of values."""
+        return sum([v.value for v in list_of_values]) / len(list_of_values)
+
+    def take_reading(self) -> Reading:
+        cpu_util = psutil.cpu_percent()
+        return {
+            "cpu_util_simple": cpu_util,
+        }
 
 
 class _GPU(_MetricGroupCollector):
     def __init__(self) -> None:
-        super().__init__()
-
         self._pynvml_device_handles: Dict[str, Any] = {}
-
         if pynvml:
             self._init_pynvml()
         else:
             logging.warning("pynvml module not found. GPU metrics will not be collected.")
 
+        super().__init__()
+
     @property
     def group(self) -> str:
         return "gpu"
+
+    def aggregate_values(self, list_of_values: List[TimestampedValue]) -> float:
+        """Average the values in the list of values."""
+        return sum([v.value for v in list_of_values]) / len(list_of_values)
 
     def _init_pynvml(self) -> None:
         """Initialize the pynvml library and validate methods.
@@ -373,10 +417,11 @@ class _GPU(_MetricGroupCollector):
             self._pynvml_device_handles = {}
             logging.info(f"Error accessing NVML {ne}. GPU metrics will not be collected.")
 
-    def sample_metrics(self) -> None:
+    def take_reading(self) -> Reading:
         metrics = {}
 
         for uuid, handle in self._pynvml_device_handles.items():
+            assert pynvml
             gpu_util = pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
             free_memory = pynvml.nvmlDeviceGetMemoryInfo(handle).free
             metrics.update(
@@ -387,7 +432,7 @@ class _GPU(_MetricGroupCollector):
                     }
                 }
             )
-        self.metric_samples.append(metrics)
+        return metrics
 
 
 class _Collector(threading.Thread):
@@ -425,7 +470,7 @@ class _Collector(threading.Thread):
                 for _ in range(self._aggregation_period):
                     next_collection_ts = time.time() + self._sampling_interval
                     for collector in self._metric_collectors:
-                        collector.sample_metrics()
+                        collector.add_sample()
                     wait_ts = max(next_collection_ts - time.time(), 0)
                     self._should_exit.wait(timeout=wait_ts)
 
