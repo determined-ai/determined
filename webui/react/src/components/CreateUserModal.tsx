@@ -79,7 +79,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
   const { openToast } = useToast();
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled, patchUserEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
@@ -108,17 +108,19 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
     try {
       if (user) {
-        const patchParams: V1PatchUser = {
-          active: formData[ACTIVE_NAME],
-          admin: formData[ADMIN_NAME],
-          displayName: formData[DISPLAY_NAME_NAME],
-          remote: formData[REMOTE_NAME],
-          username: formData[USER_NAME_NAME],
-        };
-        if (formData[USER_PASSWORD_NAME]?.length > 0) {
-          patchParams.password = formData[USER_PASSWORD_NAME];
+        if (patchUserEnabled) {
+          const patchParams: V1PatchUser = {
+            active: formData[ACTIVE_NAME],
+            admin: formData[ADMIN_NAME],
+            displayName: formData[DISPLAY_NAME_NAME],
+            remote: formData[REMOTE_NAME],
+            username: formData[USER_NAME_NAME],
+          };
+          if (formData[USER_PASSWORD_NAME]?.length > 0) {
+            patchParams.password = formData[USER_PASSWORD_NAME];
+          }
+          await patchUser({ userId: user.id, userParams: patchParams });
         }
-        await patchUser({ userId: user.id, userParams: patchParams });
         if (canModifyPermissions) {
           rolesToAdd.size > 0 &&
             (await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: user.id }]));
@@ -212,7 +214,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
           <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
             <Input
               data-testid="displayName"
-              disabled={viewOnly}
+              disabled={viewOnly || !patchUserEnabled}
               maxLength={128}
               placeholder="Display Name"
             />
@@ -223,7 +225,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
               label={ADMIN_LABEL}
               name={ADMIN_NAME}
               valuePropName="checked">
-              <Toggle disabled={viewOnly} />
+              <Toggle disabled={viewOnly || !patchUserEnabled} />
             </Form.Item>
           )}
           {rbacEnabled && canModifyPermissions && (
@@ -235,7 +237,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
               <Toggle
                 checked={isRemote}
                 data-testid="isRemote"
-                disabled={viewOnly}
+                disabled={viewOnly || !patchUserEnabled}
                 onChange={setIsRemote}
               />
             </Form.Item>
@@ -249,7 +251,11 @@ const CreateUserModalComponent: React.FC<Props> = ({
                 required={!user && !isRemote}
                 rules={editPasswordRules}
                 validateTrigger={['onSubmit']}>
-                <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
+                <Input.Password
+                  data-testid="password"
+                  disabled={viewOnly || !patchUserEnabled}
+                  placeholder="Password"
+                />
               </Form.Item>
               <Form.Item
                 dependencies={[USER_PASSWORD_NAME]}
@@ -269,7 +275,10 @@ const CreateUserModalComponent: React.FC<Props> = ({
                   }),
                 ]}
                 validateTrigger={['onSubmit']}>
-                <Input.Password data-testid="confirmPassword" disabled={viewOnly} />
+                <Input.Password
+                  data-testid="confirmPassword"
+                  disabled={viewOnly || !patchUserEnabled}
+                />
               </Form.Item>
             </>
           )}
