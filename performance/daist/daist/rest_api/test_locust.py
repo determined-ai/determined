@@ -83,13 +83,6 @@ class TestRO(TestCase):
         file_meta = FileMeta()
         file_meta.test_id = self.id()
         session.result.add_obj(perf_tests_run, perf_tests_run.get_filename(tags=(tag,)), file_meta)
-        if environment.secrets.perf_result_db_pass is not None:
-            logger.info(f'Uploading {self.id()} results.')
-            try:
-                perf_tests_run.upload()
-            except Exception as err:
-                logger.exception(f'Failed to upload {self.id()} results.')
-                raise err
 
     def test(self):
         self._runner.start(self._USERS, spawn_rate=self._USERS)
