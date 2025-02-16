@@ -2,7 +2,6 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3.3.0
   gcloud: circleci/gcp-cli@2.1.0
   gh: circleci/github-cli@2.0
   helm: circleci/helm@1.2.0
@@ -316,10 +315,6 @@ commands:
     steps:
       - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v24.3/protoc-24.3-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
-
-  install-codecov:
-    steps:
-      - run: pip install codecov
 
   setup-go-intg-deps:
     steps:
@@ -2097,9 +2092,6 @@ jobs:
       - skip-if-only-github
       - react-get-deps
       - run: make -C webui/react test-ci
-      - codecov/upload:
-          flags: "web"
-          xtra_args: "-v"
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
@@ -2210,9 +2202,6 @@ jobs:
       - run: minikube start
       - license-gen
       - run: make -C master test-intg
-      - codecov/upload:
-          flags: "backend"
-          xtra_args: "-v -X fixes"
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -2238,9 +2227,6 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
-      - codecov/upload:
-          flags: "backend"
-          xtra_args: "-v -X fixes"
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
@@ -2350,7 +2336,6 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - skip-if-only-webui
-      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
@@ -2358,7 +2343,6 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2378,11 +2362,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - run: pip install mypy pytest coverage
-      - install-codecov
       - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2402,11 +2384,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - run: pip install mypy pytest coverage
-      - install-codecov
       - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2425,11 +2405,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - run: pip install mypy pytest coverage
-      - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2449,11 +2427,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - run: pip install mypy pytest coverage
-      - install-codecov
       - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2473,11 +2449,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - run: pip install mypy pytest coverage
-      - install-codecov
       - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2494,14 +2468,11 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - skip-if-only-webui
-      - install-codecov
       - run: pip install mypy pytest coverage
-      - install-codecov
       - setup-paths
       - run: make -C harness install
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2518,7 +2489,6 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - skip-if-only-webui
-      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
@@ -2526,7 +2496,6 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
