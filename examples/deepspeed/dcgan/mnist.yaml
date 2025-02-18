@@ -13,7 +13,7 @@ environment:
   environment_variables:
     - NCCL_DEBUG=INFO
     - NCCL_SOCKET_IFNAME=ens,eth,ib
-  image: determinedai/pytorch-ngc:0.38.0
+  image: determinedai/pytorch-ngc:0.38.1
 bind_mounts:
   - host_path: /tmp
     container_path: /data
