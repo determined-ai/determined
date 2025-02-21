@@ -102,6 +102,10 @@ def test_workspace_post_gid() -> None:
         _check_test_experiment(sess, p.id)
         _check_test_command(sess, w.name)
     finally:
+        # Delete the project so the workspace can be deleted
+        bindings.delete_DeleteProject(sess, id=p.id)
+        # Wait for the delete to finish
+        time.sleep(0.5)
         _delete_workspace_and_check(sess, w)
 
 
@@ -141,6 +145,10 @@ def test_workspace_patch_gid() -> None:
         _check_test_experiment(sess, p.id)
         _check_test_command(sess, w.name)
     finally:
+        # Delete the project so the workspace can be deleted
+        bindings.delete_DeleteProject(sess, id=p.id)
+        # Wait for the delete to finish
+        time.sleep(0.5)
         _delete_workspace_and_check(sess, w)
 
 
