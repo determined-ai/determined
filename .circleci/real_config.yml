@@ -1815,6 +1815,10 @@ jobs:
           path: /tmp/pkgs
 
   package-and-push-system-release-ee:
+    parameters:
+      dryrun:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -1832,12 +1836,14 @@ jobs:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
-      - run:
-          no_output_timeout: 30m
-          command: make -C master release-ee
-      - run:
-          no_output_timeout: 30m
-          command: make -C agent release-ee
+      - make-component:
+          component: master
+          target: release
+          no_output_timeout: "30m"
+      - make-component:
+          component: agent
+          target: release
+          no_output_timeout: "30m"
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
   publish-helm-gh-rc:
@@ -5273,6 +5279,14 @@ workflows:
           filters: *release-dryrun
 
       - package-and-push-system-release:
+          dryrun: true
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - package-and-push-system-release-ee:
           dryrun: true
           requires:
             - build-react
