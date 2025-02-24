@@ -289,10 +289,20 @@ release-ee: export DET_SEGMENT_MASTER_KEY ?=
 release-ee: export DET_SEGMENT_WEBUI_KEY ?=
 release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
 release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
 release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
 release-ee: gen buildx
 	$(GORELEASER) --rm-dist -f ./.goreleaser_ee.yml
+
+.PHONY: release-ee
+release-ee: export DET_SEGMENT_MASTER_KEY ?=
+release-ee: export DET_SEGMENT_WEBUI_KEY ?=
+release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
+release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-ee: gen buildx
+	$(GORELEASER) --rm-dist -f ./.goreleaser_ee_dryrun.yml
 
 define manifest_publish
 	for image in $(2); do \
