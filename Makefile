@@ -34,6 +34,7 @@ go-version-check:
 
 .PHONY: package
 package:
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
@@ -44,6 +45,7 @@ package-dryrun:
 
 .PHONY: package-ee
 package-ee:
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
