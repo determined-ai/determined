@@ -1,4 +1,4 @@
-project_name: determined-helm
+project_name: determined-helm-dryrun
 
 build:
   skip: true

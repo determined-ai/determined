@@ -71,7 +71,7 @@ release-and-rc-filters: &release-and-rc-filters
   tags:
     only:
       # Tags like: v2.5.0, v3.0.1-rc2
-      - /v\d+\.\d+\.\d+(-rc\d+)?/
+      - /v\d+\.\d+\.\d+-ee(-rc\d+)?/
 
 rc-filters: &rc-filters
   branches:
@@ -89,7 +89,7 @@ release-filters: &release-filters
   tags:
     only:
       # Tags like: v2.1.2
-      - /v\d+\.\d+\.\d+/
+      - /v\d+\.\d+\.\d+-ee/
 
 release-dryrun: &release-dryrun
   branches:
@@ -1803,10 +1803,12 @@ jobs:
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: master
           target: release
           no_output_timeout: "30m"
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: agent
           target: release
           no_output_timeout: "30m"
@@ -1837,12 +1839,14 @@ jobs:
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: master
-          target: release
+          target: release-ee
           no_output_timeout: "30m"
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: agent
-          target: release
+          target: release-ee
           no_output_timeout: "30m"
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
@@ -5286,14 +5290,6 @@ workflows:
           context: determined-production
           filters: *release-dryrun
 
-      - package-and-push-system-release-ee:
-          dryrun: true
-          requires:
-            - build-react
-            - build-docs
-          context: determined-production
-          filters: *release-dryrun
-
       - publish-python-package:
           name: publish-python-package-release
           matrix:
@@ -5410,6 +5406,65 @@ workflows:
       - upload-try-now-template:
           context: determined-production
           filters: *release-filters
+
+  release-ee-dryrun:
+    jobs:
+      - build-helm:
+          filters: *release-dryrun
+
+      - build-proto:
+          filters: *release-dryrun
+
+      - build-react:
+          context: determined-production
+          matrix:
+            parameters:
+              ee: [true]
+          filters: *release-dryrun
+
+      - build-docs:
+          matrix:
+            parameters:
+              ee: [true]
+          context: determined-production
+          filters: *release-dryrun
+          requires:
+            - build-helm
+            - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - package-and-push-system-release-ee:
+          dryrun: true
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-docs:
+          matrix:
+            parameters:
+              ee: [true]
+              dryrun: [true]
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-helm-gh:
+          matrix:
+            parameters:
+              ee: [true]
+              dryrun: [true]
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-dryrun
 
   release-ee:
     jobs:

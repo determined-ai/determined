@@ -57,6 +57,7 @@ while getopts ${OPTSTRING} opt; do
     esac
 done
 
+CIRCLE_TAG="v0.38.0"
 # Set VERSION to CIRCLE_TAG in case we're running in CircleCI. This makes it
 # easier to avoid fiddling with environment variables there.
 if [[ -n ${CIRCLE_TAG} ]]; then
