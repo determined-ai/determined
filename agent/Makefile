@@ -141,15 +141,15 @@ release-dryrun: packaging/LICENSE buildx
 	goreleaser --rm-dist -f ./.goreleaser_dryrun.yml
 
 .PHONY: release-ee
-release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release-ee: packaging/LICENSE buildx
 	goreleaser --rm-dist -f ./.goreleaser_ee.yml
 
 .PHONY: release-ee-dryrun
-release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
-release-ee: packaging/LICENSE buildx
+release-ee-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release-ee-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-ee-dryrun: packaging/LICENSE buildx
 	goreleaser --rm-dist -f ./.goreleaser_ee_dryrun.yml
 
 define manifest_publish

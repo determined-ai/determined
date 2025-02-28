@@ -272,6 +272,7 @@ release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release: gen buildx
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	$(GORELEASER) --rm-dist
 	make publish-nvcr
 
@@ -282,6 +283,7 @@ release-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
 release-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 # We intentionally do not invoke `make publish-nvcr(-dryrun)` here.
 release-dryrun: gen buildx
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	$(GORELEASER) --rm-dist -f ./.goreleaser_dryrun.yml
 
 .PHONY: release-ee
@@ -289,19 +291,21 @@ release-ee: export DET_SEGMENT_MASTER_KEY ?=
 release-ee: export DET_SEGMENT_WEBUI_KEY ?=
 release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
 release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
 release-ee: gen buildx
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	$(GORELEASER) --rm-dist -f ./.goreleaser_ee.yml
 
-.PHONY: release-ee
-release-ee: export DET_SEGMENT_MASTER_KEY ?=
-release-ee: export DET_SEGMENT_WEBUI_KEY ?=
-release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
-release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-release-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
-release-ee: gen buildx
+.PHONY: release-ee-dryrun
+release-ee-dryrun: export DET_SEGMENT_MASTER_KEY ?=
+release-ee-dryrun: export DET_SEGMENT_WEBUI_KEY ?=
+release-ee-dryrun: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
+release-ee-dryrun: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
+release-ee-dryrun: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)
+release-ee-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)" -A1 | sed -n '2 p')
+release-ee-dryrun: gen buildx
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	$(GORELEASER) --rm-dist -f ./.goreleaser_ee_dryrun.yml
 
 define manifest_publish
