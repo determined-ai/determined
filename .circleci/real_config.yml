@@ -1838,11 +1838,11 @@ jobs:
       - pre-package-and-push-system
       - make-component:
           component: master
-          target: release
+          target: release-ee
           no_output_timeout: "30m"
       - make-component:
           component: agent
-          target: release
+          target: release-ee
           no_output_timeout: "30m"
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
@@ -4899,14 +4899,6 @@ workflows:
           filters: *release-dryrun
 
       - package-and-push-system-release:
-          dryrun: true
-          requires:
-            - build-react
-            - build-docs
-          context: determined-production
-          filters: *release-dryrun
-
-      - package-and-push-system-release-ee:
           dryrun: true
           requires:
             - build-react
