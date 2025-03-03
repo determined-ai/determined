@@ -1803,10 +1803,12 @@ jobs:
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: master
           target: release
           no_output_timeout: "30m"
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: agent
           target: release
           no_output_timeout: "30m"
