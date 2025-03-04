@@ -1,4 +1,4 @@
-project_name: hpe-mlde-helm
+project_name: hpe-mlde-helm-dryrun
 
 build:
   skip: true
@@ -6,8 +6,7 @@ build:
 release:
   github:
     owner: determined-ai
-    # Starting with 0.38.0, we have decide to make EE features publicly available in the oss repo.
-    name: determined
+    name: determined-dryrun
   mode: keep-existing
   extra_files:
     - glob: build/determined-latest.tgz
@@ -18,4 +17,4 @@ release:
   # the "include" functionality is only in the pro version
   header: |
     ## Release Notes
-    [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
+    [{{ .Tag }}](https://github.com/determined-ai/determined-dryrun/blob/{{ .Tag }}/docs/release-notes.rst)

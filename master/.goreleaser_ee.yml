@@ -142,13 +142,14 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    name: determined-ee
+    # Starting with 0.38.0, we have decide to make EE features publicly available in the oss repo.
+    name: determined
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version
   header: |
     ## Release Notes
-    [{{ .Tag }}](https://github.com/determined-ai/determined-ee/blob/{{ .Tag }}/docs/release-notes.rst)
+    [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
 
 dockers:
   # amd64
