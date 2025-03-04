@@ -1839,10 +1839,12 @@ jobs:
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: master
           target: release-ee
           no_output_timeout: "30m"
       - make-component:
+          dryrun: <<parameters.dryrun>>
           component: agent
           target: release-ee
           no_output_timeout: "30m"
@@ -5404,6 +5406,65 @@ workflows:
       - upload-try-now-template:
           context: determined-production
           filters: *release-filters
+
+  release-ee-dryrun:
+    jobs:
+      - build-helm:
+          filters: *release-dryrun
+
+      - build-proto:
+          filters: *release-dryrun
+
+      - build-react:
+          context: determined-production
+          matrix:
+            parameters:
+              ee: [true]
+          filters: *release-dryrun
+
+      - build-docs:
+          matrix:
+            parameters:
+              ee: [true]
+          context: determined-production
+          filters: *release-dryrun
+          requires:
+            - build-helm
+            - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - package-and-push-system-release-ee:
+          dryrun: true
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-docs:
+          matrix:
+            parameters:
+              ee: [true]
+              dryrun: [true]
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-dryrun
+
+      - publish-helm-gh:
+          matrix:
+            parameters:
+              ee: [true]
+              dryrun: [true]
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-dryrun
 
   release-ee:
     jobs:

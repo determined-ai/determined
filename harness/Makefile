@@ -20,6 +20,7 @@ publish-ee: ;
 publish-dryrun:
 	twine upload --verbose --non-interactive --repository testpypi dist/*
 
+.PHONY: publish-ee-dryrun
 publish-ee-dryrun: ;
 
 .PHONY: fmt

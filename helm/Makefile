@@ -49,10 +49,17 @@ release-gh-dryrun:
 
 .PHONY: release-gh-ee
 release-gh-ee: export GORELEASER_CURRENT_TAG := $(VERSION_TAG)-ee
-release-gh-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(VERSION_TAG)-ee" -A1 | sed -n '2 p')
+release-gh-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(GORELEASER_CURRENT_TAG)" -A1 | sed -n '2 p')
 release-gh-ee:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df
-	goreleaser --rm-dist
+	goreleaser --rm-dist -f ./.goreleaser_ee.yml
 
-release-gh-ee-dryrun: ;
+.PHONY: release-gh-ee-dryrun
+# VERSION_TAG v0.38.0+dryrun becomes v.0.38.0-ee+dryrun
+release-gh-ee-dryrun: export GORELEASER_CURRENT_TAG := $(shell echo $(VERSION_TAG) | sed "s/+dryrun/-ee&/g")
+release-gh-ee-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(GORELEASER_CURRENT_TAG)" -A1 | sed -n '2 p')
+release-gh-ee-dryrun:
+	go install github.com/goreleaser/goreleaser@v1.14.1
+	git clean -df
+	goreleaser --rm-dist -f ./.goreleaser_ee_dryrun.yml
