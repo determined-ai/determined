@@ -11,7 +11,6 @@ release:
   extra_files:
     - glob: build/determined-latest.tgz
       name_template: "hpe-mlde-helm-chart_{{ .Env.VERSION }}.tgz"
-  prerelease: auto
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version
