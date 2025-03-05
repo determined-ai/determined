@@ -142,7 +142,6 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    # Starting with 0.38.0, we have decide to make EE features publicly available in the oss repo.
     name: determined
 
   # be sure to keep this in sync between agent/master/helm

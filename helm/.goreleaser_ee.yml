@@ -6,7 +6,6 @@ build:
 release:
   github:
     owner: determined-ai
-    # Starting with 0.38.0, we have decide to make EE features publicly available in the oss repo.
     name: determined
   mode: keep-existing
   extra_files:
