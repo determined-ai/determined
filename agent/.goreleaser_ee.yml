@@ -91,7 +91,6 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    # Starting with 0.38.0, we have decide to make EE features publicly available in the oss repo.
     name: determined
 
   # be sure to keep this in sync between agent/master/helm
@@ -135,7 +134,7 @@ docker_manifests:
     image_templates:
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
-  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION}}"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION_DOCKER}}"
     image_templates:
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"

@@ -195,7 +195,7 @@ docker_manifests:
     image_templates:
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
-  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION}}"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION_DOCKER}}"
     image_templates:
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
       - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"

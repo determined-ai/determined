@@ -302,7 +302,7 @@ release-ee-dryrun: export DET_SEGMENT_MASTER_KEY ?=
 release-ee-dryrun: export DET_SEGMENT_WEBUI_KEY ?=
 release-ee-dryrun: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
 release-ee-dryrun: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-# VERSION_TAG v0.38.0+dryrun becomes v.0.38.0-ee+dryrun
+# VERSION_TAG v0.38.0+dryrun becomes v0.38.0-ee+dryrun
 release-ee-dryrun: export GORELEASER_CURRENT_TAG := $(shell echo $(VERSION_TAG) | sed "s/+dryrun/-ee&/g")
 release-ee-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^v?[0-9.]+-ee$$' | grep "$(GORELEASER_CURRENT_TAG)" -A1 | sed -n '2 p')
 release-ee-dryrun: gen buildx
