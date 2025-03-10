@@ -1,4 +1,4 @@
-project_name: determined-helm
+project_name: hpe-mlde-helm
 
 build:
   skip: true
@@ -6,15 +6,14 @@ build:
 release:
   github:
     owner: determined-ai
-    name: determined-ee
+    name: determined
   mode: keep-existing
   extra_files:
     - glob: build/determined-latest.tgz
-      name_template: "determined-helm-chart_{{ .Env.VERSION }}.tgz"
-  prerelease: auto
+      name_template: "hpe-mlde-helm-chart_{{ .VERSION }}.tgz"
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version
   header: |
     ## Release Notes
-    [{{ .Tag }}](https://github.com/determined-ai/determined-ee/blob/{{ .Tag }}/docs/release-notes.rst)
+    [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
