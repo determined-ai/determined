@@ -41,6 +41,8 @@ OPTSTRING=":td"
 # Options parsing
 # -t outputs the full git tag, necessary for some build steps.
 # -d outputs a Docker-friendly image tag, necessary for pushing to Docker Hub.
+#    For example, 0.38.0+dryrun becomes 0.38.0-dryrun, as '+' is invalid in a
+#    docker tag.
 # The default case simply strips the leading 'v'.
 while getopts ${OPTSTRING} opt; do
     case ${opt} in
