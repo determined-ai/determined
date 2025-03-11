@@ -6,7 +6,8 @@
 
 .. attention::
 
-   MLDES only supports Determined Enterprise Edition.
+   MLDE Managed Service has been discontinued. This page is now obsolete but is left here for
+   historical reasons.
 
 **********
  Overview
