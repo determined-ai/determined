@@ -168,6 +168,7 @@ linkcheck_ignore = [
     r"^http://127.0.0.1",
     r"^\.\./",
     "https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html",
+    r"https://mldes\.ext\.hpe\.com.*",
 ]
 
 linkcheck_timeout = 20
