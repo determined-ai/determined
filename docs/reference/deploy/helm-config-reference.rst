@@ -122,11 +122,11 @@
    -  ``type: gcs``: Checkpoints are stored on Google Cloud Storage (GCS). Authentication is done
       using GCP's "`Application Default Credentials
       <https://googleapis.dev/python/google-api-core/latest/auth.html>`__" approach. When using
-      Determined inside Google Kubernetes Engine (GCE), the simplest approach is to ensure that the
+      Determined inside Google Kubernetes Engine (GKE), the simplest approach is to ensure that the
       nodes used by Determined are running in a service account that has the "Storage Object Admin"
       role on the GCS bucket being used for checkpoints. As an alternative (or when running outside
       of GKE), you can add the appropriate `service account credentials
-      <https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa>`__ to your
+      <https://cloud.google.com/docs/authentication/set-up-adc-attached-service-account>`__ to your
       container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS``
       environment variable to the container path where the credentials are located. See
       :ref:`environment-variables` for more information on how to set environment variables in trial
