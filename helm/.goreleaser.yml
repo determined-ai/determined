@@ -10,7 +10,7 @@ release:
   mode: keep-existing
   extra_files:
     - glob: build/determined-latest.tgz
-      name_template: "determined-helm-chart_{{ .VERSION }}.tgz"
+      name_template: "determined-helm-chart_{{ .Version }}.tgz"
   prerelease: auto
 
   # be sure to keep this in sync between agent/master/helm
