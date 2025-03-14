@@ -1,4 +1,5 @@
 import contextlib
+import time
 from typing import Generator, List, Optional, Sequence
 
 import pytest
@@ -134,6 +135,7 @@ def test_ntsc_iface_access() -> None:
             ],
         ]
     ) as (workspaces, creds):
+        created_projects: List[int] = []
         # launch one of each ntsc in the first workspace
         for typ in conf.ALL_NTSC:
             experiment_id = None
@@ -143,6 +145,7 @@ def test_ntsc_iface_access() -> None:
                     body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
                     workspaceId=workspaces[0].id,
                 ).project.id
+                created_projects.append(pid)
 
                 # experiment for tensorboard
                 experiment_id = noop.create_experiment(
@@ -233,6 +236,11 @@ def test_ntsc_iface_access() -> None:
 
             # kill the ntsc
             api_utils.kill_ntsc(creds[0], typ, created_id)
+        # Delete the project so the workspace can be deleted
+        for pid in created_projects:
+            bindings.delete_DeleteProject(creds[0], id=pid)
+        # Wait for deletion
+        time.sleep(0.5)
 
 
 @pytest.mark.e2e_cpu_rbac
@@ -256,6 +264,7 @@ def test_ntsc_proxy() -> None:
             ],
         ]
     ) as (workspaces, creds):
+        created_projects: List[int] = []
         # launch one of each ntsc in the first workspace
         for typ in conf.PROXIED_NTSC:
             experiment_id = None
@@ -265,6 +274,7 @@ def test_ntsc_proxy() -> None:
                     body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
                     workspaceId=workspaces[0].id,
                 ).project.id
+                created_projects.append(pid)
 
                 # experiment for tensorboard
                 experiment_id = noop.create_experiment(
@@ -297,6 +307,12 @@ def test_ntsc_proxy() -> None:
 
             # kill the ntsc
             api_utils.kill_ntsc(creds[0], typ, created_id)
+
+        for pid in created_projects:
+            # Delete the project so the workspace can be deleted
+            bindings.delete_DeleteProject(creds[0], id=pid)
+        # Wait for deletion
+        time.sleep(0.5)
 
 
 @pytest.mark.e2e_cpu_rbac
