@@ -1,4 +1,6 @@
-project_name: hpe-mlde-helm
+# Beside draft: true, the rest of the file remains the same as .goreleaser.yml.
+# Can be avoided by upgrading goreleaser to 1.26.0. Its CLI supports --draft.
+project_name: determined-helm
 
 build:
   skip: true
@@ -10,7 +12,8 @@ release:
   mode: keep-existing
   extra_files:
     - glob: build/determined-latest.tgz
-      name_template: "hpe-mlde-helm-chart_{{ .Version }}.tgz"
+      name_template: "determined-helm-chart_{{ .Version }}.tgz"
+  draft: true
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version
