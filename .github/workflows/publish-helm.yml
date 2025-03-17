@@ -11,7 +11,7 @@ on:  # yamllint disable-line rule:truthy
         type: string
   release:
     types:
-      - published
+      - created
 
 jobs:
   publish:
