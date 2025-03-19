@@ -19,6 +19,8 @@ kubernetes
 # when pytest executes e2e_tests.
 numpy>=1.20
 h5py>=3
+# aiohttp-cors 0.8.0 breaks ray 2.10.0 (the latest version python 3.8 supports)
+aiohttp-cors==0.7.0
 ray[default,tune]
 pyarrow
 # Pydantic V2 has changes that break existing ray tests
