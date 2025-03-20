@@ -4,6 +4,7 @@ import os
 import random
 import re
 import tempfile
+import time
 import uuid
 from typing import Generator, List, Optional, Tuple
 
@@ -381,6 +382,10 @@ def test_workspace_org() -> None:
         assert e.value.status_code == http.HTTPStatus.CONFLICT
 
     finally:
+        # Clean out projects so workspaces can be cleaned
+        for p in test_projects:
+            bindings.delete_DeleteProject(sess, id=p.id)
+        time.sleep(0.5)
         # Clean out workspaces and all dependencies.
         for w in test_workspaces:
             bindings.delete_DeleteWorkspace(sess, id=w.id)
@@ -469,9 +474,18 @@ def setup_workspaces(
         for e in exps:
             if e.workspaceId not in wids:
                 continue
-            bindings.post_KillExperiment(session, id=e.id)
+            bindings.delete_DeleteExperiment(session, experimentId=e.id)
+        time.sleep(0.5)
 
         for w in workspaces:
+            projects = bindings.get_GetWorkspaceProjects(
+                session,
+                id=w.id,
+                sortBy=bindings.v1GetWorkspaceProjectsRequestSortBy.NAME,
+            ).projects
+            for p in projects:
+                bindings.delete_DeleteProject(session, id=p.id)
+            time.sleep(0.5)
             # TODO check if it needs deleting.
             bindings.delete_DeleteWorkspace(session, id=w.id)
 
