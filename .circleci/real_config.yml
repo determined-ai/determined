@@ -1459,6 +1459,22 @@ jobs:
       - store_artifacts:
           path: helm/build
 
+  retag-docker-images:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          install-python: false
+          determined: false
+          model-hub: false
+          executor: <<pipeline.parameters.docker-image>>
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - run: pip install python_on_whales ruamel_yaml
+      - run: python tools/scripts/update-docker-tags.py tools/scripts/bumpenvs.yaml
+
   build-docs:
     parameters:
       ee:
@@ -4965,6 +4981,10 @@ workflows:
             - build-docs
           context: determined-production
           filters: *rc-filters
+
+      - retag-docker-images:
+          context: determined-production
+          filters: *release-filters
 
       - publish-python-package:
           name: publish-python-package-rc
