@@ -7,6 +7,9 @@
     "npm": ">=9.6.4"
   },
   "scripts": {
+    "bindings": "npm run bindings:clean && npm run bindings:build",
+    "bindings:clean": "rimraf ./generated/orval",
+    "bindings:build": "orval --config orval.config.ts",
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "vite serve",
     "preview": "vite preview",
@@ -33,6 +36,7 @@
   },
   "dependencies": {
     "@glideapps/glide-data-grid": "^6.0.3",
+    "ajv": "^8.17.1",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.1.7",
     "core-js": "3.37.0",
@@ -54,6 +58,7 @@
     "modern-normalize": "^2.0.0",
     "notebook": "file:src/vendor/notebook",
     "omnibar": "github:hamidzr/omnibar",
+    "orval": "^7.2.0",
     "path-to-regexp": "^8.1.0",
     "pretty-bytes": "^6.1.1",
     "react": "^18.3.1",
