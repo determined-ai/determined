@@ -1,8 +1,7 @@
 import _ from 'lodash';
+import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { throttle } from 'throttle-debounce';
 import uPlot, { Plugin } from 'uplot';
-
-import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { findInsertionIndex } from 'utils/array';
 import { distance } from 'utils/chart';
 
@@ -52,8 +51,8 @@ export const closestPointPlugin = ({
     // find idx range
     // note: assuming X data to be sorted, uPlot behaves odd if that's false
     const cursorValX = uPlot.posToVal(cursorLeft, 'x');
-    const idxMax = findInsertionIndex(uPlot.data[0], cursorValX + distValX) - 1;
-    const idxMin = findInsertionIndex(uPlot.data[0], cursorValX - distValX);
+    const idxMax = findInsertionIndex(Array.from(uPlot.data[0]), cursorValX + distValX) - 1;
+    const idxMin = findInsertionIndex(Array.from(uPlot.data[0]), cursorValX - distValX);
 
     // find y value range
     const cursorValY = uPlot.posToVal(cursorTop, yScale);
