@@ -5,11 +5,11 @@
 
 # team-specific repo segments
 /.github        @determined-ai/infrastructure
-/master         @determined-ai/backend
-/go.mod         @determined-ai/backend
-/go.sum         @determined-ai/backend
-/agent          @determined-ai/backend
-/proto          @determined-ai/backend
+/master         @stoksc @maxrussell
+/go.mod         @stoksc @maxrussell
+/go.sum         @stoksc @maxrussell
+/agent          @stoksc @maxrussell
+/proto          @stoksc @maxrussell
 /performance    @determined-ai/scalability
 
 # CI is a mix
@@ -25,7 +25,7 @@
 # Harness is mapped to model-dev by default, except for `deploy`
 # and auto-generated bindings and version files.
 /harness                         @determined-ai/model-dev
-/harness/determined/deploy       @determined-ai/cluster-mgmt
+/harness/determined/deploy       @stoksc @maxrussell
 /harness/determined/common/api/bindings.py
 /harness/determined/__version__.py
 
@@ -38,9 +38,9 @@
 /e2e_tests/tests/environment      @determined-ai/model-dev
 
 # Backend owns some e2e tests.
-/e2e_tests/tests/cluster  @determined-ai/backend
-/e2e_tests/tests/command  @determined-ai/backend
-/e2e_tests/tests/template @determined-ai/backend
+/e2e_tests/tests/cluster  @stoksc @maxrussell
+/e2e_tests/tests/command  @stoksc @maxrussell
+/e2e_tests/tests/template @stoksc @maxrussell
 
 # Owned by @determined-ai/web except for generated files
 /webui                            @determined-ai/web
@@ -49,22 +49,22 @@
 /webui/react/src/services/api-ts-sdk/
 
 # Owned by resource management, so far this is only the stuff that is obvious and in its own dir.
-/master/internal/command @determined-ai/cluster-mgmt
-/master/internal/job @determined-ai/cluster-mgmt
-/master/internal/postregistry @determined-ai/cluster-mgmt
-/master/internal/sproto @determined-ai/cluster-mgmt
-/master/internal/rm @determined-ai/cluster-mgmt
-/master/internal/task @determined-ai/cluster-mgmt
-/master/pkg/aproto @determined-ai/cluster-mgmt
-/master/pkg/archive @determined-ai/cluster-mgmt
-/master/pkg/command @determined-ai/cluster-mgmt
-/master/pkg/cproto @determined-ai/cluster-mgmt
-/master/pkg/device @determined-ai/cluster-mgmt
-/master/pkg/etc @determined-ai/cluster-mgmt
-/master/pkg/tasks @determined-ai/cluster-mgmt
-/tools/scripts/slurm @determined-ai/cluster-mgmt
+/master/internal/command @stoksc @maxrussell
+/master/internal/job @stoksc @maxrussell
+/master/internal/postregistry @stoksc @maxrussell
+/master/internal/sproto @stoksc @maxrussell
+/master/internal/rm @stoksc @maxrussell
+/master/internal/task @stoksc @maxrussell
+/master/pkg/aproto @stoksc @maxrussell
+/master/pkg/archive @stoksc @maxrussell
+/master/pkg/command @stoksc @maxrussell
+/master/pkg/cproto @stoksc @maxrussell
+/master/pkg/device @stoksc @maxrussell
+/master/pkg/etc @stoksc @maxrussell
+/master/pkg/tasks @stoksc @maxrussell
+/tools/scripts/slurm @stoksc @maxrussell
 # EE only files in their own section to ease rebases
-/master/internal/rm/dispatcherrm @determined-ai/backend
-/master/internal/config/dispatcher* @determined-ai/backend
-/master/pkg/tasks/dispatcher* @determined-ai/backend
-/master/static/srv/dispatcher* @determined-ai/backend
+/master/internal/rm/dispatcherrm @stoksc @maxrussell
+/master/internal/config/dispatcher* @stoksc @maxrussell
+/master/pkg/tasks/dispatcher* @stoksc @maxrussell
+/master/static/srv/dispatcher* @stoksc @maxrussell
