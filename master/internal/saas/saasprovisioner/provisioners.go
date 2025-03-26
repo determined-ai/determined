@@ -120,11 +120,7 @@ func (p *SAASProvisioner) GetAndMaybeProvisionUserByToken(ctx context.Context, t
 	if orgRoles.Role == model.AdminRole {
 		clusterRole = model.AdminRole
 	} else {
-		clusterRole, ok = orgRoles.ClusterRoles[ext.ClusterID]
-		// ignore overrides if RBAC is enabled
-		if !ok || rbacEnabled {
-			clusterRole = orgRoles.DefaultClusterRole
-		}
+		clusterRole = orgRoles.DefaultClusterRole
 	}
 
 	if clusterRole == model.NoRole {
