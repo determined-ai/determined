@@ -3,6 +3,7 @@ import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Nameplate } from 'e2e/models/common/hew/Nameplate';
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toast } from 'e2e/models/common/hew/Toast';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
@@ -149,6 +150,9 @@ class UserRow extends Row {
   readonly user = new UserBadge({
     parent: this,
     selector: '[data-testid="user"]',
+  });
+  readonly nameplate = new Nameplate({
+    parent: this,
   });
   readonly status = new BaseComponent({
     parent: this,
