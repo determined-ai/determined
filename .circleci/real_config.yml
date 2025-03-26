@@ -3767,6 +3767,7 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
+          ee: true
       - test-e2e-react:
           name: test-e2e-react-ee
           ee: true
