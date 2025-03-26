@@ -3,9 +3,11 @@ package audit
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
@@ -65,14 +67,33 @@ func IsRBACPermissionDenied(entry *logrus.Entry) bool {
 	return entry.Data["permissionGranted"] != nil && !entry.Data["permissionGranted"].(bool)
 }
 
+var (
+	masterAuthzConfig config.AuthZConfig
+	confOnce          sync.Once
+)
+
 // Log is a convenience function for logging to logrus.
 func Log(fields logrus.Fields) {
+	confOnce.Do(func() {
+		masterAuthzConfig = config.GetMasterConfig().Security.AuthZ
+	})
+	if masterAuthzConfig.AuditLogDisabled {
+		return
+	}
+
 	logrus.WithFields(fields).Info("RBAC Audit Logs")
 }
 
-// LogFromErr is a convenience function that interprets the error to determined whether
+// LogFromErr is a convenience function that interprets the error to determine whether
 // permission was granted.
 func LogFromErr(fields logrus.Fields, err error) {
+	confOnce.Do(func() {
+		masterAuthzConfig = config.GetMasterConfig().Security.AuthZ
+	})
+	if masterAuthzConfig.AuditLogDisabled {
+		return
+	}
+
 	if err != nil {
 		fields["permissionGranted"] = false
 	} else {
