@@ -670,9 +670,6 @@ commands:
             echo Pytest exited with $pytest_status
             exit $pytest_status
 
-      - upload-test-job:
-          only_on_branch: main
-          test_results_path: <<parameters.junit-path>>
       - when:
           condition: <<parameters.collect-det-job-logs>>
           steps:
@@ -1301,42 +1298,6 @@ commands:
         default: "8080"
     steps:
       - run: python .circleci/scripts/wait_for_master.py <<parameters.scheme>>://<<parameters.host>>:<<parameters.port>>
-
-  upload-test-job:
-    parameters:
-      only_on_branch:
-        type: string
-        default: ""
-      test_results_path:
-        type: string
-        default: ""
-    steps:
-      - when:
-          condition:
-            equal: [<<parameters.only_on_branch>>, << pipeline.git.branch >>]
-          steps:
-            - run:
-                name: Test run success -> uploading results to Determined CI
-                command: |
-                  python .circleci/scripts/upload_test_results.py \
-                  'success' \
-                  ${CIRCLE_NODE_INDEX} \
-                  <<parameters.test_results_path>> \
-                  ${CIRCLE_BUILD_NUM} \
-                  ${DET_CI_ACCESS_KEY} \
-                  ${DET_CI_URL}
-                when: on_success
-            - run:
-                name: Test run failed -> uploading results to Determined CI
-                command: |
-                  python .circleci/scripts/upload_test_results.py \
-                  'failed' \
-                  ${CIRCLE_NODE_INDEX} \
-                  <<parameters.test_results_path>> \
-                  ${CIRCLE_BUILD_NUM} \
-                  ${DET_CI_ACCESS_KEY} \
-                  ${DET_CI_URL}
-                when: on_fail
 
   locate-cloudwatch-logs:
     parameters:
