@@ -1,6 +1,7 @@
 module github.com/determined-ai/determined
 
 go 1.22.0
+toolchain go1.23.7
 
 require (
 	cloud.google.com/go v0.112.1 // indirect
@@ -48,8 +49,8 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.9.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/crypto v0.31.0
-	golang.org/x/net v0.26.0
+	golang.org/x/crypto v0.35.0
+	golang.org/x/net v0.36.0
 	google.golang.org/api v0.169.0
 	google.golang.org/grpc v1.64.1
 	google.golang.org/grpc/examples v0.0.0-20210525230658-4bae49e05b28 // indirect
@@ -137,9 +138,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	golang.org/x/oauth2 v0.20.0
-	golang.org/x/sys v0.28.0
-	golang.org/x/term v0.27.0 // indirect
-	golang.org/x/text v0.21.0
+	golang.org/x/sys v0.30.0
+	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/text v0.22.0
 	golang.org/x/time v0.5.0
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -220,7 +221,7 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0
-	golang.org/x/sync v0.10.0
+	golang.org/x/sync v0.11.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094
 	k8s.io/component-helpers v0.28.3
 	sigs.k8s.io/gateway-api v1.0.0
