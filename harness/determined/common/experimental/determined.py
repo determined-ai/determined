@@ -343,9 +343,12 @@ class Determined:
         Add a model to the model registry.
 
         Arguments:
-            name (string): The name of the model. This name must be unique.
-            description (string, optional): A description of the model.
-            metadata (dict, optional): Dictionary of metadata to add to the model.
+            name: The name of the model. This name must be unique.
+            description: A description of the model.
+            metadata: Dictionary of metadata to add to the model.
+            labels: List of labels to add to the model.
+            workspace_name: The name of the workspace to add the model to. If no workspace is
+              passed, the model will be created in the "Uncategorized" workspace.
         """
 
         # TODO: add notes param to create_model()
