@@ -1,4 +1,4 @@
-<p align="center"><img width="400" src="determined-logo.svg" alt="Determined AI Logo"></p>
+<p align="center"><img width="400" src="determined-logo.svg" alt="Determined AI Logo"></p> test
 
 Determined is an all-in-one deep learning platform, compatible with PyTorch and TensorFlow.
 
