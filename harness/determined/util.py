@@ -227,8 +227,8 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
             # Recurse into lists.
             return [jsonable(v) for v in obj]
         if isinstance(obj, dict):
-            # Recurse into dicts.
-            return {k: jsonable(v) for k, v in obj.items()}
+            # Recurse into dicts, converting both keys and values.
+            return {jsonable(k): jsonable(v) for k, v in obj.items()}
         if isinstance(obj, np.ndarray):
             # Expand arrays into lists, then recurse.
             return jsonable(obj.tolist())

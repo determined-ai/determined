@@ -104,6 +104,26 @@ def test_is_numerical_scalar() -> None:
     assert util.is_numerical_scalar(np.array([1.0])[0])
 
 
+def test_json_encode_bytes_keys() -> None:
+    """json_encode should handle dicts with bytes keys (e.g. from profiling metrics)."""
+    # bytes keys should be decoded to str
+    result = util.json_encode({b"loss": 0.5, b"accuracy": 0.9})
+    import json
+
+    parsed = json.loads(result)
+    assert parsed == {"loss": 0.5, "accuracy": 0.9}
+
+    # nested dicts with bytes keys
+    result = util.json_encode({"metrics": {b"gpu_util": 85.0}})
+    parsed = json.loads(result)
+    assert parsed == {"metrics": {"gpu_util": 85.0}}
+
+    # mixed keys
+    result = util.json_encode({"str_key": 1, b"bytes_key": 2})
+    parsed = json.loads(result)
+    assert parsed == {"str_key": 1, "bytes_key": 2}
+
+
 def test_local_trial_user_code_detignore(tmp_path: pathlib.Path) -> None:
     src_path = tmp_path / "src"
     dst_path = tmp_path / "dst"
