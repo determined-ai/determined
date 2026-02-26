@@ -35,7 +35,7 @@ class GPT2Trial(DeepSpeedTrial):
         # Initalize and get arguments, timers, and Tensorboard writer.
         try:
             self.neox_args = get_neox_args(self.context)
-        except:
+        except Exception:
             traceback.print_exc()
             raise InvalidHP("Could not parse neox_args.")
         logging.info(self.neox_args)
