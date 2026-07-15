@@ -493,6 +493,9 @@ func (a *apiServer) KillGenericTask(
 	ctx context.Context, req *apiv1.KillGenericTaskRequest,
 ) (*apiv1.KillGenericTaskResponse, error) {
 	killTaskID := model.TaskID(req.TaskId)
+	if _, _, err := a.canDoActionsOnTask(ctx, killTaskID); err != nil {
+		return nil, err
+	}
 	var taskModel model.Task
 	err := db.Bun().NewSelect().Model(&taskModel).
 		Where("task_id = ?", killTaskID).
@@ -544,6 +547,9 @@ func (a *apiServer) KillGenericTask(
 func (a *apiServer) PauseGenericTask(
 	ctx context.Context, req *apiv1.PauseGenericTaskRequest,
 ) (*apiv1.PauseGenericTaskResponse, error) {
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId)); err != nil {
+		return nil, err
+	}
 	var taskModel model.Task
 	err := db.Bun().NewSelect().Model(&taskModel).
 		Where("task_id = ?", req.TaskId).
@@ -599,6 +605,9 @@ func (a *apiServer) PauseGenericTask(
 func (a *apiServer) UnpauseGenericTask(
 	ctx context.Context, req *apiv1.UnpauseGenericTaskRequest,
 ) (*apiv1.UnpauseGenericTaskResponse, error) {
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId)); err != nil {
+		return nil, err
+	}
 	var taskModel model.Task
 	err := db.Bun().NewSelect().Model(&taskModel).
 		Where("task_id = ?", req.TaskId).
