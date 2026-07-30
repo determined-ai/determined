@@ -27,16 +27,21 @@ class S3StorageManager(storage.CloudStorageManager):
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
         import boto3
+        from botocore import config as botocore_config
 
+        import determined as det
         from determined.common.storage import boto3_credential_manager
 
         boto3_credential_manager.initialize_boto3_credential_providers()
         self.bucket_name = bucket
+        # Identify this client to any S3-compatible endpoint without replacing the default user agent.
+        boto3_config = botocore_config.Config(user_agent_extra=f"determined/{det.__version__}")
         self.s3 = boto3.resource(
             "s3",
             endpoint_url=endpoint_url,
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
+            config=boto3_config,
         )
         self.bucket = self.s3.Bucket(self.bucket_name)
 
