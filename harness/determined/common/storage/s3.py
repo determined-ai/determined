@@ -34,7 +34,7 @@ class S3StorageManager(storage.CloudStorageManager):
 
         boto3_credential_manager.initialize_boto3_credential_providers()
         self.bucket_name = bucket
-        # Identify this client to any S3-compatible endpoint without replacing the default user agent.
+        # Tag the user agent so S3-compatible endpoints can identify the client.
         boto3_config = botocore_config.Config(user_agent_extra=f"determined/{det.__version__}")
         self.s3 = boto3.resource(
             "s3",
