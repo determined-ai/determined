@@ -571,6 +571,10 @@ e.g., ``/pre/.//fix`` -> ``/pre/fix``
 Optional. The endpoint to use for S3 clones, e.g., ``http://127.0.0.1:8080/``. If not specified,
 Amazon S3 will be used.
 
+Any object store that implements the Amazon S3 API can be used here, including Backblaze B2,
+Cloudflare R2, and MinIO. Set this field to the endpoint that provider publishes, for example
+``https://your-s3-endpoint.example.com``.
+
 Azure Blob Storage
 ==================
 
